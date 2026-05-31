@@ -13,7 +13,7 @@ export default async function AppLayout({
     <div className="flex flex-col min-h-screen">
       <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <Link href="/" className="text-xl font-bold text-outside-700">
+          <Link href="/home" className="text-xl font-bold text-outside-700">
             OUTSIDE
           </Link>
           <nav className="flex items-center gap-4 text-sm font-medium text-zinc-600">

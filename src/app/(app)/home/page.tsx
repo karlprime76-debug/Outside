@@ -23,7 +23,7 @@ const FILTERS = [
   { key: "CULTURE", label: "Culture" },
 ];
 
-export default function AppHome() {
+export default function HomePage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [activeFilter, setActiveFilter] = useState("");
   const [loading, setLoading] = useState(true);

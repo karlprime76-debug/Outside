@@ -49,7 +49,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      router.push("/");
+      router.push("/home");
       router.refresh();
     } catch {
       setError("Something went wrong");
