@@ -75,3 +75,4 @@ prisma/
   schema.prisma   # Database schema
   seed.ts         # Seed data
 ```
+# Outside
