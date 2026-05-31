@@ -7,23 +7,23 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:generate": "dotenv -e .env.local -- prisma generate",
+    "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
+    "db:studio": "dotenv -e .env.local -- prisma studio",
+    "db:seed": "dotenv -e .env.local -- tsx prisma/seed.ts"
   },
   "dependencies": {
-    "next": "15.2.4",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "next-auth": "5.0.0-beta.25",
     "@auth/prisma-adapter": "2.7.2",
     "@prisma/client": "6.6.0",
     "bcryptjs": "^2.4.3",
-    "zod": "^3.24.2",
-    "lucide-react": "^0.487.0",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^3.2.0"
+    "lucide-react": "^0.487.0",
+    "next": "15.2.4",
+    "next-auth": "5.0.0-beta.25",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tailwind-merge": "^3.2.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -31,6 +31,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.21",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^8",
     "eslint-config-next": "15.2.4",
     "postcss": "^8.5.3",
