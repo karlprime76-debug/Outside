@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OUTSIDE
 
-## Getting Started
+The world is outside. Find what is happening around you. Right now.
 
-First, run the development server:
+## Tech Stack
+
+- Next.js 15 + App Router
+- React 18 + TypeScript
+- Tailwind CSS 3
+- Prisma + PostgreSQL
+- NextAuth.js (v5 beta)
+- Zod validation
+
+## Setup
 
 ```bash
+# 1. Install dependencies
+npm install
+
+# 2. Configure environment
+cp .env.local.example .env.local
+# Edit .env.local with your DATABASE_URL and NEXTAUTH_SECRET
+
+# 3. Generate Prisma client
+npm run db:generate
+
+# 4. Run migrations
+npm run db:migrate
+
+# 5. Seed cities
+npm run db:seed
+
+# 6. Start dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:migrate` | Run migrations |
+| `npm run db:studio` | Open Prisma Studio |
+| `npm run db:seed` | Seed cities data |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Features
 
-## Learn More
+- **Auth**: Register, login, session with NextAuth
+- **Onboarding**: Bio, neighborhood, budget, moods, language
+- **Plans**: Create, join, leave, filter by mood/budget/city
+- **Places**: Browse places by category, view upcoming plans
+- **Passport**: Travel mode, city switching
+- **Admin**: Stats dashboard (users, plans, places, reports)
+- **Reports**: User and plan reporting system
+- **Security**: Role-based access, ownership checks, plan visibility
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/            # Next.js App Router
+    (app)/        # Authenticated routes
+    (auth)/       # Public auth routes
+    admin/        # Admin dashboard
+    api/          # API routes
+  components/     # React components
+  lib/            # Utils, auth, db, validation
+  hooks/          # Custom hooks
+  types/          # Shared types
+docs/             # Documentation
+prisma/
+  schema.prisma   # Database schema
+  seed.ts         # Seed data
+```
