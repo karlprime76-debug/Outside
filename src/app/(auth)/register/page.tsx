@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { CitySelect } from "@/components/auth/city-select";
 import { InputField } from "@/components/ui/input-field";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { ImmersiveBackground } from "@/components/ui/immersive-background";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -57,15 +58,22 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-[var(--os-bg)]">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
-            <span className="text-lg font-black text-white">O</span>
+    <ImmersiveBackground
+      daySrc="/backgrounds/auth-register.jpg"
+      nightSrc="/backgrounds/auth-register.jpg"
+      alt="Register background"
+      overlay="dark"
+      height="screen"
+    >
+      <div className="flex min-h-screen flex-col items-center justify-center px-6">
+        <div className="w-full max-w-sm space-y-6 glass-strong rounded-3xl p-8 border border-white/10">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
+              <span className="text-lg font-black text-white">O</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white">{t.auth.registerTitle}</h1>
+            <p className="mt-1 text-sm text-white/70">{t.auth.registerSubtitle}</p>
           </div>
-          <h1 className="text-2xl font-bold text-[var(--os-fg)]">{t.auth.registerTitle}</h1>
-          <p className="mt-1 text-sm text-[var(--os-muted)]">{t.auth.registerSubtitle}</p>
-        </div>
 
         {error && (
           <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
@@ -94,13 +102,14 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-[var(--os-muted)]">
+        <p className="text-center text-sm text-white/70">
           {t.auth.hasAccount}{" "}
-          <Link href="/login" className="font-bold text-outside-600 hover:text-outside-700 transition-colors">
+          <Link href="/login" className="font-bold text-outside-400 hover:text-outside-300 transition-colors">
             {t.auth.signInLink}
           </Link>
         </p>
       </div>
     </div>
+    </ImmersiveBackground>
   );
 }

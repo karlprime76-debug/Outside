@@ -9,11 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
 import { ThemeAwareLogo } from "@/components/ui/theme-aware-logo";
+import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import {
   MapPin,
   Plus,
   Globe,
-  Compass,
   Clock,
   Sparkles,
   ArrowRight,
@@ -145,31 +145,39 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* City banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-3">
+      {/* Hero card immersive */}
+      <ImmersiveBackground
+        daySrc="/backgrounds/home-day.jpg"
+        nightSrc="/backgrounds/home-night.jpg"
+        alt="Home background"
+        overlay="brand"
+        height="section"
+        className="rounded-3xl shadow-glow"
+      >
+        <div className="flex flex-1 flex-col justify-center p-6">
+          <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-4 w-4 text-white/70" />
-            <p className="text-sm font-medium text-white/80">Ta ville active</p>
+            <p className="text-sm font-medium text-white/80">{greeting}</p>
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="h-6 w-6 text-white/90" />
             {activeCity ? (
-              <span className="text-3xl font-black tracking-tight">{activeCity.name}</span>
+              <span className="text-3xl font-black tracking-tight text-white drop-shadow-lg">{activeCity.name}</span>
             ) : (
-              <span className="text-3xl font-black tracking-tight opacity-80">Choisis ta ville</span>
+              <span className="text-3xl font-black tracking-tight text-white/80 drop-shadow-lg">Choisis ta ville</span>
             )}
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {!activeCity && (
-              <Link
-                href="/profile"
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold backdrop-blur-sm hover:bg-white/30 transition-colors"
-              >
-                <Compass className="h-4 w-4" />
-                Définir ma ville
-              </Link>
-            )}
+          <p className="mt-2 text-sm text-white/70 max-w-md">
+            {activeCity ? `${activeCity.name} est actif ce soir.` : "Définis ta ville pour voir les plans autour de toi."}
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <Link
+              href="/plans/new"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition-colors pressable"
+            >
+              <Plus className="h-4 w-4" />
+              Créer un plan
+            </Link>
             <button
               onClick={() => {
                 if (!navigator.geolocation) return;
@@ -184,16 +192,14 @@ export default function HomePage() {
                 );
               }}
               disabled={geoDetecting}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold backdrop-blur-sm hover:bg-white/30 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition-colors disabled:opacity-50 pressable"
             >
               <Navigation className="h-4 w-4" />
               {geoDetecting ? "Détection..." : "Me localiser"}
             </button>
           </div>
         </div>
-        <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-accent-500/20 blur-2xl" />
-      </div>
+      </ImmersiveBackground>
 
       {/* Quick moods */}
       <section>

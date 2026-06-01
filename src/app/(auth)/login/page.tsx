@@ -5,6 +5,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { ImmersiveBackground } from "@/components/ui/immersive-background";
 
 function LoginForm() {
   const router = useRouter();
@@ -38,15 +39,22 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-[var(--os-bg)]">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
-            <span className="text-lg font-black text-white">O</span>
+    <ImmersiveBackground
+      daySrc="/backgrounds/auth-login.jpg"
+      nightSrc="/backgrounds/auth-login.jpg"
+      alt="Login background"
+      overlay="dark"
+      height="screen"
+    >
+      <div className="flex min-h-screen flex-col items-center justify-center px-6">
+        <div className="w-full max-w-sm space-y-6 glass-strong rounded-3xl p-8 border border-white/10">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
+              <span className="text-lg font-black text-white">O</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white">{t.auth.loginTitle}</h1>
+            <p className="mt-1 text-sm text-white/70">{t.auth.loginSubtitle}</p>
           </div>
-          <h1 className="text-2xl font-bold text-[var(--os-fg)]">{t.auth.loginTitle}</h1>
-          <p className="mt-1 text-sm text-[var(--os-muted)]">{t.auth.loginSubtitle}</p>
-        </div>
 
         {error && (
           <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">{error}</div>
@@ -86,14 +94,15 @@ function LoginForm() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-[var(--os-muted)]">
+        <p className="text-center text-sm text-white/70">
           {t.auth.noAccount}{" "}
-          <Link href="/register" className="font-bold text-outside-600 hover:text-outside-700 transition-colors">
+          <Link href="/register" className="font-bold text-outside-400 hover:text-outside-300 transition-colors">
             {t.auth.signUpLink}
           </Link>
         </p>
       </div>
     </div>
+    </ImmersiveBackground>
   );
 }
 

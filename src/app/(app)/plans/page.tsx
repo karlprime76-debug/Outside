@@ -8,10 +8,10 @@ import { EmptyState } from "@/components/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
-import { PageHeader } from "@/components/ui/page-header";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CalendarDays, Plus, SlidersHorizontal, X } from "lucide-react";
+import { ImmersiveBackground } from "@/components/ui/immersive-background";
 
 interface Plan {
   id: string;
@@ -71,19 +71,31 @@ export default function PlansPage() {
 
   return (
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6">
-      <PageHeader
-        title={t.plans.title}
-        icon={<CalendarDays className="h-5 w-5 text-white" />}
-        action={
-          <Link
-            href="/plans/new"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.plans.newPlan}</span>
-          </Link>
-        }
-      />
+      {/* Bandeau immersif */}
+      <ImmersiveBackground
+        daySrc="/backgrounds/plans-night.jpg"
+        nightSrc="/backgrounds/plans-night.jpg"
+        alt="Plans background"
+        overlay="night"
+        height="section"
+        className="rounded-2xl"
+      >
+        <div className="flex flex-1 flex-col justify-center p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-black text-white drop-shadow">{t.plans.title}</h1>
+              <p className="text-sm text-white/70">Ce soir, trouve ton mood.</p>
+            </div>
+            <Link
+              href="/plans/new"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{t.plans.newPlan}</span>
+            </Link>
+          </div>
+        </div>
+      </ImmersiveBackground>
 
       {/* Search */}
       <SearchBar

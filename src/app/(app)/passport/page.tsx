@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Badge } from "@/components/ui/badge";
+import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import {
   MapPin,
   Globe,
@@ -135,24 +136,32 @@ export default function PassportPage() {
 
   return (
     <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-8 pb-24 md:pb-4">
-      {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-6 text-white shadow-card">
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
-            <Plane className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-white/70">Passeport OUTSIDE</span>
+      {/* Hero immersif voyage */}
+      <ImmersiveBackground
+        daySrc="/backgrounds/passport-day.jpg"
+        nightSrc="/backgrounds/passport-night.jpg"
+        alt="Passport background"
+        overlay="dark"
+        height="section"
+        className="rounded-3xl shadow-card"
+      >
+        <div className="flex flex-1 flex-col justify-center p-6">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
+              <Plane className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-2xl font-black">Mode voyage</h1>
-            <p className="mt-1 text-sm text-white/80 max-w-md">
-              Explore les plans et lieux dans n&apos;importe quelle ville OUTSIDE.
-            </p>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-white/70">Passeport OUTSIDE</span>
+              </div>
+              <h1 className="text-2xl font-black text-white drop-shadow">Mode voyage</h1>
+              <p className="mt-1 text-sm text-white/80 max-w-md">
+                Change de ville, garde tes plans.
+              </p>
+            </div>
           </div>
         </div>
-        <div className="absolute -right-8 -bottom-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-      </div>
+      </ImmersiveBackground>
 
       {/* Ville principale */}
       <section className="os-card p-6">

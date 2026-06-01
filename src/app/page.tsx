@@ -22,6 +22,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { ThemeAwareLogo } from "@/components/ui/theme-aware-logo";
+import { ImmersiveBackground } from "@/components/ui/immersive-background";
 
 const CITIES = [
   "Cotonou",
@@ -146,36 +147,43 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-outside-50/80 to-[var(--os-bg)]">
-        <div className="mx-auto max-w-5xl px-4 pt-16 pb-20 text-center sm:pt-24 sm:pb-28">
-          <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-sm text-[var(--os-muted)] mb-6">
-            <Sparkles className="h-4 w-4 text-outside-500" />
+      {/* Hero Immersive */}
+      <ImmersiveBackground
+        daySrc="/backgrounds/landing-day.jpg"
+        nightSrc="/backgrounds/landing-night.jpg"
+        alt="OUTSIDE hero"
+        overlay="dark"
+        height="screen"
+        priority
+      >
+        <div className="mx-auto flex max-w-5xl flex-1 flex-col items-center justify-center px-4 pb-20 pt-16 text-center sm:pb-28 sm:pt-24">
+          <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-sm text-white/80 mb-6">
+            <Sparkles className="h-4 w-4 text-outside-400" />
             <span>L&apos;app privée pour sortir autour de toi</span>
           </div>
 
-          <h1 className="text-5xl font-black tracking-tight text-[var(--os-fg)] sm:text-7xl">
+          <h1 className="text-5xl font-black tracking-tight text-white sm:text-7xl drop-shadow-lg">
             Le monde est dehors
             <span className="gradient-text">.</span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-[var(--os-muted)] sm:text-xl leading-relaxed">
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80 sm:text-xl leading-relaxed drop-shadow">
             Trouve quoi faire autour de toi. Maintenant.
           </p>
 
           {!isLoggedIn && !isLoading && (
-            <p className="mx-auto mt-3 max-w-xl text-sm text-[var(--os-muted)]">
+            <p className="mx-auto mt-3 max-w-xl text-sm text-white/60">
               OUTSIDE est une app privée. Crée un compte pour accéder aux plans et lieux autour de toi.
             </p>
           )}
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             {isLoading ? (
-              <div className="h-12 w-40 animate-pulse rounded-full bg-[var(--os-card-border)]" />
+              <div className="h-12 w-40 animate-pulse rounded-full bg-white/20" />
             ) : isLoggedIn ? (
               <Link
                 href="/home"
-                className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-10 text-lg font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+                className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-10 text-lg font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
               >
                 <Compass className="h-5 w-5" />
                 L&apos;app
@@ -184,14 +192,14 @@ export default function LandingPage() {
               <>
                 <Link
                   href="/register"
-                  className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-10 text-lg font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-10 text-lg font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
                 >
                   <Sparkles className="h-5 w-5" />
                   Créer mon compte
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex h-14 items-center justify-center gap-2 rounded-full border-2 border-[var(--os-card-border)] px-10 text-lg font-bold text-[var(--os-fg)] hover:border-outside-300 hover:bg-outside-50/50 transition-all"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-full border-2 border-white/30 px-10 text-lg font-bold text-white hover:border-white/60 hover:bg-white/10 transition-all pressable"
                 >
                   Se connecter
                 </Link>
@@ -199,12 +207,12 @@ export default function LandingPage() {
             )}
           </div>
 
-          <div className="mt-12 flex items-center justify-center gap-4 text-sm text-[var(--os-muted)]">
+          <div className="mt-12 flex items-center justify-center gap-4 text-sm text-white/70">
             <div className="flex -space-x-2">
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--os-bg)] bg-gradient-to-br from-outside-400 to-accent-500 text-xs font-bold text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/30 bg-gradient-to-br from-outside-400 to-accent-500 text-xs font-bold text-white"
                 >
                   {String.fromCharCode(64 + i)}
                 </div>
@@ -213,10 +221,7 @@ export default function LandingPage() {
             <span>Déjà des milliers de plans créés</span>
           </div>
         </div>
-
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-outside-200/30 blur-3xl" />
-        <div className="absolute top-48 right-0 h-64 w-64 rounded-full bg-accent-200/20 blur-3xl" />
-      </section>
+      </ImmersiveBackground>
 
       {/* Section 1 : Ce soir, tu fais quoi ? */}
       <section className="mx-auto max-w-5xl px-4 py-20">
