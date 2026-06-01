@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0f;
+  --card: #ffffff;
+  --card-border: #e4e4e7;
+  --muted: #71717a;
+  --primary: #ff6b35;
+  --accent: #ff006e;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-zinc-900 antialiased;
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
+  }
+
+  * {
+    @apply border-zinc-200;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0f;
+    --foreground: #e2e2e8;
+    --card: #12121a;
+    --card-border: #1e1e2d;
+    --muted: #8a8a9a;
+    --primary: #ff9500;
+    --accent: #ff2d7d;
+  }
+}
+
+@layer base {
+  .dark body {
+    @apply bg-surface-dark text-surface-muted;
+  }
+
+  .dark * {
+    @apply border-surface-border;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .dark .glass {
+    background: rgba(18, 18, 26, 0.7);
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .dark .glass-strong {
+    background: rgba(18, 18, 26, 0.85);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #FF6B35 0%, #FF006E 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .dark .gradient-text {
+    background: linear-gradient(135deg, #FF9500 0%, #FF2D7D 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Neon border glow */
+  .neon-border {
+    box-shadow: 0 0 0 1px rgba(255, 107, 53, 0.3), 0 0 20px rgba(255, 0, 110, 0.15);
+  }
+
+  .dark .neon-border {
+    box-shadow: 0 0 0 1px rgba(255, 149, 0, 0.3), 0 0 20px rgba(255, 45, 125, 0.15);
+  }
+}

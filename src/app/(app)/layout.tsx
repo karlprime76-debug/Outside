@@ -1,0 +1,112 @@
+import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { LogoutButton } from "@/components/auth/logout-button";
+import { BottomNav } from "@/components/bottom-nav";
+import { Avatar } from "@/components/ui/avatar";
+import { UiProviders } from "@/components/ui/providers-client";
+import { ThemeBadge } from "@/components/theme-toggle";
+import { Bell } from "lucide-react";
+
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await auth();
+
+  const NAV_LINKS = [
+    { href: "/plans", label: "Plans" },
+    { href: "/places", label: "Lieux" },
+    { href: "/passport", label: "Passeport" },
+    { href: "/settings", label: "Paramètres" },
+  ];
+
+  return (
+    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-surface-dark">
+      {/* Top header */}
+      <header className="sticky top-0 z-50 border-b border-zinc-200/50 glass dark:border-surface-border/50">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+          <Link
+            href="/home"
+            className="text-xl font-extrabold tracking-tight gradient-text"
+          >
+            OUTSIDE
+          </Link>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-lg px-3 py-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors dark:text-zinc-400 dark:hover:bg-surface-border dark:hover:text-zinc-100"
+              >
+                {link.label}
+              </Link>
+            ))}
+            {session?.user ? (
+              <div className="flex items-center gap-3 ml-2 pl-3 border-l border-zinc-200 dark:border-surface-border">
+                <Link
+                  href="/notifications"
+                  className="relative rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-surface-border transition-colors"
+                >
+                  <Bell className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-white dark:ring-surface-dark" />
+                </Link>
+                <ThemeBadge />
+                <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-surface-border transition-colors">
+                  <Avatar src={session.user.image} name={session.user.name} size="sm" />
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                    {session.user.name?.split(" ")[0] || "Profil"}
+                  </span>
+                </Link>
+                <LogoutButton />
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="ml-2 rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-semibold text-white shadow-glow hover:shadow-glow-lg transition-all"
+              >
+                Se connecter
+              </Link>
+            )}
+          </nav>
+
+          {/* Mobile: notifications + avatar or login */}
+          <div className="flex md:hidden items-center gap-2">
+            {session?.user ? (
+              <>
+                <Link
+                  href="/notifications"
+                  className="relative rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-surface-border transition-colors"
+                >
+                  <Bell className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-white dark:ring-surface-dark" />
+                </Link>
+                <ThemeBadge />
+                <Link href="/profile">
+                  <Avatar src={session.user.image} name={session.user.name} size="sm" />
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="text-sm font-semibold text-outside-600 dark:text-outside-400"
+              >
+                Se connecter
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+        <UiProviders>{children}</UiProviders>
+      </main>
+
+      {/* Mobile bottom navigation */}
+      <BottomNav />
+    </div>
+  );
+}
