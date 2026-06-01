@@ -48,6 +48,7 @@ export function ImmersiveBackground({
 }: ImmersiveBackgroundProps) {
   const { isNight, mounted } = useOutsideThemeContext();
   const [error, setError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const src = mounted && isNight ? nightSrc : daySrc;
 
@@ -59,6 +60,11 @@ export function ImmersiveBackground({
         className
       )}
     >
+      {/* Skeleton shimmer while image loads */}
+      {!loaded && !error && (
+        <div className="absolute inset-0 z-[2] shimmer" />
+      )}
+
       {/* Background image — Next.js Image with fill for optimization */}
       {!error && (
         <Image
@@ -71,6 +77,7 @@ export function ImmersiveBackground({
           sizes="100vw"
           className="object-cover"
           onError={() => setError(true)}
+          onLoad={() => setLoaded(true)}
         />
       )}
 
@@ -78,7 +85,7 @@ export function ImmersiveBackground({
       <div className={cn("absolute inset-0 z-0", fallbackMap[overlay])} />
 
       {/* Overlay gradient */}
-      <div className={cn("absolute inset-0 z-[1]", overlayMap[overlay])} />
+      <div className={cn("absolute inset-0 z-[3]", overlayMap[overlay])} />
 
       {/* Content */}
       <div className="relative z-10 flex flex-1 flex-col">{children}</div>
