@@ -63,11 +63,11 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
 
   return (
     <div
-      className={`group relative rounded-2xl border border-zinc-200 bg-white p-5 shadow-card transition-all hover:shadow-card-hover hover:-translate-y-0.5 dark:border-surface-border dark:bg-surface-card border-l-4 ${MOOD_ACCENT[plan.mood] || "border-l-zinc-300"}`}
+      className={`group relative rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-5 shadow-card transition-all hover:shadow-card-hover hover:-translate-y-0.5 border-l-4 ${MOOD_ACCENT[plan.mood] || "border-l-[var(--os-card-border)]"}`}
     >
       {/* Top row: time + badges */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1.5 text-sm font-bold text-outside-600 dark:text-outside-400">
+        <div className="flex items-center gap-1.5 text-sm font-bold text-outside-600">
           <Calendar className="h-4 w-4" />
           {timeStr}
         </div>
@@ -79,16 +79,16 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
 
       {/* Title */}
       <Link href={`/plans/${plan.id}`} className="block">
-        <h3 className="font-bold text-zinc-900 leading-snug group-hover:text-outside-600 transition-colors dark:text-zinc-100 dark:group-hover:text-outside-400">
+        <h3 className="font-bold text-[var(--os-fg)] leading-snug group-hover:text-outside-600 transition-colors">
           {plan.title}
         </h3>
       </Link>
 
       {/* Location + creator */}
-      <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="mt-2 flex items-center gap-2 text-xs text-[var(--os-muted)]">
         <MapPin className="h-3.5 w-3.5" />
         <span>{plan.city.name}</span>
-        <span className="text-zinc-300 dark:text-zinc-700">·</span>
+        <span className="text-[var(--os-card-border)]">·</span>
         <Avatar src={plan.creator.image} name={plan.creator.name} size="sm" />
         <span>{plan.creator.name || t.plans.anonymous}</span>
       </div>
@@ -96,11 +96,11 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
       {/* Spots + CTA */}
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs">
-          <Users className="h-4 w-4 text-zinc-400" />
+          <Users className="h-4 w-4 text-[var(--os-muted)]" />
           {isFull ? (
             <Badge variant="pink">{t.planCard.full}</Badge>
           ) : (
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="font-medium text-[var(--os-fg)]">
               {spotsLeft} {t.planCard.spots}
             </span>
           )}
@@ -116,7 +116,7 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
         ) : (
           <Link
             href={`/plans/${plan.id}`}
-            className="rounded-full border border-zinc-300 px-5 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-full border border-[var(--os-card-border)] px-5 py-2 text-xs font-semibold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
           >
             {t.planCard.view}
           </Link>

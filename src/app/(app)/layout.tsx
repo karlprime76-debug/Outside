@@ -22,9 +22,9 @@ export default async function AppLayout({
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-surface-dark">
+    <div className="flex flex-col min-h-screen bg-[var(--os-bg)]">
       {/* Top header */}
-      <header className="sticky top-0 z-50 border-b border-zinc-200/50 glass dark:border-surface-border/50">
+      <header className="sticky top-0 z-50 border-b border-[var(--os-card-border)] glass">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link
             href="/home"
@@ -39,24 +39,24 @@ export default async function AppLayout({
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-lg px-3 py-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors dark:text-zinc-400 dark:hover:bg-surface-border dark:hover:text-zinc-100"
+                className="rounded-lg px-3 py-2 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors"
               >
                 {link.label}
               </Link>
             ))}
             {session?.user ? (
-              <div className="flex items-center gap-3 ml-2 pl-3 border-l border-zinc-200 dark:border-surface-border">
+              <div className="flex items-center gap-3 ml-2 pl-3 border-l border-[var(--os-card-border)]">
                 <Link
                   href="/notifications"
-                  className="relative rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-surface-border transition-colors"
+                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
                 >
-                  <Bell className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
-                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-white dark:ring-surface-dark" />
+                  <Bell className="h-5 w-5 text-[var(--os-muted)]" />
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
                 </Link>
                 <ThemeBadge />
-                <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-zinc-100 dark:hover:bg-surface-border transition-colors">
+                <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[var(--os-card-border)] transition-colors">
                   <Avatar src={session.user.image} name={session.user.name} size="sm" />
-                  <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                  <span className="text-sm text-[var(--os-fg)]">
                     {session.user.name?.split(" ")[0] || "Profil"}
                   </span>
                 </Link>
@@ -78,10 +78,10 @@ export default async function AppLayout({
               <>
                 <Link
                   href="/notifications"
-                  className="relative rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-surface-border transition-colors"
+                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
                 >
-                  <Bell className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
-                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-white dark:ring-surface-dark" />
+                  <Bell className="h-5 w-5 text-[var(--os-muted)]" />
+                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
                 </Link>
                 <ThemeBadge />
                 <Link href="/profile">
@@ -91,7 +91,7 @@ export default async function AppLayout({
             ) : (
               <Link
                 href="/login"
-                className="text-sm font-semibold text-outside-600 dark:text-outside-400"
+                className="text-sm font-semibold text-outside-600"
               >
                 Se connecter
               </Link>
