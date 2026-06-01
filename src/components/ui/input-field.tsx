@@ -6,14 +6,15 @@ import { type InputHTMLAttributes, forwardRef } from "react";
 interface InputFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  labelClassName?: string;
 }
 
 export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
-  ({ label, error, className, ...props }, ref) => {
+  ({ label, error, className, labelClassName, ...props }, ref) => {
     return (
       <div>
         {label && (
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <label className={cn("mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400", labelClassName)}>
             {label}
           </label>
         )}
