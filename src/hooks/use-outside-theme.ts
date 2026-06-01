@@ -71,9 +71,7 @@ export function useOutsideTheme() {
   const isNight = currentTheme === "night";
   const isDay = currentTheme === "day";
 
-  const logoIcon = isNight
-    ? "/brand/outside-icon-night.png"
-    : "/brand/outside-icon-day.png";
+  const logoIcon = "/brand/outside-logo.png";
 
   const classes = isNight ? nightClasses : dayClasses;
 
