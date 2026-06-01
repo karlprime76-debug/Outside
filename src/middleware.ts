@@ -23,7 +23,7 @@ export default auth((req) => {
   }
 
   if (isLoggedIn && (nextUrl.pathname === "/login" || nextUrl.pathname === "/register")) {
-    return NextResponse.redirect(new URL("/", nextUrl));
+    return NextResponse.redirect(new URL("/home", nextUrl));
   }
 
   return NextResponse.next();
