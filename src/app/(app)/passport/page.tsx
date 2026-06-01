@@ -43,9 +43,11 @@ interface Plan {
 }
 
 interface UserProfile {
-  homeCity?: { id: string; name: string } | null;
-  activeCity?: { id: string; name: string } | null;
+  homeCity?: { id: string; name: string; country?: string | null } | null;
+  activeCity?: { id: string; name: string; country?: string | null } | null;
   preferredMoods?: string[];
+  country?: string | null;
+  countryCode?: string | null;
 }
 
 export default function PassportPage() {
@@ -183,7 +185,9 @@ export default function PassportPage() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-[var(--os-fg)]">{homeCity.name}</p>
-              <p className="text-xs text-[var(--os-muted)]">Ville principale</p>
+              <p className="text-xs text-[var(--os-muted)]">
+                {homeCity.country || userProfile?.country || "Ville principale"}
+              </p>
             </div>
             <Badge variant="green">Domicile</Badge>
           </div>
@@ -238,7 +242,8 @@ export default function PassportPage() {
               <div className="flex-1">
                 <p className="text-sm font-bold text-[var(--os-fg)]">Mode normal</p>
                 <p className="text-xs text-[var(--os-muted)]">
-                  Tu vois les plans de {activeCity?.name || "ta ville"}.
+                  Tu vois les plans de {activeCity?.name || "ta ville"}
+                  {activeCity?.country || userProfile?.country ? `, ${activeCity?.country || userProfile?.country}` : ""}.
                 </p>
               </div>
             </div>

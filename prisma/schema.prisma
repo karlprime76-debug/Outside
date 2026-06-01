@@ -118,6 +118,9 @@ model User {
   preferredBudget   BudgetLevel?
   preferredMoods    Mood[]
 
+  country           String?
+  countryCode       String?
+
   isVerified        Boolean  @default(false)
   isAvailable       Boolean  @default(false)
   travelModeEnabled Boolean  @default(false)

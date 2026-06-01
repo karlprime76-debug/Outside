@@ -19,7 +19,10 @@ export const authConfig: NextAuthConfig = {
 
         const user = await db.user.findUnique({
           where: { email },
-          select: { id: true, email: true, name: true, image: true, role: true, password: true },
+          include: {
+            homeCity: true,
+            activeCity: true,
+          },
         });
 
         if (!user || !user.password) return null;
@@ -33,6 +36,10 @@ export const authConfig: NextAuthConfig = {
           name: user.name,
           image: user.image,
           role: user.role,
+          country: user.country,
+          countryCode: user.countryCode,
+          homeCity: user.homeCity?.name || null,
+          activeCity: user.activeCity?.name || null,
         };
       },
     }),
@@ -41,6 +48,10 @@ export const authConfig: NextAuthConfig = {
     jwt({ token, user }) {
       if (user) {
         token.role = user.role;
+        token.country = user.country;
+        token.countryCode = user.countryCode;
+        token.homeCity = user.homeCity;
+        token.activeCity = user.activeCity;
       }
       return token;
     },
@@ -50,6 +61,18 @@ export const authConfig: NextAuthConfig = {
       }
       if (token.role) {
         session.user.role = token.role as string;
+      }
+      if (token.country) {
+        session.user.country = token.country as string;
+      }
+      if (token.countryCode) {
+        session.user.countryCode = token.countryCode as string;
+      }
+      if (token.homeCity) {
+        session.user.homeCity = token.homeCity as string;
+      }
+      if (token.activeCity) {
+        session.user.activeCity = token.activeCity as string;
       }
       return session;
     },

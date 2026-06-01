@@ -6,13 +6,13 @@ export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     return NextResponse.json({ user });
   } catch (error) {
     console.error("Get me error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Une erreur est survenue." }, { status: 500 });
   }
 }
 
@@ -20,7 +20,7 @@ export async function PATCH(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -35,6 +35,8 @@ export async function PATCH(req: Request) {
         preferredMoods: body.preferredMoods?.length ? body.preferredMoods : undefined,
         activeCityId: body.activeCityId || undefined,
         homeCityId: body.homeCityId || undefined,
+        country: body.country !== undefined ? body.country || undefined : undefined,
+        countryCode: body.countryCode !== undefined ? body.countryCode || undefined : undefined,
       },
       include: {
         homeCity: true,
@@ -45,6 +47,6 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ user: updated });
   } catch (error) {
     console.error("Patch me error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Une erreur est survenue." }, { status: 500 });
   }
 }

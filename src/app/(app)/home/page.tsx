@@ -78,6 +78,7 @@ export default function HomePage() {
 
   const userName = session?.user?.name || "";
   const activeCity = userProfile?.activeCity;
+  const activeCountry = (session?.user?.country as string) || "";
   const preferredMoods = userProfile?.preferredMoods || [];
 
   useEffect(() => {
@@ -133,6 +134,7 @@ export default function HomePage() {
               <MapPin className="h-3.5 w-3.5 text-outside-500" />
               <span className="text-xs font-bold text-[var(--os-fg)]">
                 {activeCity?.name || "Aucune ville active"}
+                {activeCountry ? ` · ${activeCountry}` : ""}
               </span>
             </div>
           </div>

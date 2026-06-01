@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CitySelect } from "@/components/auth/city-select";
 import { InputField } from "@/components/ui/input-field";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { CountrySelect } from "@/components/location/country-select";
+import { CityAutocomplete } from "@/components/location/city-autocomplete";
+import { getCountryByCode } from "@/lib/countries";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
 
@@ -14,6 +16,9 @@ export default function RegisterPage() {
   const t = useDictionary();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [countryCode, setCountryCode] = useState("");
+  const [homeCity, setHomeCity] = useState("");
+  const [citySuggestion, setCitySuggestion] = useState<{ id: string; lat: number | null; lng: number | null } | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -21,13 +26,18 @@ export default function RegisterPage() {
     setError("");
 
     const form = new FormData(e.currentTarget);
+    const country = getCountryByCode(countryCode);
     const data = {
       name: form.get("name") as string,
       username: form.get("username") as string,
       email: form.get("email") as string,
       password: form.get("password") as string,
       confirmPassword: form.get("confirmPassword") as string,
-      homeCityId: form.get("homeCityId") as string,
+      countryCode: countryCode.toUpperCase(),
+      country: country?.name || "",
+      homeCity: homeCity.trim(),
+      homeCityLat: citySuggestion?.lat ?? null,
+      homeCityLng: citySuggestion?.lng ?? null,
     };
 
     if (data.password !== data.confirmPassword) {
@@ -88,12 +98,18 @@ export default function RegisterPage() {
           <InputField name="email" type="email" label={t.auth.email} required />
           <InputField name="password" type="password" label={t.auth.password} required minLength={8} />
           <InputField name="confirmPassword" type="password" label={t.auth.confirmPassword} required />
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">
-              Ville
-            </label>
-            <CitySelect name="homeCityId" required />
-          </div>
+          <CountrySelect
+            value={countryCode}
+            onChange={setCountryCode}
+            error={error && !countryCode ? "Sélectionne ton pays." : undefined}
+          />
+          <CityAutocomplete
+            countryCode={countryCode}
+            value={homeCity}
+            onChange={setHomeCity}
+            onSelect={(c) => setCitySuggestion(c ? { id: c.id, lat: c.lat, lng: c.lng } : null)}
+            disabled={!countryCode}
+          />
           <button
             type="submit"
             disabled={loading}
