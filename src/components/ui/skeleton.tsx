@@ -11,9 +11,8 @@ export function Skeleton({ className, circle = false }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse bg-zinc-200 dark:bg-zinc-800",
+        "shimmer rounded-xl",
         circle && "rounded-full",
-        !circle && "rounded-xl",
         className
       )}
     />
@@ -24,7 +23,7 @@ export function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-zinc-200 bg-white p-5 dark:border-surface-border dark:bg-surface-card",
+        "os-card p-5",
         className
       )}
     >

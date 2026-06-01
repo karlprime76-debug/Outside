@@ -65,7 +65,7 @@ export default async function AppLayout({
             ) : (
               <Link
                 href="/login"
-                className="ml-2 rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-semibold text-white shadow-glow hover:shadow-glow-lg transition-all"
+                className="ml-2 rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-semibold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
               >
                 Se connecter
               </Link>

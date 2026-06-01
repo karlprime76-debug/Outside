@@ -77,7 +77,7 @@ export default function PlansPage() {
         action={
           <Link
             href="/plans/new"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{t.plans.newPlan}</span>

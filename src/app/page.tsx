@@ -120,7 +120,7 @@ export default function LandingPage() {
             ) : isLoggedIn ? (
               <Link
                 href="/home"
-                className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-white font-semibold shadow-glow hover:shadow-glow-lg transition-all"
+                className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-white font-semibold shadow-glow hover:shadow-glow-lg transition-all pressable"
               >
                 <Compass className="h-4 w-4" />
                 L&apos;app
@@ -136,7 +136,7 @@ export default function LandingPage() {
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-white font-semibold shadow-glow hover:shadow-glow-lg transition-all"
+                  className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-white font-semibold shadow-glow hover:shadow-glow-lg transition-all pressable"
                 >
                   Créer mon compte
                 </Link>

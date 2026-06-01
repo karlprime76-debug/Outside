@@ -184,7 +184,7 @@ export default function PassportPage() {
             </p>
             <Link
               href="/profile"
-              className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow transition-all"
+              className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow transition-all pressable"
             >
               <MapPin className="h-4 w-4" />
               Définir ma ville
@@ -337,7 +337,7 @@ export default function PassportPage() {
             </p>
             <Link
               href="/plans"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-6 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-6 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
             >
               Voir tous les plans
               <ArrowRight className="h-4 w-4" />

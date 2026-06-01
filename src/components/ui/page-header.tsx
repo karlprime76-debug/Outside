@@ -18,7 +18,7 @@ export function PageHeader({ title, icon, action, className }: PageHeaderProps) 
         className
       )}
     >
-      <h1 className="text-2xl font-black flex items-center gap-3">
+      <h1 className="text-2xl font-black flex items-center gap-3 text-[var(--os-fg)]">
         {icon && (
           <span className="flex items-center justify-center rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow shrink-0">
             {icon}

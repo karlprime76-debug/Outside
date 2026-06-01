@@ -65,7 +65,7 @@ export default function PlaceDetailPage() {
 
       <Link
         href="/plans/new"
-        className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+        className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
       >
         {t.homeNow.mainCta}
       </Link>

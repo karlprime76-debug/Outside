@@ -152,4 +152,81 @@
   .pt-safe {
     padding-top: env(safe-area-inset-top, 0px);
   }
+
+  /* Micro-interactions */
+  .pressable {
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .pressable:active {
+    transform: scale(0.97);
+  }
+
+  /* Hover lift for cards */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--os-shadow-glow);
+  }
+
+  /* Shimmer skeleton */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--os-card-border) 25%,
+      var(--os-card) 50%,
+      var(--os-card-border) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Fade in stagger */
+  .fade-in-up {
+    animation: fadeInUp 0.4s ease-out both;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Glow pulse for CTAs */
+  .glow-pulse {
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(255, 107, 53, 0);
+    }
+  }
+
+  [data-theme="night"] .glow-pulse {
+    animation: glowPulseNight 2s ease-in-out infinite;
+  }
+
+  @keyframes glowPulseNight {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(255, 149, 0, 0);
+    }
+  }
 }

@@ -138,7 +138,7 @@ export default function HomePage() {
         </div>
         <Link
           href="/profile"
-          className="flex items-center gap-2 rounded-full glass px-3 py-1.5 text-sm font-semibold text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors"
+          className="flex items-center gap-2 rounded-full glass px-3 py-1.5 text-sm font-semibold text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors pressable"
         >
           <span className="hidden sm:inline">Profil</span>
           <ArrowRight className="h-4 w-4" />
@@ -221,7 +221,7 @@ export default function HomePage() {
       <div className="grid gap-3 sm:grid-cols-2">
         <Link
           href="/plans/new"
-          className="group flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-outside-500 to-accent-500 py-5 text-lg font-black text-white shadow-glow hover:shadow-glow-lg transition-all"
+          className="group flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-outside-500 to-accent-500 py-5 text-lg font-black text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
         >
           <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
           Créer un plan
@@ -231,7 +231,7 @@ export default function HomePage() {
             const el = document.getElementById("plans-section");
             el?.scrollIntoView({ behavior: "smooth" });
           }}
-          className="group flex items-center justify-center gap-3 rounded-2xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)] py-5 text-lg font-black text-[var(--os-fg)] hover:border-outside-300 hover:bg-outside-50/50 transition-all"
+          className="group flex items-center justify-center gap-3 rounded-2xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)] py-5 text-lg font-black text-[var(--os-fg)] hover:border-outside-300 hover:bg-outside-50/50 transition-all pressable"
         >
           <Zap className="h-6 w-6 text-outside-500" />
           Je suis dispo

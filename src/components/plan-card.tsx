@@ -109,7 +109,7 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
         {showJoin && !isFull ? (
           <Link
             href={`/plans/${plan.id}`}
-            className="rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2 text-xs font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+            className="rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2 text-xs font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
           >
             {t.planCard.join}
           </Link>
