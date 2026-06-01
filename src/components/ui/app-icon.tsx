@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { cn } from "@/lib/cn";
 
 interface AppIconProps {
@@ -17,14 +16,13 @@ export function AppIcon({ size = 40, className }: AppIconProps) {
       )}
       style={{ width: size, height: size }}
     >
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src="/brand/outside-logo.png"
         alt="OUTSIDE"
         width={size}
         height={size}
-        className="object-cover"
-        unoptimized
-        priority
+        className="object-cover w-full h-full"
       />
     </div>
   );
