@@ -13,8 +13,15 @@ import {
   Compass,
   MessageCircle,
   Heart,
+  Star,
+  Clock,
+  Zap,
+  Plane,
+  Lock,
+  Eye,
+  CheckCircle,
 } from "lucide-react";
-import { useDictionary } from "@/hooks/use-dictionary";
+import { ThemeAwareLogo } from "@/components/ui/theme-aware-logo";
 
 const CITIES = [
   "Cotonou",
@@ -28,89 +35,110 @@ const CITIES = [
   "Tokyo",
 ];
 
-const FEATURES = [
-  {
-    icon: Calendar,
-    titleKey: "Découvre les plans autour de toi",
-    description:
-      "Trouve des plans en temps réel près de chez toi. Food, soirées, sport, culture — trouve ton vibe instantanément.",
-    color: "bg-amber-50 text-amber-600",
-  },
-  {
-    icon: MapPin,
-    titleKey: "Lieux qui comptent",
-    description:
-      "Des lieux sélectionnés et validés par la communauté. Spots sûrs, actifs ce soir, toujours à jour.",
-    color: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    icon: Globe,
-    titleKey: "Passeport OUTSIDE",
-    description:
-      "Le mode voyage t'aide à découvrir des plans sûrs, locaux et friendly pour voyageurs dans chaque ville.",
-    color: "bg-sky-50 text-sky-600",
-  },
-  {
-    icon: Shield,
-    titleKey: "Sécurité avant tout",
-    description:
-      "Ta localisation exacte n'est jamais exposée publiquement. Signalements communautaires et profils vérifiés.",
-    color: "bg-rose-50 text-rose-600",
-  },
-  {
-    icon: Users,
-    titleKey: "Rencontre des gens",
-    description:
-      "Rejoins des plans, discute avec les participants et construis ton réseau local où que tu ailles.",
-    color: "bg-violet-50 text-violet-600",
-  },
-  {
-    icon: Sparkles,
-    titleKey: "Personnalisé",
-    description:
-      "Dis-nous ton mood et ton budget. OUTSIDE te suggère les plans qui correspondent vraiment à ce que tu veux faire.",
-    color: "bg-orange-50 text-orange-600",
-  },
-];
+const MOCKS = {
+  plans: [
+    { title: "Afterwork Rooftop", mood: "Chill", time: "19h30", city: "Paris", participants: 8, max: 12 },
+    { title: "Basket en salle", mood: "Sport", time: "18h00", city: "Cotonou", participants: 4, max: 10 },
+    { title: "Tacos & Talk", mood: "Food", time: "20h00", city: "Abidjan", participants: 6, max: 8 },
+  ],
+  places: [
+    { name: "Le Rooftop 237", category: "Lounge", city: "Cotonou", partner: true },
+    { name: "Maquis du Port", category: "Maquis", city: "Abidjan", partner: false },
+    { name: "Plage de Grand-Bassam", category: "Beach", city: "Abidjan", partner: true },
+  ],
+};
+
+function MoodBadge({ mood }: { mood: string }) {
+  const colors: Record<string, string> = {
+    Chill: "bg-sky-100 text-sky-700",
+    Sport: "bg-emerald-100 text-emerald-700",
+    Food: "bg-amber-100 text-amber-700",
+    Voyage: "bg-violet-100 text-violet-700",
+    Party: "bg-rose-100 text-rose-700",
+    Culture: "bg-indigo-100 text-indigo-700",
+  };
+  return (
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${colors[mood] || "bg-zinc-100 text-zinc-600"}`}>
+      {mood}
+    </span>
+  );
+}
+
+function MockPlanCard({ plan }: { plan: typeof MOCKS.plans[0] }) {
+  return (
+    <div className="os-card p-4 space-y-3 hover:-translate-y-0.5 transition-transform">
+      <div className="flex items-center justify-between">
+        <MoodBadge mood={plan.mood} />
+        <span className="text-[10px] font-semibold text-[var(--os-muted)] flex items-center gap-1">
+          <Clock className="h-3 w-3" /> {plan.time}
+        </span>
+      </div>
+      <p className="text-sm font-bold text-[var(--os-fg)]">{plan.title}</p>
+      <div className="flex items-center justify-between text-[11px] text-[var(--os-muted)]">
+        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {plan.city}</span>
+        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {plan.participants}/{plan.max}</span>
+      </div>
+      <div className="h-1.5 w-full rounded-full bg-[var(--os-card-border)] overflow-hidden">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-outside-500 to-accent-500"
+          style={{ width: `${(plan.participants / plan.max) * 100}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MockPlaceCard({ place }: { place: typeof MOCKS.places[0] }) {
+  return (
+    <div className="os-card p-4 flex items-center gap-3 hover:-translate-y-0.5 transition-transform">
+      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-outside-400 to-accent-500 flex items-center justify-center shrink-0">
+        <MapPin className="h-5 w-5 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-[var(--os-fg)] truncate">{place.name}</p>
+        <p className="text-[11px] text-[var(--os-muted)]">{place.city} · {place.category}</p>
+      </div>
+      {place.partner && <Star className="h-4 w-4 text-outside-500 shrink-0" />}
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const { data: session, status } = useSession();
-  const t = useDictionary();
   const isLoggedIn = !!session?.user;
   const isLoading = status === "loading";
 
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-surface-dark">
+    <div className="flex flex-col min-h-screen bg-[var(--os-bg)]">
       {/* Navigation */}
-      <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/80 backdrop-blur">
+      <header className="sticky top-0 z-50 glass">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <Link href="/" className="text-xl font-black tracking-tight gradient-text">
-            {t.app.name}
-          </Link>
+          <ThemeAwareLogo showIcon iconSize={28} />
           <nav className="flex items-center gap-3 text-sm font-medium">
             {isLoading ? (
-              <div className="h-8 w-20 animate-pulse rounded-lg bg-zinc-100" />
+              <div className="h-8 w-20 animate-pulse rounded-lg bg-[var(--os-card-border)]" />
             ) : isLoggedIn ? (
               <Link
                 href="/home"
                 className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-white font-semibold shadow-glow hover:shadow-glow-lg transition-all"
               >
-                {t.landing.ctaApp}
+                <Compass className="h-4 w-4" />
+                L&apos;app
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
               <>
                 <Link
                   href="/login"
-                  className="rounded-full px-4 py-2 text-zinc-600 hover:text-zinc-900 transition-colors dark:text-zinc-400 dark:hover:text-zinc-100"
+                  className="rounded-full px-4 py-2 text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
                 >
-                  {t.nav.signIn}
+                  Se connecter
                 </Link>
                 <Link
                   href="/register"
                   className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-white font-semibold shadow-glow hover:shadow-glow-lg transition-all"
                 >
-                  {t.nav.createAccount}
+                  Créer mon compte
                 </Link>
               </>
             )}
@@ -119,38 +147,38 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-outside-50/80 to-white dark:from-surface-dark dark:to-surface-dark">
-        <div className="mx-auto max-w-5xl px-4 pt-20 pb-24 text-center sm:pt-28 sm:pb-32">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white border border-zinc-200 px-4 py-1.5 text-sm text-zinc-600 shadow-sm mb-8 dark:bg-surface-card dark:border-surface-border dark:text-zinc-300">
+      <section className="relative overflow-hidden bg-gradient-to-b from-outside-50/80 to-[var(--os-bg)]">
+        <div className="mx-auto max-w-5xl px-4 pt-16 pb-20 text-center sm:pt-24 sm:pb-28">
+          <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-sm text-[var(--os-muted)] mb-6">
             <Sparkles className="h-4 w-4 text-outside-500" />
-            <span>{t.landing.badge}</span>
+            <span>L&apos;app privée pour sortir autour de toi</span>
           </div>
 
-          <h1 className="text-5xl font-black tracking-tight text-zinc-900 sm:text-7xl dark:text-zinc-100">
-            {t.app.slogan.split(".")[0]}
+          <h1 className="text-5xl font-black tracking-tight text-[var(--os-fg)] sm:text-7xl">
+            Le monde est dehors
             <span className="gradient-text">.</span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl leading-relaxed dark:text-zinc-400">
-            {t.landing.heroDescription}
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-[var(--os-muted)] sm:text-xl leading-relaxed">
+            Trouve quoi faire autour de toi. Maintenant.
           </p>
 
           {!isLoggedIn && !isLoading && (
-            <p className="mx-auto mt-3 max-w-xl text-sm text-zinc-500 dark:text-zinc-500">
-              {t.landing.privateNote}
+            <p className="mx-auto mt-3 max-w-xl text-sm text-[var(--os-muted)]">
+              OUTSIDE est une app privée. Crée un compte pour accéder aux plans et lieux autour de toi.
             </p>
           )}
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             {isLoading ? (
-              <div className="h-12 w-40 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-12 w-40 animate-pulse rounded-full bg-[var(--os-card-border)]" />
             ) : isLoggedIn ? (
               <Link
                 href="/home"
                 className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-10 text-lg font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
               >
                 <Compass className="h-5 w-5" />
-                {t.landing.ctaApp}
+                L&apos;app
               </Link>
             ) : (
               <>
@@ -159,135 +187,312 @@ export default function LandingPage() {
                   className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-10 text-lg font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
                 >
                   <Sparkles className="h-5 w-5" />
-                  {t.landing.ctaPrimary}
+                  Créer mon compte
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex h-14 items-center justify-center gap-2 rounded-full border-2 border-zinc-200 px-10 text-lg font-bold text-zinc-700 hover:border-outside-300 hover:bg-outside-50/50 transition-all dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-outside-700"
+                  className="inline-flex h-14 items-center justify-center gap-2 rounded-full border-2 border-[var(--os-card-border)] px-10 text-lg font-bold text-[var(--os-fg)] hover:border-outside-300 hover:bg-outside-50/50 transition-all"
                 >
-                  {t.landing.ctaSecondary}
+                  Se connecter
                 </Link>
               </>
             )}
           </div>
 
-          <div className="mt-12 flex items-center justify-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <div className="mt-12 flex items-center justify-center gap-4 text-sm text-[var(--os-muted)]">
             <div className="flex -space-x-2">
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-outside-400 to-accent-500 text-xs font-bold text-white dark:border-surface-dark"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--os-bg)] bg-gradient-to-br from-outside-400 to-accent-500 text-xs font-bold text-white"
                 >
                   {String.fromCharCode(64 + i)}
                 </div>
               ))}
             </div>
-            <span>{t.landing.socialProof}</span>
+            <span>Déjà des milliers de plans créés</span>
           </div>
         </div>
 
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-outside-200/30 blur-3xl dark:bg-outside-500/10" />
-        <div className="absolute top-48 right-0 h-64 w-64 rounded-full bg-accent-200/20 blur-3xl dark:bg-accent-500/10" />
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-outside-200/30 blur-3xl" />
+        <div className="absolute top-48 right-0 h-64 w-64 rounded-full bg-accent-200/20 blur-3xl" />
       </section>
 
-      {/* Features grid */}
+      {/* Section 1 : Ce soir, tu fais quoi ? */}
       <section className="mx-auto max-w-5xl px-4 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-3xl font-black text-zinc-900 sm:text-4xl dark:text-zinc-100">
-            {t.landing.featuresTitle}
+          <h2 className="text-3xl font-black text-[var(--os-fg)] sm:text-4xl">
+            Ce soir, tu fais quoi ?
           </h2>
-          <p className="mt-4 text-zinc-500 dark:text-zinc-400">{t.landing.featuresSubtitle}</p>
+          <p className="mt-4 text-[var(--os-muted)]">
+            Pas de plans ? OUTSIDE te montre ce qui bouge autour de toi.
+          </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((feature) => (
-            <div
-              key={feature.titleKey}
-              className="group rounded-2xl border border-zinc-100 bg-white p-6 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all dark:border-surface-border dark:bg-surface-card"
-            >
-              <div
-                className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${feature.color} mb-4`}
-              >
-                <feature.icon className="h-6 w-6" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-900 mb-2 dark:text-zinc-100">
-                {feature.titleKey}
-              </h3>
-              <p className="text-sm text-zinc-500 leading-relaxed dark:text-zinc-400">
-                {feature.description}
-              </p>
+        <div className="grid gap-6 sm:grid-cols-3 mb-10">
+          <div className="os-card p-6 text-center">
+            <div className="mx-auto h-12 w-12 rounded-xl bg-outside-100 flex items-center justify-center mb-4">
+              <MapPin className="h-6 w-6 text-outside-600" />
             </div>
+            <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Trouve des plans autour de toi</h3>
+            <p className="text-sm text-[var(--os-muted)]">
+              Food, sport, soirées, culture — découvre les plans en temps réel près de chez toi.
+            </p>
+          </div>
+          <div className="os-card p-6 text-center">
+            <div className="mx-auto h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-4">
+              <Shield className="h-6 w-6 text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Rejoins des sorties fiables</h3>
+            <p className="text-sm text-[var(--os-muted)]">
+              Chaque plan est créé par un membre vérifié. Pas de mauvaises surprises.
+            </p>
+          </div>
+          <div className="os-card p-6 text-center">
+            <div className="mx-auto h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center mb-4">
+              <Zap className="h-6 w-6 text-amber-600" />
+            </div>
+            <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Découvre les lieux qui bougent</h3>
+            <p className="text-sm text-[var(--os-muted)]">
+              Bars, restos, plages, salles — les spots validés par la communauté OUTSIDE.
+            </p>
+          </div>
+        </div>
+
+        {/* Mock preview */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {MOCKS.plans.map((plan) => (
+            <MockPlanCard key={plan.title} plan={plan} />
           ))}
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="bg-zinc-50 py-20 dark:bg-surface-dark/50">
+      {/* Section 2 : Une app pensée pour la vraie vie */}
+      <section className="bg-[var(--os-bg)] py-20 border-y border-[var(--os-card-border)]">
         <div className="mx-auto max-w-5xl px-4">
           <div className="text-center mb-14">
-            <h2 className="text-3xl font-black text-zinc-900 sm:text-4xl dark:text-zinc-100">
-              {t.landing.howItWorksTitle}
+            <h2 className="text-3xl font-black text-[var(--os-fg)] sm:text-4xl">
+              Une app pensée pour la vraie vie
             </h2>
-            <p className="mt-4 text-zinc-500 dark:text-zinc-400">{t.landing.howItWorksSubtitle}</p>
+            <p className="mt-4 text-[var(--os-muted)]">
+              Tout ce dont tu as besoin pour sortir et rencontrer des gens.
+            </p>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-3">
-            {[
-              {
-                step: "01",
-                title: t.landing.step1Title,
-                desc: t.landing.step1Desc,
-                icon: Users,
-              },
-              {
-                step: "02",
-                title: t.landing.step2Title,
-                desc: t.landing.step2Desc,
-                icon: Calendar,
-              },
-              {
-                step: "03",
-                title: t.landing.step3Title,
-                desc: t.landing.step3Desc,
-                icon: Heart,
-              },
-            ].map((item) => (
-              <div
-                key={item.step}
-                className="relative rounded-2xl bg-white p-8 border border-zinc-100 shadow-card dark:border-surface-border dark:bg-surface-card"
-              >
-                <span className="text-xs font-black text-outside-600 tracking-wider dark:text-outside-400">
-                  ÉTAPE {item.step}
-                </span>
-                <div className="mt-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-outside-100 text-outside-600 dark:bg-outside-950/20 dark:text-outside-400">
-                  <item.icon className="h-5 w-5" />
-                </div>
-                <h3 className="mt-4 text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm text-zinc-500 leading-relaxed dark:text-zinc-400">
-                  {item.desc}
-                </p>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="os-card p-6">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-outside-100 text-outside-600 mb-4">
+                <Calendar className="h-5 w-5" />
               </div>
-            ))}
+              <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Plans en temps réel</h3>
+              <p className="text-sm text-[var(--os-muted)] leading-relaxed">
+                Crée ou rejoins des plans ce soir. Food, soirées, sport, culture — trouve ton vibe.
+              </p>
+            </div>
+            <div className="os-card p-6">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 mb-4">
+                <MapPin className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Lieux validés</h3>
+              <p className="text-sm text-[var(--os-muted)] leading-relaxed">
+                Des lieux sélectionnés par la communauté. Spots sûrs, actifs ce soir.
+              </p>
+            </div>
+            <div className="os-card p-6">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-600 mb-4">
+                <Users className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Ville active</h3>
+              <p className="text-sm text-[var(--os-muted)] leading-relaxed">
+                Change de ville active quand tu voyages. Retrouve tes plans et amis partout.
+              </p>
+            </div>
+            <div className="os-card p-6">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-600 mb-4">
+                <Plane className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Mode voyage</h3>
+              <p className="text-sm text-[var(--os-muted)] leading-relaxed">
+                Active le mode voyage pour découvrir des plans traveler-friendly dans chaque ville.
+              </p>
+            </div>
+            <div className="os-card p-6">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-rose-100 text-rose-600 mb-4">
+                <Shield className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Sécurité intégrée</h3>
+              <p className="text-sm text-[var(--os-muted)] leading-relaxed">
+                Ta localisation exacte n&apos;est jamais exposée. Signalements et profils vérifiés.
+              </p>
+            </div>
+            <div className="os-card p-6">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-600 mb-4">
+                <Heart className="h-5 w-5" />
+              </div>
+              <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Personnalisé</h3>
+              <p className="text-sm text-[var(--os-muted)] leading-relaxed">
+                Dis-nous ton mood et ton budget. OUTSIDE te suggère les plans qui te correspondent.
+              </p>
+            </div>
+          </div>
+
+          {/* Mock places preview */}
+          <div className="mt-10">
+            <h3 className="text-sm font-black uppercase tracking-wider text-[var(--os-muted)] mb-4">Lieux tendance ce soir</h3>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {MOCKS.places.map((place) => (
+                <MockPlaceCard key={place.name} place={place} />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Cities */}
+      {/* Section 3 : Quand tu voyages */}
+      <section className="mx-auto max-w-5xl px-4 py-20">
+        <div className="grid items-center gap-12 sm:grid-cols-2">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-sm text-[var(--os-muted)] mb-6">
+              <Plane className="h-4 w-4 text-outside-500" />
+              <span>Mode voyage</span>
+            </div>
+            <h2 className="text-3xl font-black text-[var(--os-fg)] sm:text-4xl mb-4">
+              Quand tu voyages, OUTSIDE suit.
+            </h2>
+            <p className="text-[var(--os-muted)] leading-relaxed mb-6">
+              Le passeport OUTSIDE te permet de découvrir une nouvelle ville comme un local.
+              Active le mode voyage et retrouve des plans traveler-friendly, des recommandations locales et une communauté qui t&apos;accueille.
+            </p>
+            <ul className="space-y-3">
+              {[
+                "Change de ville active en un clic",
+                "Plans recommandés par les locaux",
+                "Spots sûrs vérifiés par la communauté",
+                "Rejoins des groupes de voyageurs",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-3 text-[var(--os-fg)]">
+                  <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-outside-500" />
+                  <span className="text-sm font-medium">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="relative">
+            <div className="os-card p-6 space-y-4 relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <Globe className="h-5 w-5 text-outside-500" />
+                <span className="text-sm font-bold text-[var(--os-fg)]">OUTSIDE Passport</span>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 rounded-xl bg-[var(--os-bg)] p-3">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-outside-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold">A</div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--os-fg)]">Visite guidée Plateau</p>
+                    <p className="text-[11px] text-[var(--os-muted)]">Abidjan · Culture · 14h00</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl bg-[var(--os-bg)] p-3">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-bold">M</div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--os-fg)]">Beach Volley</p>
+                    <p className="text-[11px] text-[var(--os-muted)]">Cotonou · Sport · 17h00</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl bg-[var(--os-bg)] p-3">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold">S</div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--os-fg)]">Sunset Lounge</p>
+                    <p className="text-[11px] text-[var(--os-muted)]">Dubai · Chill · 19h00</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="absolute -top-6 -right-6 h-32 w-32 rounded-full bg-outside-200/30 blur-2xl" />
+            <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-accent-200/20 blur-2xl" />
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4 : Ta position reste privée */}
+      <section className="bg-[var(--os-bg)] py-20 border-y border-[var(--os-card-border)]">
+        <div className="mx-auto max-w-5xl px-4">
+          <div className="grid items-center gap-12 sm:grid-cols-2">
+            <div className="order-2 sm:order-1">
+              <div className="os-card p-6 space-y-4 relative z-10">
+                <div className="flex items-center gap-3 rounded-xl bg-[var(--os-bg)] p-4">
+                  <div className="h-10 w-10 rounded-full bg-outside-100 flex items-center justify-center">
+                    <Eye className="h-5 w-5 text-outside-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--os-fg)]">Zone approximative</p>
+                    <p className="text-xs text-[var(--os-muted)]">On affiche la ville, pas ton adresse</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl bg-[var(--os-bg)] p-4">
+                  <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Shield className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--os-fg)]">Profils vérifiés</p>
+                    <p className="text-xs text-[var(--os-muted)]">Badges et signalements actifs</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl bg-[var(--os-bg)] p-4">
+                  <div className="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center">
+                    <Lock className="h-5 w-5 text-rose-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--os-fg)]">Chat intégré</p>
+                    <p className="text-xs text-[var(--os-muted)]">Pas de partage de contact externe</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="order-1 sm:order-2">
+              <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-sm text-[var(--os-muted)] mb-6">
+                <Shield className="h-4 w-4 text-outside-500" />
+                <span>Sécurité intégrée</span>
+              </div>
+              <h2 className="text-3xl font-black text-[var(--os-fg)] sm:text-4xl mb-4">
+                Ta position reste privée.
+              </h2>
+              <p className="text-[var(--os-muted)] leading-relaxed mb-6">
+                On ne montre jamais ta position exacte publiquement. OUTSIDE affiche des plans, des lieux et des zones — jamais ton adresse précise.
+              </p>
+              <ul className="space-y-3">
+                {[
+                  "Localisation approximative uniquement",
+                  "Système de signalement communautaire",
+                  "Profils vérifiés et badges de confiance",
+                  "Chat sécurisé intégré à l&apos;app",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-[var(--os-fg)]">
+                    <Shield className="mt-0.5 h-5 w-5 shrink-0 text-outside-500" />
+                    <span className="text-sm font-medium">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5 : Villes */}
       <section className="mx-auto max-w-5xl px-4 py-20">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-black text-zinc-900 sm:text-4xl dark:text-zinc-100">
-            {t.landing.citiesTitle}
+          <h2 className="text-3xl font-black text-[var(--os-fg)] sm:text-4xl">
+            Disponible dans ces villes
           </h2>
-          <p className="mt-4 text-zinc-500 dark:text-zinc-400">{t.landing.citiesSubtitle}</p>
+          <p className="mt-4 text-[var(--os-muted)]">
+            Et bientôt dans la tienne.
+          </p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-3">
           {CITIES.map((city) => (
             <span
               key={city}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white border border-zinc-200 px-5 py-2.5 text-sm font-bold text-zinc-700 shadow-card hover:border-outside-300 hover:text-outside-600 transition-colors cursor-default dark:bg-surface-card dark:border-surface-border dark:text-zinc-300 dark:hover:border-outside-700"
+              className="inline-flex items-center gap-1.5 rounded-full os-card px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 hover:text-outside-600 transition-colors cursor-default"
             >
               <MapPin className="h-3.5 w-3.5" />
               OUTSIDE {city}
@@ -296,98 +501,32 @@ export default function LandingPage() {
         </div>
 
         <div className="mt-8 text-center">
-          <span className="inline-flex items-center gap-2 rounded-full bg-outside-50 px-4 py-2 text-sm font-bold text-outside-700 dark:bg-outside-950/20 dark:text-outside-400">
+          <span className="inline-flex items-center gap-2 rounded-full bg-outside-50 px-4 py-2 text-sm font-bold text-outside-700">
             <MessageCircle className="h-4 w-4" />
-            {t.landing.citiesRequest}
+            Ta ville n&apos;est pas là ? Écris-nous.
           </span>
         </div>
       </section>
 
-      {/* Safety */}
-      <section className="bg-gradient-to-br from-surface-dark to-zinc-900 py-20 text-white">
-        <div className="mx-auto max-w-5xl px-4">
-          <div className="grid items-center gap-12 sm:grid-cols-2">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm text-zinc-300 mb-6">
-                <Shield className="h-4 w-4 text-outside-400" />
-                Sécurité intégrée
-              </div>
-              <h2 className="text-3xl font-black sm:text-4xl">
-                {t.landing.safetyTitle}
-              </h2>
-              <p className="mt-4 text-zinc-400 leading-relaxed">
-                {t.landing.safetySubtitle}
-              </p>
-
-              <ul className="mt-8 space-y-4">
-                {[
-                  t.landing.safetyFeature1,
-                  t.landing.safetyFeature2,
-                  t.landing.safetyFeature3,
-                  t.landing.safetyFeature4,
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-zinc-300">
-                    <Shield className="mt-0.5 h-5 w-5 shrink-0 text-outside-400" />
-                    <span className="text-sm font-medium">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur neon-border">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 rounded-xl bg-white/10 p-4">
-                  <div className="h-10 w-10 rounded-full bg-outside-500/20 flex items-center justify-center">
-                    <Shield className="h-5 w-5 text-outside-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold">Confidentialité de localisation</p>
-                    <p className="text-xs text-zinc-400">Zone approximative uniquement</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-xl bg-white/10 p-4">
-                  <div className="h-10 w-10 rounded-full bg-accent-500/20 flex items-center justify-center">
-                    <Users className="h-5 w-5 text-accent-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold">Communauté vérifiée</p>
-                    <p className="text-xs text-zinc-400">Système de signalement actif</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-xl bg-white/10 p-4">
-                  <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                    <MessageCircle className="h-5 w-5 text-indigo-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold">Chat intégré</p>
-                    <p className="text-xs text-zinc-400">Pas de partage de contact externe</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
+      {/* Section 6 : Prêt à sortir ? */}
       <section className="mx-auto max-w-5xl px-4 py-20 text-center">
-        <h2 className="text-3xl font-black text-zinc-900 sm:text-4xl dark:text-zinc-100">
-          {t.landing.finalCtaTitle}
+        <h2 className="text-3xl font-black text-[var(--os-fg)] sm:text-4xl">
+          Prêt à sortir ?
         </h2>
-        <p className="mx-auto mt-4 max-w-xl text-zinc-500 dark:text-zinc-400">
-          {t.landing.finalCtaDescription}
+        <p className="mx-auto mt-4 max-w-xl text-[var(--os-muted)]">
+          Rejoins la communauté OUTSIDE et trouve des plans réels autour de toi. C&apos;est gratuit et ça prend 30 secondes.
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           {isLoading ? (
-            <div className="h-12 w-40 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-12 w-40 animate-pulse rounded-full bg-[var(--os-card-border)]" />
           ) : isLoggedIn ? (
             <Link
               href="/home"
               className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-10 text-lg font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
             >
               <Compass className="h-5 w-5" />
-              {t.landing.ctaApp}
+              L&apos;app
             </Link>
           ) : (
             <>
@@ -395,14 +534,14 @@ export default function LandingPage() {
                 href="/register"
                 className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-10 text-lg font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
               >
-                {t.landing.ctaPrimary}
+                Créer mon compte
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
                 href="/login"
-                className="inline-flex h-14 items-center justify-center gap-2 rounded-full border-2 border-zinc-200 px-10 text-lg font-bold text-zinc-700 hover:border-outside-300 hover:bg-outside-50/50 transition-all dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-outside-700"
+                className="inline-flex h-14 items-center justify-center gap-2 rounded-full border-2 border-[var(--os-card-border)] px-10 text-lg font-bold text-[var(--os-fg)] hover:border-outside-300 hover:bg-outside-50/50 transition-all"
               >
-                {t.landing.ctaSecondary}
+                Se connecter
               </Link>
             </>
           )}
@@ -410,22 +549,22 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-100 bg-zinc-50 px-6 py-12 dark:border-surface-border dark:bg-surface-card">
+      <footer className="border-t border-[var(--os-card-border)] bg-[var(--os-bg)] px-6 py-12">
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <div className="text-center sm:text-left">
-              <p className="text-lg font-black gradient-text">{t.app.name}</p>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{t.app.slogan}</p>
+              <p className="text-lg font-black gradient-text">OUTSIDE</p>
+              <p className="mt-1 text-sm text-[var(--os-muted)]">Le monde est dehors.</p>
             </div>
-            <div className="flex items-center gap-6 text-sm text-zinc-500 dark:text-zinc-400">
-              <Link href="/login" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors font-medium">
-                {t.nav.signIn}
+            <div className="flex items-center gap-6 text-sm text-[var(--os-muted)]">
+              <Link href="/login" className="hover:text-[var(--os-fg)] transition-colors font-medium">
+                Se connecter
               </Link>
-              <Link href="/register" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors font-medium">
-                {t.nav.createAccount}
+              <Link href="/register" className="hover:text-[var(--os-fg)] transition-colors font-medium">
+                Créer mon compte
               </Link>
-              <span className="text-zinc-300 dark:text-zinc-700">|</span>
-              <span>&copy; {new Date().getFullYear()} {t.app.name}</span>
+              <span className="text-[var(--os-card-border)]">|</span>
+              <span>&copy; {new Date().getFullYear()} OUTSIDE</span>
             </div>
           </div>
         </div>
