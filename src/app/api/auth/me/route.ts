@@ -28,21 +28,17 @@ export async function PATCH(req: Request) {
     const updated = await db.user.update({
       where: { id: user.id },
       data: {
-        bio: body.bio || null,
-        neighborhood: body.neighborhood || null,
-        preferredBudget: body.preferredBudget || null,
-        language: body.language || "fr",
+        bio: body.bio !== undefined ? body.bio || null : undefined,
+        neighborhood: body.neighborhood !== undefined ? body.neighborhood || null : undefined,
+        preferredBudget: body.preferredBudget !== undefined ? body.preferredBudget || null : undefined,
+        language: body.language || undefined,
         preferredMoods: body.preferredMoods?.length ? body.preferredMoods : undefined,
+        activeCityId: body.activeCityId || undefined,
+        homeCityId: body.homeCityId || undefined,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        bio: true,
-        neighborhood: true,
-        preferredBudget: true,
-        preferredMoods: true,
-        language: true,
+      include: {
+        homeCity: true,
+        activeCity: true,
       },
     });
 
