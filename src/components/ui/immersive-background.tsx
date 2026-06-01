@@ -60,11 +60,6 @@ export function ImmersiveBackground({
         className
       )}
     >
-      {/* Skeleton shimmer while image loads */}
-      {!loaded && !error && (
-        <div className="absolute inset-0 z-[2] shimmer" />
-      )}
-
       {/* Background image — Next.js Image with fill for optimization */}
       {!error && (
         <Image
@@ -75,14 +70,21 @@ export function ImmersiveBackground({
           loading={priority ? "eager" : "lazy"}
           quality={75}
           sizes="100vw"
-          className="object-cover"
+          className="object-cover z-[1]"
           onError={() => setError(true)}
           onLoad={() => setLoaded(true)}
         />
       )}
 
-      {/* Fallback gradient if image fails or while loading */}
-      <div className={cn("absolute inset-0 z-0", fallbackMap[overlay])} />
+      {/* Fallback gradient if image fails */}
+      {error && (
+        <div className={cn("absolute inset-0 z-0", fallbackMap[overlay])} />
+      )}
+
+      {/* Skeleton shimmer while image loads */}
+      {!loaded && !error && (
+        <div className="absolute inset-0 z-[2] shimmer" />
+      )}
 
       {/* Overlay gradient */}
       <div className={cn("absolute inset-0 z-[3]", overlayMap[overlay])} />
