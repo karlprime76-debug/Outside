@@ -21,20 +21,9 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      {
-        url: "/favicon-32x32.png",
-        type: "image/png",
-        sizes: "32x32",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/favicon-dark.png",
-        type: "image/png",
-        sizes: "32x32",
-        media: "(prefers-color-scheme: dark)",
-      },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-dark.png", type: "image/png", sizes: "32x32" },
     ],
-    shortcut: "/favicon.ico",
     apple: "/apple-icon.png",
   },
   appleWebApp: {
@@ -49,10 +38,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#18181b" },
-  ],
+  themeColor: [{ color: "#fafafa" }],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -66,7 +52,9 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
+      data-theme="day"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
         <ThemeMeta />

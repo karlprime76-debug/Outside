@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Calendar, MapPin, Globe, User, Settings } from "lucide-react";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { cn } from "@/lib/cn";
 
 const ITEMS = [
   { href: "/home", labelKey: "home" as const, icon: Home },
@@ -19,7 +20,12 @@ export function BottomNav() {
   const t = useDictionary();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200/50 bg-white/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden dark:border-surface-border/50 dark:bg-surface-dark/80">
+    <nav
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50 border-t pb-safe backdrop-blur-xl md:hidden",
+        "border-[var(--os-card-border)] bg-[var(--os-bg)]/80"
+      )}
+    >
       <div className="mx-auto flex h-[4.5rem] max-w-md items-center justify-around px-3">
         {ITEMS.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -29,24 +35,27 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className="relative flex flex-col items-center gap-1 px-3 py-1.5 transition-colors"
+              aria-current={isActive ? "page" : undefined}
             >
               {isActive && (
                 <span className="absolute -top-1 h-1 w-6 rounded-full bg-gradient-to-r from-outside-500 to-accent-500" />
               )}
               <Icon
-                className={`h-5 w-5 transition-colors ${
+                className={cn(
+                  "h-5 w-5 transition-colors",
                   isActive
-                    ? "text-outside-600 dark:text-outside-400"
-                    : "text-zinc-400 dark:text-zinc-600"
-                }`}
+                    ? "text-outside-600"
+                    : "text-[var(--os-muted)]"
+                )}
                 strokeWidth={isActive ? 2.5 : 1.5}
               />
               <span
-                className={`text-[10px] font-semibold transition-colors ${
+                className={cn(
+                  "text-[10px] font-semibold transition-colors",
                   isActive
-                    ? "text-outside-600 dark:text-outside-400"
-                    : "text-zinc-400 dark:text-zinc-600"
-                }`}
+                    ? "text-outside-600"
+                    : "text-[var(--os-muted)]"
+                )}
               >
                 {(t.bottomNav as Record<string, string>)[item.labelKey]}
               </span>

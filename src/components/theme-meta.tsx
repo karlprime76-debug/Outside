@@ -4,50 +4,41 @@ import { useEffect } from "react";
 
 /**
  * ThemeMeta — Met à jour dynamiquement :
- * - theme-color selon le thème système (jour/nuit)
- * - favicon selon le thème système (light/dark)
- *
- * Ce composant NE change PAS l'icône installée PWA.
- * L'icône PWA reste stable (définie dans le manifest).
- * Seul le favicon du navigateur web change selon le thème.
+ * - theme-color selon le thème OUTSIDE (day/night)
+ * - favicon selon le thème OUTSIDE (light/dark)
  */
 
-const THEME_COLOR_LIGHT = "#ffffff";
-const THEME_COLOR_DARK = "#18181b";
+const THEME_COLOR_DAY = "#fafafa";
+const THEME_COLOR_NIGHT = "#0a0a0f";
 
 export function ThemeMeta() {
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]');
-    const lightLink = document.querySelector('link[data-favicon="light"]');
-    const darkLink = document.querySelector('link[data-favicon="dark"]');
+    const faviconLink = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null;
 
     function updateTheme() {
-      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const isNight = document.documentElement.getAttribute("data-theme") === "night";
 
       if (meta) {
-        meta.setAttribute(
-          "content",
-          isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT
-        );
+        meta.setAttribute("content", isNight ? THEME_COLOR_NIGHT : THEME_COLOR_DAY);
       }
 
-      // Active/désactive les link favicon selon le thème
-      if (lightLink) {
-        (lightLink as HTMLLinkElement).disabled = isDark;
-      }
-      if (darkLink) {
-        (darkLink as HTMLLinkElement).disabled = !isDark;
+      if (faviconLink) {
+        faviconLink.href = isNight ? "/favicon-dark.png" : "/favicon-32x32.png";
       }
     }
 
     updateTheme();
 
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    mql.addEventListener("change", updateTheme);
+    // Observer data-theme changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((m) => {
+        if (m.attributeName === "data-theme") updateTheme();
+      });
+    });
+    observer.observe(document.documentElement, { attributes: true });
 
-    return () => {
-      mql.removeEventListener("change", updateTheme);
-    };
+    return () => observer.disconnect();
   }, []);
 
   return null;
