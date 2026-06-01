@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
+import { PageHeader } from "@/components/ui/page-header";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
 import { MapPin, Store } from "lucide-react";
@@ -55,12 +56,10 @@ export default function PlacesPage() {
 
   return (
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6">
-      <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
-        <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
-          <Store className="h-5 w-5 text-white" />
-        </div>
-        {t.places.title}
-      </h1>
+      <PageHeader
+        title={t.places.title}
+        icon={<Store className="h-5 w-5 text-white" />}
+      />
 
       {/* Search */}
       <SearchBar
@@ -103,7 +102,7 @@ export default function PlacesPage() {
             <Link
               key={place.id}
               href={`/places/${place.id}`}
-              className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all dark:border-surface-border dark:bg-surface-card"
+              className="group os-card p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
             >
               <div className="flex gap-2 mb-3">
                 <Badge variant="orange">{place.category}</Badge>

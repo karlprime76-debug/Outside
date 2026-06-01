@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
+import { SectionTitle } from "@/components/ui/section-title";
 import { MapPin, Plus, Globe, Compass, Clock, Sparkles, ArrowRight, Navigation } from "lucide-react";
 
 interface Plan {
@@ -137,16 +138,16 @@ export default function HomePage() {
 
       {/* Tonight's plans */}
       <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <Clock className="h-5 w-5 text-outside-500" />
-            {t.homeNow.tonight}
-          </h2>
-          <Link href="/plans" className="text-sm font-bold text-outside-600 hover:text-outside-700 dark:text-outside-400 dark:hover:text-outside-300 transition-colors flex items-center gap-1">
-            {t.home.seeAll}
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+        <SectionTitle
+          title={t.homeNow.tonight}
+          icon={<Clock className="h-5 w-5 text-outside-500" />}
+          action={
+            <Link href="/plans" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
+              {t.home.seeAll}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          }
+        />
 
         {loadingPlans ? (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -154,7 +155,7 @@ export default function HomePage() {
             <SkeletonCard />
           </div>
         ) : plans.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white dark:border-surface-border dark:bg-surface-card">
+          <div className="os-card">
             <EmptyState
               icon={Clock}
               title={t.emptyStates.noPlansTitle}
@@ -173,29 +174,29 @@ export default function HomePage() {
 
       {/* Popular places */}
       <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-outside-500" />
-            {t.homeNow.popularPlaces}
-          </h2>
-          <Link href="/places" className="text-sm font-bold text-outside-600 hover:text-outside-700 dark:text-outside-400 dark:hover:text-outside-300 transition-colors flex items-center gap-1">
-            {t.home.seeAll}
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+        <SectionTitle
+          title={t.homeNow.popularPlaces}
+          icon={<MapPin className="h-5 w-5 text-outside-500" />}
+          action={
+            <Link href="/places" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
+              {t.home.seeAll}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          }
+        />
 
         {loadingPlaces ? (
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="min-w-[180px] flex-shrink-0 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-surface-border dark:bg-surface-card">
-                <div className="h-3 w-12 rounded bg-zinc-200 dark:bg-zinc-800 mb-3" />
-                <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-800 mb-2" />
-                <div className="h-3 w-1/2 rounded bg-zinc-200 dark:bg-zinc-800" />
+              <div key={i} className="min-w-[180px] flex-shrink-0 os-card p-4">
+                <div className="h-3 w-12 rounded bg-[var(--os-card-border)] mb-3" />
+                <div className="h-4 w-3/4 rounded bg-[var(--os-card-border)] mb-2" />
+                <div className="h-3 w-1/2 rounded bg-[var(--os-card-border)]" />
               </div>
             ))}
           </div>
         ) : places.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white dark:border-surface-border dark:bg-surface-card">
+          <div className="os-card">
             <EmptyState
               icon={MapPin}
               title={t.emptyStates.noPlacesTitle}
@@ -208,7 +209,7 @@ export default function HomePage() {
               <Link
                 key={place.id}
                 href={`/places/${place.id}`}
-                className="min-w-[200px] flex-shrink-0 rounded-2xl border border-zinc-200 bg-white p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all dark:border-surface-border dark:bg-surface-card"
+                className="min-w-[200px] flex-shrink-0 os-card p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
               >
                 <div className="flex gap-2 mb-3">
                   <Badge variant="orange">{place.category}</Badge>
@@ -216,8 +217,8 @@ export default function HomePage() {
                     <Badge variant="pink">{t.places.partner}</Badge>
                   )}
                 </div>
-                <h3 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{place.name}</h3>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <h3 className="font-bold text-sm text-[var(--os-fg)]">{place.name}</h3>
+                <p className="mt-1 text-xs text-[var(--os-muted)]">
                   {place.city.name}{place.neighborhood ? ` · ${place.neighborhood}` : ""}
                 </p>
               </Link>
@@ -230,15 +231,15 @@ export default function HomePage() {
       <section>
         <Link
           href="/passport"
-          className="group flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-6 shadow-card hover:shadow-card-hover transition-all dark:border-surface-border dark:bg-surface-card"
+          className="group flex items-center justify-between os-card p-6 shadow-card hover:shadow-card-hover transition-all"
         >
           <div className="flex items-center gap-4">
             <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 p-3 shadow-lg">
               <Globe className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100">{t.homeNow.quickPassport}</h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">{t.homeNow.passportDesc}</p>
+              <h3 className="font-bold text-[var(--os-fg)]">{t.homeNow.quickPassport}</h3>
+              <p className="text-xs text-[var(--os-muted)]">{t.homeNow.passportDesc}</p>
             </div>
           </div>
           <ArrowRight className="h-5 w-5 text-outside-500 transition-transform group-hover:translate-x-1" />

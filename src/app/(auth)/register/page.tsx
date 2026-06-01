@@ -57,14 +57,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-white dark:from-surface-dark dark:to-surface-dark">
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-[var(--os-bg)]">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
             <span className="text-lg font-black text-white">O</span>
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{t.auth.registerTitle}</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{t.auth.registerSubtitle}</p>
+          <h1 className="text-2xl font-bold text-[var(--os-fg)]">{t.auth.registerTitle}</h1>
+          <p className="mt-1 text-sm text-[var(--os-muted)]">{t.auth.registerSubtitle}</p>
         </div>
 
         {error && (
@@ -80,7 +80,7 @@ export default function RegisterPage() {
           <InputField name="password" type="password" label={t.auth.password} required minLength={6} />
           <InputField name="confirmPassword" type="password" label={t.auth.confirmPassword} required />
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">
               Ville
             </label>
             <CitySelect name="homeCityId" required />
@@ -94,9 +94,9 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-center text-sm text-[var(--os-muted)]">
           {t.auth.hasAccount}{" "}
-          <Link href="/login" className="font-bold text-outside-600 hover:text-outside-700 dark:text-outside-400 dark:hover:text-outside-300 transition-colors">
+          <Link href="/login" className="font-bold text-outside-600 hover:text-outside-700 transition-colors">
             {t.auth.signInLink}
           </Link>
         </p>

@@ -38,14 +38,14 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-white dark:from-surface-dark dark:to-surface-dark">
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-[var(--os-bg)]">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
             <span className="text-lg font-black text-white">O</span>
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{t.auth.loginTitle}</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{t.auth.loginSubtitle}</p>
+          <h1 className="text-2xl font-bold text-[var(--os-fg)]">{t.auth.loginTitle}</h1>
+          <p className="mt-1 text-sm text-[var(--os-muted)]">{t.auth.loginSubtitle}</p>
         </div>
 
         {error && (
@@ -54,7 +54,7 @@ function LoginForm() {
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">
               {t.auth.email}
             </label>
             <input
@@ -62,11 +62,11 @@ function LoginForm() {
               type="email"
               placeholder={t.auth.email}
               required
-              className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 focus:border-transparent bg-white dark:bg-surface-card dark:border-surface-border dark:text-zinc-100 transition-all"
+              className="w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 focus:border-transparent bg-[var(--os-card)] text-[var(--os-fg)] transition-all"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">
               {t.auth.password}
             </label>
             <input
@@ -74,7 +74,7 @@ function LoginForm() {
               type="password"
               placeholder={t.auth.password}
               required
-              className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 focus:border-transparent bg-white dark:bg-surface-card dark:border-surface-border dark:text-zinc-100 transition-all"
+              className="w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 focus:border-transparent bg-[var(--os-card)] text-[var(--os-fg)] transition-all"
             />
           </div>
           <button
@@ -86,9 +86,9 @@ function LoginForm() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-center text-sm text-[var(--os-muted)]">
           {t.auth.noAccount}{" "}
-          <Link href="/register" className="font-bold text-outside-600 hover:text-outside-700 dark:text-outside-400 dark:hover:text-outside-300 transition-colors">
+          <Link href="/register" className="font-bold text-outside-600 hover:text-outside-700 transition-colors">
             {t.auth.signUpLink}
           </Link>
         </p>
@@ -100,11 +100,11 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-white dark:from-surface-dark dark:to-surface-dark">
+      <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-[var(--os-bg)]">
         <div className="w-full max-w-sm space-y-6 text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 animate-pulse" />
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Connexion</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Chargement...</p>
+          <h1 className="text-2xl font-bold text-[var(--os-fg)]">Connexion</h1>
+          <p className="text-sm text-[var(--os-muted)]">Chargement...</p>
         </div>
       </div>
     }>

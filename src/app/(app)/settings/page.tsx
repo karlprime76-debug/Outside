@@ -54,12 +54,12 @@ export default function SettingsPage() {
     value: boolean,
     onChange: (v: boolean) => void
   ) => (
-    <div className="flex items-center justify-between py-3 border-b border-zinc-100 dark:border-surface-border">
+    <div className="flex items-center justify-between py-3 border-b border-[var(--os-card-border)]">
       <div className="flex items-center gap-3">
-        <div className="rounded-lg bg-outside-100 p-2 dark:bg-outside-950/20">
-          <Icon className="h-4 w-4 text-outside-600 dark:text-outside-400" />
+        <div className="rounded-lg bg-outside-100 p-2">
+          <Icon className="h-4 w-4 text-outside-600" />
         </div>
-        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{label}</span>
+        <span className="text-sm font-semibold text-[var(--os-fg)]">{label}</span>
       </div>
       <button
         onClick={() => onChange(!value)}
@@ -80,7 +80,7 @@ export default function SettingsPage() {
     <div className="p-4 max-w-2xl mx-auto space-y-6">
       <Link
         href="/profile"
-        className="inline-flex items-center gap-1 text-sm font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+        className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour au profil
@@ -90,16 +90,16 @@ export default function SettingsPage() {
       <div className="flex items-center gap-4">
         <Avatar src={session?.user?.image} name={session?.user?.name} size="xl" />
         <div>
-          <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">Paramètres</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="text-2xl font-black text-[var(--os-fg)]">Paramètres</h1>
+          <p className="text-sm text-[var(--os-muted)]">
             {session?.user?.email}
           </p>
         </div>
       </div>
 
       {/* Preferences */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-surface-border dark:bg-surface-card">
-        <h2 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">
+      <section className="os-card p-5">
+        <h2 className="text-xs font-black uppercase tracking-wider text-[var(--os-muted)] mb-3">
           Préférences
         </h2>
         {toggleRow(Bell, "Notifications", notifications, setNotifications)}
@@ -108,8 +108,8 @@ export default function SettingsPage() {
       </section>
 
       {/* Appearance */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-surface-border dark:bg-surface-card">
-        <h2 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">
+      <section className="os-card p-5">
+        <h2 className="text-xs font-black uppercase tracking-wider text-[var(--os-muted)] mb-3">
           Apparence
         </h2>
         <div className="flex items-center justify-between py-3 border-b border-zinc-100 dark:border-surface-border">
@@ -134,7 +134,7 @@ export default function SettingsPage() {
               setLanguage(e.target.value);
               addToast("Langue changée", "success");
             }}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:bg-surface-card dark:border-surface-border dark:text-zinc-100"
+            className="rounded-lg border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-1.5 text-sm text-[var(--os-fg)]"
           >
             <option value="fr">Français</option>
             <option value="en">English</option>
@@ -143,21 +143,21 @@ export default function SettingsPage() {
       </section>
 
       {/* Privacy */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-surface-border dark:bg-surface-card">
-        <h2 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">
+      <section className="os-card p-5">
+        <h2 className="text-xs font-black uppercase tracking-wider text-[var(--os-muted)] mb-3">
           Confidentialité
         </h2>
-        <div className="flex items-center justify-between py-3 border-b border-zinc-100 dark:border-surface-border">
+        <div className="flex items-center justify-between py-3 border-b border-[var(--os-card-border)]">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-outside-100 p-2 dark:bg-outside-950/20">
-              <Eye className="h-4 w-4 text-outside-600 dark:text-outside-400" />
+            <div className="rounded-lg bg-outside-100 p-2">
+              <Eye className="h-4 w-4 text-outside-600" />
             </div>
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Visibilité du profil</span>
+            <span className="text-sm font-semibold text-[var(--os-fg)]">Visibilité du profil</span>
           </div>
           <select
             value={visibility}
             onChange={(e) => setVisibility(e.target.value)}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:bg-surface-card dark:border-surface-border dark:text-zinc-100"
+            className="rounded-lg border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-1.5 text-sm text-[var(--os-fg)]"
           >
             <option value="PUBLIC">Public</option>
             <option value="FRIENDS">Amis</option>
@@ -166,14 +166,14 @@ export default function SettingsPage() {
         </div>
         <div className="flex items-center justify-between py-3">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-outside-100 p-2 dark:bg-outside-950/20">
-              <Shield className="h-4 w-4 text-outside-600 dark:text-outside-400" />
+            <div className="rounded-lg bg-outside-100 p-2">
+              <Shield className="h-4 w-4 text-outside-600" />
             </div>
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Vérification</span>
+            <span className="text-sm font-semibold text-[var(--os-fg)]">Vérification</span>
           </div>
           <Link
             href="/profile"
-            className="text-sm font-bold text-outside-600 dark:text-outside-400 flex items-center gap-1"
+            className="text-sm font-bold text-outside-600 flex items-center gap-1"
           >
             Voir le profil
             <ChevronRight className="h-4 w-4" />
@@ -182,21 +182,21 @@ export default function SettingsPage() {
       </section>
 
       {/* Danger zone */}
-      <section className="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-900/30 dark:bg-red-950/20">
-        <h2 className="text-xs font-black uppercase tracking-wider text-red-600 dark:text-red-400 mb-3">
+      <section className="rounded-2xl border border-red-200 bg-red-50 p-5">
+        <h2 className="text-xs font-black uppercase tracking-wider text-red-600 mb-3">
           Zone dangereuse
         </h2>
         <button
           onClick={deleteAccount}
           disabled={loading}
-          className="flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-sm transition-colors hover:bg-red-100 dark:bg-surface-card dark:hover:bg-red-950/30"
+          className="flex w-full items-center gap-3 rounded-xl bg-[var(--os-card)] px-4 py-3 text-left shadow-sm transition-colors hover:bg-red-100"
         >
           <Trash2 className="h-5 w-5 text-red-500" />
           <div className="flex-1">
-            <p className="text-sm font-bold text-red-600 dark:text-red-400">
+            <p className="text-sm font-bold text-red-600">
               Supprimer le compte
             </p>
-            <p className="text-xs text-red-400 dark:text-red-500">
+            <p className="text-xs text-red-400">
               Irréversible. Toutes tes données seront perdues.
             </p>
           </div>

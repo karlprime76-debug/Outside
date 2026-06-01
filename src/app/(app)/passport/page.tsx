@@ -38,8 +38,8 @@ export default function PassportPage() {
       </div>
 
       {/* Cities grid */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-surface-border dark:bg-surface-card">
-        <h2 className="text-lg font-bold mb-4 text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+      <section className="os-card p-6">
+        <h2 className="text-lg font-bold mb-4 text-[var(--os-fg)] flex items-center gap-2">
           <MapPin className="h-5 w-5 text-outside-500" />
           Villes disponibles
         </h2>
@@ -53,30 +53,30 @@ export default function PassportPage() {
       </section>
 
       {/* Visited cities */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-surface-border dark:bg-surface-card">
-        <h2 className="text-lg font-bold mb-4 text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+      <section className="os-card p-6">
+        <h2 className="text-lg font-bold mb-4 text-[var(--os-fg)] flex items-center gap-2">
           <Globe className="h-5 w-5 text-outside-500" />
           {t.passport.visitedCities}
         </h2>
-        <div className="flex items-center gap-3 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
-          <div className="rounded-full bg-zinc-200 h-10 w-10 flex items-center justify-center dark:bg-zinc-700">
-            <MapPin className="h-5 w-5 text-zinc-400" />
+        <div className="flex items-center gap-3 rounded-xl bg-[var(--os-bg)] p-4">
+          <div className="rounded-full bg-[var(--os-card-border)] h-10 w-10 flex items-center justify-center">
+            <MapPin className="h-5 w-5 text-[var(--os-muted)]" />
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{t.passport.visitedCitiesEmpty}</p>
+          <p className="text-sm text-[var(--os-muted)]">{t.passport.visitedCitiesEmpty}</p>
         </div>
       </section>
 
       {/* Traveler tips */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-surface-border dark:bg-surface-card">
-        <h2 className="text-lg font-bold mb-4 text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+      <section className="os-card p-6">
+        <h2 className="text-lg font-bold mb-4 text-[var(--os-fg)] flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-outside-500" />
           {t.passport.travelerTips}
         </h2>
         <ul className="space-y-3">
           {[t.passport.tip1, t.passport.tip2, t.passport.tip3].map((tip, i) => (
-            <li key={i} className="flex items-start gap-3 rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/50">
+            <li key={i} className="flex items-start gap-3 rounded-xl bg-[var(--os-bg)] p-3">
               <Shield className="h-4 w-4 text-outside-500 mt-0.5 shrink-0" />
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">{tip}</span>
+              <span className="text-sm text-[var(--os-muted)]">{tip}</span>
             </li>
           ))}
         </ul>

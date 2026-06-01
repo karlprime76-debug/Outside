@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
+import { PageHeader } from "@/components/ui/page-header";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CalendarDays, Plus, SlidersHorizontal, X } from "lucide-react";
@@ -70,22 +71,19 @@ export default function PlansPage() {
 
   return (
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
-          <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
-            <CalendarDays className="h-5 w-5 text-white" />
-          </div>
-          {t.plans.title}
-        </h1>
-        <Link
-          href="/plans/new"
-          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">{t.plans.newPlan}</span>
-        </Link>
-      </div>
+      <PageHeader
+        title={t.plans.title}
+        icon={<CalendarDays className="h-5 w-5 text-white" />}
+        action={
+          <Link
+            href="/plans/new"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{t.plans.newPlan}</span>
+          </Link>
+        }
+      />
 
       {/* Search */}
       <SearchBar
@@ -97,11 +95,11 @@ export default function PlansPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        <SlidersHorizontal className="h-4 w-4 text-zinc-400" />
+        <SlidersHorizontal className="h-4 w-4 text-[var(--os-muted)]" />
         <select
           value={mood}
           onChange={(e) => setMood(e.target.value)}
-          className="rounded-full border border-zinc-300 px-4 py-2 text-xs font-semibold bg-white dark:bg-surface-card dark:border-surface-border dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-outside-500"
+          className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
         >
           <option value="">Mood</option>
           {MOODS.map((m) => <option key={m} value={m}>{m.charAt(0) + m.slice(1).toLowerCase()}</option>)}
@@ -109,7 +107,7 @@ export default function PlansPage() {
         <select
           value={budget}
           onChange={(e) => setBudget(e.target.value)}
-          className="rounded-full border border-zinc-300 px-4 py-2 text-xs font-semibold bg-white dark:bg-surface-card dark:border-surface-border dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-outside-500"
+          className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
         >
           <option value="">Budget</option>
           {BUDGETS.map((b) => <option key={b} value={b}>{b}</option>)}
@@ -117,7 +115,7 @@ export default function PlansPage() {
         {hasFilters && (
           <button
             onClick={() => { setMood(""); setBudget(""); }}
-            className="inline-flex items-center gap-1 text-xs font-bold text-zinc-500 hover:text-red-500 dark:text-zinc-400 dark:hover:text-red-400 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-bold text-[var(--os-muted)] hover:text-red-500 transition-colors"
           >
             <X className="h-3 w-3" />
             Réinitialiser

@@ -68,14 +68,14 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-white dark:from-surface-dark dark:to-surface-dark py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-[var(--os-bg)] py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
             <span className="text-lg font-black text-white">O</span>
           </div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{t.auth.onboardingTitle}</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{t.auth.onboardingSubtitle}</p>
+          <h1 className="text-2xl font-bold text-[var(--os-fg)]">{t.auth.onboardingTitle}</h1>
+          <p className="mt-1 text-sm text-[var(--os-muted)]">{t.auth.onboardingSubtitle}</p>
         </div>
 
         {error && (
@@ -84,23 +84,23 @@ export default function OnboardingPage() {
 
         <form onSubmit={onSubmit} className="space-y-5">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{t.auth.bio}</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">{t.auth.bio}</label>
             <textarea
               name="bio"
               maxLength={160}
               rows={3}
               placeholder="Parle-nous de toi"
-              className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-white dark:bg-surface-card dark:border-surface-border dark:text-zinc-100 transition-all resize-none"
+              className="w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-[var(--os-card)] text-[var(--os-fg)] transition-all resize-none"
             />
           </div>
 
           <InputField name="neighborhood" type="text" label={t.auth.neighborhood} placeholder="Ton quartier" />
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{t.auth.budget}</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">{t.auth.budget}</label>
             <select
               name="preferredBudget"
-              className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-white dark:bg-surface-card dark:border-surface-border dark:text-zinc-100 transition-all"
+              className="w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-[var(--os-card)] text-[var(--os-fg)] transition-all"
             >
               <option value="">Sélectionner...</option>
               <option value="FREE">Gratuit</option>
@@ -111,7 +111,7 @@ export default function OnboardingPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{t.auth.interests}</label>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">{t.auth.interests}</label>
             <div className="flex flex-wrap gap-2">
               {MOODS.map((mood) => {
                 const isSelected = selectedMoods.includes(mood);
@@ -136,11 +136,11 @@ export default function OnboardingPage() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{t.auth.language}</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">{t.auth.language}</label>
             <select
               name="language"
               defaultValue="fr"
-              className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-white dark:bg-surface-card dark:border-surface-border dark:text-zinc-100 transition-all"
+              className="w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-[var(--os-card)] text-[var(--os-fg)] transition-all"
             >
               <option value="fr">Français</option>
               <option value="en">English</option>
@@ -158,7 +158,7 @@ export default function OnboardingPage() {
 
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
-          className="w-full text-center text-sm text-zinc-500 hover:text-red-500 transition-colors dark:text-zinc-400 dark:hover:text-red-400"
+          className="w-full text-center text-sm text-[var(--os-muted)] hover:text-red-500 transition-colors"
         >
           {t.nav.signOut}
         </button>

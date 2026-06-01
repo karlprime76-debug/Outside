@@ -57,19 +57,19 @@ export default async function ProfilePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 text-center dark:border-surface-border dark:bg-surface-card">
-          <p className="text-2xl font-black text-outside-600 dark:text-outside-400">{joinedPlansCount}</p>
-          <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Plans rejoints</p>
+        <div className="os-card p-5 text-center">
+          <p className="text-2xl font-black text-outside-600">{joinedPlansCount}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Plans rejoints</p>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 text-center dark:border-surface-border dark:bg-surface-card">
-          <p className="text-2xl font-black text-accent-600 dark:text-accent-400">{createdPlansCount}</p>
-          <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Plans créés</p>
+        <div className="os-card p-5 text-center">
+          <p className="text-2xl font-black text-accent-600">{createdPlansCount}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Plans créés</p>
         </div>
       </div>
 
       {/* Info card */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 dark:border-surface-border dark:bg-surface-card">
-        <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Informations</h2>
+      <div className="os-card p-6 space-y-4">
+        <h2 className="text-lg font-bold text-[var(--os-fg)]">Informations</h2>
         <InfoRow icon={Mail} label="Email" value={user.email} />
         <InfoRow icon={User} label="Bio" value={user.bio || "-"} />
         <InfoRow icon={Building} label="Ville d'origine" value={user.homeCity?.name || "-"} />
@@ -81,23 +81,23 @@ export default async function ProfilePage() {
       </div>
 
       {/* Friends */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-surface-border dark:bg-surface-card">
+      <div className="os-card p-6">
         <div className="flex items-center gap-2 mb-4">
           <Users className="h-5 w-5 text-outside-500" />
-          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Amis ({friends.length})</h2>
+          <h2 className="text-lg font-bold text-[var(--os-fg)]">Amis ({friends.length})</h2>
         </div>
         {friends.length === 0 ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Tu n&apos;as pas encore d&apos;amis. Explore les plans pour en rencontrer !</p>
+          <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis. Explore les plans pour en rencontrer !</p>
         ) : (
           <div className="flex flex-wrap gap-3">
             {friends.map((friend) => (
               <Link
                 key={friend.id}
                 href={`/users/${friend.id}`}
-                className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 hover:border-outside-300 transition-colors dark:border-surface-border dark:bg-surface-card"
+                className="flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-2 hover:border-outside-300 transition-colors"
               >
                 <Avatar src={friend.image} name={friend.name} size="sm" />
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{friend.name || "Anonyme"}</span>
+                <span className="text-sm font-semibold text-[var(--os-fg)]">{friend.name || "Anonyme"}</span>
               </Link>
             ))}
           </div>
@@ -115,12 +115,12 @@ export default async function ProfilePage() {
 function InfoRow({ icon: Icon, label, value }: { icon: typeof MapPin; label: string; value: string }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="rounded-lg bg-outside-100 p-2 dark:bg-outside-950/20">
-        <Icon className="h-4 w-4 text-outside-600 dark:text-outside-400" />
+      <div className="rounded-lg bg-outside-100 p-2">
+        <Icon className="h-4 w-4 text-outside-600" />
       </div>
       <div className="flex-1">
-        <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{label}</p>
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">{label}</p>
+        <p className="text-sm font-semibold text-[var(--os-fg)]">{value}</p>
       </div>
     </div>
   );
