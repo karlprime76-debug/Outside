@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { supabaseServer } from "@/lib/supabase/server";
-
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE_MB = 5;
-const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  AVATARS_BUCKET,
+  AVATAR_MAX_SIZE,
+  ALLOWED_AVATAR_TYPES,
+  buildAvatarPath,
+} from "@/lib/supabase/storage";
 
 export async function POST(req: Request) {
   try {
@@ -19,7 +21,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Utilisateur non trouvé." }, { status: 404 });
     }
 
-    if (!supabaseServer) {
+    let supabase;
+    try {
+      supabase = createSupabaseServerClient();
+    } catch {
       return NextResponse.json(
         { error: "Le stockage d'images n'est pas configuré." },
         { status: 500 }
@@ -30,32 +35,31 @@ export async function POST(req: Request) {
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "Aucun fichier fourni." }, { status: 400 });
+      return NextResponse.json({ error: "Aucune image reçue." }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "Format non accepté. Utilise JPG, PNG ou WebP." },
+        { error: "Format d'image non accepté. Utilise JPG, PNG ou WebP." },
         { status: 400 }
       );
     }
 
-    if (file.size > MAX_SIZE_BYTES) {
+    if (file.size > AVATAR_MAX_SIZE) {
       return NextResponse.json(
-        { error: "Ce fichier est trop lourd. Maximum 5 Mo." },
+        { error: "Cette image est trop lourde. Maximum 3 Mo." },
         { status: 400 }
       );
     }
 
-    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-    const path = `avatars/${user.id}/${Date.now()}.${ext}`;
+    const path = buildAvatarPath(user.id, file.type);
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const { error: uploadError } = await supabaseServer.storage
-      .from("avatars")
+    const { error: uploadError } = await supabase.storage
+      .from(AVATARS_BUCKET)
       .upload(path, buffer, {
         contentType: file.type,
-        upsert: false,
+        upsert: true,
       });
 
     if (uploadError) {
@@ -63,13 +67,21 @@ export async function POST(req: Request) {
         // eslint-disable-next-line no-console
         console.error("[AVATAR UPLOAD] Supabase error:", uploadError);
       }
+
+      if (uploadError.message?.includes("bucket") || uploadError.message?.includes("not found")) {
+        return NextResponse.json(
+          { error: "Le bucket avatars n'existe pas dans Supabase Storage." },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json(
         { error: "Impossible d'envoyer la photo. Réessaie." },
         { status: 500 }
       );
     }
 
-    const { data: publicUrlData } = supabaseServer.storage.from("avatars").getPublicUrl(path);
+    const { data: publicUrlData } = supabase.storage.from(AVATARS_BUCKET).getPublicUrl(path);
     const publicUrl = publicUrlData.publicUrl;
 
     await db.user.update({
