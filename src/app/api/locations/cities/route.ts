@@ -47,7 +47,15 @@ export async function GET(req: Request) {
       },
     });
 
-    return NextResponse.json({ cities });
+    const formatted = cities.map((c) => ({
+      id: c.id,
+      name: c.name,
+      countryCode: c.countryCode,
+      lat: c.latitude,
+      lng: c.longitude,
+    }));
+
+    return NextResponse.json({ cities: formatted });
   } catch (error) {
     console.error("Cities search error:", error);
     return NextResponse.json(

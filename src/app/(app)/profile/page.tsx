@@ -5,7 +5,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
-import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users } from "lucide-react";
+import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil } from "lucide-react";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -106,6 +106,13 @@ export default async function ProfilePage() {
 
       {/* Actions */}
       <div className="flex flex-col gap-3">
+        <Link
+          href="/profile/edit"
+          className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
+        >
+          <Pencil className="h-4 w-4" />
+          Modifier mon profil
+        </Link>
         <LogoutButton />
       </div>
     </AnimatedPage>
