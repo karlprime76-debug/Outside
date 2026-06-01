@@ -7,7 +7,6 @@ import { MapPin, Shield, Globe, Sparkles } from "lucide-react";
 import { InputField } from "@/components/ui/input-field";
 import { CountrySelect } from "@/components/location/country-select";
 import { CityAutocomplete } from "@/components/location/city-autocomplete";
-import { getCountryByCode } from "@/lib/countries";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
 
@@ -25,7 +24,6 @@ export default function RegisterPage() {
     setError("");
 
     const form = new FormData(e.currentTarget);
-    const country = getCountryByCode(countryCode);
     const data = {
       name: form.get("name") as string,
       username: form.get("username") as string,
@@ -33,7 +31,6 @@ export default function RegisterPage() {
       password: form.get("password") as string,
       confirmPassword: form.get("confirmPassword") as string,
       countryCode: countryCode.toUpperCase(),
-      country: country?.name || "",
       homeCity: homeCity.trim(),
       homeCityLat: citySuggestion?.lat ?? null,
       homeCityLng: citySuggestion?.lng ?? null,
