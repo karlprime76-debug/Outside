@@ -51,7 +51,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/login");
+      router.push("/login?registered=1");
     } catch {
       setError(t.common.error);
       setLoading(false);
@@ -86,7 +86,7 @@ export default function RegisterPage() {
           <InputField name="name" type="text" label={t.auth.name} required />
           <InputField name="username" type="text" label={t.auth.username} required />
           <InputField name="email" type="email" label={t.auth.email} required />
-          <InputField name="password" type="password" label={t.auth.password} required minLength={6} />
+          <InputField name="password" type="password" label={t.auth.password} required minLength={8} />
           <InputField name="confirmPassword" type="password" label={t.auth.confirmPassword} required />
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">

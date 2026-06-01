@@ -15,6 +15,7 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const callbackUrl = searchParams.get("callbackUrl") || "/home";
+  const justRegistered = searchParams.get("registered") === "1";
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -56,6 +57,12 @@ function LoginForm() {
             <h1 className="text-2xl font-bold text-white">{t.auth.loginTitle}</h1>
             <p className="mt-1 text-sm text-white/70">{t.auth.loginSubtitle}</p>
           </div>
+
+        {justRegistered && (
+          <div className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-950/30 dark:text-green-400">
+            Compte créé avec succès. Tu peux maintenant te connecter.
+          </div>
+        )}
 
         {error && (
           <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">{error}</div>

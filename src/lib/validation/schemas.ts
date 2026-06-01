@@ -3,14 +3,14 @@ import { BudgetLevel, Mood, PlanVisibility, PlaceCategory, SafetyLevel } from "@
 
 export const loginSchema = z.object({
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
 });
 
 export const registerSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(50),
   username: z.string().min(3, "Le username doit contenir au moins 3 caractères").max(30).regex(/^[a-zA-Z0-9_]+$/, "Lettres, chiffres et underscore uniquement"),
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
   confirmPassword: z.string(),
   homeCityId: z.string().min(1, "Veuillez choisir une ville"),
 }).refine((data) => data.password === data.confirmPassword, {

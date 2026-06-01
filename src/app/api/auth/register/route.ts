@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const limit = rateLimit(`register:${ip}`, 3, 3600000);
     if (!limit.success) {
       return NextResponse.json(
-        { error: "Too many registration attempts. Please try again later." },
+        { error: "Trop de tentatives d'inscription. Veuillez réessayer plus tard." },
         { status: 429, headers: getRateLimitHeaders(limit) }
       );
     }
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: parsed.error.flatten() },
+        { error: "Veuillez vérifier les informations saisies." },
         { status: 400 }
       );
     }
@@ -29,19 +29,19 @@ export async function POST(req: Request) {
 
     const existingEmail = await db.user.findUnique({ where: { email } });
     if (existingEmail) {
-      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+      return NextResponse.json({ error: "Un compte existe déjà avec cet email." }, { status: 409 });
     }
 
     if (username) {
       const existingUsername = await db.user.findUnique({ where: { username } });
       if (existingUsername) {
-        return NextResponse.json({ error: "Username already taken" }, { status: 409 });
+        return NextResponse.json({ error: "Ce nom d'utilisateur est déjà pris." }, { status: 409 });
       }
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await db.user.create({
+    await db.user.create({
       data: {
         name,
         username,
@@ -50,12 +50,12 @@ export async function POST(req: Request) {
         homeCityId,
         activeCityId: homeCityId,
       },
-      select: { id: true, name: true, email: true, username: true },
+      select: { id: true, name: true, email: true },
     });
 
-    return NextResponse.json({ user }, { status: 201 });
+    return NextResponse.json({ message: "Compte créé avec succès." }, { status: 201 });
   } catch (error) {
     console.error("Registration error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Une erreur est survenue. Veuillez réessayer." }, { status: 500 });
   }
 }
