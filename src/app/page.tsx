@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { ThemeAwareLogo } from "@/components/ui/theme-aware-logo";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
+import { backgrounds } from "@/lib/backgrounds";
 
 const CITIES = [
   "Cotonou",
@@ -149,8 +150,8 @@ export default function LandingPage() {
 
       {/* Hero Immersive */}
       <ImmersiveBackground
-        daySrc="/backgrounds/landing-day.jpg"
-        nightSrc="/backgrounds/landing-night.jpg"
+        daySrc={backgrounds.landing.day}
+        nightSrc={backgrounds.landing.night}
         alt="OUTSIDE hero"
         overlay="dark"
         height="screen"

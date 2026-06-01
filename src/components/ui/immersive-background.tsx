@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 import { useOutsideThemeContext } from "@/components/theme-provider";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 interface ImmersiveBackgroundProps {
   daySrc: string;
@@ -22,6 +23,13 @@ const overlayMap = {
   night: "bg-gradient-to-b from-[#0a0a0f]/40 via-[#0a0a0f]/75 to-[#0a0a0f]/95",
 };
 
+const fallbackMap = {
+  dark: "bg-gradient-to-br from-zinc-800 to-black",
+  light: "bg-gradient-to-br from-zinc-100 to-white",
+  brand: "bg-gradient-to-br from-outside-800 to-accent-900",
+  night: "bg-gradient-to-br from-[#0a0a0f] to-black",
+};
+
 const heightMap = {
   screen: "min-h-screen",
   hero: "min-h-[70vh] md:min-h-[60vh]",
@@ -39,34 +47,41 @@ export function ImmersiveBackground({
   children,
 }: ImmersiveBackgroundProps) {
   const { isNight, mounted } = useOutsideThemeContext();
+  const [error, setError] = useState(false);
 
   const src = mounted && isNight ? nightSrc : daySrc;
 
   return (
     <div
       className={cn(
-        "relative flex flex-col overflow-hidden isolate",
+        "relative flex flex-col overflow-hidden",
         heightMap[height],
         className
       )}
     >
-      {/* Background image */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt}
-        loading={priority ? "eager" : "lazy"}
-        decoding={priority ? "sync" : "async"}
-        className="absolute inset-0 h-full w-full object-cover -z-20"
-      />
+      {/* Background image — Next.js Image with fill for optimization */}
+      {!error && (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          priority={priority}
+          loading={priority ? "eager" : "lazy"}
+          quality={75}
+          sizes="100vw"
+          className="object-cover"
+          onError={() => setError(true)}
+        />
+      )}
+
+      {/* Fallback gradient if image fails or while loading */}
+      <div className={cn("absolute inset-0 z-0", fallbackMap[overlay])} />
 
       {/* Overlay gradient */}
-      <div className={cn("absolute inset-0 -z-10", overlayMap[overlay])} />
+      <div className={cn("absolute inset-0 z-[1]", overlayMap[overlay])} />
 
       {/* Content */}
-      <div className="relative z-0 flex flex-1 flex-col">
-        {children}
-      </div>
+      <div className="relative z-10 flex flex-1 flex-col">{children}</div>
     </div>
   );
 }

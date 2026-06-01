@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Badge } from "@/components/ui/badge";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
+import { backgrounds } from "@/lib/backgrounds";
 import {
   MapPin,
   Globe,
@@ -138,8 +139,8 @@ export default function PassportPage() {
     <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-8 pb-24 md:pb-4">
       {/* Hero immersif voyage */}
       <ImmersiveBackground
-        daySrc="/backgrounds/passport-day.jpg"
-        nightSrc="/backgrounds/passport-night.jpg"
+        daySrc={backgrounds.passport.day}
+        nightSrc={backgrounds.passport.night}
         alt="Passport background"
         overlay="dark"
         height="section"

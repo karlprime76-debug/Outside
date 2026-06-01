@@ -10,6 +10,7 @@ import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
 import { ThemeAwareLogo } from "@/components/ui/theme-aware-logo";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
+import { backgrounds } from "@/lib/backgrounds";
 import {
   MapPin,
   Plus,
@@ -147,8 +148,8 @@ export default function HomePage() {
 
       {/* Hero card immersive */}
       <ImmersiveBackground
-        daySrc="/backgrounds/home-day.jpg"
-        nightSrc="/backgrounds/home-night.jpg"
+        daySrc={backgrounds.home.day}
+        nightSrc={backgrounds.home.night}
         alt="Home background"
         overlay="brand"
         height="section"

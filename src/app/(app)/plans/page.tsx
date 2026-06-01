@@ -12,6 +12,7 @@ import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CalendarDays, Plus, SlidersHorizontal, X } from "lucide-react";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
+import { backgrounds } from "@/lib/backgrounds";
 
 interface Plan {
   id: string;
@@ -73,8 +74,8 @@ export default function PlansPage() {
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6">
       {/* Bandeau immersif */}
       <ImmersiveBackground
-        daySrc="/backgrounds/plans-night.jpg"
-        nightSrc="/backgrounds/plans-night.jpg"
+        daySrc={backgrounds.plans.day}
+        nightSrc={backgrounds.plans.night}
         alt="Plans background"
         overlay="night"
         height="section"

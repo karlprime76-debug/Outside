@@ -7,6 +7,7 @@ import { CitySelect } from "@/components/auth/city-select";
 import { InputField } from "@/components/ui/input-field";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
+import { backgrounds } from "@/lib/backgrounds";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -59,8 +60,8 @@ export default function RegisterPage() {
 
   return (
     <ImmersiveBackground
-      daySrc="/backgrounds/auth-register.jpg"
-      nightSrc="/backgrounds/auth-register.jpg"
+      daySrc={backgrounds.auth.register}
+      nightSrc={backgrounds.auth.register}
       alt="Register background"
       overlay="dark"
       height="screen"

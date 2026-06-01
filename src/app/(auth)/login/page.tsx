@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
+import { backgrounds } from "@/lib/backgrounds";
 
 function LoginForm() {
   const router = useRouter();
@@ -40,8 +41,8 @@ function LoginForm() {
 
   return (
     <ImmersiveBackground
-      daySrc="/backgrounds/auth-login.jpg"
-      nightSrc="/backgrounds/auth-login.jpg"
+      daySrc={backgrounds.auth.login}
+      nightSrc={backgrounds.auth.login}
       alt="Login background"
       overlay="dark"
       height="screen"
