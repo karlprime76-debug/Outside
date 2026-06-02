@@ -8,7 +8,7 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ReportButton } from "@/components/report-button";
-import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, X, Star } from "lucide-react";
+import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, X, Star, Send, Flag } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
 
 interface PlanDetail {
@@ -30,6 +30,13 @@ interface PlanDetail {
   place: { name: string } | null;
   participants: { user: { id: string; name: string | null; image: string | null } }[];
   _count: { participants: number };
+}
+
+interface ChatMessage {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: { id: string; name: string | null; image: string | null };
 }
 
 const VISIBILITY_LABELS: Record<string, string> = {
@@ -67,6 +74,10 @@ export default function PlanDetailPage() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewTarget, setReviewTarget] = useState<{ id: string; name: string | null } | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(true);
+  const [chatInput, setChatInput] = useState("");
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     fetch(`/api/plans/${id}`)
@@ -76,6 +87,14 @@ export default function PlanDetailPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    fetch(`/api/plans/${id}/messages`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        setMessages(data?.messages || []);
+        setChatLoading(false);
+      })
+      .catch(() => setChatLoading(false));
   }, [id]);
 
   const isFull = plan?.status === "FULL";
@@ -266,6 +285,112 @@ export default function PlanDetailPage() {
           onClose={() => { setReviewOpen(false); setReviewTarget(null); }}
         />
       )}
+
+      {/* Chat */}
+      <div className="rounded-2xl border border-zinc-200 bg-white dark:border-surface-border dark:bg-surface-card overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-zinc-100 px-5 py-3 dark:border-zinc-800">
+          <MessageSquare className="h-4 w-4 text-outside-500" />
+          <h3 className="text-sm font-bold text-[var(--os-fg)]">Discussion du plan</h3>
+          {(plan.status === "COMPLETED" || plan.status === "CANCELLED") && (
+            <span className="ml-auto text-[10px] font-bold uppercase text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+              Archivée
+            </span>
+          )}
+        </div>
+
+        {!isParticipant && !isCreator ? (
+          <div className="p-6 text-center">
+            <p className="text-sm text-[var(--os-muted)]">Rejoins le plan pour accéder à la discussion.</p>
+          </div>
+        ) : chatLoading ? (
+          <div className="p-6 text-center">
+            <p className="text-sm text-[var(--os-muted)]">Chargement...</p>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="p-6 text-center">
+            <p className="text-sm text-[var(--os-muted)]">Aucun message pour le moment.</p>
+            <p className="text-xs text-[var(--os-muted)] mt-1">Sois le premier à écrire !</p>
+          </div>
+        ) : (
+          <div className="max-h-96 overflow-y-auto p-4 space-y-3">
+            {messages.map((msg) => {
+              const isMe = msg.author.id === session?.user?.id;
+              return (
+                <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
+                  <Avatar src={msg.author.image} name={msg.author.name} size="sm" />
+                  <div className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
+                    <div className={`rounded-2xl px-3 py-2 text-sm ${isMe ? "bg-outside-100 text-outside-900" : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"}`}>
+                      <p>{msg.content}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-[var(--os-muted)]">
+                        {msg.author.name || "Anonyme"} · {new Date(msg.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      {!isMe && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm("Signaler ce message ?")) return;
+                            const res = await fetch(`/api/plans/${plan.id}/messages/${msg.id}/report`, { method: "POST" });
+                            if (res.ok) alert("Message signalé.");
+                            else alert("Erreur lors du signalement.");
+                          }}
+                          className="text-[10px] text-red-400 hover:text-red-600 transition-colors"
+                          title="Signaler"
+                        >
+                          <Flag className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {(isParticipant || isCreator) && plan.status !== "COMPLETED" && plan.status !== "CANCELLED" && (
+          <div className="border-t border-zinc-100 p-3 dark:border-zinc-800">
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!chatInput.trim() || sending) return;
+                setSending(true);
+                const res = await fetch(`/api/plans/${plan.id}/messages`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ content: chatInput.trim() }),
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  setMessages((prev) => [...prev, data.message]);
+                  setChatInput("");
+                } else {
+                  const json = await res.json().catch(() => ({}));
+                  alert(json.error || "Erreur d'envoi");
+                }
+                setSending(false);
+              }}
+              className="flex gap-2"
+            >
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                maxLength={500}
+                placeholder="Écris un message..."
+                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-outside-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+              <button
+                type="submit"
+                disabled={sending || !chatInput.trim()}
+                className="rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+            <p className="mt-1 text-[10px] text-[var(--os-muted)] text-right">{chatInput.length}/500</p>
+          </div>
+        )}
+      </div>
 
       {/* Report */}
       <div className="flex justify-end">

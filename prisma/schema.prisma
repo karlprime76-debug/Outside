@@ -377,10 +377,11 @@ model PlanMessage {
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
   content   String
+  isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  @@index([planId])
-  @@index([createdAt])
+  @@index([planId, createdAt])
+  @@index([authorId])
 }
 
 model Report {
