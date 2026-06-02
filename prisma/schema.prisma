@@ -94,6 +94,18 @@ enum PlanInvitationStatus {
   CANCELLED
 }
 
+enum MomentType {
+  PHOTO
+  VIDEO
+}
+
+enum MomentVisibility {
+  PUBLIC
+  FRIENDS
+  PLAN_PARTICIPANTS
+  PRIVATE
+}
+
 enum PlaceCategory {
   RESTAURANT
   CAFE
@@ -214,6 +226,7 @@ model User {
   planMessages      PlanMessage[]
   planInvitationsSent    PlanInvitation[] @relation("PlanInvitationSender")
   planInvitationsReceived PlanInvitation[] @relation("PlanInvitationReceiver")
+  moments            Moment[]
   reportsMade       Report[] @relation("Reporter")
   reportsReceived   Report[] @relation("Reported")
   blocksMade        UserBlock[] @relation("Blocker")
@@ -382,6 +395,32 @@ model PlanMessage {
 
   @@index([planId, createdAt])
   @@index([authorId])
+}
+
+model Moment {
+  id          String           @id @default(cuid())
+  authorId    String
+  author      User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  type        MomentType
+  mediaUrl    String
+  caption     String?
+  city        String?
+  countryCode String?
+  visibility  MomentVisibility @default(PUBLIC)
+
+  planId      String?
+  placeId     String?
+  eventId     String?
+  liveId      String?
+
+  expiresAt   DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([city, createdAt])
+  @@index([authorId])
+  @@index([planId])
+  @@index([placeId])
 }
 
 model Report {

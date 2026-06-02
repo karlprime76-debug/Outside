@@ -32,6 +32,7 @@ import {
   Radio,
   CalendarDays,
   X,
+  Image as ImageIcon,
 } from "lucide-react";
 import { AvailabilitySheet } from "@/components/availability/availability-sheet";
 
@@ -85,6 +86,8 @@ export default function HomePage() {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [myAvailability, setMyAvailability] = useState<{ mood: string; expiresAt: string } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [moments, setMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null } }[]>([]);
+  const [loadingMoments, setLoadingMoments] = useState(true);
 
   const userName = session?.user?.name || "";
   const activeCity = userProfile?.activeCity;
@@ -137,6 +140,14 @@ export default function HomePage() {
         if (data?.availability) setMyAvailability(data.availability);
       })
       .catch(() => {});
+
+    fetch("/api/moments")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        setMoments(data?.moments?.slice(0, 6) || []);
+        setLoadingMoments(false);
+      })
+      .catch(() => setLoadingMoments(false));
   }, []);
 
   async function deactivateAvailability() {
@@ -345,6 +356,41 @@ export default function HomePage() {
           })}
         </div>
       </section>
+
+      {/* Moments */}
+      {!loadingMoments && moments.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-black text-[var(--os-fg)] flex items-center gap-2">
+              <ImageIcon className="h-5 w-5 text-outside-500" />
+              Moments dehors maintenant
+            </h2>
+            <Link href="/moments" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
+              Voir tout
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+            {moments.map((m) => (
+              <Link
+                key={m.id}
+                href="/moments"
+                className="min-w-[140px] flex-shrink-0 rounded-2xl overflow-hidden bg-black relative aspect-[3/4] block"
+              >
+                {m.type === "VIDEO" ? (
+                  <video src={m.mediaUrl} className="h-full w-full object-cover" muted loop playsInline preload="metadata" />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={m.mediaUrl} alt={m.caption || "Moment"} className="h-full w-full object-cover" loading="lazy" />
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                  <p className="text-xs font-bold text-white truncate">{m.author.name || "Anonyme"}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* CTAs */}
       <div className="grid gap-3 sm:grid-cols-2">
