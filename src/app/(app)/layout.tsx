@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { BottomNav } from "@/components/bottom-nav";
 import { Avatar } from "@/components/ui/avatar";
@@ -13,6 +14,13 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+
+  let unreadCount = 0;
+  if (session?.user?.id) {
+    unreadCount = await db.notification.count({
+      where: { recipientId: session.user.id, isRead: false },
+    });
+  }
 
   const NAV_LINKS = [
     { href: "/plans", label: "Plans" },
@@ -51,7 +59,9 @@ export default async function AppLayout({
                   className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
                 >
                   <Bell className="h-5 w-5 text-[var(--os-muted)]" />
-                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                  )}
                 </Link>
                 <ThemeBadge />
                 <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[var(--os-card-border)] transition-colors">
@@ -81,7 +91,9 @@ export default async function AppLayout({
                   className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
                 >
                   <Bell className="h-5 w-5 text-[var(--os-muted)]" />
-                  <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                  )}
                 </Link>
                 <ThemeBadge />
                 <Link href="/profile">

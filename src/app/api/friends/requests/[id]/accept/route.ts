@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { canReceiveMoreFriends } from "@/lib/social/friendship";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -11,6 +12,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const { id } = await params;
   const userId = session.user.id;
+  const userName = session.user.name || "Quelqu'un";
+  const userImage = session.user.image || null;
 
   const request = await db.friendRequest.findUnique({
     where: { id },
@@ -47,6 +50,16 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       data: { initiatorId: request.senderId, receiverId: request.receiverId },
     }),
   ]);
+
+  await createNotification({
+    type: "FRIEND_ACCEPTED",
+    title: "Demande d'ami acceptée",
+    body: `${userName} a accepté ta demande d'ami.`,
+    recipientId: request.senderId,
+    actorId: userId,
+    actorName: userName,
+    actorImage: userImage,
+  });
 
   return NextResponse.json({ message: "Vous êtes maintenant amis." });
 }

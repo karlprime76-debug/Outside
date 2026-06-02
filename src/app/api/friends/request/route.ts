@@ -8,6 +8,7 @@ import {
   isBlocked,
   isFollowing,
 } from "@/lib/social/friendship";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -19,6 +20,8 @@ export async function POST(req: Request) {
   const { username, userId } = body;
 
   const currentUserId = session.user.id;
+  const currentUserName = session.user.name || "Quelqu'un";
+  const currentUserImage = session.user.image || null;
 
   // Résoudre la cible
   let targetUser;
@@ -54,7 +57,6 @@ export async function POST(req: Request) {
   const receiverCanAdd = await canReceiveMoreFriends(targetId);
 
   if (!senderCanAdd || !receiverCanAdd) {
-    // Créer un follow à la place si pas déjà suivant
     if (!(await isFollowing(currentUserId, targetId))) {
       await db.follow.create({
         data: { followerId: currentUserId, followingId: targetId },
@@ -68,6 +70,16 @@ export async function POST(req: Request) {
 
   await db.friendRequest.create({
     data: { senderId: currentUserId, receiverId: targetId },
+  });
+
+  await createNotification({
+    type: "FRIEND_REQUEST",
+    title: "Nouvelle demande d'ami",
+    body: `${currentUserName} veut devenir ton ami.`,
+    recipientId: targetId,
+    actorId: currentUserId,
+    actorName: currentUserName,
+    actorImage: currentUserImage,
   });
 
   return NextResponse.json({ message: "Demande d'ami envoyée.", code: "REQUEST_SENT" });

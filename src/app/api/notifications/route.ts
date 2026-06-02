@@ -1,23 +1,30 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth/session";
+import { auth } from "@/lib/auth";
+import { markNotificationsAsRead } from "@/lib/notifications";
 
 export async function GET() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
 
+    const userId = session.user.id;
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const [newPlans, myPlansActivity, joinedPlans] = await Promise.all([
+    const [socialNotifications, newPlans, myPlansActivity, joinedPlans] = await Promise.all([
+      db.notification.findMany({
+        where: { recipientId: userId },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
       db.plan.findMany({
         where: {
-          cityId: user.activeCityId || undefined,
+          cityId: session.user.activeCityId || undefined,
           createdAt: { gte: yesterday },
-          creatorId: { not: user.id },
+          creatorId: { not: userId },
         },
         orderBy: { createdAt: "desc" },
         take: 5,
@@ -27,17 +34,15 @@ export async function GET() {
         },
       }),
       db.planParticipant.findMany({
-        where: { userId: user.id, joinedAt: { gte: yesterday } },
+        where: { userId, joinedAt: { gte: yesterday } },
         orderBy: { joinedAt: "desc" },
         take: 5,
         include: {
-          plan: {
-            select: { id: true, title: true, startDate: true },
-          },
+          plan: { select: { id: true, title: true, startDate: true } },
         },
       }),
       db.plan.findMany({
-        where: { creatorId: user.id },
+        where: { creatorId: userId },
         orderBy: { createdAt: "desc" },
         take: 3,
         include: {
@@ -46,15 +51,27 @@ export async function GET() {
       }),
     ]);
 
-    const notifications = [
+    const socialItems = socialNotifications.map((n) => ({
+      id: n.id,
+      type: n.type.toLowerCase(),
+      title: n.title,
+      body: n.body,
+      createdAt: n.createdAt.toISOString(),
+      isRead: n.isRead,
+      actorName: n.actorName,
+      actorImage: n.actorImage,
+      data: n.data ? JSON.parse(n.data) : undefined,
+    }));
+
+    const virtualItems = [
       ...newPlans.map((p) => ({
         id: `plan-${p.id}`,
         type: "new_plan" as const,
         title: `Nouveau plan : ${p.title}`,
         body: `Par ${p.creator.name || "Quelqu'un"} à ${p.city.name}`,
         createdAt: p.createdAt.toISOString(),
+        isRead: true,
         link: `/plans/${p.id}`,
-        read: false,
       })),
       ...myPlansActivity.map((p) => ({
         id: `join-${p.planId}`,
@@ -62,8 +79,8 @@ export async function GET() {
         title: "Tu as rejoint un plan",
         body: p.plan.title,
         createdAt: p.joinedAt.toISOString(),
+        isRead: true,
         link: `/plans/${p.planId}`,
-        read: false,
       })),
       ...joinedPlans
         .filter((p) => p._count.participants > 0)
@@ -73,16 +90,37 @@ export async function GET() {
           title: "Activité sur ton plan",
           body: `${p._count.participants} participant(s) sur "${p.title}"`,
           createdAt: p.createdAt.toISOString(),
+          isRead: true,
           link: `/plans/${p.id}`,
-          read: false,
         })),
-    ]
+    ];
+
+    const notifications = [...socialItems, ...virtualItems]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 10);
+      .slice(0, 25);
 
     return NextResponse.json({ notifications });
   } catch (error) {
     console.error("Notifications error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const ids = body.ids as string[] | undefined;
+
+    await markNotificationsAsRead(session.user.id, ids);
+
+    return NextResponse.json({ message: "Notifications marquées comme lues." });
+  } catch (error) {
+    console.error("Mark notifications read error:", error);
+    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }
