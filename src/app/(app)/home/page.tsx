@@ -33,6 +33,7 @@ import {
   CalendarDays,
   X,
   Image as ImageIcon,
+  Compass,
 } from "lucide-react";
 import { AvailabilitySheet } from "@/components/availability/availability-sheet";
 
@@ -391,6 +392,23 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* City map CTA */}
+      <Link
+        href="/city-map"
+        className="group flex items-center justify-between gap-3 rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-5 hover:border-outside-300 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
+            <Compass className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-black text-[var(--os-fg)]">Carte vivante</p>
+            <p className="text-xs text-[var(--os-muted)]">Vois ce qui se passe dans ta ville</p>
+          </div>
+        </div>
+        <ArrowRight className="h-5 w-5 text-[var(--os-muted)] group-hover:text-outside-500 transition-colors" />
+      </Link>
 
       {/* CTAs */}
       <div className="grid gap-3 sm:grid-cols-2">
