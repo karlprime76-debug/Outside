@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { Avatar } from "@/components/ui/avatar";
 import {
   Bell,
   Calendar,
@@ -12,16 +13,22 @@ import {
   Activity,
   ArrowLeft,
   CheckCheck,
+  UserCheck,
+  Users,
+  Sparkles,
 } from "lucide-react";
 
 interface Notification {
   id: string;
-  type: "new_plan" | "joined" | "activity";
+  type: string;
   title: string;
-  body: string;
+  body: string | null;
   createdAt: string;
-  link: string;
-  read: boolean;
+  isRead: boolean;
+  link?: string;
+  actorName?: string | null;
+  actorImage?: string | null;
+  data?: Record<string, unknown>;
 }
 
 export default function NotificationsPage() {
@@ -29,7 +36,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchNotifications = useCallback(() => {
     fetch("/api/notifications")
       .then((r) => r.json())
       .then((data) => {
@@ -42,6 +49,10 @@ export default function NotificationsPage() {
       });
   }, [addToast]);
 
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
   function formatRelative(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const minutes = Math.floor(diff / 60000);
@@ -52,7 +63,7 @@ export default function NotificationsPage() {
     return new Date(dateStr).toLocaleDateString("fr-FR");
   }
 
-  function iconFor(type: Notification["type"]) {
+  function iconFor(type: string) {
     switch (type) {
       case "new_plan":
         return Calendar;
@@ -60,22 +71,61 @@ export default function NotificationsPage() {
         return UserPlus;
       case "activity":
         return Activity;
+      case "friend_request":
+        return UserPlus;
+      case "friend_accepted":
+        return UserCheck;
+      case "follow":
+        return Users;
+      case "system":
+        return Sparkles;
       default:
         return Bell;
     }
   }
 
-  function colorFor(type: Notification["type"]) {
+  function colorFor(type: string) {
     switch (type) {
       case "new_plan":
-        return "bg-outside-100 text-outside-600 dark:bg-outside-950/20 dark:text-outside-400";
+        return "bg-outside-100 text-outside-600";
       case "joined":
-        return "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400";
+        return "bg-emerald-100 text-emerald-600";
       case "activity":
-        return "bg-indigo-100 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400";
+        return "bg-indigo-100 text-indigo-600";
+      case "friend_request":
+        return "bg-amber-100 text-amber-600";
+      case "friend_accepted":
+        return "bg-green-100 text-green-600";
+      case "follow":
+        return "bg-sky-100 text-sky-600";
       default:
         return "bg-zinc-100 text-zinc-600";
     }
+  }
+
+  async function markAllRead() {
+    try {
+      await fetch("/api/notifications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch {
+      addToast("Erreur lors du marquage", "error");
+    }
+  }
+
+  async function markOneRead(id: string) {
+    try {
+      await fetch("/api/notifications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: [id] }) });
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+    } catch {
+      // silent
+    }
+  }
+
+  function getLink(n: Notification): string {
+    if (n.link) return n.link;
+    if (n.data?.username) return `/u/${n.data.username}`;
+    if (n.data?.userId) return `/u/${n.data.userId}`;
+    return "/home";
   }
 
   return (
@@ -97,7 +147,7 @@ export default function NotificationsPage() {
         </h1>
         {notifications.length > 0 && (
           <button
-            onClick={() => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))}
+            onClick={markAllRead}
             className="flex items-center gap-1 text-xs font-bold text-outside-600"
           >
             <CheckCheck className="h-3.5 w-3.5" />
@@ -126,27 +176,33 @@ export default function NotificationsPage() {
         <div className="space-y-2">
           {notifications.map((n) => {
             const Icon = iconFor(n.type);
+            const href = getLink(n);
             return (
               <Link
                 key={n.id}
-                href={n.link}
+                href={href}
+                onClick={() => { if (!n.isRead) markOneRead(n.id); }}
                 className={`flex items-start gap-3 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-card ${
-                  n.read
+                  n.isRead
                     ? "border-[var(--os-card-border)] bg-[var(--os-card)]"
                     : "border-outside-200 bg-outside-50/30"
                 }`}
               >
-                <div className={`rounded-xl p-2 ${colorFor(n.type)}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
+                {n.actorImage ? (
+                  <Avatar src={n.actorImage} name={n.actorName || undefined} size="md" />
+                ) : (
+                  <div className={`rounded-xl p-2 ${colorFor(n.type)}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-[var(--os-fg)]">{n.title}</p>
-                  <p className="text-xs text-[var(--os-muted)] truncate">{n.body}</p>
+                  {n.body && <p className="text-xs text-[var(--os-muted)] truncate">{n.body}</p>}
                   <p className="mt-1 text-[10px] font-semibold text-[var(--os-muted)]">
                     {formatRelative(n.createdAt)}
                   </p>
                 </div>
-                {!n.read && (
+                {!n.isRead && (
                   <span className="mt-1 h-2 w-2 rounded-full bg-outside-500 shrink-0" />
                 )}
               </Link>

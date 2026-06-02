@@ -29,8 +29,8 @@ export default async function ProfilePage() {
   const friendships = await db.friendship.findMany({
     where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
     include: {
-      initiator: { select: { id: true, name: true, image: true } },
-      receiver: { select: { id: true, name: true, image: true } },
+      initiator: { select: { id: true, name: true, username: true, image: true } },
+      receiver: { select: { id: true, name: true, username: true, image: true } },
     },
     take: 10,
   });
@@ -82,9 +82,14 @@ export default async function ProfilePage() {
 
       {/* Friends */}
       <div className="os-card p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="h-5 w-5 text-outside-500" />
-          <h2 className="text-lg font-bold text-[var(--os-fg)]">Amis ({friends.length})</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-outside-500" />
+            <h2 className="text-lg font-bold text-[var(--os-fg)]">Amis ({friends.length})</h2>
+          </div>
+          <Link href="/friends" className="text-xs font-bold text-outside-600 hover:text-outside-700 transition-colors">
+            Voir tout
+          </Link>
         </div>
         {friends.length === 0 ? (
           <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis. Explore les plans pour en rencontrer !</p>
@@ -93,7 +98,7 @@ export default async function ProfilePage() {
             {friends.map((friend) => (
               <Link
                 key={friend.id}
-                href={`/users/${friend.id}`}
+                href={`/u/${friend.username}`}
                 className="flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-2 hover:border-outside-300 transition-colors"
               >
                 <Avatar src={friend.image} name={friend.name} size="sm" />

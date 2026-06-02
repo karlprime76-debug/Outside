@@ -19,7 +19,7 @@ export interface Dictionary {
     home: string;
     plans: string;
     places: string;
-    live: string;
+    friends: string;
     profile: string;
   };
   landing: {

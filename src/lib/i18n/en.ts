@@ -21,7 +21,7 @@ export const en: Dictionary = {
     home: "Home",
     plans: "Plans",
     places: "Places",
-    live: "Live",
+    friends: "Friends",
     profile: "Profile",
   },
   landing: {
