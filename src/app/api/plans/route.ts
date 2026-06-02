@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createPlanSchema } from "@/lib/validation/schemas";
+import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
 import { PlanVisibility } from "@prisma/client";
 
 export async function GET(req: Request) {
@@ -133,6 +134,8 @@ export async function POST(req: Request) {
         city: { select: { id: true, name: true } },
       },
     });
+
+    evaluateBadgesAfterPlanCreated(user.id).catch(() => {});
 
     return NextResponse.json({ plan }, { status: 201 });
   } catch (error) {

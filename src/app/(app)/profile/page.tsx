@@ -8,6 +8,7 @@ import Link from "next/link";
 import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil } from "lucide-react";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
+import { UserBadges } from "@/components/profile/user-badges";
 import { getTrustData } from "@/lib/trust";
 
 export default async function ProfilePage() {
@@ -67,6 +68,8 @@ export default async function ProfilePage() {
         <h3 className="text-sm font-bold text-[var(--os-fg)] mb-3">Signaux de confiance</h3>
         <TrustSignals signals={trust.signals} compact />
       </div>
+
+      <UserBadges userId={user.id} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">

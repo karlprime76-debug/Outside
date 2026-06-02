@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canJoinPlan } from "@/lib/plans/permissions";
+import { evaluateBadgesAfterPlanJoined } from "@/lib/badges";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -54,6 +55,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (updatedCount >= plan.maxParticipants) {
       await db.plan.update({ where: { id }, data: { status: "FULL" } });
     }
+
+    evaluateBadgesAfterPlanJoined(user.id).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

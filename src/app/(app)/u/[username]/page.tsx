@@ -11,6 +11,7 @@ import { FollowButton } from "@/components/social/follow-button";
 import { FriendButton } from "@/components/social/friend-button";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
+import { UserBadges } from "@/components/profile/user-badges";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -59,6 +60,8 @@ export default async function PublicProfilePage({ params }: Props) {
         <h3 className="text-sm font-bold text-[var(--os-fg)] mb-3">Signaux de confiance</h3>
         <TrustSignals signals={trust.signals} compact />
       </div>
+
+      <UserBadges userId={user.id} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">

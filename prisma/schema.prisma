@@ -227,6 +227,7 @@ model User {
   planInvitationsSent    PlanInvitation[] @relation("PlanInvitationSender")
   planInvitationsReceived PlanInvitation[] @relation("PlanInvitationReceiver")
   moments            Moment[]
+  userBadges         UserBadge[]
   reportsMade       Report[] @relation("Reporter")
   reportsReceived   Report[] @relation("Reported")
   blocksMade        UserBlock[] @relation("Blocker")
@@ -421,6 +422,28 @@ model Moment {
   @@index([authorId])
   @@index([planId])
   @@index([placeId])
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  key         String      @unique
+  name        String
+  description String
+  icon        String?
+  createdAt   DateTime    @default(now())
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+  @@index([userId])
 }
 
 model Report {
