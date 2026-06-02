@@ -21,7 +21,8 @@ export interface TrustData {
   signals: TrustSignals;
 }
 
-export function getTrustBadge(score: number): { badge: TrustBadge; label: string } {
+export function getTrustBadge(score: number, isVerified?: boolean): { badge: TrustBadge; label: string } {
+  if (isVerified) return { badge: "very_reliable", label: "Vérifié" };
   if (score >= 86) return { badge: "very_reliable", label: "Très fiable" };
   if (score >= 61) return { badge: "reliable", label: "Fiable" };
   if (score >= 31) return { badge: "active", label: "Profil actif" };
@@ -73,17 +74,22 @@ export async function getTrustSignals(userId: string): Promise<TrustSignals> {
 }
 
 export async function calculateTrustScore(userId: string): Promise<number> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { isVerified: true },
+  });
   const signals = await getTrustSignals(userId);
 
   let score = 0;
 
+  if (user?.isVerified) score += 20;
   if (signals.hasPhoto) score += 10;
   if (signals.emailVerified) score += 10;
   if (signals.phoneVerified) score += 10;
   if (signals.accountAgeDays > 30) score += 10;
 
-  score += Math.min(signals.plansConfirmed * 5, 100);
-  score += Math.min(signals.positiveReviews * 5, 100);
+  score += Math.min(signals.plansConfirmed * 5, 50);
+  score += Math.min(signals.positiveReviews * 5, 50);
 
   score -= signals.reportsCount * 20;
 
@@ -127,11 +133,12 @@ export async function canReviewUser(
 export async function getTrustData(userId: string): Promise<TrustData> {
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { trustScore: true },
+    select: { trustScore: true, isVerified: true },
   });
 
-  const score = user?.trustScore ?? 0;
-  const { badge, label } = getTrustBadge(score);
+  const score = (user as unknown as { trustScore?: number })?.trustScore ?? 0;
+  const isVerified = (user as unknown as { isVerified?: boolean })?.isVerified ?? false;
+  const { badge, label } = getTrustBadge(score, isVerified);
   const signals = await getTrustSignals(userId);
 
   return {

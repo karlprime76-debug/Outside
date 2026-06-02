@@ -11,6 +11,7 @@ import { FollowButton } from "@/components/social/follow-button";
 import { FriendButton } from "@/components/social/friend-button";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
+import { TrustReviewButton } from "@/components/trust/trust-review-button";
 import { UserBadges } from "@/components/profile/user-badges";
 
 interface Props {
@@ -89,6 +90,7 @@ export default async function PublicProfilePage({ params }: Props) {
           {relation !== "FRIENDS" && relation !== "REQUEST_SENT" && relation !== "REQUEST_RECEIVED" && (
             <FollowButton userId={user.id} relation={relation} />
           )}
+          <TrustReviewButton reviewedId={user.id} reviewedName={user.name || undefined} />
         </div>
       )}
 

@@ -5,7 +5,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
-import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil, Image } from "lucide-react";
+import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil, Image, Shield } from "lucide-react";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
 import { UserBadges } from "@/components/profile/user-badges";
@@ -96,6 +96,13 @@ export default async function ProfilePage() {
         <InfoRow icon={Globe} label="Langue" value={user.language === "fr" ? "Français" : "English"} />
         <InfoRow icon={Wallet} label="Budget" value={user.preferredBudget || "-"} />
         <InfoRow icon={CheckCircle} label="Vérifié" value={user.isVerified ? "Oui" : "Non"} />
+        <Link
+          href="/settings/verification"
+          className="inline-flex items-center gap-2 rounded-lg bg-outside-50 px-3 py-2 text-xs font-bold text-outside-700 hover:bg-outside-100 transition-colors"
+        >
+          <Shield className="h-3.5 w-3.5" />
+          {user.isVerified ? "Identité vérifiée" : "Vérifier mon identité"}
+        </Link>
       </div>
 
       {/* Friends */}

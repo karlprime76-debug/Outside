@@ -194,6 +194,24 @@ enum EventVisibility {
   INVITE_ONLY
 }
 
+enum IdentityVerificationStatus {
+  NOT_SUBMITTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TrustSignalType {
+  PROFILE_PHOTO
+  EMAIL_VERIFIED
+  PHONE_VERIFIED
+  IDENTITY_VERIFIED
+  PLAN_ATTENDANCE
+  RESPECTFUL
+  REAL_PROFILE
+  REAL_PLAN
+}
+
 model User {
   id                String   @id @default(cuid())
   name              String?
@@ -222,6 +240,7 @@ model User {
 
   isVerified        Boolean  @default(false)
   trustScore        Int      @default(0)
+  identityVerificationStatus IdentityVerificationStatus @default(NOT_SUBMITTED)
   isAvailable       Boolean  @default(false)
   travelModeEnabled Boolean  @default(false)
 
@@ -253,6 +272,8 @@ model User {
 
   liveSessions      LiveSession[]
   proAccount        ProAccount?
+  identityVerification IdentityVerification?
+  trustSignals      TrustSignal[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -573,6 +594,7 @@ model TrustReview {
 
   wasPresent  Boolean?
   respectful  Boolean?
+  realProfile Boolean?
   realPlan    Boolean?
   goodVibe    Boolean?
   comment     String?
@@ -584,6 +606,40 @@ model TrustReview {
 
   @@unique([reviewerId, reviewedId, planId])
   @@index([reviewedId])
+}
+
+model IdentityVerification {
+  id          String                     @id @default(cuid())
+  userId      String                     @unique
+  user        User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status      IdentityVerificationStatus @default(PENDING)
+  fullName    String?
+  documentType String?
+  documentPath String?
+  selfiePath   String?
+
+  reviewedById String?
+  reviewedAt   DateTime?
+  rejectionReason String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TrustSignal {
+  id                String          @id @default(cuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              TrustSignalType
+  label             String
+  value             Boolean         @default(true)
+  validatedByUserId String?
+  source            String?
+  createdAt         DateTime        @default(now())
+
+  @@index([userId])
+  @@index([type])
 }
 
 model Availability {
