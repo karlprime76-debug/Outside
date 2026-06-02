@@ -360,18 +360,52 @@ export default function HomePage() {
       </section>
 
       {/* Moments */}
-      {!loadingMoments && moments.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <div>
             <h2 className="text-lg font-black text-[var(--os-fg)] flex items-center gap-2">
               <ImageIcon className="h-5 w-5 text-outside-500" />
               Moments dehors maintenant
             </h2>
+            <p className="text-xs text-[var(--os-muted)] mt-0.5">
+              Regarde ce qui se passe dans ta ville.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/moments/new"
+              className="inline-flex items-center gap-1 rounded-full bg-outside-100 px-3 py-1.5 text-xs font-bold text-outside-700 hover:bg-outside-200 transition-colors"
+            >
+              <Plus className="h-3 w-3" />
+              Ajouter
+            </Link>
             <Link href="/moments" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
               Voir tout
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
+        </div>
+
+        {loadingMoments ? (
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="min-w-[140px] flex-shrink-0 aspect-[3/4] rounded-2xl bg-[var(--os-bg)] shimmer" />
+            ))}
+          </div>
+        ) : moments.length === 0 ? (
+          <div className="os-card p-6 text-center">
+            <p className="text-sm text-[var(--os-muted)]">
+              Aucun moment dehors pour l&apos;instant.
+            </p>
+            <Link
+              href="/moments/new"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+            >
+              <Plus className="h-4 w-4" />
+              Ajouter un moment
+            </Link>
+          </div>
+        ) : (
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
             {moments.map((m) => (
               <Link
@@ -391,8 +425,8 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* City map CTA */}
       <Link

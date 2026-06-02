@@ -24,6 +24,9 @@ export default async function AppLayout({
 
   const NAV_LINKS = [
     { href: "/plans", label: "Plans" },
+    { href: "/live", label: "Live" },
+    { href: "/moments", label: "Moments" },
+    { href: "/friends", label: "Amis" },
     { href: "/places", label: "Lieux" },
     { href: "/passport", label: "Passeport" },
     { href: "/settings", label: "Paramètres" },

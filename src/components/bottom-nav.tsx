@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, MapPin, Users, User } from "lucide-react";
+import { Home, Calendar, Radio, Image, User } from "lucide-react";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { cn } from "@/lib/cn";
 
 const ITEMS = [
   { href: "/home", labelKey: "home" as const, icon: Home },
   { href: "/plans", labelKey: "plans" as const, icon: Calendar },
-  { href: "/places", labelKey: "places" as const, icon: MapPin },
-  { href: "/friends", labelKey: "friends" as const, icon: Users },
+  { href: "/live", labelKey: "live" as const, icon: Radio },
+  { href: "/moments", labelKey: "moments" as const, icon: Image },
   { href: "/profile", labelKey: "profile" as const, icon: User },
 ];
 

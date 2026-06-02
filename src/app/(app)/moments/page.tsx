@@ -5,7 +5,6 @@ import Link from "next/link";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { MomentUploadSheet } from "@/components/moments/moment-upload-sheet";
 import { Image, Video, MapPin, Plus, ArrowLeft, Flag } from "lucide-react";
 
 interface MomentItem {
@@ -27,7 +26,6 @@ interface MomentItem {
 export default function MomentsPage() {
   const [moments, setMoments] = useState<MomentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "photo" | "video">("all");
 
   useEffect(() => {
@@ -50,21 +48,25 @@ export default function MomentsPage() {
         Retour
       </Link>
 
-      <div className="flex items-center justify-between">
+      <div>
         <h1 className="text-2xl font-black text-[var(--os-fg)] flex items-center gap-3">
           <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
             <Image className="h-5 w-5 text-white" />
           </div>
-          Moments
+          Moments OUTSIDE
         </h1>
-        <button
-          onClick={() => setUploadOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter
-        </button>
+        <p className="mt-1 text-sm text-[var(--os-muted)]">
+          Ce qui se passe dehors, maintenant.
+        </p>
       </div>
+
+      <Link
+        href="/moments/new"
+        className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all w-fit"
+      >
+        <Plus className="h-4 w-4" />
+        Ajouter un moment
+      </Link>
 
       <div className="flex gap-2">
         {(["all", "photo", "video"] as const).map((f) => (
@@ -94,11 +96,18 @@ export default function MomentsPage() {
             <Image className="h-6 w-6 text-[var(--os-muted)]" />
           </div>
           <h3 className="mt-3 text-sm font-bold text-[var(--os-fg)]">
-            Aucun moment pour le moment
+            Aucun moment dans ta ville
           </h3>
           <p className="mt-1 text-xs text-[var(--os-muted)]">
-            Sois le premier à partager ce qui se passe dehors !
+            Montre ce qui se passe dehors.
           </p>
+          <Link
+            href="/moments/new"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un moment
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
@@ -108,16 +117,6 @@ export default function MomentsPage() {
         </div>
       )}
 
-      {uploadOpen && (
-        <MomentUploadSheet
-          onClose={() => setUploadOpen(false)}
-          onUploaded={() => {
-            fetch(`/api/moments?type=${filter === "all" ? "" : filter}`)
-              .then((r) => r.json())
-              .then((data) => setMoments(data.moments || []));
-          }}
-        />
-      )}
     </AnimatedPage>
   );
 }

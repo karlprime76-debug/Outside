@@ -5,7 +5,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
-import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil } from "lucide-react";
+import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil, Image } from "lucide-react";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
 import { UserBadges } from "@/components/profile/user-badges";
@@ -132,8 +132,39 @@ export default async function ProfilePage() {
         )}
       </div>
 
+      {/* Moments */}
+      <div className="os-card p-6 animate-slide-up animate-stagger-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Image className="h-5 w-5 text-outside-500" />
+            <h2 className="text-lg font-bold text-[var(--os-fg)]">Moments OUTSIDE</h2>
+          </div>
+          <Link href="/moments" className="text-xs font-bold text-outside-600 hover:text-outside-700 transition-colors">
+            Voir tout
+          </Link>
+        </div>
+        <p className="text-sm text-[var(--os-muted)] mb-4">
+          Partage ce qui se passe dehors avec ta ville.
+        </p>
+        <div className="flex gap-2">
+          <Link
+            href="/moments/new"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Ajouter un moment
+          </Link>
+          <Link
+            href="/moments"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-2 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-colors"
+          >
+            Voir les moments
+          </Link>
+        </div>
+      </div>
+
       {/* Actions */}
-      <div className="flex flex-col gap-3 animate-slide-up animate-stagger-6">
+      <div className="flex flex-col gap-3 animate-slide-up animate-stagger-7">
         <Link
           href="/profile/edit"
           className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"

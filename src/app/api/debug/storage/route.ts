@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AVATARS_BUCKET } from "@/lib/supabase/storage";
+import { MOMENTS_BUCKET } from "@/lib/supabase/moments-storage";
 
 export async function GET() {
   const isDev = process.env.NODE_ENV === "development";
@@ -11,21 +12,22 @@ export async function GET() {
     );
   }
 
-  const supabaseUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const serviceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const hasSupabaseUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  let bucketExists = false;
+  let avatarsBucketExists = false;
+  let momentsBucketExists = false;
   let bucketError: string | null = null;
 
-  if (supabaseUrl && serviceRoleKey) {
+  if (hasSupabaseUrl && hasServiceRoleKey) {
     try {
       const supabase = createSupabaseServerClient();
       const { data: buckets, error } = await supabase.storage.listBuckets();
       if (error) {
         bucketError = error.message;
       } else {
-        bucketExists = buckets.some((b) => b.name === AVATARS_BUCKET);
+        avatarsBucketExists = buckets.some((b) => b.name === AVATARS_BUCKET);
+        momentsBucketExists = buckets.some((b) => b.name === MOMENTS_BUCKET);
       }
     } catch (err) {
       bucketError = err instanceof Error ? err.message : "Erreur inconnue";
@@ -33,11 +35,14 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    supabaseUrl,
-    anonKey,
-    serviceRoleKey,
-    bucket: AVATARS_BUCKET,
-    bucketExists,
-    bucketError,
+    env: {
+      hasSupabaseUrl,
+      hasServiceRoleKey,
+    },
+    storage: {
+      avatarsBucketExists,
+      momentsBucketExists,
+      bucketError,
+    },
   });
 }

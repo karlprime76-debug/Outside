@@ -8,6 +8,7 @@ export const ALLOWED_MOMENT_TYPES = [
   "image/webp",
   "video/mp4",
   "video/webm",
+  "video/quicktime",
 ];
 
 export function getMomentFileExtension(fileType: string): string {
@@ -20,6 +21,8 @@ export function getMomentFileExtension(fileType: string): string {
       return "mp4";
     case "video/webm":
       return "webm";
+    case "video/quicktime":
+      return "mov";
     case "image/jpeg":
     default:
       return "jpg";

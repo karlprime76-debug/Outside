@@ -44,7 +44,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ message: "Signalement envoyé." });
   } catch (error) {
     console.error("Report moment error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
