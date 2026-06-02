@@ -31,7 +31,9 @@ import {
   Heart,
   Radio,
   CalendarDays,
+  X,
 } from "lucide-react";
+import { AvailabilitySheet } from "@/components/availability/availability-sheet";
 
 interface Plan {
   id: string;
@@ -81,6 +83,8 @@ export default function HomePage() {
   const [events, setEvents] = useState<{ id: string; title: string; startsAt: string; city?: string; priceLabel?: string }[]>([]);
   const [loadingLives, setLoadingLives] = useState(true);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [myAvailability, setMyAvailability] = useState<{ mood: string; expiresAt: string } | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const userName = session?.user?.name || "";
   const activeCity = userProfile?.activeCity;
@@ -126,7 +130,19 @@ export default function HomePage() {
         setLoadingEvents(false);
       })
       .catch(() => setLoadingEvents(false));
+
+    fetch("/api/availability?mine=1")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.availability) setMyAvailability(data.availability);
+      })
+      .catch(() => {});
   }, []);
+
+  async function deactivateAvailability() {
+    const res = await fetch("/api/availability", { method: "DELETE" });
+    if (res.ok) setMyAvailability(null);
+  }
 
   const greeting = userName ? `Bonjour ${userName.split(" ")[0]}` : "Bonjour";
 
@@ -339,17 +355,44 @@ export default function HomePage() {
           <Plus className="h-6 w-6 transition-transform group-hover:rotate-90" />
           Créer un plan
         </Link>
-        <button
-          onClick={() => {
-            const el = document.getElementById("plans-section");
-            el?.scrollIntoView({ behavior: "smooth" });
-          }}
-          className="group flex items-center justify-center gap-3 rounded-2xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)] py-5 text-lg font-black text-[var(--os-fg)] hover:border-outside-300 hover:bg-outside-50/50 transition-all pressable"
-        >
-          <Zap className="h-6 w-6 text-outside-500" />
-          Je suis dispo
-        </button>
+        {myAvailability ? (
+          <div className="flex items-center justify-between rounded-2xl border-2 border-outside-300 bg-outside-50/50 px-5 py-4">
+            <div>
+              <p className="text-sm font-bold text-outside-700">
+                Tu es dispo pour {QUICK_MOODS.find((m) => m.mood === myAvailability.mood)?.label || myAvailability.mood}
+              </p>
+              <p className="text-xs text-outside-600">
+                Jusqu&apos;à {new Date(myAvailability.expiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+              </p>
+            </div>
+            <button
+              onClick={deactivateAvailability}
+              className="rounded-full bg-white p-2 text-outside-600 hover:bg-outside-100 transition-colors"
+              title="Désactiver"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setSheetOpen(true)}
+            className="group flex items-center justify-center gap-3 rounded-2xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)] py-5 text-lg font-black text-[var(--os-fg)] hover:border-outside-300 hover:bg-outside-50/50 transition-all pressable"
+          >
+            <Zap className="h-6 w-6 text-outside-500" />
+            Je suis dispo
+          </button>
+        )}
       </div>
+
+      {sheetOpen && (
+        <AvailabilitySheet onClose={() => setSheetOpen(false)} onSubmitted={() => {
+          fetch("/api/availability?mine=1")
+            .then((r) => r.json())
+            .then((data) => {
+              if (data?.availability) setMyAvailability(data.availability);
+            });
+        }} />
+      )}
 
       {/* Plans du jour */}
       <section id="plans-section">

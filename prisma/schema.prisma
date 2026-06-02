@@ -38,6 +38,17 @@ enum NotificationType {
   SYSTEM
 }
 
+enum AvailabilityMood {
+  FOOD
+  CHILL
+  SPORT
+  MUSIC
+  OUT
+  STUDY
+  BUSINESS
+  TRAVEL
+}
+
 enum BudgetLevel {
   FREE
   LOW
@@ -211,6 +222,7 @@ model User {
   notifications     Notification[] @relation("NotificationRecipient")
   trustReviewsGiven    TrustReview[] @relation("TrustReviewReviewer")
   trustReviewsReceived TrustReview[] @relation("TrustReviewReviewed")
+  availabilities       Availability[]
 
   liveSessions      LiveSession[]
   proAccount        ProAccount?
@@ -478,6 +490,26 @@ model TrustReview {
 
   @@unique([reviewerId, reviewedId, planId])
   @@index([reviewedId])
+}
+
+model Availability {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mood        AvailabilityMood
+  city        String?
+  country     String?
+  countryCode String?
+
+  isActive    Boolean          @default(true)
+  expiresAt   DateTime
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([city, isActive])
+  @@index([userId, isActive])
 }
 
 model LiveSession {
