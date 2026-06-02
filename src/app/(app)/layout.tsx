@@ -24,7 +24,7 @@ export default async function AppLayout({
   return (
     <div className="flex flex-col min-h-screen bg-[var(--os-bg)]">
       {/* Top header */}
-      <header className="sticky top-0 z-50 border-b border-[var(--os-card-border)] glass">
+      <header className="sticky top-0 z-50 border-b border-[var(--os-card-border)] glass safe-header">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link
             href="/home"

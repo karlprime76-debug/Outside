@@ -24,11 +24,13 @@ export async function POST(req: Request) {
     let supabase;
     try {
       supabase = createSupabaseServerClient();
-    } catch {
-      return NextResponse.json(
-        { error: "Le stockage d'images n'est pas configuré." },
-        { status: 500 }
-      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Le stockage d'images n'est pas configuré.";
+      if (process.env.NODE_ENV === "development") {
+        // eslint-disable-next-line no-console
+        console.error("[AVATAR UPLOAD] Config error:", message);
+      }
+      return NextResponse.json({ error: message }, { status: 500 });
     }
 
     const formData = await req.formData();

@@ -153,6 +153,21 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 
+  .safe-header {
+    padding-top: max(env(safe-area-inset-top), 16px);
+  }
+
+  .mobile-page-padding {
+    padding-top: calc(max(env(safe-area-inset-top), 16px) + 8px);
+    padding-bottom: calc(max(env(safe-area-inset-bottom), 16px) + 72px);
+  }
+
+  @supports (height: 100dvh) {
+    .min-h-mobile {
+      min-height: 100dvh;
+    }
+  }
+
   /* Micro-interactions */
   .pressable {
     transition: transform 0.15s ease, box-shadow 0.2s ease;
