@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AnimatedPage } from "@/components/ui/animated-page";
 import {
   ArrowLeft,
   Bell,
@@ -29,6 +30,49 @@ export default function SettingsPage() {
   const [haptics, setHaptics] = useState(true);
   const [language, setLanguage] = useState("fr");
   const [visibility, setVisibility] = useState("PUBLIC");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("outside-settings");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.notifications === "boolean") setNotifications(parsed.notifications);
+        if (typeof parsed.sound === "boolean") setSound(parsed.sound);
+        if (typeof parsed.haptics === "boolean") setHaptics(parsed.haptics);
+        if (parsed.language) setLanguage(parsed.language);
+        if (parsed.visibility) setVisibility(parsed.visibility);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "outside-settings",
+        JSON.stringify({ notifications, sound, haptics, language, visibility })
+      );
+    } catch {
+      // ignore
+    }
+  }, [notifications, sound, haptics, language, visibility]);
+
+  async function updateVisibility(newValue: string) {
+    setVisibility(newValue);
+    try {
+      const res = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visibility: newValue }),
+      });
+      if (!res.ok) {
+        addToast("Visibilité sauvegardée localement", "info");
+      }
+    } catch {
+      addToast("Visibilité sauvegardée localement", "info");
+    }
+  }
 
   async function deleteAccount() {
     if (!confirm("Es-tu sûr de vouloir supprimer ton compte ? Cette action est irréversible.")) return;
@@ -77,7 +121,7 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-6">
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6">
       <Link
         href="/profile"
         className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
@@ -156,7 +200,7 @@ export default function SettingsPage() {
           </div>
           <select
             value={visibility}
-            onChange={(e) => setVisibility(e.target.value)}
+            onChange={(e) => updateVisibility(e.target.value)}
             className="rounded-lg border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-1.5 text-sm text-[var(--os-fg)]"
           >
             <option value="PUBLIC">Public</option>
@@ -203,6 +247,6 @@ export default function SettingsPage() {
           <ChevronRight className="h-4 w-4 text-red-400" />
         </button>
       </section>
-    </div>
+    </AnimatedPage>
   );
 }

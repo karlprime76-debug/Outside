@@ -18,6 +18,8 @@ export function BottomNav() {
   const pathname = usePathname();
   const t = useDictionary();
 
+  if (pathname.startsWith("/live/")) return null;
+
   return (
     <nav
       className={cn(

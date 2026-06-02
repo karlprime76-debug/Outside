@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Avatar } from "@/components/ui/avatar";
+import { useToast } from "@/components/ui/toast";
 import { MomentUploadSheet } from "@/components/moments/moment-upload-sheet";
 import { Image, Video, MapPin, Plus, ArrowLeft, Flag } from "lucide-react";
 
@@ -123,6 +124,7 @@ export default function MomentsPage() {
 
 function MomentCard({ moment }: { moment: MomentItem }) {
   const isVideo = moment.type === "VIDEO";
+  const { addToast } = useToast();
 
   return (
     <div className="os-card overflow-hidden group">
@@ -156,7 +158,7 @@ function MomentCard({ moment }: { moment: MomentItem }) {
             onClick={async () => {
               if (!confirm("Signaler ce moment ?")) return;
               const res = await fetch(`/api/moments/${moment.id}/report`, { method: "POST" });
-              if (res.ok) alert("Moment signalé.");
+              if (res.ok) addToast("Moment signalé.", "success");
             }}
             className="text-zinc-300 hover:text-red-500 transition-colors"
             title="Signaler"
