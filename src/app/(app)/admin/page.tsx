@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AnimatedPage } from "@/components/ui/animated-page";
-import { Users, CalendarDays, Store, AlertTriangle, Shield, MapPin, ArrowRight } from "lucide-react";
+import { Users, CalendarDays, Store, AlertTriangle, Shield, MapPin, ArrowRight, Briefcase, Video } from "lucide-react";
 
 export default async function AdminPage() {
   const session = await auth();
@@ -96,11 +96,12 @@ export default async function AdminPage() {
       </section>
 
       {/* Quick links */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Gérer les plans", href: "/plans", icon: CalendarDays, color: "from-outside-500 to-accent-500" },
           { label: "Gérer les lieux", href: "/places", icon: MapPin, color: "from-indigo-500 to-purple-500" },
-          { label: "Voir les utilisateurs", href: "/admin/users", icon: Users, color: "from-emerald-500 to-teal-500" },
+          { label: "Demandes pro", href: "/admin/pro-requests", icon: Briefcase, color: "from-amber-500 to-orange-500" },
+          { label: "Modérer les lives", href: "/admin/lives", icon: Video, color: "from-red-500 to-pink-500" },
         ].map((link) => (
           <Link
             key={link.href}

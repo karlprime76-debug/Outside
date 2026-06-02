@@ -32,11 +32,10 @@ export default function EventDetailPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`/api/pro/events`)
+    fetch(`/api/events/${id}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        const ev = data?.events?.find((e: EventDetail) => e.id === id);
-        if (ev) setEvent(ev);
+        if (data?.event) setEvent(data.event);
         else setError("Événement introuvable.");
         setLoading(false);
       })

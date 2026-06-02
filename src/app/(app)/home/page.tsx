@@ -119,7 +119,7 @@ export default function HomePage() {
       })
       .catch(() => setLoadingLives(false));
 
-    fetch("/api/pro/events")
+    fetch("/api/events")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         setEvents(data?.events?.slice(0, 3) || []);
