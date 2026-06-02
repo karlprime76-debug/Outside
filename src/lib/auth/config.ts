@@ -45,13 +45,18 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
+        token.image = user.image;
         token.country = user.country;
         token.countryCode = user.countryCode;
         token.homeCity = user.homeCity;
         token.activeCity = user.activeCity;
+      }
+      // Mise à jour du token lors d'un update() client
+      if (trigger === "update" && session?.image) {
+        token.image = session.image;
       }
       return token;
     },
@@ -73,6 +78,9 @@ export const authConfig: NextAuthConfig = {
       }
       if (token.activeCity) {
         session.user.activeCity = token.activeCity as string;
+      }
+      if (token.image) {
+        session.user.image = token.image as string;
       }
       return session;
     },

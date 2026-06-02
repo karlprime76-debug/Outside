@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Avatar } from "@/components/ui/avatar";
 import { InputField } from "@/components/ui/input-field";
@@ -25,6 +26,7 @@ interface ProfileData {
 
 export default function EditProfilePage() {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -110,8 +112,13 @@ export default function EditProfilePage() {
       }
 
       setPreviewImage(json.image);
+      if (json.user) {
+        setProfile(json.user);
+      }
       setSuccess(json.message || "Photo de profil mise à jour.");
       setTimeout(() => setSuccess(""), 3000);
+      // Mettre à jour la session NextAuth pour refléter le nouvel avatar partout
+      await updateSession({ image: json.image });
       router.refresh();
     } catch {
       setError("Impossible d'envoyer la photo. Réessaie.");
@@ -146,8 +153,11 @@ export default function EditProfilePage() {
         return;
       }
 
+      setProfile(json);
       setSuccess("Profil mis à jour.");
       setTimeout(() => setSuccess(""), 3000);
+      // Mettre à jour la session NextAuth (name, image, etc.)
+      await updateSession({ name: json.name, image: json.image });
       router.refresh();
     } catch {
       setError("Impossible de mettre à jour le profil.");

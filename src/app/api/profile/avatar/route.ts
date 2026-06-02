@@ -169,9 +169,29 @@ export async function POST(req: Request) {
     console.log("[AVATAR_UPLOAD] publicUrl:", publicUrl);
 
     try {
-      await db.user.update({
+      const updated = await db.user.update({
         where: { id: user.id },
         data: { image: publicUrl },
+        include: { homeCity: true, activeCity: true },
+      });
+
+      console.log("[AVATAR_UPLOAD] success");
+      return NextResponse.json({
+        message: "Photo de profil mise à jour.",
+        image: publicUrl,
+        user: {
+          id: updated.id,
+          name: updated.name,
+          username: updated.username,
+          email: updated.email,
+          image: updated.image,
+          bio: updated.bio,
+          country: updated.country,
+          countryCode: updated.countryCode,
+          homeCity: updated.homeCity?.name || null,
+          activeCity: updated.activeCity?.name || null,
+        },
+        code: "SUCCESS",
       });
     } catch (prismaErr) {
       console.error("[AVATAR_UPLOAD] Prisma update error:", prismaErr);
@@ -183,13 +203,6 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-
-    console.log("[AVATAR_UPLOAD] success");
-    return NextResponse.json({
-      message: "Photo de profil mise à jour.",
-      image: publicUrl,
-      code: "SUCCESS",
-    });
   } catch (error) {
     console.error("[AVATAR_UPLOAD] Unexpected error:", error);
     return NextResponse.json(
