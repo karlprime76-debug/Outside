@@ -115,10 +115,16 @@ export async function POST(req: Request, { params }: Params) {
       isHost: mode === "host",
     });
 
+    if (process.env.NODE_ENV === "development") {
+      console.log("[LIVEKIT_API_TOKEN]", { liveId: live.id, mode, isHost: mode === "host", roomName });
+    }
+
     return NextResponse.json({
       token,
       url: env.url,
       roomName,
+      mode,
+      isHost: mode === "host",
       message: "Token LiveKit généré.",
       code: "SUCCESS",
     });

@@ -61,6 +61,28 @@ export default function LiveDetailPage() {
   async function fetchToken(mode: "host" | "viewer") {
     setActionLoading(true);
     setError("");
+
+    // Host : pré-vérification permissions caméra/micro
+    if (mode === "host" && typeof navigator !== "undefined" && navigator.mediaDevices) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+      } catch (err: unknown) {
+        setActionLoading(false);
+        const e = err as Error;
+        if (e.name === "NotAllowedError" || e.message?.includes("Permission")) {
+          setError("Autorise la caméra et le micro pour lancer ton live.");
+        } else if (e.name === "NotFoundError") {
+          setError("Aucune caméra ou aucun micro détecté.");
+        } else if (e.name === "NotReadableError" || e.message?.includes("in use")) {
+          setError("Ta caméra ou ton micro est déjà utilisé par une autre application.");
+        } else {
+          setError("Impossible d'accéder à la caméra ou au micro.");
+        }
+        return;
+      }
+    }
+
     try {
       const res = await fetch(`/api/lives/${id}/token`, {
         method: "POST",
@@ -72,6 +94,17 @@ export default function LiveDetailPage() {
         setError(json.message || "Erreur.");
         return;
       }
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("[LIVE_VIEW]", {
+          hasToken: Boolean(json.token),
+          hasUrl: Boolean(json.url),
+          roomName: json.roomName,
+          mode: json.mode,
+          isHost: json.isHost,
+        });
+      }
+
       setTokenData({ token: json.token, url: json.url, roomName: json.roomName });
       setInRoom(true);
       // Mettre à jour le live si le host démarre
