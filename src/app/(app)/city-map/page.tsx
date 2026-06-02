@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   MapPin,
   Radio,
@@ -107,7 +108,7 @@ export default function CityMapPage() {
   }, []);
 
   return (
-    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-8 pb-24 md:pb-4">
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-8 pb-24 md:pb-4 animate-slide-up">
       {/* Header */}
       <div className="flex items-center justify-between">
         <Link
@@ -130,13 +131,11 @@ export default function CityMapPage() {
       </div>
 
       {loading ? (
-        <div className="os-card p-10 text-center">
+        <div className="os-card p-10 text-center animate-fade-in">
           <p className="text-sm text-[var(--os-muted)]">Chargement...</p>
         </div>
       ) : !data ? (
-        <div className="os-card p-10 text-center">
-          <p className="text-sm text-[var(--os-muted)]">Impossible de charger la carte.</p>
-        </div>
+        <EmptyState icon={MapPin} title="Impossible de charger la carte" description="Réessaie plus tard." />
       ) : (
         <>
           {/* City status card */}
@@ -319,21 +318,12 @@ export default function CityMapPage() {
           )}
 
           {data.totalActivity === 0 && (
-            <div className="os-card p-10 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--os-bg)]">
-                <Moon className="h-6 w-6 text-[var(--os-muted)]" />
-              </div>
-              <h3 className="mt-3 text-sm font-bold text-[var(--os-fg)]">C&apos;est calme ici</h3>
-              <p className="mt-1 text-xs text-[var(--os-muted)]">
-                Aucune activité visible pour le moment dans cette ville.
-              </p>
-              <Link
-                href="/plans/new"
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-              >
-                Créer un plan
-              </Link>
-            </div>
+            <EmptyState
+              icon={Moon}
+              title="C'est calme ici"
+              description="Aucune activité visible pour le moment dans cette ville."
+              cta={{ label: "Créer un plan", href: "/plans/new" }}
+            />
           )}
         </>
       )}

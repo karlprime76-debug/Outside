@@ -129,7 +129,7 @@ export default function PassportPage() {
 
   if (loading) {
     return (
-      <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-8">
+      <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-8 animate-fade-in">
         <div className="h-40 rounded-3xl bg-[var(--os-card-border)] animate-pulse" />
         <div className="h-32 rounded-2xl bg-[var(--os-card-border)] animate-pulse" />
         <div className="h-32 rounded-2xl bg-[var(--os-card-border)] animate-pulse" />
@@ -138,7 +138,7 @@ export default function PassportPage() {
   }
 
   return (
-    <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-8 pb-24 md:pb-4">
+    <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-8 pb-24 md:pb-4 animate-slide-up">
       {/* Hero immersif voyage */}
       <ImmersiveBackground
         daySrc={backgrounds.passport.day}

@@ -10,6 +10,8 @@ import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
 import { ThemeAwareLogo } from "@/components/ui/theme-aware-logo";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
+import { EmptyState } from "@/components/ui/empty-state";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { backgrounds } from "@/lib/backgrounds";
 import {
   MapPin,
@@ -255,7 +257,7 @@ export default function HomePage() {
       </ImmersiveBackground>
 
       {/* Lives */}
-      <section>
+      <section className="animate-slide-up animate-stagger-1">
         <SectionTitle
           title="En direct maintenant"
           icon={<Radio className="h-5 w-5 text-red-500" />}
@@ -273,20 +275,17 @@ export default function HomePage() {
             ))}
           </div>
         ) : lives.length === 0 ? (
-          <div className="os-card p-6 text-center">
-            <p className="text-sm text-[var(--os-muted)]">Aucun live pour le moment dans ta ville.</p>
-          </div>
+          <EmptyState
+            icon={Radio}
+            title="Aucun live pour le moment"
+            description="Lance un live ou reviens plus tard."
+          />
         ) : (
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-            {lives.map((live) => (
-              <Link key={live.id} href={`/live/${live.id}`} className="min-w-[220px] flex-shrink-0 os-card p-4 hover:shadow-card-hover transition-all block">
+            {lives.map((live, i) => (
+              <Link key={live.id} href={`/live/${live.id}`} className={`min-w-[220px] flex-shrink-0 os-card p-4 card-hover block animate-slide-up animate-stagger-${Math.min(i+1, 6)}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                    live.status === "LIVE" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
-                  }`}>
-                    {live.status === "LIVE" && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
-                    {live.status === "LIVE" ? "En direct" : "Prévu"}
-                  </span>
+                  <StatusBadge status={live.status === "LIVE" ? "live" : "soon"} text={live.status === "LIVE" ? "En direct" : "Prévu"} />
                 </div>
                 <h3 className="font-bold text-sm text-[var(--os-fg)] truncate">{live.title}</h3>
                 <p className="text-xs text-[var(--os-muted)] mt-1">{live.host.name || "Anonyme"} · {live.city}</p>
@@ -297,7 +296,7 @@ export default function HomePage() {
       </section>
 
       {/* Pro Events */}
-      <section>
+      <section className="animate-slide-up animate-stagger-2">
         <SectionTitle
           title="Événements pro"
           icon={<CalendarDays className="h-5 w-5 text-outside-500" />}
@@ -315,13 +314,15 @@ export default function HomePage() {
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="os-card p-6 text-center">
-            <p className="text-sm text-[var(--os-muted)]">Aucun événement pro publié pour le moment.</p>
-          </div>
+          <EmptyState
+            icon={CalendarDays}
+            title="Aucun événement pro"
+            description="Les organisateurs publient leurs événements ici."
+          />
         ) : (
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-            {events.map((ev) => (
-              <Link key={ev.id} href={`/events/${ev.id}`} className="min-w-[220px] flex-shrink-0 os-card p-4 hover:shadow-card-hover transition-all block">
+            {events.map((ev, i) => (
+              <Link key={ev.id} href={`/events/${ev.id}`} className={`min-w-[220px] flex-shrink-0 os-card p-4 card-hover block animate-slide-up animate-stagger-${Math.min(i+1, 6)}`}>
                 <h3 className="font-bold text-sm text-[var(--os-fg)] truncate">{ev.title}</h3>
                 <p className="text-xs text-[var(--os-muted)] mt-1">
                   {new Date(ev.startsAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
@@ -337,18 +338,18 @@ export default function HomePage() {
       </section>
 
       {/* Quick moods */}
-      <section>
+      <section className="animate-slide-up animate-stagger-3">
         <h2 className="text-lg font-black text-[var(--os-fg)] mb-4">
           Tu veux faire quoi maintenant ?
         </h2>
         <div className="flex flex-wrap gap-2">
-          {QUICK_MOODS.map((m) => {
+          {QUICK_MOODS.map((m, i) => {
             const Icon = m.icon;
             return (
               <Link
                 key={m.mood}
                 href={`/plans?mood=${m.mood}`}
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-2 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 hover:text-outside-600 transition-colors"
+                className={`inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 hover:text-outside-600 transition-colors card-hover animate-fade-in animate-stagger-${Math.min(i+1, 6)}`}
               >
                 <Icon className="h-4 w-4" />
                 {m.label}
@@ -478,24 +479,12 @@ export default function HomePage() {
             <SkeletonCard />
           </div>
         ) : todayPlans.length === 0 ? (
-          <div className="os-card p-8 text-center">
-            <div className="mx-auto h-14 w-14 rounded-full bg-outside-100 flex items-center justify-center mb-4">
-              <Sparkles className="h-7 w-7 text-outside-600" />
-            </div>
-            <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">
-              Aucun plan pour le moment dans ta ville.
-            </h3>
-            <p className="text-sm text-[var(--os-muted)] mb-4">
-              Sois le premier à créer un plan ce soir.
-            </p>
-            <Link
-              href="/plans/new"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-6 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-            >
-              <Plus className="h-4 w-4" />
-              Créer un plan
-            </Link>
-          </div>
+          <EmptyState
+            icon={Sparkles}
+            title="Aucun plan pour le moment"
+            description="Sois le premier à créer un plan ce soir."
+            cta={{ label: "Créer un plan", href: "/plans/new" }}
+          />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {todayPlans.map((plan) => (
@@ -553,17 +542,11 @@ export default function HomePage() {
             ))}
           </div>
         ) : places.length === 0 ? (
-          <div className="os-card p-8 text-center">
-            <div className="mx-auto h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-              <MapPin className="h-7 w-7 text-emerald-600" />
-            </div>
-            <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">
-              Aucun lieu enregistré dans ta ville.
-            </h3>
-            <p className="text-sm text-[var(--os-muted)]">
-              Les lieux apparaîtront bientôt.
-            </p>
-          </div>
+          <EmptyState
+            icon={MapPin}
+            title="Aucun lieu enregistré"
+            description="Les lieux apparaîtront bientôt dans ta ville."
+          />
         ) : (
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
             {places.map((place) => (

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Avatar } from "@/components/ui/avatar";
 import { InputField } from "@/components/ui/input-field";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Search, UserPlus, UserCheck, UserX, Users, Loader2, UserCircle, UserSearch, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -179,7 +180,7 @@ export default function FriendsPage() {
 
   if (loading) {
     return (
-      <AnimatedPage className="flex min-h-[60vh] items-center justify-center">
+      <AnimatedPage className="flex min-h-[60vh] items-center justify-center animate-fade-in">
         <Loader2 className="h-8 w-8 animate-spin text-outside-500" />
       </AnimatedPage>
     );
@@ -188,8 +189,13 @@ export default function FriendsPage() {
   const hasRequests = receivedRequests.length > 0 || sentRequests.length > 0;
 
   return (
-    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-4">
-      <h1 className="text-xl font-black text-[var(--os-fg)]">Amis</h1>
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-4 animate-slide-up">
+      <h1 className="text-2xl font-black text-[var(--os-fg)] flex items-center gap-3">
+        <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
+          <Users className="h-5 w-5 text-white" />
+        </div>
+        Amis
+      </h1>
 
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
@@ -237,7 +243,7 @@ export default function FriendsPage() {
           )}
 
           {searchQuery.length >= 2 && !searchLoading && searchResults.length === 0 && (
-            <p className="text-sm text-[var(--os-muted)]">Aucun résultat.</p>
+            <EmptyState icon={UserSearch} title="Aucun résultat" description="Essaye un autre nom d'utilisateur." />
           )}
 
           {searchResults.length > 0 && (
@@ -320,7 +326,7 @@ export default function FriendsPage() {
           )}
 
           {!hasRequests && (
-            <p className="text-sm text-[var(--os-muted)] text-center py-8">Aucune demande pour le moment.</p>
+            <EmptyState icon={Send} title="Aucune demande" description="Tes demandes d'amis apparaîtront ici." />
           )}
         </div>
       )}
@@ -329,8 +335,8 @@ export default function FriendsPage() {
       {activeTab === "suggestions" && (
         <div className="space-y-3">
           {suggestions.length > 0 ? (
-            suggestions.map((s) => (
-              <div key={s.id} className="os-card p-4 flex items-center justify-between">
+            suggestions.map((s, i) => (
+              <div key={s.id} className={`os-card p-4 flex items-center justify-between card-hover animate-slide-up animate-stagger-${Math.min(i+1, 6)}`}>
                 <Link href={`/u/${s.username}`} className="flex items-center gap-3">
                   <Avatar src={s.image} name={s.name} size="md" />
                   <div>
@@ -350,7 +356,7 @@ export default function FriendsPage() {
               </div>
             ))
           ) : (
-            <p className="text-sm text-[var(--os-muted)] text-center py-8">Aucune suggestion pour le moment.</p>
+            <EmptyState icon={Sparkles} title="Aucune suggestion" description="On te proposera des personnes proches de ta ville bientôt." />
           )}
         </div>
       )}
@@ -365,9 +371,7 @@ export default function FriendsPage() {
             </h2>
           </div>
           {friends.length === 0 ? (
-            <p className="text-sm text-[var(--os-muted)] text-center py-8">
-              Tu n&apos;as pas encore d&apos;amis. Cherche un utilisateur pour commencer !
-            </p>
+            <EmptyState icon={Users} title="Pas encore d'amis" description="Cherche un utilisateur pour commencer !" />
           ) : (
             <div className="grid grid-cols-1 gap-3">
               {friends.map((f) => (
@@ -416,7 +420,7 @@ export default function FriendsPage() {
           )}
 
           {followers.length === 0 && following.length === 0 && (
-            <p className="text-sm text-[var(--os-muted)] text-center py-8">Aucun abonné ni abonnement.</p>
+            <EmptyState icon={Users} title="Aucun abonné" description="Tes abonnés et abonnements apparaîtront ici." />
           )}
         </div>
       )}

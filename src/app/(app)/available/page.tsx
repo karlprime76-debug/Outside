@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
-import { MapPin, ArrowLeft, Zap, Plus } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { MapPin, ArrowLeft, Zap } from "lucide-react";
 
 interface AvailabilityItem {
   id: string;
@@ -77,7 +78,7 @@ export default function AvailablePage() {
   }, []);
 
   return (
-    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4">
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-slide-up">
       <Link
         href="/home"
         className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
@@ -96,41 +97,29 @@ export default function AvailablePage() {
       </div>
 
       {myCity && (
-        <div className="flex items-center gap-1.5 text-sm text-[var(--os-muted)]">
+        <div className="flex items-center gap-1.5 text-sm text-[var(--os-muted)] animate-fade-in">
           <MapPin className="h-3.5 w-3.5" />
           <span>{myCity}</span>
         </div>
       )}
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center">
+        <div className="flex h-40 items-center justify-center animate-fade-in">
           <LoadingScreen size="sm" />
         </div>
       ) : items.length === 0 ? (
-        <div className="os-card p-10 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--os-bg)]">
-            <Zap className="h-6 w-6 text-[var(--os-muted)]" />
-          </div>
-          <h3 className="mt-3 text-sm font-bold text-[var(--os-fg)]">
-            Personne n&apos;est disponible pour le moment
-          </h3>
-          <p className="mt-1 text-xs text-[var(--os-muted)]">
-            Sois le premier à te rendre disponible !
-          </p>
-          <Link
-            href="/home"
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-          >
-            <Plus className="h-4 w-4" />
-            Me rendre dispo
-          </Link>
-        </div>
+        <EmptyState
+          icon={Zap}
+          title="Personne n'est disponible"
+          description="Sois le premier à te rendre disponible !"
+          cta={{ label: "Me rendre dispo", href: "/home" }}
+        />
       ) : (
         <div className="space-y-3">
-          {items.map((item) => (
+          {items.map((item, i) => (
             <div
               key={item.id}
-              className="os-card p-4 flex items-center gap-4 hover:shadow-card-hover transition-all"
+              className={`os-card p-4 flex items-center gap-4 card-hover animate-slide-up animate-stagger-${Math.min(i+1, 6)}`}
             >
               <Avatar src={item.user.image} name={item.user.name} size="md" />
               <div className="flex-1 min-w-0">

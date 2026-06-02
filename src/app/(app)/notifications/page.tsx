@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Bell,
@@ -146,7 +147,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6">
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 animate-slide-up">
       <Link
         href="/home"
         className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
@@ -165,7 +166,7 @@ export default function NotificationsPage() {
         {notifications.length > 0 && (
           <button
             onClick={markAllRead}
-            className="flex items-center gap-1 text-xs font-bold text-outside-600"
+            className="flex items-center gap-1 text-xs font-bold text-outside-600 press"
           >
             <CheckCheck className="h-3.5 w-3.5" />
             Tout lire
@@ -174,24 +175,18 @@ export default function NotificationsPage() {
       </div>
 
       {loading ? (
-        <div className="flex h-40 items-center justify-center">
+        <div className="flex h-40 items-center justify-center animate-fade-in">
           <LoadingScreen size="sm" />
         </div>
       ) : notifications.length === 0 ? (
-        <div className="os-card p-10 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--os-bg)]">
-            <Bell className="h-6 w-6 text-[var(--os-muted)]" />
-          </div>
-          <h3 className="mt-3 text-sm font-bold text-[var(--os-fg)]">
-            Pas de notifications
-          </h3>
-          <p className="mt-1 text-xs text-[var(--os-muted)]">
-            On te préviendra quand il y aura du nouveau.
-          </p>
-        </div>
+        <EmptyState
+          icon={Bell}
+          title="Pas de notifications"
+          description="On te préviendra quand il y aura du nouveau."
+        />
       ) : (
         <div className="space-y-2">
-          {notifications.map((n) => {
+          {notifications.map((n, i) => {
             const Icon = iconFor(n.type);
             const href = getLink(n);
             return (
@@ -199,7 +194,7 @@ export default function NotificationsPage() {
                 key={n.id}
                 href={href}
                 onClick={() => { if (!n.isRead) markOneRead(n.id); }}
-                className={`flex items-start gap-3 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-card ${
+                className={`flex items-start gap-3 rounded-2xl border p-4 transition-all card-hover animate-slide-up animate-stagger-${Math.min(i+1, 6)} ${
                   n.isRead
                     ? "border-[var(--os-card-border)] bg-[var(--os-card)]"
                     : "border-outside-200 bg-outside-50/30"

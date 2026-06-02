@@ -43,9 +43,9 @@ export default async function ProfilePage() {
   const trust = await getTrustData(user.id);
 
   return (
-    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6">
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 animate-slide-up">
       {/* Header card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow animate-fade-in">
         <div className="relative z-10 flex items-center gap-4">
           <Avatar src={user.image} name={user.name} size="xl" />
           <div className="flex-1">
@@ -64,27 +64,29 @@ export default async function ProfilePage() {
       </div>
 
       {/* Trust signals */}
-      <div className="os-card p-5">
+      <div className="os-card p-5 animate-slide-up animate-stagger-1">
         <h3 className="text-sm font-bold text-[var(--os-fg)] mb-3">Signaux de confiance</h3>
         <TrustSignals signals={trust.signals} compact />
       </div>
 
-      <UserBadges userId={user.id} />
+      <div className="animate-slide-up animate-stagger-2">
+        <UserBadges userId={user.id} />
+      </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="os-card p-5 text-center">
+      <div className="grid grid-cols-2 gap-3 animate-slide-up animate-stagger-3">
+        <div className="os-card p-5 text-center card-hover">
           <p className="text-2xl font-black text-outside-600">{joinedPlansCount}</p>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Plans rejoints</p>
         </div>
-        <div className="os-card p-5 text-center">
+        <div className="os-card p-5 text-center card-hover">
           <p className="text-2xl font-black text-accent-600">{createdPlansCount}</p>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Plans créés</p>
         </div>
       </div>
 
       {/* Info card */}
-      <div className="os-card p-6 space-y-4">
+      <div className="os-card p-6 space-y-4 animate-slide-up animate-stagger-4">
         <h2 className="text-lg font-bold text-[var(--os-fg)]">Informations</h2>
         <InfoRow icon={Mail} label="Email" value={user.email} />
         <InfoRow icon={User} label="Bio" value={user.bio || "-"} />
@@ -97,7 +99,7 @@ export default async function ProfilePage() {
       </div>
 
       {/* Friends */}
-      <div className="os-card p-6">
+      <div className="os-card p-6 animate-slide-up animate-stagger-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-outside-500" />
@@ -108,7 +110,12 @@ export default async function ProfilePage() {
           </Link>
         </div>
         {friends.length === 0 ? (
-          <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis. Explore les plans pour en rencontrer !</p>
+          <div className="text-center py-6">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--os-bg)] mb-3">
+              <Users className="h-5 w-5 text-[var(--os-muted)]" />
+            </div>
+            <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis. Explore les plans pour en rencontrer !</p>
+          </div>
         ) : (
           <div className="flex flex-wrap gap-3">
             {friends.map((friend) => (
@@ -126,7 +133,7 @@ export default async function ProfilePage() {
       </div>
 
       {/* Actions */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 animate-slide-up animate-stagger-6">
         <Link
           href="/profile/edit"
           className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"

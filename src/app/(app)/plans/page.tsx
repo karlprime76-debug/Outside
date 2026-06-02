@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { PlanCard } from "@/components/plan-card";
-import { EmptyState } from "@/components/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
@@ -95,7 +95,7 @@ export default function PlansPage() {
     : plans;
 
   return (
-    <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6">
+    <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6 animate-slide-up">
       {/* Bandeau immersif */}
       <ImmersiveBackground
         daySrc={backgrounds.plans.day}
@@ -103,7 +103,7 @@ export default function PlansPage() {
         alt="Plans background"
         overlay="night"
         height="section"
-        className="rounded-2xl"
+        className="rounded-2xl animate-fade-in"
       >
         <div className="flex flex-1 flex-col justify-center p-6">
           <div className="flex items-center justify-between gap-4">
@@ -113,7 +113,7 @@ export default function PlansPage() {
             </div>
             <Link
               href="/plans/new"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable shrink-0"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable shrink-0 animate-soft-glow"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t.plans.newPlan}</span>
@@ -239,8 +239,10 @@ export default function PlansPage() {
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredPlans.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} showJoin />
+          {filteredPlans.map((plan, i) => (
+            <div key={plan.id} className={`animate-slide-up animate-stagger-${Math.min(i+1, 6)}`}>
+              <PlanCard plan={plan} showJoin />
+            </div>
           ))}
         </div>
       )}
