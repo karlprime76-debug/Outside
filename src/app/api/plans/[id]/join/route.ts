@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { canJoinPlan } from "@/lib/plans/permissions";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,6 +11,12 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     }
 
     const { id } = await params;
+
+    const allowed = await canJoinPlan(user.id, id);
+    if (!allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const plan = await db.plan.findUnique({
       where: { id },
       include: { _count: { select: { participants: true } } },

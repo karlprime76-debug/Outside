@@ -21,6 +21,7 @@ interface PlanDetail {
   endDate: string | null;
   maxParticipants: number;
   status: string;
+  visibility: string;
   isTravelerFriendly: boolean;
   safetyLevel: string;
   rules: string | null;
@@ -30,6 +31,22 @@ interface PlanDetail {
   participants: { user: { id: string; name: string | null; image: string | null } }[];
   _count: { participants: number };
 }
+
+const VISIBILITY_LABELS: Record<string, string> = {
+  PUBLIC: "Public",
+  FRIENDS: "Amis uniquement",
+  FRIENDS_OF_FRIENDS: "Amis d'amis",
+  INVITE_ONLY: "Sur invitation",
+  PRIVATE: "Privé",
+};
+
+const VISIBILITY_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]> = {
+  PUBLIC: "green",
+  FRIENDS: "blue",
+  FRIENDS_OF_FRIENDS: "purple",
+  INVITE_ONLY: "orange",
+  PRIVATE: "slate",
+};
 
 const MOOD_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]> = {
   CHILL: "blue", FOOD: "orange", SPORT: "green", PARTY: "purple",
@@ -110,6 +127,9 @@ export default function PlanDetailPage() {
           <Badge variant="slate">{plan.budgetLevel}</Badge>
           <Badge variant={plan.status === "ACTIVE" ? "green" : plan.status === "FULL" ? "orange" : plan.status === "CANCELLED" ? "red" : "default"}>
             {plan.status}
+          </Badge>
+          <Badge variant={VISIBILITY_VARIANTS[plan.visibility] || "default"}>
+            {VISIBILITY_LABELS[plan.visibility] || plan.visibility}
           </Badge>
           {plan.isTravelerFriendly && (
             <Badge variant="green">{t.planDetail.travelerFriendly}</Badge>

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { CalendarDays, Plus, SlidersHorizontal, X } from "lucide-react";
+import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle } from "lucide-react";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
 
@@ -36,6 +36,20 @@ const MOOD_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]> = {
   BUSINESS: "slate", CULTURE: "purple", TRAVEL: "green", GAMING: "orange", FITNESS: "green",
 };
 
+interface Invitation {
+  id: string;
+  plan: {
+    id: string;
+    title: string;
+    mood: string;
+    startDate: string;
+    city: { name: string };
+    creator: { id: string; name: string | null; image: string | null };
+  };
+  sender: { id: string; name: string | null; image: string | null };
+  createdAt: string;
+}
+
 export default function PlansPage() {
   const t = useDictionary();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -44,6 +58,8 @@ export default function PlansPage() {
   const [budget, setBudget] = useState("");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [loadingInvitations, setLoadingInvitations] = useState(true);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -58,6 +74,14 @@ export default function PlansPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    fetch("/api/plans/invitations")
+      .then((r) => r.json())
+      .then((data) => {
+        setInvitations(data.invitations || []);
+        setLoadingInvitations(false);
+      })
+      .catch(() => setLoadingInvitations(false));
   }, [mood, budget]);
 
   const hasFilters = mood || budget || search;
@@ -148,6 +172,55 @@ export default function PlansPage() {
             <Badge variant="slate">{budget}</Badge>
           )}
         </div>
+      )}
+
+      {/* Invitations */}
+      {!loadingInvitations && invitations.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Mail className="h-5 w-5 text-outside-500" />
+            <h2 className="text-lg font-black text-[var(--os-fg)]">Invitations reçues</h2>
+          </div>
+          <div className="space-y-3">
+            {invitations.map((inv) => (
+              <div key={inv.id} className="os-card p-4 flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-[var(--os-fg)] truncate">{inv.plan.title}</p>
+                  <p className="text-xs text-[var(--os-muted)]">
+                    Par {inv.sender.name || "Anonyme"} · {inv.plan.city.name}
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={async () => {
+                      const res = await fetch(`/api/plans/invitations/${inv.id}/accept`, { method: "POST" });
+                      if (res.ok) {
+                        setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
+                        window.location.reload();
+                      }
+                    }}
+                    className="rounded-lg bg-emerald-100 p-2 text-emerald-700 hover:bg-emerald-200 transition-colors"
+                    title="Accepter"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const res = await fetch(`/api/plans/invitations/${inv.id}/decline`, { method: "POST" });
+                      if (res.ok) {
+                        setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
+                      }
+                    }}
+                    className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 transition-colors"
+                    title="Refuser"
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Plans grid */}

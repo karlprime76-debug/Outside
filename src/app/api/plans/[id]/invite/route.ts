@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { canInviteToPlan, isFriend } from "@/lib/plans/permissions";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -11,6 +12,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     const { id } = await params;
+
+    const allowed = await canInviteToPlan(user.id, id);
+    if (!allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const limit = rateLimit(`invite:${user.id}:${id}`, 5, 60000);
     if (!limit.success) {
@@ -26,20 +32,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "userId required" }, { status: 400 });
     }
 
-    // Verify they are friends
-    const friendship = await db.friendship.findFirst({
-      where: {
-        OR: [
-          { initiatorId: user.id, receiverId: userId },
-          { initiatorId: userId, receiverId: user.id },
-        ],
-      },
-    });
-    if (!friendship) {
+    if (!(await isFriend(user.id, userId))) {
       return NextResponse.json({ error: "Must be friends to invite" }, { status: 403 });
     }
 
-    // Check if already participant
     const existing = await db.planParticipant.findUnique({
       where: { planId_userId: { planId: id, userId } },
     });
@@ -47,24 +43,36 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "User already joined" }, { status: 409 });
     }
 
-    // Create system message in chat
+    const existingInvitation = await db.planInvitation.findUnique({
+      where: { planId_receiverId: { planId: id, receiverId: userId } },
+    });
+    if (existingInvitation && existingInvitation.status === "PENDING") {
+      return NextResponse.json({ error: "Invitation already sent" }, { status: 409 });
+    }
+
+    const invitation = await db.planInvitation.create({
+      data: {
+        planId: id,
+        senderId: user.id,
+        receiverId: userId,
+        status: "PENDING",
+      },
+    });
+
     const invitedUser = await db.user.findUnique({
       where: { id: userId },
       select: { name: true },
     });
 
-    const message = await db.planMessage.create({
+    await db.planMessage.create({
       data: {
         planId: id,
         authorId: user.id,
         content: `📩 a invité ${invitedUser?.name || "quelqu'un"} à rejoindre le plan`,
       },
-      include: {
-        author: { select: { id: true, name: true, image: true } },
-      },
     });
 
-    return NextResponse.json({ message }, { status: 201 });
+    return NextResponse.json({ invitation }, { status: 201 });
   } catch (error) {
     console.error("Invite error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

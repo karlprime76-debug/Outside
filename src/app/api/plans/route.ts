@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createPlanSchema } from "@/lib/validation/schemas";
+import { PlanVisibility } from "@prisma/client";
 
 export async function GET(req: Request) {
   try {
@@ -17,16 +18,58 @@ export async function GET(req: Request) {
     const category = searchParams.get("category");
     const travelerFriendly = searchParams.get("travelerFriendly");
 
-    const where: Record<string, unknown> = { status: "ACTIVE" };
+    const friendRows = await db.friendship.findMany({
+      where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
+      select: { initiatorId: true, receiverId: true },
+    });
+    const friendIds = friendRows.map((f) =>
+      f.initiatorId === user.id ? f.receiverId : f.initiatorId
+    );
 
-    if (cityId) where.cityId = cityId;
-    if (mood) where.mood = mood;
-    if (budgetLevel) where.budgetLevel = budgetLevel;
-    if (category) where.category = category;
-    if (travelerFriendly === "true") where.isTravelerFriendly = true;
+    let fofIds: string[] = [];
+    if (friendIds.length > 0) {
+      const fofRows = await db.friendship.findMany({
+        where: {
+          OR: friendIds.flatMap((fid) => [
+            { initiatorId: fid },
+            { receiverId: fid },
+          ]),
+        },
+        select: { initiatorId: true, receiverId: true },
+      });
+      fofIds = Array.from(
+        new Set(
+          fofRows
+            .map((f) => (friendIds.includes(f.initiatorId) ? f.receiverId : f.initiatorId))
+            .filter((id) => id !== user.id && !friendIds.includes(id))
+        )
+      );
+    }
+
+    const invitedPlanIds = await db.planInvitation.findMany({
+      where: { receiverId: user.id, status: { in: ["PENDING", "ACCEPTED"] } },
+      select: { planId: true },
+    });
+    const invitedIds = invitedPlanIds.map((i) => i.planId);
+
+    const baseWhere: Record<string, unknown> = { status: "ACTIVE" };
+    if (cityId) baseWhere.cityId = cityId;
+    if (mood) baseWhere.mood = mood;
+    if (budgetLevel) baseWhere.budgetLevel = budgetLevel;
+    if (category) baseWhere.category = category;
+    if (travelerFriendly === "true") baseWhere.isTravelerFriendly = true;
 
     const plans = await db.plan.findMany({
-      where,
+      where: {
+        ...baseWhere,
+        OR: [
+          { visibility: PlanVisibility.PUBLIC },
+          { creatorId: user.id },
+          { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
+          { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
+          ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
+        ],
+      },
       orderBy: { startDate: "asc" },
       take: 50,
       include: {

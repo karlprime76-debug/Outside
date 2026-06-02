@@ -76,8 +76,8 @@ enum PlanVisibility {
   PUBLIC
   FRIENDS
   FRIENDS_OF_FRIENDS
+  INVITE_ONLY
   PRIVATE
-  VERIFIED_ONLY
 }
 
 enum PlanStatus {
@@ -85,6 +85,13 @@ enum PlanStatus {
   FULL
   CANCELLED
   COMPLETED
+}
+
+enum PlanInvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
 }
 
 enum PlaceCategory {
@@ -205,6 +212,8 @@ model User {
   plansCreated      Plan[]
   planParticipants  PlanParticipant[]
   planMessages      PlanMessage[]
+  planInvitationsSent    PlanInvitation[] @relation("PlanInvitationSender")
+  planInvitationsReceived PlanInvitation[] @relation("PlanInvitationReceiver")
   reportsMade       Report[] @relation("Reporter")
   reportsReceived   Report[] @relation("Reported")
   blocksMade        UserBlock[] @relation("Blocker")
@@ -316,6 +325,7 @@ model Plan {
   creator           User            @relation(fields: [creatorId], references: [id])
   participants      PlanParticipant[]
   messages          PlanMessage[]
+  invitations       PlanInvitation[]
   reports           Report[]
 
   createdAt         DateTime        @default(now())
@@ -327,6 +337,23 @@ model Plan {
   @@index([visibility])
   @@index([mood])
   @@index([startDate])
+}
+
+model PlanInvitation {
+  id         String               @id @default(cuid())
+  planId     String
+  plan       Plan                 @relation(fields: [planId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User                 @relation("PlanInvitationSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User                 @relation("PlanInvitationReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     PlanInvitationStatus @default(PENDING)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@unique([planId, receiverId])
+  @@index([receiverId, status])
+  @@index([planId])
 }
 
 model PlanParticipant {

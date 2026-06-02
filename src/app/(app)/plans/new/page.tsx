@@ -20,7 +20,14 @@ const CATEGORIES = [
 ];
 
 const BUDGETS = ["FREE", "LOW", "MEDIUM", "PREMIUM"];
-const VISIBILITY = ["PUBLIC", "FRIENDS", "FRIENDS_OF_FRIENDS", "PRIVATE", "VERIFIED_ONLY"];
+const VISIBILITY = ["PUBLIC", "FRIENDS", "FRIENDS_OF_FRIENDS", "INVITE_ONLY", "PRIVATE"];
+const VISIBILITY_LABELS: Record<string, string> = {
+  PUBLIC: "Public",
+  FRIENDS: "Amis uniquement",
+  FRIENDS_OF_FRIENDS: "Amis d'amis",
+  INVITE_ONLY: "Sur invitation",
+  PRIVATE: "Privé",
+};
 const SAFETY = ["LOW", "MEDIUM", "HIGH"];
 
 const MOOD_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]> = {
@@ -170,7 +177,7 @@ export default function NewPlanPage() {
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Visibilité</label>
             <select name="visibility" required className={inputBase}>
-              {VISIBILITY.map((v) => <option key={v} value={v}>{v.replace(/_/g, " ")}</option>)}
+              {VISIBILITY.map((v) => <option key={v} value={v}>{VISIBILITY_LABELS[v]}</option>)}
             </select>
           </div>
         </div>

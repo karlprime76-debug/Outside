@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { canViewPlan } from "@/lib/plans/permissions";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,6 +11,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }
 
     const { id } = await params;
+
+    const allowed = await canViewPlan(user.id, id);
+    if (!allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const plan = await db.plan.findUnique({
       where: { id },
