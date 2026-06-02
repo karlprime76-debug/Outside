@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, MapPin, Globe, User, Settings } from "lucide-react";
+import { Home, Calendar, MapPin, Globe, User } from "lucide-react";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { cn } from "@/lib/cn";
 
@@ -10,9 +10,8 @@ const ITEMS = [
   { href: "/home", labelKey: "home" as const, icon: Home },
   { href: "/plans", labelKey: "plans" as const, icon: Calendar },
   { href: "/places", labelKey: "places" as const, icon: MapPin },
-  { href: "/passport", labelKey: "passport" as const, icon: Globe },
+  { href: "/live", labelKey: "live" as const, icon: Globe },
   { href: "/profile", labelKey: "profile" as const, icon: User },
-  { href: "/settings", labelKey: "settings" as const, icon: Settings },
 ];
 
 export function BottomNav() {

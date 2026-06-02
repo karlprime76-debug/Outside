@@ -29,6 +29,8 @@ import {
   Plane,
   Zap,
   Heart,
+  Radio,
+  CalendarDays,
 } from "lucide-react";
 
 interface Plan {
@@ -75,6 +77,10 @@ export default function HomePage() {
     preferredMoods?: string[];
   } | null>(null);
   const [geoDetecting, setGeoDetecting] = useState(false);
+  const [lives, setLives] = useState<{ id: string; title: string; status: string; city?: string; viewerCount: number; host: { name: string | null } }[]>([]);
+  const [events, setEvents] = useState<{ id: string; title: string; startsAt: string; city?: string; priceLabel?: string }[]>([]);
+  const [loadingLives, setLoadingLives] = useState(true);
+  const [loadingEvents, setLoadingEvents] = useState(true);
 
   const userName = session?.user?.name || "";
   const activeCity = userProfile?.activeCity;
@@ -104,6 +110,22 @@ export default function HomePage() {
         if (data?.user) setUserProfile(data.user);
       })
       .catch(() => {});
+
+    fetch("/api/lives")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        setLives(data?.lives?.slice(0, 3) || []);
+        setLoadingLives(false);
+      })
+      .catch(() => setLoadingLives(false));
+
+    fetch("/api/pro/events")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        setEvents(data?.events?.slice(0, 3) || []);
+        setLoadingEvents(false);
+      })
+      .catch(() => setLoadingEvents(false));
   }, []);
 
   const greeting = userName ? `Bonjour ${userName.split(" ")[0]}` : "Bonjour";
@@ -203,6 +225,88 @@ export default function HomePage() {
           </div>
         </div>
       </ImmersiveBackground>
+
+      {/* Lives */}
+      <section>
+        <SectionTitle
+          title="En direct maintenant"
+          icon={<Radio className="h-5 w-5 text-red-500" />}
+          action={
+            <Link href="/live" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
+              Voir tout
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          }
+        />
+        {loadingLives ? (
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="min-w-[200px] flex-shrink-0 os-card p-4 h-28 shimmer" />
+            ))}
+          </div>
+        ) : lives.length === 0 ? (
+          <div className="os-card p-6 text-center">
+            <p className="text-sm text-[var(--os-muted)]">Aucun live pour le moment dans ta ville.</p>
+          </div>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {lives.map((live) => (
+              <Link key={live.id} href={`/live/${live.id}`} className="min-w-[220px] flex-shrink-0 os-card p-4 hover:shadow-card-hover transition-all block">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                    live.status === "LIVE" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                  }`}>
+                    {live.status === "LIVE" && <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />}
+                    {live.status === "LIVE" ? "En direct" : "Prévu"}
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-[var(--os-fg)] truncate">{live.title}</h3>
+                <p className="text-xs text-[var(--os-muted)] mt-1">{live.host.name || "Anonyme"} · {live.city}</p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Pro Events */}
+      <section>
+        <SectionTitle
+          title="Événements pro"
+          icon={<CalendarDays className="h-5 w-5 text-outside-500" />}
+          action={
+            <Link href="/events" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
+              Explorer
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          }
+        />
+        {loadingEvents ? (
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="min-w-[200px] flex-shrink-0 os-card p-4 h-28 shimmer" />
+            ))}
+          </div>
+        ) : events.length === 0 ? (
+          <div className="os-card p-6 text-center">
+            <p className="text-sm text-[var(--os-muted)]">Aucun événement pro publié pour le moment.</p>
+          </div>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {events.map((ev) => (
+              <Link key={ev.id} href={`/events/${ev.id}`} className="min-w-[220px] flex-shrink-0 os-card p-4 hover:shadow-card-hover transition-all block">
+                <h3 className="font-bold text-sm text-[var(--os-fg)] truncate">{ev.title}</h3>
+                <p className="text-xs text-[var(--os-muted)] mt-1">
+                  {new Date(ev.startsAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                  {ev.city ? ` · ${ev.city}` : ""}
+                </p>
+                {ev.priceLabel && (
+                  <p className="text-xs font-bold text-outside-600 mt-1">{ev.priceLabel}</p>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Quick moods */}
       <section>

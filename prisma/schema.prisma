@@ -10,6 +10,7 @@ datasource db {
 
 enum UserRole {
   USER
+  PRO
   ADMIN
   MODERATOR
 }
@@ -75,9 +76,12 @@ enum SafetyLevel {
 
 enum ReportStatus {
   PENDING
+  OPEN
+  REVIEWING
   REVIEWED
   RESOLVED
   REJECTED
+  DISMISSED
 }
 
 enum ReportReason {
@@ -94,6 +98,43 @@ enum ParticipantStatus {
   PENDING
   CONFIRMED
   REJECTED
+}
+
+enum LiveStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+  REPORTED
+  BLOCKED
+}
+
+enum LiveVisibility {
+  PUBLIC
+  CITY
+  PLAN_PARTICIPANTS
+  EVENT_ATTENDEES
+  PRIVATE
+}
+
+enum ProAccountStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  ENDED
+}
+
+enum EventVisibility {
+  PUBLIC
+  PRIVATE
+  INVITE_ONLY
 }
 
 model User {
@@ -135,6 +176,9 @@ model User {
   visitedCities     UserVisitedCity[]
   friendshipsInitiated Friendship[] @relation("FriendshipInitiator")
   friendshipsReceived  Friendship[] @relation("FriendshipReceiver")
+
+  liveSessions      LiveSession[]
+  proAccount        ProAccount?
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -274,6 +318,8 @@ model Report {
   planId          String?
   plan            Plan?        @relation(fields: [planId], references: [id])
   placeId         String?
+  targetType      String?
+  targetId        String?
   reason          ReportReason
   description     String?
   status          ReportStatus @default(PENDING)
@@ -319,4 +365,105 @@ model Friendship {
   @@unique([initiatorId, receiverId])
   @@index([initiatorId])
   @@index([receiverId])
+}
+
+model LiveSession {
+  id             String         @id @default(cuid())
+  title          String
+  description    String?
+  status         LiveStatus     @default(SCHEDULED)
+  visibility     LiveVisibility @default(CITY)
+
+  city           String?
+  country        String?
+  countryCode    String?
+
+  hostId         String
+  host           User           @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  planId         String?
+  eventId        String?
+  placeId        String?
+
+  thumbnailUrl   String?
+  streamProvider String?
+  streamKey      String?
+  playbackUrl    String?
+
+  viewerCount    Int            @default(0)
+  startedAt      DateTime?
+  endedAt        DateTime?
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([hostId])
+  @@index([status])
+  @@index([city])
+  @@index([createdAt])
+}
+
+model ProAccount {
+  id              String            @id @default(cuid())
+  userId          String            @unique
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  businessName    String
+  businessType    String?
+  description     String?
+  country         String?
+  countryCode     String?
+  city            String?
+  addressLabel    String?
+  phone           String?
+  email           String?
+  website         String?
+  logoUrl         String?
+
+  status          ProAccountStatus  @default(PENDING)
+  verifiedAt      DateTime?
+  rejectedReason  String?
+
+  events          ProEvent[]
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([city])
+}
+
+model ProEvent {
+  id              String          @id @default(cuid())
+  proAccountId    String
+  proAccount      ProAccount      @relation(fields: [proAccountId], references: [id], onDelete: Cascade)
+
+  title           String
+  description     String?
+  category        String?
+  coverImageUrl   String?
+  city            String?
+  country         String?
+  countryCode     String?
+  venueName       String?
+  addressLabel    String?
+
+  startsAt        DateTime
+  endsAt          DateTime?
+  priceLabel      String?
+  currency        String?
+  ticketUrl       String?
+  reservationUrl  String?
+
+  status          EventStatus     @default(DRAFT)
+  visibility      EventVisibility @default(PUBLIC)
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([proAccountId])
+  @@index([status])
+  @@index([city])
+  @@index([startsAt])
 }
