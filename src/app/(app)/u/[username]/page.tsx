@@ -25,7 +25,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
   const user = await db.user.findUnique({
     where: { username },
-    include: { homeCity: true, activeCity: true },
+    include: { homeCity: true, activeCity: true, userSettings: true },
   });
 
   if (!user) notFound();
@@ -44,10 +44,12 @@ export default async function PublicProfilePage({ params }: Props) {
           <div className="flex-1">
             <h1 className="text-2xl font-black">{user.name || "Utilisateur"}</h1>
             <p className="text-sm text-white/80">@{user.username}</p>
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-white/70">
-              <MapPin className="h-3.5 w-3.5" />
-              <span>{user.activeCity?.name || user.homeCity?.name || "Aucune ville"}</span>
-            </div>
+            {(isSelf || user.userSettings?.showCityOnProfile !== false) && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-white/70">
+                <MapPin className="h-3.5 w-3.5" />
+                <span>{user.activeCity?.name || user.homeCity?.name || "Aucune ville"}</span>
+              </div>
+            )}
             <div className="mt-3">
               <TrustBadge badge={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
             </div>
