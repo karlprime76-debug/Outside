@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canInviteToPlan, isFriend } from "@/lib/plans/permissions";
+import { createNotification } from "@/lib/notifications";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -59,16 +60,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       },
     });
 
-    const invitedUser = await db.user.findUnique({
-      where: { id: userId },
-      select: { name: true },
+    const [plan, sender] = await Promise.all([
+      db.plan.findUnique({ where: { id }, select: { title: true } }),
+      db.user.findUnique({ where: { id: user.id }, select: { name: true, image: true } }),
+    ]);
+
+    await createNotification({
+      type: "PLAN_INVITE",
+      title: "Invitation à un plan",
+      body: `${sender?.name || "Quelqu'un"} t'a invité à rejoindre "${plan?.title || "un plan"}"`,
+      recipientId: userId,
+      actorId: user.id,
+      actorName: sender?.name,
+      actorImage: sender?.image,
+      data: { planId: id },
     });
 
     await db.planMessage.create({
       data: {
         planId: id,
         authorId: user.id,
-        content: `📩 a invité ${invitedUser?.name || "quelqu'un"} à rejoindre le plan`,
+        content: `📩 a invité ${sender?.name || "quelqu'un"} à rejoindre le plan`,
       },
     });
 

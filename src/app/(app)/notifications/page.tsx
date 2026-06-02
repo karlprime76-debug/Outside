@@ -16,6 +16,9 @@ import {
   UserCheck,
   Users,
   Sparkles,
+  Radio,
+  Award,
+  Compass,
 } from "lucide-react";
 
 interface Notification {
@@ -77,6 +80,12 @@ export default function NotificationsPage() {
         return UserCheck;
       case "follow":
         return Users;
+      case "plan_invite":
+        return Compass;
+      case "live_started":
+        return Radio;
+      case "badge_earned":
+        return Award;
       case "system":
         return Sparkles;
       default:
@@ -98,6 +107,12 @@ export default function NotificationsPage() {
         return "bg-green-100 text-green-600";
       case "follow":
         return "bg-sky-100 text-sky-600";
+      case "plan_invite":
+        return "bg-violet-100 text-violet-600";
+      case "live_started":
+        return "bg-red-100 text-red-600";
+      case "badge_earned":
+        return "bg-yellow-100 text-yellow-600";
       default:
         return "bg-zinc-100 text-zinc-600";
     }
@@ -123,6 +138,8 @@ export default function NotificationsPage() {
 
   function getLink(n: Notification): string {
     if (n.link) return n.link;
+    if (n.data?.planId) return `/plans/${n.data.planId}`;
+    if (n.data?.liveId) return `/live/${n.data.liveId}`;
     if (n.data?.username) return `/u/${n.data.username}`;
     if (n.data?.userId) return `/u/${n.data.userId}`;
     return "/home";

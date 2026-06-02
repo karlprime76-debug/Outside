@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 
 export async function awardBadge(userId: string, badgeKey: string): Promise<boolean> {
   const badge = await db.badge.findUnique({ where: { key: badgeKey } });
@@ -12,6 +13,14 @@ export async function awardBadge(userId: string, badgeKey: string): Promise<bool
   await db.userBadge.create({
     data: { userId, badgeId: badge.id },
   });
+
+  createNotification({
+    type: "BADGE_EARNED",
+    title: "Badge obtenu !",
+    body: `Tu as débloqué le badge "${badge.name}"`,
+    recipientId: userId,
+    data: { badgeId: badge.id, badgeKey: badge.key },
+  }).catch(() => {});
 
   return true;
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -89,6 +90,27 @@ export async function PATCH(req: Request, { params }: Params) {
       host: { select: { id: true, name: true, image: true } },
     },
   });
+
+  if (status === "LIVE") {
+    const friends = await db.friendship.findMany({
+      where: { OR: [{ initiatorId: updated.hostId }, { receiverId: updated.hostId }] },
+      select: { initiatorId: true, receiverId: true },
+    });
+    const friendIds = friends.map((f) => (f.initiatorId === updated.hostId ? f.receiverId : f.initiatorId));
+
+    for (const friendId of friendIds) {
+      createNotification({
+        type: "LIVE_STARTED",
+        title: "Live démarré",
+        body: `${updated.host.name || "Quelqu'un"} est en live maintenant${updated.city ? ` à ${updated.city}` : ""}`,
+        recipientId: friendId,
+        actorId: updated.hostId,
+        actorName: updated.host.name,
+        actorImage: updated.host.image,
+        data: { liveId: id },
+      }).catch(() => {});
+    }
+  }
 
   return NextResponse.json({ live: updated, message: "Live mis à jour." });
 }
