@@ -100,13 +100,17 @@ export default function EditProfilePage() {
 
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error || "Impossible d'envoyer la photo. Réessaie.");
+        if (process.env.NODE_ENV === "development" && json.code) {
+          // eslint-disable-next-line no-console
+          console.log("[AVATAR_UPLOAD] error code:", json.code);
+        }
+        setError(json.message || "Impossible d'envoyer la photo. Réessaie.");
         setPreviewImage(profile?.image || null);
         return;
       }
 
       setPreviewImage(json.image);
-      setSuccess("Photo de profil mise à jour.");
+      setSuccess(json.message || "Photo de profil mise à jour.");
       setTimeout(() => setSuccess(""), 3000);
       router.refresh();
     } catch {

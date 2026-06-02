@@ -10,7 +10,8 @@ export default auth((req) => {
 
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
   const isApiLocationsRoute = nextUrl.pathname.startsWith("/api/locations");
-  const isPublicRoute = PUBLIC_ROUTES.includes(nextUrl.pathname) || isApiLocationsRoute;
+  const isApiDebugRoute = nextUrl.pathname.startsWith("/api/debug");
+  const isPublicRoute = PUBLIC_ROUTES.includes(nextUrl.pathname) || isApiLocationsRoute || isApiDebugRoute;
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
 
   // API auth routes always open
