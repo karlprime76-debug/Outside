@@ -8,7 +8,8 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ReportButton } from "@/components/report-button";
-import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, X } from "lucide-react";
+import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, X, Star } from "lucide-react";
+import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
 
 interface PlanDetail {
   id: string;
@@ -47,6 +48,8 @@ export default function PlanDetailPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [friends, setFriends] = useState<{ id: string; name: string | null; image: string | null }[]>([]);
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewTarget, setReviewTarget] = useState<{ id: string; name: string | null } | null>(null);
 
   useEffect(() => {
     fetch(`/api/plans/${id}`)
@@ -202,20 +205,47 @@ export default function PlanDetailPage() {
 
       {/* Participants */}
       <div>
-        <h3 className="text-lg font-bold mb-4 text-zinc-900 dark:text-zinc-100">{t.planDetail.participantsTitle} ({plan._count.participants})</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{t.planDetail.participantsTitle} ({plan._count.participants})</h3>
+          {plan.status === "COMPLETED" && isParticipant && (
+            <span className="text-xs text-[var(--os-muted)]">Clique sur un participant pour lui donner un retour</span>
+          )}
+        </div>
         <div className="flex flex-wrap gap-3">
           {plan.participants.map((p) => (
-            <Link
+            <button
               key={p.user.id}
-              href={`/users/${p.user.id}`}
-              className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 hover:border-outside-300 transition-colors dark:border-surface-border dark:bg-surface-card"
+              onClick={() => {
+                if (plan.status === "COMPLETED" && isParticipant && p.user.id !== session?.user?.id) {
+                  setReviewTarget({ id: p.user.id, name: p.user.name });
+                  setReviewOpen(true);
+                }
+              }}
+              className={`flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 transition-colors dark:border-surface-border dark:bg-surface-card ${
+                plan.status === "COMPLETED" && isParticipant && p.user.id !== session?.user?.id
+                  ? "cursor-pointer hover:border-outside-300 hover:shadow-sm"
+                  : ""
+              }`}
             >
               <Avatar src={p.user.image} name={p.user.name} size="sm" />
               <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{p.user.name || t.plans.anonymous}</span>
-            </Link>
+              {plan.status === "COMPLETED" && isParticipant && p.user.id !== session?.user?.id && (
+                <Star className="h-3 w-3 text-outside-500" />
+              )}
+            </button>
           ))}
         </div>
       </div>
+
+      {/* Trust Review Dialog */}
+      {reviewOpen && reviewTarget && (
+        <TrustReviewDialog
+          planId={plan.id}
+          reviewedId={reviewTarget.id}
+          reviewedName={reviewTarget.name || "Anonyme"}
+          onClose={() => { setReviewOpen(false); setReviewTarget(null); }}
+        />
+      )}
 
       {/* Report */}
       <div className="flex justify-end">

@@ -6,8 +6,11 @@ import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { getRelationshipStatus } from "@/lib/social/friendship";
 import { getFriendCount } from "@/lib/social/friendship";
+import { getTrustData } from "@/lib/trust";
 import { FollowButton } from "@/components/social/follow-button";
 import { FriendButton } from "@/components/social/friend-button";
+import { TrustBadge } from "@/components/trust/trust-badge";
+import { TrustSignals } from "@/components/trust/trust-signals";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -28,6 +31,7 @@ export default async function PublicProfilePage({ params }: Props) {
   const isSelf = currentUserId === user.id;
   const relation = currentUserId ? await getRelationshipStatus(currentUserId, user.id) : "NONE";
   const friendCount = await getFriendCount(user.id);
+  const trust = await getTrustData(user.id);
 
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-6">
@@ -42,9 +46,18 @@ export default async function PublicProfilePage({ params }: Props) {
               <MapPin className="h-3.5 w-3.5" />
               <span>{user.activeCity?.name || user.homeCity?.name || "Aucune ville"}</span>
             </div>
+            <div className="mt-3">
+              <TrustBadge badge={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
+            </div>
           </div>
         </div>
         <div className="absolute -right-8 -bottom-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+      </div>
+
+      {/* Trust signals */}
+      <div className="os-card p-5">
+        <h3 className="text-sm font-bold text-[var(--os-fg)] mb-3">Signaux de confiance</h3>
+        <TrustSignals signals={trust.signals} compact />
       </div>
 
       {/* Stats */}

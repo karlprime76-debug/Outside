@@ -6,6 +6,9 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
 import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil } from "lucide-react";
+import { TrustBadge } from "@/components/trust/trust-badge";
+import { TrustSignals } from "@/components/trust/trust-signals";
+import { getTrustData } from "@/lib/trust";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -36,6 +39,7 @@ export default async function ProfilePage() {
   });
 
   const friends = friendships.map((f) => (f.initiatorId === user.id ? f.receiver : f.initiator));
+  const trust = await getTrustData(user.id);
 
   return (
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6">
@@ -43,16 +47,25 @@ export default async function ProfilePage() {
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow">
         <div className="relative z-10 flex items-center gap-4">
           <Avatar src={user.image} name={user.name} size="xl" />
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-black">{user.name || "Utilisateur"}</h1>
             <p className="text-sm text-white/80">@{user.username || "username"}</p>
             <div className="mt-2 flex items-center gap-1.5 text-xs text-white/70">
               <MapPin className="h-3.5 w-3.5" />
               <span>{user.activeCity?.name || user.homeCity?.name || "Aucune ville"}</span>
             </div>
+            <div className="mt-3">
+              <TrustBadge badge={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
+            </div>
           </div>
         </div>
         <div className="absolute -right-8 -bottom-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+      </div>
+
+      {/* Trust signals */}
+      <div className="os-card p-5">
+        <h3 className="text-sm font-bold text-[var(--os-fg)] mb-3">Signaux de confiance</h3>
+        <TrustSignals signals={trust.signals} compact />
       </div>
 
       {/* Stats */}

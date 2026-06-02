@@ -187,6 +187,7 @@ model User {
   countryCode       String?
 
   isVerified        Boolean  @default(false)
+  trustScore        Int      @default(0)
   isAvailable       Boolean  @default(false)
   travelModeEnabled Boolean  @default(false)
 
@@ -208,6 +209,8 @@ model User {
   following  Follow[] @relation("UserFollowing")
 
   notifications     Notification[] @relation("NotificationRecipient")
+  trustReviewsGiven    TrustReview[] @relation("TrustReviewReviewer")
+  trustReviewsReceived TrustReview[] @relation("TrustReviewReviewed")
 
   liveSessions      LiveSession[]
   proAccount        ProAccount?
@@ -454,6 +457,27 @@ model Notification {
 
   @@index([recipientId, isRead])
   @@index([createdAt])
+}
+
+model TrustReview {
+  id          String   @id @default(cuid())
+  reviewerId  String
+  reviewedId  String
+  planId      String?
+
+  wasPresent  Boolean?
+  respectful  Boolean?
+  realPlan    Boolean?
+  goodVibe    Boolean?
+  comment     String?
+
+  createdAt   DateTime @default(now())
+
+  reviewer    User     @relation("TrustReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewed    User     @relation("TrustReviewReviewed", fields: [reviewedId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewerId, reviewedId, planId])
+  @@index([reviewedId])
 }
 
 model LiveSession {
