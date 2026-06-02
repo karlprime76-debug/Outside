@@ -80,5 +80,18 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json({ live, message: "Live créé." }, { status: 201 });
+  // Générer le nom de room LiveKit stable
+  await db.liveSession.update({
+    where: { id: live.id },
+    data: { livekitRoomName: `outside-live-${live.id}` },
+  });
+
+  const liveWithRoom = await db.liveSession.findUnique({
+    where: { id: live.id },
+    include: {
+      host: { select: { id: true, name: true, image: true } },
+    },
+  });
+
+  return NextResponse.json({ live: liveWithRoom, message: "Live créé." }, { status: 201 });
 }

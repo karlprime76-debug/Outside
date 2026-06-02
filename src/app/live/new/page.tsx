@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Video, Radio, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function NewLivePage() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState("CITY");
@@ -44,6 +46,10 @@ export default function NewLivePage() {
       if (!res.ok) {
         setError(json.error || "Impossible de créer le live.");
         setLoading(false);
+        return;
+      }
+      if (json.live?.id) {
+        router.push(`/live/${json.live.id}`);
         return;
       }
       setCreated(true);

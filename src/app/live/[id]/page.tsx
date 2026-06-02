@@ -6,6 +6,12 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Video, Radio, MapPin, Eye, Flag, StopCircle, Play, ArrowLeft, Loader2 } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const LiveKitRoomView = dynamic(
+  () => import("@/components/live/livekit-room-view"),
+  { ssr: false }
+);
 
 interface LiveDetail {
   id: string;
@@ -16,6 +22,7 @@ interface LiveDetail {
   country?: string;
   viewerCount: number;
   startedAt?: string;
+  livekitRoomName?: string;
   host: { id: string; name: string | null; image: string | null };
 }
 
@@ -30,6 +37,9 @@ export default function LiveDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [reportText, setReportText] = useState("");
   const [showReport, setShowReport] = useState(false);
+
+  const [tokenData, setTokenData] = useState<{ token: string; url: string; roomName: string } | null>(null);
+  const [inRoom, setInRoom] = useState(false);
 
   const isHost = session?.user?.id === live?.host.id;
   const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "MODERATOR";
@@ -48,19 +58,44 @@ export default function LiveDetailPage() {
       });
   }, [id]);
 
-  async function updateStatus(status: string) {
+  async function fetchToken(mode: "host" | "viewer") {
+    setActionLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/lives/${id}/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.message || "Erreur.");
+        return;
+      }
+      setTokenData({ token: json.token, url: json.url, roomName: json.roomName });
+      setInRoom(true);
+      // Mettre à jour le live si le host démarre
+      if (mode === "host" && live?.status === "SCHEDULED") {
+        setLive((prev) => (prev ? { ...prev, status: "LIVE" } : prev));
+      }
+    } catch {
+      setError("Erreur réseau.");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function endLive() {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/lives/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
+      const res = await fetch(`/api/lives/${id}/end`, { method: "POST" });
       const json = await res.json();
       if (res.ok && json.live) {
         setLive(json.live);
+        setInRoom(false);
+        setTokenData(null);
       } else {
-        setError(json.error || "Erreur.");
+        setError(json.message || "Erreur.");
       }
     } catch {
       setError("Erreur réseau.");
@@ -113,6 +148,24 @@ export default function LiveDetailPage() {
     );
   }
 
+  // Mode plein écran live
+  if (inRoom && tokenData) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex flex-col">
+        <LiveKitRoomView
+          token={tokenData.token}
+          serverUrl={tokenData.url}
+          roomName={tokenData.roomName}
+          isHost={!!isHost}
+          onDisconnected={() => {
+            setInRoom(false);
+            setTokenData(null);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-6 pb-24">
       <Link href="/live" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors">
@@ -124,7 +177,13 @@ export default function LiveDetailPage() {
         {/* Player placeholder */}
         <div className="relative aspect-video bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col items-center justify-center">
           <Video className="h-12 w-12 text-white/20 mb-3" />
-          <p className="text-sm font-bold text-white/50">Le live vidéo sera activé au prochain sprint.</p>
+          <p className="text-sm font-bold text-white/50">
+            {live.status === "LIVE"
+              ? "Ce live est en cours."
+              : live.status === "ENDED"
+              ? "Ce live est terminé."
+              : "Le live n'a pas encore commencé."}
+          </p>
           {live.status === "LIVE" && (
             <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold text-white uppercase">
               <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
@@ -171,17 +230,17 @@ export default function LiveDetailPage() {
           <div className="flex flex-wrap gap-2 pt-2">
             {isHost && live.status === "SCHEDULED" && (
               <button
-                onClick={() => updateStatus("LIVE")}
+                onClick={() => fetchToken("host")}
                 disabled={actionLoading}
                 className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-60"
               >
                 <Play className="h-4 w-4" />
-                Démarrer
+                Démarrer le live
               </button>
             )}
             {isHost && live.status === "LIVE" && (
               <button
-                onClick={() => updateStatus("ENDED")}
+                onClick={endLive}
                 disabled={actionLoading}
                 className="inline-flex items-center gap-1.5 rounded-full bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-60"
               >
@@ -189,9 +248,32 @@ export default function LiveDetailPage() {
                 Terminer
               </button>
             )}
+            {!isHost && live.status === "LIVE" && (
+              <button
+                onClick={() => fetchToken("viewer")}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-60"
+              >
+                <Radio className="h-4 w-4" />
+                Regarder le live
+              </button>
+            )}
+            {!isHost && live.status === "SCHEDULED" && (
+              <p className="text-sm text-[var(--os-muted)]">
+                Ce live n&apos;a pas encore commencé.
+              </p>
+            )}
             {isAdmin && live.status !== "BLOCKED" && (
               <button
-                onClick={() => updateStatus("BLOCKED")}
+                onClick={() => {
+                  fetch(`/api/lives/${id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status: "BLOCKED" }),
+                  }).then((r) => {
+                    if (r.ok) setLive((prev) => (prev ? { ...prev, status: "BLOCKED" } : prev));
+                  });
+                }}
                 disabled={actionLoading}
                 className="inline-flex items-center gap-1.5 rounded-full border border-red-300 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60"
               >

@@ -385,10 +385,11 @@ model LiveSession {
   eventId        String?
   placeId        String?
 
-  thumbnailUrl   String?
-  streamProvider String?
-  streamKey      String?
-  playbackUrl    String?
+  thumbnailUrl    String?
+  streamProvider  String?
+  streamKey       String?
+  playbackUrl     String?
+  livekitRoomName String?
 
   viewerCount    Int            @default(0)
   startedAt      DateTime?
