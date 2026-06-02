@@ -1,4 +1,4 @@
-import { AccessToken } from "livekit-server-sdk";
+import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
 
 export function getLiveKitEnv() {
   const apiKey = process.env.LIVEKIT_API_KEY;
@@ -53,4 +53,15 @@ export async function createLiveKitToken({ liveId, userId, name, isHost }: Creat
   });
 
   return await token.toJwt();
+}
+
+export async function getLiveKitParticipantCount(roomName: string): Promise<number> {
+  const { apiKey, apiSecret, url } = getLiveKitEnv();
+
+  // Convertir wss:// en https:// pour l'API RoomService
+  const apiUrl = url.replace(/^wss:\/\//, "https://");
+
+  const roomService = new RoomServiceClient(apiUrl, apiKey, apiSecret);
+  const participants = await roomService.listParticipants(roomName);
+  return participants.length;
 }

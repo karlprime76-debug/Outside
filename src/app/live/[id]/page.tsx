@@ -151,7 +151,7 @@ export default function LiveDetailPage() {
   // Mode plein écran live
   if (inRoom && tokenData) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      <div className="fixed inset-0 z-50 bg-black flex flex-col" style={{ paddingBottom: 'max(0px, env(safe-area-inset-bottom))' }}>
         <LiveKitRoomView
           token={tokenData.token}
           serverUrl={tokenData.url}
@@ -167,7 +167,8 @@ export default function LiveDetailPage() {
   }
 
   return (
-    <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-6 pb-24">
+    <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-6">
+      <div style={{ paddingBottom: 'max(6rem, env(safe-area-inset-bottom))' }}>
       <Link href="/live" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors">
         <ArrowLeft className="h-4 w-4" />
         Retour
@@ -322,6 +323,7 @@ export default function LiveDetailPage() {
 
           {error && <p className="text-sm font-semibold text-red-500">{error}</p>}
         </div>
+      </div>
       </div>
     </AnimatedPage>
   );

@@ -6,6 +6,7 @@ import {
   VideoConference,
   RoomAudioRenderer,
   DisconnectButton,
+  Chat,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { Loader2, LogOut } from "lucide-react";
@@ -66,7 +67,7 @@ export default function LiveKitRoomView({
   }
 
   return (
-    <div className="relative flex flex-col h-full min-h-[300px] bg-black">
+    <div className="relative flex flex-col h-full min-h-[300px] bg-black" style={{ paddingBottom: 'max(0px, env(safe-area-inset-bottom))' }}>
       {/* Badge LIVE */}
       {connected && (
         <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-1">
@@ -102,18 +103,23 @@ export default function LiveKitRoomView({
         onDisconnected={handleDisconnected}
         onError={handleError}
         data-lk-theme="default"
-        className="flex-1"
+        className="flex-1 lk-room"
       >
-        <VideoConference />
-        <RoomAudioRenderer />
-        {!isHost && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-            <DisconnectButton className="inline-flex items-center gap-1.5 rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white hover:bg-red-600 transition-colors">
-              <LogOut className="h-3.5 w-3.5" />
-              Quitter
-            </DisconnectButton>
+        <div className="flex flex-col h-full">
+          <div className="flex-1 relative">
+            <VideoConference />
           </div>
-        )}
+          <div className="h-48 border-t border-white/10 bg-black/90">
+            <Chat />
+          </div>
+        </div>
+        <RoomAudioRenderer />
+        <div className="absolute bottom-52 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+          <DisconnectButton className="inline-flex items-center gap-1.5 rounded-full bg-red-500 px-4 py-2 text-xs font-bold text-white hover:bg-red-600 transition-colors">
+            <LogOut className="h-3.5 w-3.5" />
+            Quitter
+          </DisconnectButton>
+        </div>
       </LiveKitRoom>
 
       {/* Room name for debug */}
