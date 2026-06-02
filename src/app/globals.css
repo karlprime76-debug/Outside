@@ -154,12 +154,20 @@
   }
 
   .safe-header {
-    padding-top: max(env(safe-area-inset-top), 16px);
+    padding-top: max(env(safe-area-inset-top), 20px);
+  }
+
+  .safe-public-header {
+    padding-top: max(env(safe-area-inset-top), 20px);
   }
 
   .mobile-page-padding {
-    padding-top: calc(max(env(safe-area-inset-top), 16px) + 8px);
-    padding-bottom: calc(max(env(safe-area-inset-bottom), 16px) + 72px);
+    padding-top: calc(max(env(safe-area-inset-top), 20px) + 12px);
+    padding-bottom: calc(max(env(safe-area-inset-bottom), 20px) + 80px);
+  }
+
+  .safe-bottom-nav {
+    padding-bottom: max(env(safe-area-inset-bottom), 14px);
   }
 
   @supports (height: 100dvh) {

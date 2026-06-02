@@ -145,7 +145,7 @@ export default function HomePage() {
     : plans.slice(0, 3);
 
   return (
-    <AnimatedPage className="space-y-8 p-4 max-w-5xl mx-auto pb-24 md:pb-4 pt-2 md:pt-0">
+    <AnimatedPage className="space-y-8 p-4 max-w-5xl mx-auto pb-24 md:pb-4 pt-safe md:pt-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

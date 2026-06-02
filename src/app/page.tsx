@@ -113,7 +113,7 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[var(--os-bg)]">
       {/* Navigation */}
-      <header className="sticky top-0 z-50 glass">
+      <header className="sticky top-0 z-50 glass safe-public-header">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <ThemeAwareLogo showIcon iconSize={28} />
           <nav className="flex items-center gap-3 text-sm font-medium">
