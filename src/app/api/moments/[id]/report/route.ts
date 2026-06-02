@@ -6,7 +6,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -29,7 +29,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     });
 
     if (existing) {
-      return NextResponse.json({ error: "Already reported" }, { status: 409 });
+      return NextResponse.json({ error: "Déjà signalé" }, { status: 409 });
     }
 
     await db.report.create({
@@ -47,6 +47,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Report moment error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -84,7 +84,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ plans });
   } catch (error) {
     console.error("List plans error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: parsed.error.flatten() },
+        { error: "Données invalides", details: parsed.error.flatten() },
         { status: 400 }
       );
     }
@@ -140,6 +140,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ plan }, { status: 201 });
   } catch (error) {
     console.error("Create plan error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

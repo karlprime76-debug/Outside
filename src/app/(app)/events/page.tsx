@@ -62,8 +62,8 @@ export default function EventsPage() {
       ) : events.length === 0 ? (
         <EmptyState
           icon={Sparkles}
-          title="Aucun événement pour le moment"
-          description="Les organisateurs publient leurs événements ici."
+          title="Aucun événement pro publié"
+          description="Pour l'instant, aucun événement pro n'est disponible."
         />
       ) : (
         <div className="space-y-3">

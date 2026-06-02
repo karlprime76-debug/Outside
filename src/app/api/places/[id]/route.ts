@@ -6,7 +6,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -25,12 +25,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
 
     if (!place) {
-      return NextResponse.json({ error: "Place not found" }, { status: 404 });
+      return NextResponse.json({ error: "Lieu introuvable" }, { status: 404 });
     }
 
     return NextResponse.json({ place });
   } catch (error) {
     console.error("Get place error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -8,14 +8,14 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id } = await params;
 
     const allowed = await canJoinPlan(user.id, id);
     if (!allowed) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
     const plan = await db.plan.findUnique({
@@ -24,19 +24,19 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     });
 
     if (!plan) {
-      return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+      return NextResponse.json({ error: "Plan introuvable" }, { status: 404 });
     }
 
     if (plan.status === "FULL") {
-      return NextResponse.json({ error: "Plan is full" }, { status: 409 });
+      return NextResponse.json({ error: "Plan complet" }, { status: 409 });
     }
 
     if (plan.status === "CANCELLED") {
-      return NextResponse.json({ error: "Plan cancelled" }, { status: 409 });
+      return NextResponse.json({ error: "Plan annulé" }, { status: 409 });
     }
 
     if (plan._count.participants >= plan.maxParticipants) {
-      return NextResponse.json({ error: "Plan is full" }, { status: 409 });
+      return NextResponse.json({ error: "Plan complet" }, { status: 409 });
     }
 
     const existing = await db.planParticipant.findUnique({
@@ -44,7 +44,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     });
 
     if (existing) {
-      return NextResponse.json({ error: "Already joined" }, { status: 409 });
+      return NextResponse.json({ error: "Déjà rejoint" }, { status: 409 });
     }
 
     await db.planParticipant.create({
@@ -61,6 +61,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Join plan error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

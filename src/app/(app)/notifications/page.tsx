@@ -181,8 +181,8 @@ export default function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <EmptyState
           icon={Bell}
-          title="Pas de notifications"
-          description="On te préviendra quand il y aura du nouveau."
+          title="Aucune notification"
+          description="Pour le moment, rien de nouveau."
         />
       ) : (
         <div className="space-y-2">

@@ -141,7 +141,7 @@ export default function UserPage() {
           } disabled:opacity-50`}
         >
           {user.isFriend ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-          {user.isFriend ? "Retirer des amis" : "Ajouter en ami"}
+          {user.isFriend ? "Retirer des amis" : "Ajouter un ami"}
         </button>
       )}
 

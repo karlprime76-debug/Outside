@@ -118,7 +118,7 @@ export function AvailabilitySheet({ onClose, onSubmitted }: Props) {
           disabled={!canSubmit || loading}
           className="w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50"
         >
-          {loading ? "Activation..." : "Me rendre disponible"}
+          {loading ? "Activation..." : "Je suis dispo"}
         </button>
       </div>
     </div>

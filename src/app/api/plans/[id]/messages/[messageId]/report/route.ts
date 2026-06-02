@@ -7,14 +7,14 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id, messageId } = await params;
 
     const allowed = await canViewPlan(user.id, id);
     if (!allowed) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
     const message = await db.planMessage.findUnique({
@@ -23,7 +23,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     });
 
     if (!message || message.planId !== id) {
-      return NextResponse.json({ error: "Message not found" }, { status: 404 });
+      return NextResponse.json({ error: "Message introuvable" }, { status: 404 });
     }
 
     if (message.authorId === user.id) {
@@ -35,7 +35,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     });
 
     if (existing) {
-      return NextResponse.json({ error: "Already reported" }, { status: 409 });
+      return NextResponse.json({ error: "Déjà signalé" }, { status: 409 });
     }
 
     await db.report.create({
@@ -54,6 +54,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Report message error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

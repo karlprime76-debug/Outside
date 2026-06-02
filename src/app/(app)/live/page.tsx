@@ -69,8 +69,8 @@ export default function LivePage() {
       ) : lives.length === 0 ? (
         <EmptyState
           icon={Video}
-          title="Aucun live pour le moment"
-          description="Sois le premier à lancer un live dans ta ville."
+          title="Aucun live en cours"
+          description="L'ambiance commence peut-être avec toi."
           cta={{ label: "Lancer un live", href: "/live/new" }}
         />
       ) : (

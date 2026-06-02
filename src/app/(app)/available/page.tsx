@@ -110,9 +110,9 @@ export default function AvailablePage() {
       ) : items.length === 0 ? (
         <EmptyState
           icon={Zap}
-          title="Personne n'est disponible"
-          description="Sois le premier à te rendre disponible !"
-          cta={{ label: "Me rendre dispo", href: "/home" }}
+          title="Personne n'est dispo pour le moment"
+          description="Active ton statut pour que les autres le sachent."
+          cta={{ label: "Je suis dispo", href: "/home" }}
         />
       ) : (
         <div className="space-y-3">

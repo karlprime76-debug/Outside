@@ -6,7 +6,7 @@ export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ places });
   } catch (error) {
     console.error("List places error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user || user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
     const body = await req.json();
@@ -62,6 +62,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ place }, { status: 201 });
   } catch (error) {
     console.error("Create place error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

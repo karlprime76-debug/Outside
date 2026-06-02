@@ -6,7 +6,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ user
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { userId } = await params;
@@ -21,7 +21,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ user
     });
 
     if (!friendship) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ error: "Introuvable" }, { status: 404 });
     }
 
     await db.friendship.delete({ where: { id: friendship.id } });
@@ -29,6 +29,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ user
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete friendship error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -9,14 +9,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id } = await params;
 
     const allowed = await canInviteToPlan(user.id, id);
     if (!allowed) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
     const limit = rateLimit(`invite:${user.id}:${id}`, 5, 60000);
@@ -87,6 +87,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ invitation }, { status: 201 });
   } catch (error) {
     console.error("Invite error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

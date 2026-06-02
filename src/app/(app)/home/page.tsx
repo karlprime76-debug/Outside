@@ -277,8 +277,8 @@ export default function HomePage() {
         ) : lives.length === 0 ? (
           <EmptyState
             icon={Radio}
-            title="Aucun live pour le moment"
-            description="Lance un live ou reviens plus tard."
+            title="Aucun live en cours"
+            description="L'ambiance commence peut-être avec toi."
           />
         ) : (
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
@@ -316,8 +316,8 @@ export default function HomePage() {
         ) : events.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
-            title="Aucun événement pro"
-            description="Les organisateurs publient leurs événements ici."
+            title="Aucun événement pro publié"
+            description="Pour l'instant, aucun événement pro n'est disponible."
           />
         ) : (
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
@@ -482,7 +482,7 @@ export default function HomePage() {
           <EmptyState
             icon={Sparkles}
             title="Aucun plan pour le moment"
-            description="Sois le premier à créer un plan ce soir."
+            description="Dans ta ville. Lance le premier."
             cta={{ label: "Créer un plan", href: "/plans/new" }}
           />
         ) : (

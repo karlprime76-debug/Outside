@@ -7,14 +7,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id } = await params;
 
     const allowed = await canViewPlan(user.id, id);
     if (!allowed) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
     const plan = await db.plan.findUnique({
@@ -31,13 +31,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     });
 
     if (!plan) {
-      return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+      return NextResponse.json({ error: "Plan introuvable" }, { status: 404 });
     }
 
     return NextResponse.json({ plan });
   } catch (error) {
     console.error("Get plan error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -45,18 +45,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id } = await params;
     const existing = await db.plan.findUnique({ where: { id } });
 
     if (!existing) {
-      return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+      return NextResponse.json({ error: "Plan introuvable" }, { status: 404 });
     }
 
     if (existing.creatorId !== user.id && user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
     const body = await req.json();
@@ -73,7 +73,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ plan });
   } catch (error) {
     console.error("Update plan error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -81,18 +81,18 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { id } = await params;
     const existing = await db.plan.findUnique({ where: { id } });
 
     if (!existing) {
-      return NextResponse.json({ error: "Plan not found" }, { status: 404 });
+      return NextResponse.json({ error: "Plan introuvable" }, { status: 404 });
     }
 
     if (existing.creatorId !== user.id && user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
     await db.plan.delete({ where: { id } });
@@ -100,6 +100,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete plan error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

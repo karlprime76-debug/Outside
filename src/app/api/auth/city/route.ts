@@ -6,7 +6,7 @@ export async function PATCH(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { activeCityId, travelModeEnabled } = await req.json();
@@ -28,6 +28,6 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ user: updated });
   } catch (error) {
     console.error("Update city error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

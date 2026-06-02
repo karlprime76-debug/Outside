@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const expected = CRON_SECRET ? `Bearer ${CRON_SECRET}` : undefined;
 
   if (expected && authHeader !== expected) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);

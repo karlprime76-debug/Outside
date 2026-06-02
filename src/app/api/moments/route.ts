@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -76,7 +76,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ moments: filtered.filter(Boolean) });
   } catch (error) {
     console.error("List moments error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const formData = await req.formData();
@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     if (planId) {
       const canView = await canViewPlan(user.id, planId);
       if (!canView) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
       }
     }
 
@@ -173,6 +173,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ moment }, { status: 201 });
   } catch (error) {
     console.error("Create moment error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
