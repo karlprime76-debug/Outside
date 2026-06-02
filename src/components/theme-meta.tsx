@@ -17,7 +17,7 @@ export function ThemeMeta() {
     const faviconLink = document.querySelector('link[rel="icon"]') as HTMLLinkElement | null;
 
     function updateTheme() {
-      const isNight = document.documentElement.getAttribute("data-theme") === "night";
+      const isNight = document.documentElement.classList.contains("dark");
 
       if (meta) {
         meta.setAttribute("content", isNight ? THEME_COLOR_NIGHT : THEME_COLOR_DAY);
@@ -30,10 +30,10 @@ export function ThemeMeta() {
 
     updateTheme();
 
-    // Observer data-theme changes
+    // Observer class changes for dark mode
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((m) => {
-        if (m.attributeName === "data-theme") updateTheme();
+        if (m.attributeName === "class") updateTheme();
       });
     });
     observer.observe(document.documentElement, { attributes: true });
