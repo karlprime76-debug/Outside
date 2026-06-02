@@ -1,74 +1,76 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getFriendCount } from "@/lib/social/friendship";
 
 export async function GET() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
+
+    const userId = session.user.id;
 
     const friendships = await db.friendship.findMany({
       where: {
-        OR: [{ initiatorId: user.id }, { receiverId: user.id }],
+        OR: [{ initiatorId: userId }, { receiverId: userId }],
       },
       include: {
-        initiator: { select: { id: true, name: true, image: true } },
-        receiver: { select: { id: true, name: true, image: true } },
+        initiator: { select: { id: true, name: true, username: true, image: true, activeCity: { select: { name: true } } } },
+        receiver: { select: { id: true, name: true, username: true, image: true, activeCity: { select: { name: true } } } },
       },
       orderBy: { createdAt: "desc" },
     });
 
     const friends = friendships.map((f) =>
-      f.initiatorId === user.id ? f.receiver : f.initiator
+      f.initiatorId === userId ? f.receiver : f.initiator
     );
 
-    return NextResponse.json({ friends });
+    const count = await getFriendCount(userId);
+
+    return NextResponse.json({ friends, count, maxFriends: 5000 });
   } catch (error) {
     console.error("Get friends error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
 
     const body = await req.json();
     const { userId } = body;
+    const currentUserId = session.user.id;
 
-    if (!userId || userId === user.id) {
-      return NextResponse.json({ error: "Invalid user" }, { status: 400 });
+    if (!userId || userId === currentUserId) {
+      return NextResponse.json({ error: "Utilisateur invalide." }, { status: 400 });
     }
 
-    // Check if already friends
     const existing = await db.friendship.findFirst({
       where: {
         OR: [
-          { initiatorId: user.id, receiverId: userId },
-          { initiatorId: userId, receiverId: user.id },
+          { initiatorId: currentUserId, receiverId: userId },
+          { initiatorId: userId, receiverId: currentUserId },
         ],
       },
     });
 
     if (existing) {
-      return NextResponse.json({ error: "Already friends" }, { status: 409 });
+      return NextResponse.json({ error: "Déjà amis." }, { status: 409 });
     }
 
     const friendship = await db.friendship.create({
-      data: {
-        initiatorId: user.id,
-        receiverId: userId,
-      },
+      data: { initiatorId: currentUserId, receiverId: userId },
     });
 
     return NextResponse.json({ friendship }, { status: 201 });
   } catch (error) {
     console.error("Create friendship error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

@@ -1,0 +1,377 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { AnimatedPage } from "@/components/ui/animated-page";
+import { Avatar } from "@/components/ui/avatar";
+import { InputField } from "@/components/ui/input-field";
+import { Search, UserPlus, UserCheck, UserX, Users, Loader2 } from "lucide-react";
+import Link from "next/link";
+
+interface FriendUser {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+  activeCity?: { name: string } | null;
+}
+
+interface FriendRequestItem {
+  id: string;
+  sender?: FriendUser;
+  receiver?: FriendUser;
+}
+
+interface Suggestion {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+  activeCity: string | null;
+  country: string | null;
+  reason: string;
+  relationshipStatus: string;
+}
+
+export default function FriendsPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<FriendUser[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  const [friends, setFriends] = useState<FriendUser[]>([]);
+  const [friendCount, setFriendCount] = useState(0);
+  const [receivedRequests, setReceivedRequests] = useState<FriendRequestItem[]>([]);
+  const [sentRequests, setSentRequests] = useState<FriendRequestItem[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [followers, setFollowers] = useState<FriendUser[]>([]);
+  const [following, setFollowing] = useState<FriendUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const fetchAll = useCallback(async () => {
+    try {
+      const [friendsRes, requestsRes, suggRes, followersRes, followingRes] = await Promise.all([
+        fetch("/api/friends"),
+        fetch("/api/friends/requests"),
+        fetch("/api/friends/suggestions"),
+        fetch("/api/followers"),
+        fetch("/api/following"),
+      ]);
+
+      if (friendsRes.ok) {
+        const data = await friendsRes.json();
+        setFriends(data.friends || []);
+        setFriendCount(data.count || 0);
+      }
+      if (requestsRes.ok) {
+        const data = await requestsRes.json();
+        setReceivedRequests(data.received || []);
+        setSentRequests(data.sent || []);
+      }
+      if (suggRes.ok) {
+        const data = await suggRes.json();
+        setSuggestions(data.suggestions || []);
+      }
+      if (followersRes.ok) {
+        const data = await followersRes.json();
+        setFollowers(data.followers || []);
+      }
+      if (followingRes.ok) {
+        const data = await followingRes.json();
+        setFollowing(data.following || []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchQuery.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      setSearchLoading(true);
+      try {
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.users || []);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  async function sendRequest(userId: string) {
+    setActionLoading(userId);
+    try {
+      const res = await fetch("/api/friends/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (res.ok) {
+        fetchAll();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function acceptRequest(requestId: string) {
+    setActionLoading(requestId);
+    try {
+      const res = await fetch(`/api/friends/requests/${requestId}/accept`, { method: "POST" });
+      if (res.ok) fetchAll();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function declineRequest(requestId: string) {
+    setActionLoading(requestId);
+    try {
+      const res = await fetch(`/api/friends/requests/${requestId}/decline`, { method: "POST" });
+      if (res.ok) fetchAll();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function cancelRequest(requestId: string) {
+    setActionLoading(requestId);
+    try {
+      const res = await fetch(`/api/friends/requests/${requestId}/cancel`, { method: "POST" });
+      if (res.ok) fetchAll();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  if (loading) {
+    return (
+      <AnimatedPage className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-outside-500" />
+      </AnimatedPage>
+    );
+  }
+
+  return (
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6">
+      <h1 className="text-xl font-black text-[var(--os-fg)]">Amis</h1>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--os-muted)]" />
+        <InputField
+          placeholder="Rechercher par nom d'utilisateur"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {searchLoading && (
+        <div className="flex items-center gap-2 text-sm text-[var(--os-muted)]">
+          <Loader2 className="h-4 w-4 animate-spin" /> Recherche…
+        </div>
+      )}
+
+      {searchQuery.length >= 2 && !searchLoading && searchResults.length === 0 && (
+        <p className="text-sm text-[var(--os-muted)]">Aucun résultat.</p>
+      )}
+
+      {searchResults.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)]">Résultats</h2>
+          {searchResults.map((u) => (
+            <UserCard key={u.id} user={u} onAction={() => sendRequest(u.id)} actionLoading={actionLoading === u.id} />
+          ))}
+        </div>
+      )}
+
+      {/* Received requests */}
+      {receivedRequests.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)]">Demandes reçues</h2>
+          {receivedRequests.map((r) => (
+            <div key={r.id} className="os-card p-4 flex items-center justify-between">
+              <Link href={`/u/${r.sender?.username}`} className="flex items-center gap-3">
+                <Avatar src={r.sender?.image} name={r.sender?.name} size="md" />
+                <div>
+                  <p className="text-sm font-bold text-[var(--os-fg)]">{r.sender?.name || "Anonyme"}</p>
+                  <p className="text-xs text-[var(--os-muted)]">@{r.sender?.username}</p>
+                </div>
+              </Link>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => acceptRequest(r.id)}
+                  disabled={actionLoading === r.id}
+                  className="rounded-lg bg-outside-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-outside-600 transition-colors disabled:opacity-50"
+                >
+                  <UserCheck className="h-3.5 w-3.5 inline mr-1" />
+                  Accepter
+                </button>
+                <button
+                  onClick={() => declineRequest(r.id)}
+                  disabled={actionLoading === r.id}
+                  className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                >
+                  <UserX className="h-3.5 w-3.5 inline mr-1" />
+                  Refuser
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Sent requests */}
+      {sentRequests.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)]">Demandes envoyées</h2>
+          {sentRequests.map((r) => (
+            <div key={r.id} className="os-card p-4 flex items-center justify-between">
+              <Link href={`/u/${r.receiver?.username}`} className="flex items-center gap-3">
+                <Avatar src={r.receiver?.image} name={r.receiver?.name} size="md" />
+                <div>
+                  <p className="text-sm font-bold text-[var(--os-fg)]">{r.receiver?.name || "Anonyme"}</p>
+                  <p className="text-xs text-[var(--os-muted)]">@{r.receiver?.username}</p>
+                </div>
+              </Link>
+              <button
+                onClick={() => cancelRequest(r.id)}
+                disabled={actionLoading === r.id}
+                className="rounded-lg bg-[var(--os-card-border)] px-3 py-1.5 text-xs font-bold text-[var(--os-fg)] hover:bg-outside-100 transition-colors disabled:opacity-50"
+              >
+                Annuler
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Suggestions */}
+      {suggestions.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)]">Suggestions près de toi</h2>
+          {suggestions.map((s) => (
+            <div key={s.id} className="os-card p-4 flex items-center justify-between">
+              <Link href={`/u/${s.username}`} className="flex items-center gap-3">
+                <Avatar src={s.image} name={s.name} size="md" />
+                <div>
+                  <p className="text-sm font-bold text-[var(--os-fg)]">{s.name || "Anonyme"}</p>
+                  <p className="text-xs text-[var(--os-muted)]">@{s.username}</p>
+                  <p className="text-[10px] text-outside-500 font-semibold mt-0.5">{s.reason}</p>
+                </div>
+              </Link>
+              <button
+                onClick={() => sendRequest(s.id)}
+                disabled={actionLoading === s.id}
+                className="rounded-lg bg-outside-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-outside-600 transition-colors disabled:opacity-50"
+              >
+                <UserPlus className="h-3.5 w-3.5 inline mr-1" />
+                Ajouter
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Friends */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-outside-500" />
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)]">
+            Mes amis ({friendCount} / 5000)
+          </h2>
+        </div>
+        {friends.length === 0 ? (
+          <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis. Cherche un utilisateur pour commencer !</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {friends.map((f) => (
+              <Link key={f.id} href={`/u/${f.username}`} className="os-card p-4 flex items-center gap-3 hover:border-outside-300 transition-colors">
+                <Avatar src={f.image} name={f.name} size="md" />
+                <div>
+                  <p className="text-sm font-bold text-[var(--os-fg)]">{f.name || "Anonyme"}</p>
+                  <p className="text-xs text-[var(--os-muted)]">@{f.username}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Followers */}
+      {followers.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)]">Abonnés</h2>
+          <div className="grid grid-cols-1 gap-3">
+            {followers.map((f) => (
+              <Link key={f.id} href={`/u/${f.username}`} className="os-card p-4 flex items-center gap-3 hover:border-outside-300 transition-colors">
+                <Avatar src={f.image} name={f.name} size="sm" />
+                <p className="text-sm font-semibold text-[var(--os-fg)]">{f.name || "Anonyme"}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Following */}
+      {following.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)]">Abonnements</h2>
+          <div className="grid grid-cols-1 gap-3">
+            {following.map((f) => (
+              <Link key={f.id} href={`/u/${f.username}`} className="os-card p-4 flex items-center gap-3 hover:border-outside-300 transition-colors">
+                <Avatar src={f.image} name={f.name} size="sm" />
+                <p className="text-sm font-semibold text-[var(--os-fg)]">{f.name || "Anonyme"}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </AnimatedPage>
+  );
+}
+
+function UserCard({ user, onAction, actionLoading }: { user: FriendUser; onAction: () => void; actionLoading: boolean }) {
+  return (
+    <div className="os-card p-4 flex items-center justify-between">
+      <Link href={`/u/${user.username}`} className="flex items-center gap-3">
+        <Avatar src={user.image} name={user.name} size="md" />
+        <div>
+          <p className="text-sm font-bold text-[var(--os-fg)]">{user.name || "Anonyme"}</p>
+          <p className="text-xs text-[var(--os-muted)]">@{user.username}</p>
+        </div>
+      </Link>
+      <button
+        onClick={onAction}
+        disabled={actionLoading}
+        className="rounded-lg bg-outside-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-outside-600 transition-colors disabled:opacity-50"
+      >
+        <UserPlus className="h-3.5 w-3.5 inline mr-1" />
+        Ajouter
+      </button>
+    </div>
+  );
+}

@@ -18,6 +18,7 @@ interface ProfileData {
   email: string;
   image: string | null;
   bio: string | null;
+  gender: string | null;
   country: string | null;
   countryCode: string | null;
   homeCity: string | null;
@@ -39,6 +40,7 @@ export default function EditProfilePage() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [gender, setGender] = useState("");
   const [countryCode, setCountryCode] = useState("");
   const [homeCity, setHomeCity] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -58,6 +60,7 @@ export default function EditProfilePage() {
       setName(data.name || "");
       setUsername(data.username || "");
       setBio(data.bio || "");
+      setGender(data.gender || "");
       setCountryCode(data.countryCode || "");
       setHomeCity(data.homeCity || "");
       setPreviewImage(data.image);
@@ -142,6 +145,7 @@ export default function EditProfilePage() {
           name: name.trim() || undefined,
           username: username.trim() || undefined,
           bio: bio.trim() || undefined,
+          gender: gender || undefined,
           countryCode: countryCode || undefined,
           homeCity: homeCity.trim() || undefined,
         }),
@@ -269,6 +273,21 @@ export default function EditProfilePage() {
             className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:border-outside-400 focus:outline-none focus:ring-2 focus:ring-outside-400/20 transition-all resize-none"
           />
           <p className="mt-1 text-right text-xs text-[var(--os-muted)]">{bio.length}/160</p>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-bold text-[var(--os-muted)]">Sexe</label>
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-3 text-sm text-[var(--os-fg)] focus:border-outside-400 focus:outline-none focus:ring-2 focus:ring-outside-400/20 transition-all"
+          >
+            <option value="">Sélectionne…</option>
+            <option value="MALE">Homme</option>
+            <option value="FEMALE">Femme</option>
+            <option value="OTHER">Autre</option>
+            <option value="PREFER_NOT_TO_SAY">Je préfère ne pas préciser</option>
+          </select>
         </div>
 
         <div>

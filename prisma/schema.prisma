@@ -15,6 +15,21 @@ enum UserRole {
   MODERATOR
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  BLOCKED
+}
+
 enum BudgetLevel {
   FREE
   LOW
@@ -148,6 +163,7 @@ model User {
   phoneVerified     DateTime?
   image             String?
   bio               String?
+  gender            Gender?
   role              UserRole @default(USER)
 
   homeCityId        String?
@@ -176,6 +192,12 @@ model User {
   visitedCities     UserVisitedCity[]
   friendshipsInitiated Friendship[] @relation("FriendshipInitiator")
   friendshipsReceived  Friendship[] @relation("FriendshipReceiver")
+
+  friendRequestsSent     FriendRequest[] @relation("FriendRequestSender")
+  friendRequestsReceived FriendRequest[] @relation("FriendRequestReceiver")
+
+  followers  Follow[] @relation("UserFollowers")
+  following  Follow[] @relation("UserFollowing")
 
   liveSessions      LiveSession[]
   proAccount        ProAccount?
@@ -365,6 +387,40 @@ model Friendship {
   @@unique([initiatorId, receiverId])
   @@index([initiatorId])
   @@index([receiverId])
+}
+
+model FriendRequest {
+  id         String              @id @default(cuid())
+  senderId   String
+  receiverId String
+
+  sender     User                @relation("FriendRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User                @relation("FriendRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  status     FriendRequestStatus @default(PENDING)
+
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId, status])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+
+  followerId  String
+  followingId String
+
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model LiveSession {

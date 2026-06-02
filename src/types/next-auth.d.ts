@@ -3,6 +3,7 @@ import "next-auth";
 declare module "next-auth" {
   interface User {
     role?: string;
+    username?: string | null;
     image?: string | null;
     country?: string | null;
     countryCode?: string | null;
@@ -14,6 +15,7 @@ declare module "next-auth" {
     user: {
       id?: string;
       role?: string;
+      username?: string | null;
       country?: string | null;
       countryCode?: string | null;
       homeCity?: string | null;
@@ -25,6 +27,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     role?: string;
+    username?: string | null;
     image?: string | null;
     country?: string | null;
     countryCode?: string | null;

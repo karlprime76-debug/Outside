@@ -10,12 +10,20 @@ import { CityAutocomplete } from "@/components/location/city-autocomplete";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
 
+const GENDER_OPTIONS = [
+  { value: "MALE", label: "Homme" },
+  { value: "FEMALE", label: "Femme" },
+  { value: "OTHER", label: "Autre" },
+  { value: "PREFER_NOT_TO_SAY", label: "Je préfère ne pas préciser" },
+];
+
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [countryCode, setCountryCode] = useState("");
   const [homeCity, setHomeCity] = useState("");
+  const [gender, setGender] = useState("");
   const [citySuggestion, setCitySuggestion] = useState<{ id: string; lat: number | null; lng: number | null } | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -30,6 +38,7 @@ export default function RegisterPage() {
       email: form.get("email") as string,
       password: form.get("password") as string,
       confirmPassword: form.get("confirmPassword") as string,
+      gender: gender || undefined,
       countryCode: countryCode.toUpperCase(),
       homeCity: homeCity.trim(),
       homeCityLat: citySuggestion?.lat ?? null,
@@ -186,6 +195,21 @@ export default function RegisterPage() {
                   labelClassName="text-white/70"
                   className="bg-white/90 text-zinc-900 placeholder-zinc-400 border-0"
                 />
+                <div>
+                  <label className="mb-1.5 block text-sm font-bold text-white/70">Sexe</label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full rounded-xl bg-white/90 px-4 py-3 text-sm text-zinc-900 border-0"
+                  >
+                    <option value="">Sélectionne…</option>
+                    {GENDER_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <CountrySelect
                   value={countryCode}
                   onChange={setCountryCode}

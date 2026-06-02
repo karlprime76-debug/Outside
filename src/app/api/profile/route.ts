@@ -8,6 +8,7 @@ const profileUpdateSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(80, "Le nom est trop long").optional(),
   username: z.string().min(3, "Le username doit contenir au moins 3 caractères").max(30, "Le username est trop long").regex(/^[a-zA-Z0-9_]+$/, "Lettres, chiffres et underscore uniquement").optional(),
   bio: z.string().max(160, "La bio est trop longue").optional(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(),
   countryCode: z.string().length(2, "Code pays invalide").optional(),
   homeCity: z.string().min(2, "La ville doit contenir au moins 2 caractères").max(120, "La ville est trop longue").optional(),
 });
@@ -34,6 +35,7 @@ export async function GET() {
     email: user.email,
     image: user.image,
     bio: user.bio,
+    gender: user.gender,
     country: user.country,
     countryCode: user.countryCode,
     homeCity: user.homeCity?.name || null,
@@ -62,7 +64,7 @@ export async function PUT(req: Request) {
     );
   }
 
-  const { name, username, bio, countryCode, homeCity } = parsed.data;
+  const { name, username, bio, gender, countryCode, homeCity } = parsed.data;
 
   const existingUser = await db.user.findUnique({
     where: { email: session.user.email },
@@ -83,6 +85,7 @@ export async function PUT(req: Request) {
   if (name !== undefined) updateData.name = name;
   if (username !== undefined) updateData.username = username;
   if (bio !== undefined) updateData.bio = bio;
+  if (gender !== undefined) updateData.gender = gender;
 
   if (countryCode !== undefined) {
     if (!isValidCountryCode(countryCode)) {
@@ -135,6 +138,7 @@ export async function PUT(req: Request) {
     email: updated.email,
     image: updated.image,
     bio: updated.bio,
+    gender: updated.gender,
     country: updated.country,
     countryCode: updated.countryCode,
     homeCity: updated.homeCity?.name || null,

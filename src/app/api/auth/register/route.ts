@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, username, email, password, countryCode, homeCity, homeCityLat, homeCityLng } = parsed.data;
+    const { name, username, email, password, gender, countryCode, homeCity, homeCityLat, homeCityLng } = parsed.data;
 
     if (!isValidCountryCode(countryCode)) {
       if (process.env.NODE_ENV === "development") {
@@ -131,6 +131,7 @@ export async function POST(req: Request) {
           username,
           email,
           password: hashedPassword,
+          gender: gender || "PREFER_NOT_TO_SAY",
           country: countryName,
           countryCode: countryCode.toUpperCase(),
           homeCityId: city.id,

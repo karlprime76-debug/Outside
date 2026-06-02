@@ -34,6 +34,7 @@ export const authConfig: NextAuthConfig = {
           id: user.id,
           email: user.email,
           name: user.name,
+          username: user.username,
           image: user.image,
           role: user.role,
           country: user.country,
@@ -48,6 +49,7 @@ export const authConfig: NextAuthConfig = {
     jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
+        token.username = user.username;
         token.image = user.image;
         token.country = user.country;
         token.countryCode = user.countryCode;
@@ -58,6 +60,9 @@ export const authConfig: NextAuthConfig = {
       if (trigger === "update" && session?.image) {
         token.image = session.image;
       }
+      if (trigger === "update" && session?.username) {
+        token.username = session.username;
+      }
       return token;
     },
     session({ session, token }) {
@@ -66,6 +71,9 @@ export const authConfig: NextAuthConfig = {
       }
       if (token.role) {
         session.user.role = token.role as string;
+      }
+      if (token.username) {
+        session.user.username = token.username as string;
       }
       if (token.country) {
         session.user.country = token.country as string;
