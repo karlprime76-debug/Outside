@@ -487,10 +487,10 @@ export default function LandingPage() {
       <section className="mx-auto max-w-5xl px-4 py-20">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-black text-[var(--os-fg)] sm:text-4xl">
-            Disponible dans ces villes
+            Déjà actif partout
           </h2>
           <p className="mt-4 text-[var(--os-muted)]">
-            Et bientôt dans la tienne.
+            Choisis ton pays et ta ville. OUTSIDE fonctionne dans le monde entier.
           </p>
         </div>
 

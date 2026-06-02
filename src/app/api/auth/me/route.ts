@@ -50,3 +50,18 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Une erreur est survenue." }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    await db.user.delete({ where: { id: user.id } });
+    return NextResponse.json({ message: "Compte supprimé." });
+  } catch (error) {
+    console.error("Delete me error:", error);
+    return NextResponse.json({ error: "Une erreur est survenue." }, { status: 500 });
+  }
+}
