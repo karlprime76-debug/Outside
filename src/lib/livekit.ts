@@ -3,12 +3,12 @@ import { AccessToken } from "livekit-server-sdk";
 export function getLiveKitEnv() {
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;
-  const url = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+  const url = process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL;
 
   const missing: string[] = [];
   if (!apiKey) missing.push("LIVEKIT_API_KEY");
   if (!apiSecret) missing.push("LIVEKIT_API_SECRET");
-  if (!url) missing.push("NEXT_PUBLIC_LIVEKIT_URL");
+  if (!url) missing.push("NEXT_PUBLIC_LIVEKIT_URL (ou LIVEKIT_URL)");
 
   if (missing.length > 0) {
     throw new Error(`Configuration LiveKit manquante : ${missing.join(", ")}`);

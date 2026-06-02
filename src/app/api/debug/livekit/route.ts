@@ -15,7 +15,7 @@ export async function GET() {
     }
   }
 
-  const hasLivekitUrl = !!process.env.NEXT_PUBLIC_LIVEKIT_URL;
+  const hasLivekitUrl = !!(process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL);
   const hasApiKey = !!process.env.LIVEKIT_API_KEY;
   const hasApiSecret = !!process.env.LIVEKIT_API_SECRET;
 
