@@ -15,11 +15,25 @@ export async function GET() {
 
   const city = user?.activeCity?.name;
 
+  const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
   const lives = await db.liveSession.findMany({
-    where: {
-      status: { in: ["LIVE", "SCHEDULED"] },
-      ...(city ? { city } : {}),
-    },
+    where: DEMO_GLOBAL
+      ? {
+          OR: [
+            {
+              status: { in: ["LIVE", "SCHEDULED"] },
+              ...(city ? { city } : {}),
+            },
+            {
+              isDemo: true,
+              status: { in: ["LIVE", "SCHEDULED"] },
+            },
+          ],
+        }
+      : {
+          status: { in: ["LIVE", "SCHEDULED"] },
+          ...(city ? { city } : {}),
+        },
     orderBy: [
       { status: "asc" },
       { createdAt: "desc" },

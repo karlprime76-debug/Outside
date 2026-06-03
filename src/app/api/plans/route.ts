@@ -60,17 +60,35 @@ export async function GET(req: Request) {
     if (category) baseWhere.category = category;
     if (travelerFriendly === "true") baseWhere.isTravelerFriendly = true;
 
+    const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
     const plans = await db.plan.findMany({
-      where: {
-        ...baseWhere,
-        OR: [
-          { visibility: PlanVisibility.PUBLIC },
-          { creatorId: user.id },
-          { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
-          { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
-          ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
-        ],
-      },
+      where: DEMO_GLOBAL
+        ? {
+            OR: [
+              {
+                ...baseWhere,
+                OR: [
+                  { visibility: PlanVisibility.PUBLIC },
+                  { creatorId: user.id },
+                  { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
+                  { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
+                  ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
+                ],
+              },
+              // Demo plans visible globally
+              { isDemo: true },
+            ],
+          }
+        : {
+            ...baseWhere,
+            OR: [
+              { visibility: PlanVisibility.PUBLIC },
+              { creatorId: user.id },
+              { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
+              { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
+              ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
+            ],
+          },
       orderBy: { startDate: "asc" },
       take: 50,
       include: {

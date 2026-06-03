@@ -36,6 +36,7 @@ export async function GET(req: Request) {
     const followingIds = followingRows.map((f) => f.followingId);
 
     const now = new Date();
+    const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
     const activeCityName = user.activeCity?.name || null;
 
     let baseWhere: Prisma.MomentWhereInput = {
@@ -91,7 +92,19 @@ export async function GET(req: Request) {
     }
 
     const moments = await db.moment.findMany({
-      where: baseWhere,
+      where: DEMO_GLOBAL
+        ? {
+            OR: [
+              baseWhere,
+              {
+                AND: [
+                  { isDemo: true },
+                  { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+                ],
+              },
+            ],
+          }
+        : baseWhere,
       orderBy: { createdAt: "desc" },
       take: limit,
       skip: cursor ? 1 : 0,
