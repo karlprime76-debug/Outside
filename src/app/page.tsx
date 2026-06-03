@@ -552,6 +552,18 @@ export default function LandingPage() {
               <Link href="/register" className="hover:text-[var(--os-fg)] transition-colors font-medium">
                 Créer mon compte
               </Link>
+              <Link href="/legal/terms" className="hover:text-[var(--os-fg)] transition-colors font-medium">
+                Conditions
+              </Link>
+              <Link href="/legal/privacy" className="hover:text-[var(--os-fg)] transition-colors font-medium">
+                Confidentialité
+              </Link>
+              <Link href="/legal/community-guidelines" className="hover:text-[var(--os-fg)] transition-colors font-medium">
+                Règles
+              </Link>
+              <Link href="/legal/cookies" className="hover:text-[var(--os-fg)] transition-colors font-medium">
+                Cookies
+              </Link>
               <span className="text-[var(--os-card-border)]">|</span>
               <span>&copy; {new Date().getFullYear()} OUTSIDE</span>
             </div>
