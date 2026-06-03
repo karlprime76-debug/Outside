@@ -63,20 +63,22 @@ export default async function AppLayout({
               <div className="flex items-center gap-3 ml-2 pl-3 border-l border-[var(--os-card-border)]">
                 <Link
                   href="/notifications"
-                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
+                  aria-label="Notifications"
+                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
                 >
                   <Bell className="h-5 w-5 text-[var(--os-muted)]" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
                 <Link
                   href="/dm"
-                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
+                  aria-label={dmUnread > 0 ? `Messages non lus: ${dmUnread}` : "Messages"}
+                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
                 >
                   <MessageSquare className="h-5 w-5 text-[var(--os-muted)]" />
                   {dmUnread > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
                 <ThemeBadge />
@@ -104,20 +106,22 @@ export default async function AppLayout({
               <>
                 <Link
                   href="/notifications"
-                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
+                  aria-label="Notifications"
+                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
                 >
                   <Bell className="h-5 w-5 text-[var(--os-muted)]" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
                 <Link
                   href="/dm"
-                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
+                  aria-label={dmUnread > 0 ? `Messages non lus: ${dmUnread}` : "Messages"}
+                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
                 >
                   <MessageSquare className="h-5 w-5 text-[var(--os-muted)]" />
                   {dmUnread > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
                 <ThemeBadge />
