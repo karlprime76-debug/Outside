@@ -30,6 +30,7 @@ export default async function AppLayout({
     { href: "/places", label: "Lieux" },
     { href: "/passport", label: "Passeport" },
     { href: "/settings", label: "Paramètres" },
+    { href: "/legal", label: "Légal" },
   ];
 
   return (
