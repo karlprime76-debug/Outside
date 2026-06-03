@@ -2,7 +2,7 @@
 
 import { useState, useRef, ChangeEvent } from "react";
 import { useToast } from "@/components/ui/toast";
-import { X, Image, Video, Upload, MapPin } from "lucide-react";
+import { X, Image as ImageIcon, Video, Upload, MapPin } from "lucide-react";
 
 interface Props {
   onClose: () => void;
@@ -100,7 +100,7 @@ export function MomentUploadSheet({ onClose, onUploaded, defaultCity, defaultPla
             className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-[var(--os-card-border)] bg-[var(--os-bg)] p-10 cursor-pointer hover:border-outside-300 transition-colors"
           >
             <div className="flex gap-3">
-              <Image className="h-8 w-8 text-[var(--os-muted)]" />
+              <ImageIcon className="h-8 w-8 text-[var(--os-muted)]" />
               <Video className="h-8 w-8 text-[var(--os-muted)]" />
             </div>
             <p className="text-sm text-[var(--os-muted)] text-center">
