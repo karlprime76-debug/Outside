@@ -6,7 +6,8 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Avatar } from "@/components/ui/avatar";
 import { UiProviders } from "@/components/ui/providers-client";
 import { ThemeBadge } from "@/components/theme-toggle";
-import { Bell } from "lucide-react";
+import { Bell, MessageSquare } from "lucide-react";
+import { getUnreadDmCount } from "@/lib/dm";
 
 export default async function AppLayout({
   children,
@@ -16,10 +17,12 @@ export default async function AppLayout({
   const session = await auth();
 
   let unreadCount = 0;
+  let dmUnread = 0;
   if (session?.user?.id) {
     unreadCount = await db.notification.count({
       where: { recipientId: session.user.id, isRead: false },
     });
+    dmUnread = await getUnreadDmCount(session.user.id);
   }
 
   const NAV_LINKS = [
@@ -67,6 +70,15 @@ export default async function AppLayout({
                     <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
                   )}
                 </Link>
+                <Link
+                  href="/dm"
+                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
+                >
+                  <MessageSquare className="h-5 w-5 text-[var(--os-muted)]" />
+                  {dmUnread > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                  )}
+                </Link>
                 <ThemeBadge />
                 <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[var(--os-card-border)] transition-colors">
                   <Avatar src={session.user.image} name={session.user.name} size="sm" />
@@ -96,6 +108,15 @@ export default async function AppLayout({
                 >
                   <Bell className="h-5 w-5 text-[var(--os-muted)]" />
                   {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
+                  )}
+                </Link>
+                <Link
+                  href="/dm"
+                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors"
+                >
+                  <MessageSquare className="h-5 w-5 text-[var(--os-muted)]" />
+                  {dmUnread > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)]" />
                   )}
                 </Link>
