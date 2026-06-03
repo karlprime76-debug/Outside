@@ -14,8 +14,8 @@ jobs:
   push-and-seed:
     runs-on: ubuntu-latest
     env:
+      # Always provide DATABASE_URL (prefer Supabase Pooler here)
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -28,6 +28,41 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check database secrets (safe)
+        run: |
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "DATABASE_URL is missing"
+            exit 1
+          fi
+          # DIRECT_URL can be omitted in CI; we'll fall back to DATABASE_URL (pooler)
+          if [ -z "${{ secrets.DIRECT_URL }}" ] && [ -z "${{ secrets.CI_DIRECT_URL }}" ]; then
+            echo "DIRECT_URL not provided in secrets; will use DATABASE_URL for DIRECT_URL in CI"
+          else
+            echo "CI_DIRECT_URL or DIRECT_URL provided"
+          fi
+          echo "DATABASE_URL configured: true"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Prepare Prisma environment (prefer pooler for DIRECT_URL in CI)
+        run: |
+          echo "Preparing Prisma env (without exposing secrets)"
+          # Priorities for DIRECT_URL in CI:
+          # 1) CI_DIRECT_URL secret (if you set a special CI-friendly direct URL)
+          # 2) Otherwise, fall back to DATABASE_URL (pooler) to avoid port 5432 issues
+          if [ -n "${{ secrets.CI_DIRECT_URL }}" ]; then
+            echo "Using CI_DIRECT_URL for DIRECT_URL"
+            echo "DIRECT_URL=${{ secrets.CI_DIRECT_URL }}" >> $GITHUB_ENV
+          else
+            echo "Falling back to DATABASE_URL for DIRECT_URL (pooler)"
+            echo "DIRECT_URL=${DATABASE_URL}" >> $GITHUB_ENV
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Node version
+        run: node -v
 
       - name: Generate Prisma client
         run: npx prisma generate
