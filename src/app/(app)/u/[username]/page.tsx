@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -13,10 +15,28 @@ import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
 import { TrustReviewButton } from "@/components/trust/trust-review-button";
 import { UserBadges } from "@/components/profile/user-badges";
+import type { TrustData } from "@/lib/trust";
 
 interface Props {
   params: Promise<{ username: string }>;
 }
+
+const defaultTrust: TrustData = {
+  trustScore: 0,
+  badge: "new",
+  badgeLabel: "Nouveau profil",
+  signals: {
+    hasPhoto: false,
+    emailVerified: false,
+    phoneVerified: false,
+    accountAgeDays: 0,
+    plansCreated: 0,
+    plansJoined: 0,
+    plansConfirmed: 0,
+    positiveReviews: 0,
+    reportsCount: 0,
+  },
+};
 
 export default async function PublicProfilePage({ params }: Props) {
   const { username } = await params;
@@ -35,23 +55,45 @@ export default async function PublicProfilePage({ params }: Props) {
   if (!user) notFound();
 
   const isSelf = currentUserId === user.id;
-  const relation = currentUserId ? await getRelationshipStatus(currentUserId, user.id) : "NONE";
-  const friendCount = await getFriendCount(user.id);
-  const trust = await getTrustData(user.id);
+
+  // Appels DB secondaires résilients
+  let relation: string = "NONE";
+  let friendCount = 0;
+  let trust = defaultTrust;
+
+  if (currentUserId) {
+    try {
+      relation = await getRelationshipStatus(currentUserId, user.id);
+    } catch {
+      relation = "NONE";
+    }
+  }
+
+  try {
+    friendCount = await getFriendCount(user.id);
+  } catch {
+    friendCount = 0;
+  }
+
+  try {
+    trust = await getTrustData(user.id);
+  } catch {
+    trust = defaultTrust;
+  }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-6">
+    <div className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4">
       {/* Header card */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow">
         <div className="relative z-10 flex items-center gap-4">
           <Avatar src={user.image} name={user.name} size="xl" />
-          <div className="flex-1">
-            <h1 className="text-2xl font-black">{user.name || "Utilisateur"}</h1>
-            <p className="text-sm text-white/80">@{user.username}</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-black truncate">{user.name || "Utilisateur OUTSIDE"}</h1>
+            <p className="text-sm text-white/80 truncate">@{user.username || "username non défini"}</p>
             {(isSelf || user.userSettings?.showCityOnProfile !== false) && (
               <div className="mt-2 flex items-center gap-1.5 text-xs text-white/70">
-                <MapPin className="h-3.5 w-3.5" />
-                <span>{user.activeCity?.name || user.homeCity?.name || "Aucune ville"}</span>
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span>{user.activeCity?.name || user.homeCity?.name || "Ville non définie"}</span>
               </div>
             )}
             <div className="mt-3">
@@ -77,17 +119,17 @@ export default async function PublicProfilePage({ params }: Props) {
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Amis</p>
         </div>
         <div className="os-card p-5 text-center">
-          <p className="text-2xl font-black text-accent-600">{user.country || "—"}</p>
+          <p className="text-2xl font-black text-accent-600">{user.country || "Pays non défini"}</p>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Pays</p>
         </div>
       </div>
 
       {/* Bio */}
-      {user.bio && (
-        <div className="os-card p-5">
-          <p className="text-sm text-[var(--os-fg)] leading-relaxed">{user.bio}</p>
-        </div>
-      )}
+      <div className="os-card p-5">
+        <p className="text-sm text-[var(--os-fg)] leading-relaxed">
+          {user.bio || "Aucune bio pour le moment."}
+        </p>
+      </div>
 
       {/* Actions */}
       {!isSelf && currentUserId && (

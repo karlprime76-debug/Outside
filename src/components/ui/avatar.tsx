@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/cn";
+import { useState } from "react";
 
 interface AvatarProps {
   src?: string | null;
@@ -35,7 +36,9 @@ function getInitials(name?: string | null) {
 }
 
 export function Avatar({ src, name, size = "md", className }: AvatarProps) {
-  if (src) {
+  const [hasError, setHasError] = useState(false);
+
+  if (src && !hasError) {
     return (
       <Image
         src={src}
@@ -48,6 +51,7 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
           className
         )}
         unoptimized
+        onError={() => setHasError(true)}
       />
     );
   }

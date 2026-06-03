@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
@@ -5,11 +7,29 @@ import { Avatar } from "@/components/ui/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
-import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil, Image, Shield } from "lucide-react";
+import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil, Image as ImageIcon, Shield } from "lucide-react";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
 import { UserBadges } from "@/components/profile/user-badges";
 import { getTrustData } from "@/lib/trust";
+import type { TrustData } from "@/lib/trust";
+
+const defaultTrust: TrustData = {
+  trustScore: 0,
+  badge: "new",
+  badgeLabel: "Nouveau profil",
+  signals: {
+    hasPhoto: false,
+    emailVerified: false,
+    phoneVerified: false,
+    accountAgeDays: 0,
+    plansCreated: 0,
+    plansJoined: 0,
+    plansConfirmed: 0,
+    positiveReviews: 0,
+    reportsCount: 0,
+  },
+};
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -22,38 +42,53 @@ export default async function ProfilePage() {
 
   if (!user) redirect("/login");
 
-  const joinedPlansCount = await db.planParticipant.count({
-    where: { userId: user.id },
-  });
+  // Appels DB secondaires résilients — un échec n'effondre pas la page
+  let joinedPlansCount = 0;
+  let createdPlansCount = 0;
+  let friends: { id: string; name: string | null; username: string | null; image: string | null }[] = [];
+  let trust = defaultTrust;
 
-  const createdPlansCount = await db.plan.count({
-    where: { creatorId: user.id },
-  });
+  try {
+    [joinedPlansCount, createdPlansCount] = await Promise.all([
+      db.planParticipant.count({ where: { userId: user.id } }),
+      db.plan.count({ where: { creatorId: user.id } }),
+    ]);
+  } catch {
+    // Valeurs par défaut conservées
+  }
 
-  const friendships = await db.friendship.findMany({
-    where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
-    include: {
-      initiator: { select: { id: true, name: true, username: true, image: true } },
-      receiver: { select: { id: true, name: true, username: true, image: true } },
-    },
-    take: 10,
-  });
+  try {
+    const friendships = await db.friendship.findMany({
+      where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
+      include: {
+        initiator: { select: { id: true, name: true, username: true, image: true } },
+        receiver: { select: { id: true, name: true, username: true, image: true } },
+      },
+      take: 10,
+    });
+    friends = friendships.map((f) => (f.initiatorId === user.id ? f.receiver : f.initiator));
+  } catch {
+    // Valeur par défaut conservée
+  }
 
-  const friends = friendships.map((f) => (f.initiatorId === user.id ? f.receiver : f.initiator));
-  const trust = await getTrustData(user.id);
+  try {
+    trust = await getTrustData(user.id);
+  } catch {
+    // Valeur par défaut conservée
+  }
 
   return (
-    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 animate-slide-up">
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 animate-slide-up pb-24 md:pb-4">
       {/* Header card */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow animate-fade-in">
         <div className="relative z-10 flex items-center gap-4">
           <Avatar src={user.image} name={user.name} size="xl" />
-          <div className="flex-1">
-            <h1 className="text-2xl font-black">{user.name || "Utilisateur"}</h1>
-            <p className="text-sm text-white/80">@{user.username || "username"}</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-black truncate">{user.name || "Utilisateur OUTSIDE"}</h1>
+            <p className="text-sm text-white/80 truncate">@{user.username || "username non défini"}</p>
             <div className="mt-2 flex items-center gap-1.5 text-xs text-white/70">
-              <MapPin className="h-3.5 w-3.5" />
-              <span>{user.activeCity?.name || user.homeCity?.name || "Aucune ville"}</span>
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span>{user.activeCity?.name || user.homeCity?.name || "Ville non définie"}</span>
             </div>
             <div className="mt-3">
               <TrustBadge badge={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
@@ -88,13 +123,14 @@ export default async function ProfilePage() {
       {/* Info card */}
       <div className="os-card p-6 space-y-4 animate-slide-up animate-stagger-4">
         <h2 className="text-lg font-bold text-[var(--os-fg)]">Informations</h2>
-        <InfoRow icon={Mail} label="Email" value={user.email} />
-        <InfoRow icon={User} label="Bio" value={user.bio || "-"} />
-        <InfoRow icon={Building} label="Ville d'origine" value={user.homeCity?.name || "-"} />
-        <InfoRow icon={MapPin} label="Ville active" value={user.activeCity?.name || "-"} />
-        <InfoRow icon={MapPin} label="Quartier" value={user.neighborhood || "-"} />
+        <InfoRow icon={Mail} label="Email" value={user.email || "—"} />
+        <InfoRow icon={User} label="Bio" value={user.bio || "Aucune bio pour le moment."} />
+        <InfoRow icon={Building} label="Ville d'origine" value={user.homeCity?.name || "—"} />
+        <InfoRow icon={MapPin} label="Ville active" value={user.activeCity?.name || "—"} />
+        <InfoRow icon={MapPin} label="Quartier" value={user.neighborhood || "—"} />
+        <InfoRow icon={Globe} label="Pays" value={user.country || "Pays non défini"} />
         <InfoRow icon={Globe} label="Langue" value={user.language === "fr" ? "Français" : "English"} />
-        <InfoRow icon={Wallet} label="Budget" value={user.preferredBudget || "-"} />
+        <InfoRow icon={Wallet} label="Budget" value={user.preferredBudget || "—"} />
         <InfoRow icon={CheckCircle} label="Vérifié" value={user.isVerified ? "Oui" : "Non"} />
         <Link
           href="/settings/verification"
@@ -128,7 +164,7 @@ export default async function ProfilePage() {
             {friends.map((friend) => (
               <Link
                 key={friend.id}
-                href={`/u/${friend.username}`}
+                href={`/u/${friend.username || ""}`}
                 className="flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-2 hover:border-outside-300 transition-colors"
               >
                 <Avatar src={friend.image} name={friend.name} size="sm" />
@@ -143,7 +179,7 @@ export default async function ProfilePage() {
       <div className="os-card p-6 animate-slide-up animate-stagger-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Image className="h-5 w-5 text-outside-500" />
+            <ImageIcon className="h-5 w-5 text-outside-500" />
             <h2 className="text-lg font-bold text-[var(--os-fg)]">Moments OUTSIDE</h2>
           </div>
           <Link href="/moments" className="text-xs font-bold text-outside-600 hover:text-outside-700 transition-colors">
