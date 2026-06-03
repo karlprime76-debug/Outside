@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, SendHorizontal, Trash2, Flag } from "lucide-react";
+import { Loader2, SendHorizontal, Trash2, Flag, ArrowLeft } from "lucide-react";
 import { OutsideHeader } from "@/components/ui/outside-header";
 import { OutsidePage } from "@/components/ui/outside-page";
+import { useSession } from "next-auth/react";
 
 interface DmMessage {
   id: string;
@@ -19,6 +20,7 @@ export default function DmConversationPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<DmMessage[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -26,6 +28,7 @@ export default function DmConversationPage() {
   const [sending, setSending] = useState(false);
   const [content, setContent] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
+  const myId = session?.user?.id || "";
 
   function formatFromNow(iso: string) {
     const now = new Date();
@@ -155,7 +158,15 @@ export default function DmConversationPage() {
 
   return (
     <OutsidePage>
-      <OutsideHeader title="Messages" sticky />
+      <OutsideHeader
+        title="Conversation"
+        left={(
+          <button onClick={() => router.back()} aria-label="Retour" className="rounded-lg p-2 hover:bg-[var(--os-card-border)]">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
+        sticky
+      />
       <div className="max-w-2xl mx-auto px-4 py-4 h-[calc(100dvh-6.5rem)] flex flex-col gap-3">
         {error && (
           <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-600">
@@ -176,7 +187,7 @@ export default function DmConversationPage() {
                 </div>
               )}
               {ordered.map((m) => {
-                const mine = false; // TODO: align right when session userId is available on client
+                const mine = myId && m.senderId === myId;
                 return (
                   <div key={`${m.id}-row`} className={`flex ${mine ? 'justify-end' : 'justify-start'} mb-2`}>
                     <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${mine ? 'bg-outside-500 text-white' : 'bg-[var(--os-bg)] text-[var(--os-fg)] border border-[var(--os-card-border)]'}`}>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, MessageSquare, ArrowRight } from "lucide-react";
+import { Loader2, MessageSquare, ArrowRight, Search } from "lucide-react";
 import { OutsideHeader } from "@/components/ui/outside-header";
 import { OutsidePage } from "@/components/ui/outside-page";
 
@@ -22,6 +22,7 @@ export default function DmInboxPage() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loadingMore, setLoadingMore] = useState(false);
+  const [query, setQuery] = useState("");
 
   const load = useCallback(async (cursor?: string) => {
     const url = new URL("/api/dm/conversations", window.location.origin);
@@ -74,6 +75,17 @@ export default function DmInboxPage() {
     <OutsidePage>
       <OutsideHeader title="Messages" sticky />
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--os-muted)]" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher (nom, username)"
+            className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] pl-9 pr-3 py-2.5 text-sm text-[var(--os-fg)] focus:border-outside-400 focus:outline-none focus:ring-2 focus:ring-outside-400/20 transition-all"
+          />
+        </div>
         {error && (
           <div className="rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-600">
             {error}
@@ -94,7 +106,15 @@ export default function DmInboxPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {items.map((c) => (
+            {items
+              .filter((c) => {
+                const q = query.trim().toLowerCase();
+                if (!q) return true;
+                const name = (c.other?.name || "").toLowerCase();
+                const username = (c.other?.username || "").toLowerCase();
+                return name.includes(q) || username.includes(q);
+              })
+              .map((c) => (
               <Link key={c.id} href={`/dm/${c.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-3 hover:border-outside-300 transition-colors">
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-[var(--os-fg)] truncate">
