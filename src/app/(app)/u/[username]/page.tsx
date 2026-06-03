@@ -11,6 +11,7 @@ import { getFriendCount } from "@/lib/social/friendship";
 import { getTrustData } from "@/lib/trust";
 import { FollowButton } from "@/components/social/follow-button";
 import { FriendButton } from "@/components/social/friend-button";
+import { MessageButton } from "@/components/social/message-button";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
 import { TrustReviewButton } from "@/components/trust/trust-review-button";
@@ -41,19 +42,59 @@ const defaultTrust: TrustData = {
   },
 };
 
+function normalizeUsername(raw: string): string {
+  return decodeURIComponent(raw).trim().replace(/^@/, "").toLowerCase();
+}
+
 export default async function PublicProfilePage({ params }: Props) {
-  const { username } = await params;
-  const session = await auth();
+  const { username: rawUsername } = await params;
+  const username = normalizeUsername(rawUsername);
+  if (!username || username.length < 2) notFound();
+
+  const session = await auth().catch(() => null);
   const currentUserId = session?.user?.id;
 
-  const user = await db.user.findUnique({
-    where: { username },
-    include: {
-      homeCity: true,
-      activeCity: true,
-      userSettings: { select: { showCityOnProfile: true } },
-    },
-  });
+  let user: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    image: string | null;
+    bio: string | null;
+    country: string | null;
+    countryCode: string | null;
+    isVerified: boolean;
+    trustScore: number;
+    createdAt: Date;
+    homeCity: { name: string } | null;
+    activeCity: { name: string } | null;
+    userSettings: { showCityOnProfile: boolean } | null;
+  } | null = null;
+
+  try {
+    user = await db.user.findUnique({
+      where: { username },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        image: true,
+        bio: true,
+        country: true,
+        countryCode: true,
+        isVerified: true,
+        trustScore: true,
+        createdAt: true,
+        homeCity: { select: { name: true } },
+        activeCity: { select: { name: true } },
+        userSettings: { select: { showCityOnProfile: true } },
+      },
+    });
+  } catch (err) {
+    const e = err as { message?: string; code?: string; name?: string };
+    // eslint-disable-next-line no-console
+    console.error("[PUBLIC_PROFILE_ERROR]", { username, message: e?.message, code: e?.code, name: e?.name });
+    notFound();
+  }
 
   if (!user) notFound();
 
@@ -63,6 +104,22 @@ export default async function PublicProfilePage({ params }: Props) {
   let relation: string = "NONE";
   let friendCount = 0;
   let trust = defaultTrust;
+  let followersCount = 0;
+  let momentsCount = 0;
+  let publicPlansCount = 0;
+  let recent: Array<{
+    id: string; type: string; mediaUrl: string; caption: string | null;
+    city: string | null; countryCode: string | null; visibility: string;
+    createdAt: Date; author: { id: string; name: string | null; username: string | null; image: string | null; role: string; isVerified: boolean };
+    _count: { likes: number; comments: number };
+  }> = [];
+  let likedSet = new Set<string>();
+  let recentPlans: Array<{
+    id: string; title: string; mood: string; budgetLevel: string; startDate: Date;
+    maxParticipants: number; status: string; city: { name: string };
+    creator: { name: string | null; image: string | null };
+    _count: { participants: number };
+  }> = [];
 
   if (currentUserId) {
     try {
@@ -84,28 +141,67 @@ export default async function PublicProfilePage({ params }: Props) {
     trust = defaultTrust;
   }
 
-  // Charger quelques moments publics récents (sans données sensibles)
-  const recent = await db.moment.findMany({
-    where: {
-      authorId: user.id,
-      visibility: "PUBLIC",
-      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-    },
-    orderBy: { createdAt: "desc" },
-    take: 5,
-    include: {
-      author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
-      _count: { select: { likes: true, comments: true } },
-    },
-  });
+  try {
+    followersCount = await db.follow.count({ where: { followingId: user.id } });
+  } catch {
+    followersCount = 0;
+  }
 
-  let likedSet = new Set<string>();
-  if (currentUserId && recent.length > 0) {
-    const likes = await db.momentLike.findMany({
-      where: { userId: currentUserId, momentId: { in: recent.map((m) => m.id) } },
-      select: { momentId: true },
+  try {
+    momentsCount = await db.moment.count({ where: { authorId: user.id, visibility: "PUBLIC" } });
+  } catch {
+    momentsCount = 0;
+  }
+
+  try {
+    publicPlansCount = await db.plan.count({ where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } } });
+  } catch {
+    publicPlansCount = 0;
+  }
+
+  try {
+    recent = await db.moment.findMany({
+      where: {
+        authorId: user.id,
+        visibility: "PUBLIC",
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      include: {
+        author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
+        _count: { select: { likes: true, comments: true } },
+      },
     });
-    likedSet = new Set(likes.map((l) => l.momentId));
+  } catch {
+    recent = [];
+  }
+
+  if (currentUserId && recent.length > 0) {
+    try {
+      const likes = await db.momentLike.findMany({
+        where: { userId: currentUserId, momentId: { in: recent.map((m) => m.id) } },
+        select: { momentId: true },
+      });
+      likedSet = new Set(likes.map((l) => l.momentId));
+    } catch {
+      likedSet = new Set();
+    }
+  }
+
+  try {
+    recentPlans = await db.plan.findMany({
+      where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } },
+      orderBy: { startDate: "asc" },
+      take: 6,
+      include: {
+        city: { select: { name: true } },
+        creator: { select: { name: true, image: true } },
+        _count: { select: { participants: true } },
+      },
+    });
+  } catch {
+    recentPlans = [];
   }
 
   const publicMoments: PublicMomentItem[] = recent.map((m) => ({
@@ -121,28 +217,10 @@ export default async function PublicProfilePage({ params }: Props) {
     _count: { likes: m._count.likes, comments: m._count.comments },
     viewerState: {
       likedByMe: likedSet.has(m.id),
-      canDelete: currentUserId === m.authorId || session?.user?.role === "ADMIN" || session?.user?.role === "MODERATOR",
-      canReport: currentUserId !== m.authorId,
+      canDelete: currentUserId === m.author.id || session?.user?.role === "ADMIN" || session?.user?.role === "MODERATOR",
+      canReport: currentUserId !== m.author.id,
     },
   }));
-
-  // Stats basiques
-  const [followersCount, momentsCount, publicPlansCount] = await Promise.all([
-    db.follow.count({ where: { followingId: user.id } }),
-    db.moment.count({ where: { authorId: user.id, visibility: "PUBLIC" } }),
-    db.plan.count({ where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } } }).catch(() => 0),
-  ]);
-
-  const recentPlans = await db.plan.findMany({
-    where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } },
-    orderBy: { startDate: "asc" },
-    take: 6,
-    include: {
-      city: { select: { name: true } },
-      creator: { select: { name: true, image: true } },
-      _count: { select: { participants: true } },
-    },
-  });
 
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-fade-in">
@@ -161,21 +239,8 @@ export default async function PublicProfilePage({ params }: Props) {
             )}
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <TrustBadge badge={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
-              {!isSelf && (
-                <form action={`/api/dm/conversations`} method="post" className="inline-block"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const res = await fetch('/api/dm/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) });
-                    const data = await res.json().catch(() => ({}));
-                    if (res.ok && data.conversationId) {
-                      window.location.href = `/dm/${data.conversationId}`;
-                    } else {
-                      alert(data.error || 'Impossible de démarrer la conversation');
-                    }
-                  }}
-                >
-                  <button type="submit" className="rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/30 transition-colors">Message</button>
-                </form>
+              {!isSelf && currentUserId && (
+                <MessageButton username={user.username || ""} />
               )}
             </div>
           </div>
