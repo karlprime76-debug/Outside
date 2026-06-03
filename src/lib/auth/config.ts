@@ -15,10 +15,12 @@ export const authConfig: NextAuthConfig = {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const { email, password } = parsed.data;
+        // Normalize inputs to reduce false negatives from autofill/spaces/case
+        const emailNorm = parsed.data.email.trim().toLowerCase();
+        const passwordNorm = parsed.data.password.trim();
 
-        const user = await db.user.findUnique({
-          where: { email },
+        const user = await db.user.findFirst({
+          where: { email: { equals: emailNorm, mode: "insensitive" } },
           include: {
             homeCity: true,
             activeCity: true,
@@ -27,7 +29,7 @@ export const authConfig: NextAuthConfig = {
 
         if (!user || !user.password) return null;
 
-        const valid = await bcrypt.compare(password, user.password);
+        const valid = await bcrypt.compare(passwordNorm, user.password);
         if (!valid) return null;
 
         return {
