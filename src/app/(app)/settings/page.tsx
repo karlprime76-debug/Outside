@@ -120,7 +120,7 @@ export default function SettingsPage() {
     icon: typeof Bell;
   }) {
     return (
-      <div className="flex items-center justify-between py-3 border-b border-[var(--os-card-border)] last:border-0">
+      <div className="flex items-center justify-between py-3 border-b border-[var(--os-card-border)] last:border-0 animate-fade-in">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-outside-100 p-2">
             <Icon className="h-4 w-4 text-outside-600" />
@@ -129,7 +129,7 @@ export default function SettingsPage() {
         </div>
         <button
           onClick={() => onChange(!value)}
-          className={`relative h-7 w-12 rounded-full transition-colors ${
+          className={`relative h-7 w-12 rounded-full transition-colors pressable ${
             value ? "bg-outside-500" : "bg-zinc-300 dark:bg-zinc-700"
           }`}
           aria-pressed={value}
@@ -155,7 +155,7 @@ export default function SettingsPage() {
   }) {
     return (
       <section
-        className={`p-5 ${
+        className={`p-5 animate-slide-up ${
           danger
             ? "rounded-2xl border border-red-200 bg-red-50"
             : "os-card"
@@ -206,7 +206,7 @@ export default function SettingsPage() {
       </Link>
 
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 animate-fade-in">
         <Avatar src={session?.user?.image} name={session?.user?.name} size="xl" />
         <div>
           <h1 className="text-2xl font-black text-[var(--os-fg)]">Paramètres</h1>
