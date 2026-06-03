@@ -18,6 +18,8 @@ export const registerSchema = z.object({
   homeCity: z.string().min(2, "La ville doit contenir au moins 2 caractères"),
   homeCityLat: z.number().nullish(),
   homeCityLng: z.number().nullish(),
+  birthDate: z.string().min(1, "La date de naissance est requise"),
+  acceptTerms: z.boolean().refine((v) => v === true, { message: "Tu dois accepter les Conditions et la Politique de confidentialité" }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { registerSchema } from "@/lib/validation/schemas";
+import { isAtLeast18 } from "@/lib/age";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { isValidCountryCode, getCountryName } from "@/lib/countries";
 
@@ -67,7 +68,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, username, email, password, gender, countryCode, homeCity, homeCityLat, homeCityLng } = parsed.data;
+    const { name, username, email, password, gender, countryCode, homeCity, homeCityLat, homeCityLng, birthDate, acceptTerms } = parsed.data as typeof parsed.data & { birthDate: string; acceptTerms: boolean };
+
+    // Validation âge et acceptation
+    if (!birthDate) {
+      return NextResponse.json({ error: "La date de naissance est requise." }, { status: 400 });
+    }
+    const bd = new Date(birthDate);
+    if (!isAtLeast18(bd)) {
+      return NextResponse.json({ message: "Tu dois avoir au moins 18 ans pour créer un compte OUTSIDE.", code: "AGE_RESTRICTED" }, { status: 403 });
+    }
+    if (!acceptTerms) {
+      return NextResponse.json({ error: "Tu dois accepter les Conditions d’utilisation et la Politique de confidentialité." }, { status: 400 });
+    }
 
     if (!isValidCountryCode(countryCode)) {
       if (process.env.NODE_ENV === "development") {
@@ -136,6 +149,10 @@ export async function POST(req: Request) {
           countryCode: countryCode.toUpperCase(),
           homeCityId: city.id,
           activeCityId: city.id,
+          birthDate: bd,
+          isAdultConfirmed: true,
+          termsAcceptedAt: new Date(),
+          privacyAcceptedAt: new Date(),
         },
         select: { id: true, name: true, email: true },
       });

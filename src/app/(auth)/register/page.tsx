@@ -25,6 +25,8 @@ export default function RegisterPage() {
   const [homeCity, setHomeCity] = useState("");
   const [gender, setGender] = useState("");
   const [citySuggestion, setCitySuggestion] = useState<{ id: string; lat: number | null; lng: number | null } | null>(null);
+  const [birthDate, setBirthDate] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,10 +45,35 @@ export default function RegisterPage() {
       homeCity: homeCity.trim(),
       homeCityLat: citySuggestion?.lat ?? null,
       homeCityLng: citySuggestion?.lng ?? null,
+      birthDate,
+      acceptTerms,
     };
 
     if (data.password !== data.confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");
+      setLoading(false);
+      return;
+    }
+
+    if (!birthDate) {
+      setError("La date de naissance est requise.");
+      setLoading(false);
+      return;
+    }
+    // Vérif âge côté client (défense en profondeur)
+    const bd = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - bd.getFullYear();
+    const m = today.getMonth() - bd.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) age--;
+    if (age < 18) {
+      setError("Tu dois avoir au moins 18 ans pour créer un compte OUTSIDE.");
+      setLoading(false);
+      return;
+    }
+
+    if (!acceptTerms) {
+      setError("Tu dois accepter les Conditions d’utilisation et la Politique de confidentialité.");
       setLoading(false);
       return;
     }
@@ -222,6 +249,32 @@ export default function RegisterPage() {
                   onSelect={(c) => setCitySuggestion(c ? { id: c.id, lat: c.lat, lng: c.lng } : null)}
                   disabled={!countryCode}
                 />
+                <div>
+                  <label className="mb-1.5 block text-sm font-bold text-white/70">Date de naissance</label>
+                  <input
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    className="w-full rounded-xl bg-white/90 px-4 py-3 text-sm text-zinc-900 border-0"
+                    required
+                  />
+                  <p className="text-[10px] text-white/60 mt-1">Tu dois avoir au moins 18 ans pour utiliser OUTSIDE.</p>
+                </div>
+                <label className="flex items-start gap-2 text-sm text-white/80">
+                  <input
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    className="mt-1"
+                    required
+                  />
+                  <span>
+                    J’ai lu et j’accepte les
+                    {' '}<Link href="/legal/terms" className="font-bold text-outside-300 hover:text-outside-200">Conditions d’utilisation</Link>
+                    {' '}et la{' '}
+                    <Link href="/legal/privacy" className="font-bold text-outside-300 hover:text-outside-200">Politique de confidentialité</Link>.
+                  </span>
+                </label>
                 <button
                   type="submit"
                   disabled={loading}

@@ -243,6 +243,11 @@ model User {
   gender            Gender?
   role              UserRole @default(USER)
 
+  birthDate         DateTime?
+  isAdultConfirmed  Boolean  @default(false)
+  termsAcceptedAt   DateTime?
+  privacyAcceptedAt DateTime?
+
   homeCityId        String?
   homeCity          City?    @relation("UserHomeCity", fields: [homeCityId], references: [id])
   activeCityId      String?

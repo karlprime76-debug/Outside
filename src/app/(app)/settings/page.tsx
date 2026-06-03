@@ -257,6 +257,24 @@ export default function SettingsPage() {
         </div>
       </Section>
 
+      {!session?.user?.birthDate && (
+        <Section title="Informations légales">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-amber-100 p-2">
+              <Shield className="h-4 w-4 text-amber-700" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-[var(--os-fg)]">Compléter mes informations légales</p>
+              <p className="text-xs text-[var(--os-muted)] mt-0.5">Ajoute ta date de naissance pour confirmer que tu as au moins 18 ans.</p>
+              <Link href="/profile/edit" className="inline-flex items-center gap-1.5 mt-2 rounded-lg bg-[var(--os-card)] px-3 py-1.5 text-xs font-bold text-[var(--os-fg)] border border-[var(--os-card-border)] hover:bg-[var(--os-card-border)] transition-colors">
+                Mettre à jour
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        </Section>
+      )}
+
       {/* Apparence */}
       <Section title="Apparence">
         <div className="flex items-center justify-between py-3 border-b border-[var(--os-card-border)]">
