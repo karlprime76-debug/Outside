@@ -25,7 +25,11 @@ export default async function PublicProfilePage({ params }: Props) {
 
   const user = await db.user.findUnique({
     where: { username },
-    include: { homeCity: true, activeCity: true, userSettings: true },
+    include: {
+      homeCity: true,
+      activeCity: true,
+      userSettings: { select: { showCityOnProfile: true } },
+    },
   });
 
   if (!user) notFound();
