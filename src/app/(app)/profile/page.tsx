@@ -7,13 +7,14 @@ import { Avatar } from "@/components/ui/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
-import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil, Image as ImageIcon, Shield } from "lucide-react";
+import { MapPin, Mail, User as UserIcon, Globe, Wallet, CheckCircle, Building, Users, Pencil, Image as ImageIcon, Shield } from "lucide-react";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
 import { UserBadges } from "@/components/profile/user-badges";
 import { getTrustData } from "@/lib/trust";
 import type { TrustData } from "@/lib/trust";
+import type { User } from "@prisma/client";
 
 const defaultTrust: TrustData = {
   trustScore: 0,
@@ -36,10 +37,27 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user?.email) redirect("/login");
 
-  const user = await db.user.findUnique({
-    where: { email: session.user.email },
-    include: { homeCity: true, activeCity: true },
-  });
+  type UserWithCities = User & { homeCity: { name: string } | null; activeCity: { name: string } | null };
+  let user: UserWithCities | null = null;
+  try {
+    user = await db.user.findUnique({
+      where: { email: session.user.email },
+      include: { homeCity: true, activeCity: true },
+    });
+  } catch {
+    return (
+      <AnimatedPage className="p-6 max-w-2xl mx-auto">
+        <div className="os-card p-8 text-center">
+          <p className="text-lg font-black text-[var(--os-fg)] mb-2">Impossible de charger ton profil pour le moment.</p>
+          <p className="text-sm text-[var(--os-muted)]">Un problème est survenu. Réessaie ou reviens plus tard.</p>
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <Link href="/profile" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--os-card)] px-4 py-2 text-sm font-bold text-[var(--os-fg)] border border-[var(--os-card-border)] hover:bg-[var(--os-card-border)] transition-colors">Réessayer</Link>
+            <Link href="/login" className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all">Se reconnecter</Link>
+          </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
 
   if (!user) redirect("/login");
 
@@ -125,7 +143,7 @@ export default async function ProfilePage() {
       <div className="os-card p-6 space-y-4 animate-slide-up animate-stagger-4">
         <h2 className="text-lg font-bold text-[var(--os-fg)]">Informations</h2>
         <InfoRow icon={Mail} label="Email" value={user.email || "—"} />
-        <InfoRow icon={User} label="Bio" value={user.bio || "Aucune bio pour le moment."} />
+        <InfoRow icon={UserIcon} label="Bio" value={user.bio || "Aucune bio pour le moment."} />
         <InfoRow icon={Building} label="Ville d'origine" value={user.homeCity?.name || "—"} />
         <InfoRow icon={MapPin} label="Ville active" value={user.activeCity?.name || "—"} />
         <InfoRow icon={MapPin} label="Quartier" value={user.neighborhood || "—"} />
