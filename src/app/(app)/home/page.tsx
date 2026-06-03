@@ -10,7 +10,7 @@ import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
 import { ThemeAwareLogo } from "@/components/ui/theme-aware-logo";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
-import { EmptyState } from "@/components/ui/empty-state";
+import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { backgrounds } from "@/lib/backgrounds";
 import {
@@ -275,7 +275,7 @@ export default function HomePage() {
             ))}
           </div>
         ) : lives.length === 0 ? (
-          <EmptyState
+          <OutsideEmptyState
             icon={Radio}
             title="Aucun live en cours"
             description="L'ambiance commence peut-être avec toi."
@@ -314,7 +314,7 @@ export default function HomePage() {
             ))}
           </div>
         ) : events.length === 0 ? (
-          <EmptyState
+          <OutsideEmptyState
             icon={CalendarDays}
             title="Aucun événement pro publié"
             description="Pour l'instant, aucun événement pro n'est disponible."
@@ -513,11 +513,15 @@ export default function HomePage() {
             <SkeletonCard />
           </div>
         ) : todayPlans.length === 0 ? (
-          <EmptyState
+          <OutsideEmptyState
             icon={Sparkles}
             title="Aucun plan pour le moment"
             description="Dans ta ville. Lance le premier."
-            cta={{ label: "Créer un plan", href: "/plans/new" }}
+            action={(
+              <Link href="/plans/new" className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all">
+                Créer un plan
+              </Link>
+            )}
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -576,7 +580,7 @@ export default function HomePage() {
             ))}
           </div>
         ) : places.length === 0 ? (
-          <EmptyState
+          <OutsideEmptyState
             icon={MapPin}
             title="Aucun lieu enregistré"
             description="Les lieux apparaîtront bientôt dans ta ville."
