@@ -96,8 +96,24 @@ export default async function PublicProfilePage({ params }: Props) {
                 <span>{user.activeCity?.name || user.homeCity?.name || "Ville non définie"}</span>
               </div>
             )}
-            <div className="mt-3">
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
               <TrustBadge badge={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
+              {!isSelf && (
+                <form action={`/api/dm/conversations`} method="post" className="inline-block"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const res = await fetch('/api/dm/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.conversationId) {
+                      window.location.href = `/dm/${data.conversationId}`;
+                    } else {
+                      alert(data.error || 'Impossible de démarrer la conversation');
+                    }
+                  }}
+                >
+                  <button type="submit" className="rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/30 transition-colors">Message</button>
+                </form>
+              )}
             </div>
           </div>
         </div>

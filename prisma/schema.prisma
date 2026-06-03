@@ -110,6 +110,23 @@ enum MomentVisibility {
   PRIVATE
 }
 
+enum ConversationType {
+  DIRECT
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  DELETED
+}
+
+enum DirectMessagePermission {
+  FRIENDS_ONLY
+  FRIENDS_AND_FOLLOWING
+  EVERYONE
+}
+
 enum PlaceCategory {
   RESTAURANT
   CAFE
@@ -277,6 +294,8 @@ model User {
   userSettings      UserSettings?
   momentLikes       MomentLike[]
   momentComments    MomentComment[]
+  conversationParticipants ConversationParticipant[]
+  directMessagesSent       DirectMessage[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -294,6 +313,7 @@ model UserSettings {
   profileVisibility        String  @default("PUBLIC")
   showCityOnProfile        Boolean @default(true)
   allowFriendRequests      Boolean @default(true)
+  directMessagePermission  DirectMessagePermission @default(FRIENDS_ONLY)
   allowFollowers           Boolean @default(true)
   allowFriendSuggestions   Boolean @default(true)
 
@@ -305,6 +325,56 @@ model UserSettings {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Conversation {
+  id        String           @id @default(cuid())
+  type      ConversationType @default(DIRECT)
+
+  participants ConversationParticipant[]
+  messages     DirectMessage[]
+
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([updatedAt])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lastReadAt     DateTime?
+  mutedAt        DateTime?
+  archivedAt     DateTime?
+
+  createdAt      DateTime     @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model DirectMessage {
+  id             String        @id @default(cuid())
+  conversationId String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String?
+  mediaUrl       String?
+
+  status         MessageStatus @default(SENT)
+  isDeleted      Boolean       @default(false)
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
 }
 
 model City {
