@@ -242,6 +242,7 @@ model User {
   bio               String?
   gender            Gender?
   role              UserRole @default(USER)
+  isDemoAccount     Boolean  @default(false)
 
   birthDate         DateTime?
   isAdultConfirmed  Boolean  @default(false)
@@ -458,6 +459,7 @@ model Plan {
   isTravelerFriendly Boolean        @default(false)
   safetyLevel       SafetyLevel     @default(MEDIUM)
   rules             String?
+  isDemo            Boolean         @default(false)
 
   creatorId         String
   creator           User            @relation(fields: [creatorId], references: [id])
@@ -532,6 +534,7 @@ model Moment {
   city        String?
   countryCode String?
   visibility  MomentVisibility @default(PUBLIC)
+  isDemo      Boolean          @default(false)
 
   planId      String?
   placeId     String?
@@ -820,6 +823,7 @@ model LiveSession {
   viewerCount    Int            @default(0)
   startedAt      DateTime?
   endedAt        DateTime?
+  isDemo         Boolean        @default(false)
 
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt

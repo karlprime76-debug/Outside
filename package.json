@@ -12,6 +12,7 @@
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:studio": "dotenv -e .env.local -- prisma studio",
     "db:seed": "dotenv -e .env.local -- tsx prisma/seed.ts",
+    "db:seed:demo": "dotenv -e .env.local -- tsx prisma/seed-demo.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
