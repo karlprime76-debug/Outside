@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { canViewPlan } from "@/lib/plans/permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateMomentFile, buildMomentPath, ensureMomentsBucket, MOMENTS_BUCKET } from "@/lib/supabase/moments-storage";
-import { MomentVisibility } from "@prisma/client";
+import { MomentVisibility, MomentType } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(req: Request) {
@@ -58,6 +58,7 @@ export async function GET(req: Request) {
     if (isNaN(limit) || limit < 1) limit = 10;
     if (limit > 20) limit = 20;
     const scope = searchParams.get("scope") || "for-you";
+    const media = (searchParams.get("media") || "all").toLowerCase();
 
     const friendRows = await db.friendship.findMany({
       where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
@@ -128,20 +129,35 @@ export async function GET(req: Request) {
       };
     }
 
+    // Apply media filter: posts=PHOTO, clips=VIDEO, all=no filter
+    const mediaWhere: Prisma.MomentWhereInput | undefined =
+      media === "posts"
+        ? { type: MomentType.PHOTO }
+        : media === "clips"
+        ? { type: MomentType.VIDEO }
+        : undefined;
+
+    const finalWhere: Prisma.MomentWhereInput = mediaWhere
+      ? { AND: [baseWhere, mediaWhere] }
+      : baseWhere;
+
+    const demoWhere: Prisma.MomentWhereInput | undefined = DEMO_GLOBAL
+      ? {
+          OR: [
+            finalWhere,
+            {
+              AND: [
+                { isDemo: true },
+                { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+                mediaWhere ? mediaWhere : {},
+              ],
+            },
+          ],
+        }
+      : undefined;
+
     const moments = await db.moment.findMany({
-      where: DEMO_GLOBAL
-        ? {
-            OR: [
-              baseWhere,
-              {
-                AND: [
-                  { isDemo: true },
-                  { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
-                ],
-              },
-            ],
-          }
-        : baseWhere,
+      where: demoWhere ?? finalWhere,
       orderBy: { createdAt: "desc" },
       take: limit,
       skip: cursor ? 1 : 0,

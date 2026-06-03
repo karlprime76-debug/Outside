@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { normalizeUsername, validateUsername } from "@/lib/username";
 import { useRouter } from "next/navigation";
 import { MapPin, Shield, Globe, Sparkles } from "lucide-react";
 import { InputField } from "@/components/ui/input-field";
@@ -34,9 +35,12 @@ export default function RegisterPage() {
     setError("");
 
     const form = new FormData(e.currentTarget);
+    const rawUsername = (form.get("username") as string) || "";
+    const normalizedUsername = normalizeUsername(rawUsername);
+
     const data = {
       name: form.get("name") as string,
-      username: form.get("username") as string,
+      username: normalizedUsername,
       email: form.get("email") as string,
       password: form.get("password") as string,
       confirmPassword: form.get("confirmPassword") as string,
@@ -48,6 +52,25 @@ export default function RegisterPage() {
       birthDate,
       acceptTerms,
     };
+
+    // Username client-side validation
+    const uv = validateUsername(normalizedUsername);
+    if (!uv.ok) {
+      setError(uv.error);
+      setLoading(false);
+      return;
+    }
+
+    // Availability pre-check
+    try {
+      const r = await fetch(`/api/users/check-username?username=${encodeURIComponent(normalizedUsername)}`);
+      const j = await r.json();
+      if (!j.available) {
+        setError(j.reason || "Nom d’utilisateur déjà utilisé.");
+        setLoading(false);
+        return;
+      }
+    } catch {}
 
     if (data.password !== data.confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");

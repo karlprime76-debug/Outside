@@ -120,26 +120,28 @@ export default function SettingsPage() {
     icon: typeof Bell;
   }) {
     return (
-      <div className="flex items-center justify-between py-3 border-b border-[var(--os-card-border)] last:border-0 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-outside-100 p-2">
+      <div className="flex w-full items-center justify-between gap-4 py-3 border-b border-[var(--os-card-border)] last:border-0 animate-fade-in">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="shrink-0 rounded-lg bg-outside-100 p-2">
             <Icon className="h-4 w-4 text-outside-600" />
           </div>
-          <span className="text-sm font-semibold text-[var(--os-fg)]">{label}</span>
+          <span className="break-words text-sm font-semibold text-[var(--os-fg)]">{label}</span>
         </div>
-        <button
-          onClick={() => onChange(!value)}
-          className={`relative h-7 w-12 rounded-full transition-colors pressable ${
-            value ? "bg-outside-500" : "bg-zinc-300 dark:bg-zinc-700"
-          }`}
-          aria-pressed={value}
-        >
-          <span
-            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
-              value ? "translate-x-5" : "translate-x-0.5"
+        <div className="shrink-0">
+          <button
+            onClick={() => onChange(!value)}
+            className={`relative h-7 w-12 rounded-full transition-colors pressable ${
+              value ? "bg-outside-500" : "bg-zinc-300 dark:bg-zinc-700"
             }`}
-          />
-        </button>
+            aria-pressed={value}
+          >
+            <span
+              className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+                value ? "translate-x-5" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </div>
       </div>
     );
   }
@@ -158,7 +160,7 @@ export default function SettingsPage() {
         className={`p-5 animate-slide-up ${
           danger
             ? "rounded-2xl border border-red-200 bg-red-50"
-            : "os-card"
+            : "os-card overflow-hidden"
         }`}
       >
         <h2

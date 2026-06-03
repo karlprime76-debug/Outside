@@ -40,6 +40,9 @@ enum NotificationType {
   PRO_APPROVED
   BADGE_EARNED
   SYSTEM
+  DM_MESSAGE
+  MOMENT_LIKE
+  MOMENT_COMMENT
 }
 
 enum AvailabilityMood {

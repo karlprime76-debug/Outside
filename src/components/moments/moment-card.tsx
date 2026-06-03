@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
 import { Heart, MessageCircle, Share2, Flag, MapPin, MoreHorizontal, Trash2, Volume2, VolumeX, Play } from "lucide-react";
+import { MomentMedia } from "./moment-media";
 
 interface Author {
   id: string;
@@ -41,9 +42,10 @@ interface MomentCardProps {
   onLikeToggle: (id: string, liked: boolean) => void;
   onOpenComments: (moment: MomentItem) => void;
   onDelete?: (id: string) => void;
+  onHide?: (id: string) => void;
 }
 
-export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete }: MomentCardProps) {
+export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onHide }: MomentCardProps) {
   const { addToast } = useToast();
   const [liked, setLiked] = useState(moment.viewerState.likedByMe);
   const [likesCount, setLikesCount] = useState(moment._count.likes);
@@ -124,6 +126,20 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete }: M
     if (res.ok) addToast("Moment signalé.", "success");
   };
 
+  const handleHideLocal = () => {
+    try {
+      const key = "outside_hidden_moments";
+      const raw = localStorage.getItem(key);
+      const set = new Set<string>(raw ? JSON.parse(raw) : []);
+      set.add(moment.id);
+      localStorage.setItem(key, JSON.stringify(Array.from(set)));
+      onHide?.(moment.id);
+      addToast("Moment masqué.", "success");
+    } catch {
+      addToast("Impossible de masquer le moment.", "error");
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm("Supprimer ce moment ?")) return;
     const res = await fetch(`/api/moments/${moment.id}`, { method: "DELETE" });
@@ -148,18 +164,23 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete }: M
 
   return (
     <div ref={cardRef} className="relative w-full flex-shrink-0 snap-start animate-fade-in">
-      {/* Media container - full viewport height on mobile */}
-      <div className="relative h-[calc(100dvh-180px)] sm:h-[70vh] md:h-[600px] w-full bg-black rounded-none sm:rounded-2xl overflow-hidden">
+      {/* Media container - immersive on mobile, centered on desktop */}
+      <div className="relative h-[calc(100dvh-150px)] sm:h-[70vh] md:h-[600px] w-full max-w-full bg-black rounded-none sm:rounded-2xl overflow-hidden">
         {isVideo ? (
           <>
-            <video
+            <MomentMedia
               ref={videoRef}
+              type={moment.type}
               src={moment.mediaUrl}
               className="h-full w-full object-cover"
               muted={videoMuted}
               loop
               playsInline
               preload="metadata"
+            />
+            {/* Click-to-play overlay keeps working via videoRef */}
+            <div
+              className="absolute inset-0"
               onClick={() => {
                 if (videoRef.current) {
                   if (videoRef.current.paused) {
@@ -187,12 +208,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete }: M
             </button>
           </>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <MomentMedia
+            type={moment.type}
             src={moment.mediaUrl}
-            alt={moment.caption || "Moment"}
             className="h-full w-full object-cover"
-            loading="lazy"
+            preload="metadata"
           />
         )}
 
@@ -246,6 +266,12 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete }: M
                     Signaler
                   </button>
                 )}
+                <button
+                  onClick={() => { setMenuOpen(false); handleHideLocal(); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+                >
+                  Masquer
+                </button>
                 <button
                   onClick={() => { setMenuOpen(false); handleShare(); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"

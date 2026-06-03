@@ -5,6 +5,7 @@ import { registerSchema } from "@/lib/validation/schemas";
 import { isAtLeast18 } from "@/lib/age";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { isValidCountryCode, getCountryName } from "@/lib/countries";
+import { normalizeUsername, validateUsername } from "@/lib/username";
 
 export async function POST(req: Request) {
   try {
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, username, email, password, gender, countryCode, homeCity, homeCityLat, homeCityLng, birthDate, acceptTerms } = parsed.data as typeof parsed.data & { birthDate: string; acceptTerms: boolean };
+    const { name, username: rawUsername, email, password, gender, countryCode, homeCity, homeCityLat, homeCityLng, birthDate, acceptTerms } = parsed.data as typeof parsed.data & { birthDate: string; acceptTerms: boolean };
 
     // Validation âge et acceptation
     if (!birthDate) {
@@ -104,15 +105,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Un compte existe déjà avec cet email." }, { status: 409 });
     }
 
-    if (username) {
-      const existingUsername = await db.user.findUnique({ where: { username } });
+    let username: string | null = null;
+    if (rawUsername) {
+      const norm = normalizeUsername(rawUsername);
+      const valid = validateUsername(norm);
+      if (!valid.ok) {
+        return NextResponse.json({ error: valid.error }, { status: 400 });
+      }
+      const existingUsername = await db.user.findUnique({ where: { username: norm } });
       if (existingUsername) {
         if (process.env.NODE_ENV === "development") {
           // eslint-disable-next-line no-console
-          console.log("[REGISTER] Validation failed: username_already_taken", username);
+          console.log("[REGISTER] Validation failed: username_already_taken", norm);
         }
         return NextResponse.json({ error: "Ce nom d'utilisateur est déjà utilisé." }, { status: 409 });
       }
+      username = norm;
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);

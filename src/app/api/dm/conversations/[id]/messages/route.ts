@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canSendDirectMessage } from "@/lib/dm";
+import { createNotification } from "@/lib/notifications";
+import { NotificationType } from "@prisma/client";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -72,6 +74,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     });
 
     await db.conversation.update({ where: { id }, data: { updatedAt: new Date() } });
+
+    // Notifier l'autre participant (pas soi-même)
+    if (otherPart.userId !== user.id) {
+      await createNotification({
+        type: NotificationType.DM_MESSAGE,
+        title: "Nouveau message",
+        body: `${user.name || "Quelqu'un"} t'a envoyé un message`,
+        recipientId: otherPart.userId,
+        actorId: user.id,
+        actorName: user.name || null,
+        actorImage: user.image || null,
+        data: { conversationId: id, userId: user.id, username: user.username || undefined },
+      });
+    }
 
     return NextResponse.json({
       message: {

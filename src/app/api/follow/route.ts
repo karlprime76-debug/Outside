@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
+import { isBlocked } from "@/lib/social/friendship";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -8,27 +10,63 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
 
-  const body = await req.json();
-  const { userId } = body;
+  let targetId: string | null = null;
+  try {
+    const contentType = req.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const body = await req.json().catch(() => ({}));
+      targetId = body.userId || null;
+    }
+    if (!targetId) {
+      const { searchParams } = new URL(req.url);
+      targetId = searchParams.get("userId");
+    }
+  } catch {}
+
+  if (!targetId) {
+    return NextResponse.json({ error: "Paramètre manquant." }, { status: 400 });
+  }
+
   const currentUserId = session.user.id;
-
-  if (!userId || userId === currentUserId) {
-    return NextResponse.json({ error: "Utilisateur invalide." }, { status: 400 });
+  if (currentUserId === targetId) {
+    return NextResponse.json({ error: "Action impossible." }, { status: 400 });
   }
 
-  const existing = await db.follow.findUnique({
-    where: { followerId_followingId: { followerId: currentUserId, followingId: userId } },
-  });
-
-  if (existing) {
-    return NextResponse.json({ error: "Tu suis déjà cet utilisateur." }, { status: 409 });
+  if (await isBlocked(currentUserId, targetId)) {
+    return NextResponse.json({ error: "Action impossible." }, { status: 403 });
   }
 
-  await db.follow.create({
-    data: { followerId: currentUserId, followingId: userId },
+  const target = await db.user.findUnique({
+    where: { id: targetId },
+    select: { id: true, name: true, image: true, userSettings: { select: { allowFollowers: true } } },
   });
 
-  return NextResponse.json({ message: "Utilisateur suivi." });
+  if (!target) return NextResponse.json({ error: "Utilisateur introuvable." }, { status: 404 });
+
+  if (target.userSettings && target.userSettings.allowFollowers === false) {
+    return NextResponse.json({ error: "Cet utilisateur n'accepte pas les abonnés." }, { status: 403 });
+  }
+
+  await db.follow.upsert({
+    where: { followerId_followingId: { followerId: currentUserId, followingId: target.id } },
+    create: { followerId: currentUserId, followingId: target.id },
+    update: {},
+  });
+
+  if (currentUserId !== target.id) {
+    await createNotification({
+      type: "FOLLOW",
+      title: "Nouvel abonné",
+      body: `${session.user.name || "Quelqu'un"} s'est abonné(e) à toi`,
+      recipientId: target.id,
+      actorId: currentUserId,
+      actorName: session.user.name || null,
+      actorImage: session.user.image || null,
+      data: { username: typeof session.user?.username === 'string' ? session.user.username : undefined, userId: currentUserId },
+    });
+  }
+
+  return NextResponse.json({ message: "Abonnement confirmé." });
 }
 
 export async function DELETE(req: Request) {
@@ -38,16 +76,11 @@ export async function DELETE(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId");
-  const currentUserId = session.user.id;
+  const targetId = searchParams.get("userId");
+  if (!targetId) return NextResponse.json({ error: "Paramètre manquant." }, { status: 400 });
 
-  if (!userId || userId === currentUserId) {
-    return NextResponse.json({ error: "Utilisateur invalide." }, { status: 400 });
-  }
+  await db.follow.deleteMany({ where: { followerId: session.user.id, followingId: targetId } });
 
-  await db.follow.deleteMany({
-    where: { followerId: currentUserId, followingId: userId },
-  });
-
-  return NextResponse.json({ message: "Tu ne suis plus cet utilisateur." });
+  return NextResponse.json({ message: "Désabonnement confirmé." });
 }
+

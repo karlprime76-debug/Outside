@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { normalizeUsername, validateUsername } from "@/lib/username";
 import { isValidCountryCode, getCountryName } from "@/lib/countries";
 
 const profileUpdateSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(80, "Le nom est trop long").optional(),
-  username: z.string().min(3, "Le username doit contenir au moins 3 caractères").max(30, "Le username est trop long").regex(/^[a-zA-Z0-9_]+$/, "Lettres, chiffres et underscore uniquement").optional(),
+  username: z.string().min(3, "Le username doit contenir au moins 3 caractères").max(30, "Le username est trop long").optional(),
   bio: z.string().max(160, "La bio est trop longue").optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(),
   countryCode: z.string().length(2, "Code pays invalide").optional(),
@@ -81,16 +82,26 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
     }
 
+    const updateData: Record<string, unknown> = {};
+
+    if (name !== undefined) updateData.name = name;
+
     if (username && username !== existingUser.username) {
-      const taken = await db.user.findUnique({ where: { username } });
+      const norm = normalizeUsername(username);
+      const valid = validateUsername(norm);
+      if (!valid.ok) {
+        return NextResponse.json({ error: valid.error }, { status: 400 });
+      }
+      const taken = await db.user.findUnique({ where: { username: norm } });
       if (taken) {
         return NextResponse.json({ error: "Ce nom d'utilisateur est déjà utilisé." }, { status: 409 });
       }
+      
+      // Appliquer le username normalisé
+      (updateData as Record<string, unknown>).username = norm;
     }
 
-    const updateData: Record<string, unknown> = {};
-    if (name !== undefined) updateData.name = name;
-    if (username !== undefined) updateData.username = username;
+    // username déjà traité plus haut (normalisé/validé)
     if (bio !== undefined) updateData.bio = bio;
     if (gender !== undefined) updateData.gender = gender;
 

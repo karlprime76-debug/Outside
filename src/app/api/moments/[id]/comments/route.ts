@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { createNotification } from "@/lib/notifications";
+import type { NotificationType } from "@prisma/client";
 
 export async function GET(
   _req: Request,
@@ -83,6 +85,20 @@ export async function POST(
         },
       },
     });
+
+    // Notifier l'auteur du moment si différent
+    if (moment.authorId !== user.id) {
+      await createNotification({
+        type: "MOMENT_COMMENT" as unknown as NotificationType,
+        title: "Nouveau commentaire",
+        body: user.name ? `${user.name} a commenté ton moment` : "Quelqu'un a commenté ton moment",
+        recipientId: moment.authorId,
+        actorId: user.id,
+        actorName: user.name || null,
+        actorImage: user.image || null,
+        data: { momentId: id, userId: user.id, username: user.username || undefined },
+      });
+    }
 
     return NextResponse.json({
       comment: {

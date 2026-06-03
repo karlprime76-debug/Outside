@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { MomentCard } from "./moment-card";
 import { MomentCommentsSheet } from "./moment-comments-sheet";
+import { MomentTypeFilter } from "./moment-type-filter";
 import { Loader2, Camera } from "lucide-react";
 import Link from "next/link";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
@@ -48,6 +49,7 @@ const SCOPE_LABELS: Record<Scope, string> = {
 
 export function MomentFeed() {
   const [scope, setScope] = useState<Scope>("for-you");
+  const [media, setMedia] = useState<"all" | "posts" | "clips">("all");
   const [moments, setMoments] = useState<FeedMoment[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,6 +59,33 @@ export function MomentFeed() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
+  const [hiddenSet, setHiddenSet] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem("outside_hidden_moments");
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set();
+    }
+  });
+
+  // Clips swipe-up hint (show once)
+  const [showClipHint, setShowClipHint] = useState<boolean>(false);
+  const clipsHintSeenRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      clipsHintSeenRef.current = localStorage.getItem("outside_clips_hint_seen") === "1";
+    } catch {
+      clipsHintSeenRef.current = true; // avoid showing if storage fails
+    }
+  }, []);
+
+  const markClipsHintSeen = useCallback(() => {
+    if (clipsHintSeenRef.current) return;
+    clipsHintSeenRef.current = true;
+    try { localStorage.setItem("outside_clips_hint_seen", "1"); } catch {}
+  }, []);
 
   const fetchMoments = useCallback(
     async (cursor?: string) => {
@@ -72,6 +101,7 @@ export function MomentFeed() {
         const url = new URL("/api/moments", window.location.origin);
         url.searchParams.set("scope", scope);
         url.searchParams.set("limit", "10");
+        url.searchParams.set("media", media);
         if (cursor) url.searchParams.set("cursor", cursor);
 
         const res = await fetch(url.toString(), { signal: abortRef.current.signal });
@@ -81,8 +111,9 @@ export function MomentFeed() {
           throw new Error(data.error || "Erreur de chargement");
         }
 
-        const newMoments: FeedMoment[] = data.moments || [];
-        setMoments((prev) => (cursor ? [...prev, ...newMoments] : newMoments));
+        const all: FeedMoment[] = data.moments || [];
+        const filtered = all.filter((m) => !hiddenSet.has(m.id));
+        setMoments((prev) => (cursor ? [...prev, ...filtered] : filtered));
         setNextCursor(data.nextCursor || null);
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
@@ -95,7 +126,7 @@ export function MomentFeed() {
         isFetchingRef.current = false;
       }
     },
-    [scope]
+    [scope, media, hiddenSet]
   );
 
   useEffect(() => {
@@ -103,7 +134,22 @@ export function MomentFeed() {
     setNextCursor(null);
     setInitialLoading(true);
     fetchMoments();
-  }, [scope, fetchMoments]);
+  }, [scope, media, fetchMoments]);
+
+  // Show a brief swipe-up hint the first time user visits Clips
+  useEffect(() => {
+    if (media !== "clips") return;
+    if (clipsHintSeenRef.current) return;
+    const t = setTimeout(() => {
+      setShowClipHint(true);
+      const t2 = setTimeout(() => {
+        setShowClipHint(false);
+        markClipsHintSeen();
+      }, 2200);
+      return () => clearTimeout(t2);
+    }, 200);
+    return () => clearTimeout(t);
+  }, [media, markClipsHintSeen]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -138,6 +184,11 @@ export function MomentFeed() {
     setMoments((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
+  const handleHide = useCallback((id: string) => {
+    setHiddenSet((prev) => new Set([...Array.from(prev), id]));
+    setMoments((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
@@ -147,21 +198,45 @@ export function MomentFeed() {
             <button
               key={s}
               onClick={() => setScope(s)}
-              className={`relative flex-shrink-0 px-3 py-3 text-xs font-bold transition-colors ${
-                scope === s ? "text-[var(--os-fg)]" : "text-[var(--os-muted)] hover:text-[var(--os-fg)]"
+              aria-current={scope === s ? "page" : undefined}
+              className={`relative flex-shrink-0 px-3 py-2.5 text-xs font-bold rounded-full transition-colors ${
+                scope === s
+                  ? "text-[var(--os-fg)] bg-[var(--os-card-border)]/60"
+                  : "text-[var(--os-muted)] hover:text-[var(--os-fg)]"
               }`}
             >
               {SCOPE_LABELS[s]}
               {scope === s && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-outside-500 transition-all duration-300" />
+                <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-outside-500 transition-all duration-300" />
               )}
             </button>
           ))}
+          {/* Media filter */}
+          <div className="ml-auto">
+            <MomentTypeFilter value={media} onChange={setMedia} />
+          </div>
+
+      {/* Clips swipe hint bubble */}
+      {showClipHint && media === "clips" && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40">
+          <div className="px-3 py-1.5 rounded-full bg-black/70 text-white text-[11px] font-bold shadow-lg">
+            Glissez vers le haut
+          </div>
+        </div>
+      )}
         </div>
       </div>
 
-      {/* Feed */}
-      <div className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide">
+      {/* Feed: strong snap only for Clips */}
+      <div
+        className={`flex-1 overflow-y-auto ${media === "clips" ? "snap-y snap-mandatory" : "snap-none"} scrollbar-hide`}
+        onScroll={() => {
+          if (showClipHint) {
+            setShowClipHint(false);
+            markClipsHintSeen();
+          }
+        }}
+      >
         {initialLoading ? (
           <div className="space-y-6 p-4">
             {[1, 2].map((i) => (
@@ -189,8 +264,18 @@ export function MomentFeed() {
           <div className="p-6">
             <OutsideEmptyState
               icon={Camera}
-              title="Aucun moment pour l'instant"
-              description="Montre ce qui se passe dehors."
+              title={
+                media === "posts"
+                  ? "Aucune publication pour le moment"
+                  : media === "clips"
+                  ? "Aucun clip pour le moment"
+                  : "Aucun moment pour l'instant"
+              }
+              description={
+                media === "clips"
+                  ? "Montre l'ambiance dehors."
+                  : "Montre ce qui se passe dehors."
+              }
               action={(
                 <Link
                   href="/moments/new"
@@ -210,6 +295,7 @@ export function MomentFeed() {
                 onLikeToggle={handleLikeToggle}
                 onOpenComments={setCommentMoment}
                 onDelete={handleDelete}
+                onHide={handleHide}
               />
             ))}
             {/* Sentinel */}

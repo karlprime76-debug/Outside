@@ -176,6 +176,37 @@ export default function HomePage() {
 
   return (
     <AnimatedPage className="space-y-8 p-4 max-w-5xl mx-auto pb-24 md:pb-4 pt-safe md:pt-0">
+      {/* Onboarding social banner (UI-only, safe) */}
+      {session?.user && (
+        (() => {
+          const missingImage = !session.user.image;
+          const missingUsername = !session.user.username;
+          const needsOnboarding = missingImage || missingUsername;
+          if (!needsOnboarding) return null;
+          return (
+            <div className="os-card p-4 flex items-start gap-3 animate-slide-up">
+              <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow shrink-0">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-[var(--os-fg)]">Bienvenue sur OUTSIDE</p>
+                <p className="text-xs text-[var(--os-muted)] mt-0.5">Complète ton profil et découvre des personnes près de toi.</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {missingImage && (
+                    <Link href="/profile/edit" className="rounded-full bg-[var(--os-bg)] border border-[var(--os-card-border)] px-3 py-1.5 text-xs font-bold text-[var(--os-fg)] hover:border-outside-300 transition-colors">Ajouter une photo</Link>
+                  )}
+                  {missingUsername && (
+                    <Link href="/profile/edit" className="rounded-full bg-[var(--os-bg)] border border-[var(--os-card-border)] px-3 py-1.5 text-xs font-bold text-[var(--os-fg)] hover:border-outside-300 transition-colors">Choisir mon username</Link>
+                  )}
+                  <Link href="/u/outside" className="rounded-full bg-[var(--os-bg)] border border-[var(--os-card-border)] px-3 py-1.5 text-xs font-bold text-[var(--os-fg)] hover:border-outside-300 transition-colors">Suivre OUTSIDE Officiel</Link>
+                  <Link href="/friends" className="rounded-full bg-[var(--os-bg)] border border-[var(--os-card-border)] px-3 py-1.5 text-xs font-bold text-[var(--os-fg)] hover:border-outside-300 transition-colors">Personnes de ma ville</Link>
+                  <Link href="/moments/new" className="rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1.5 text-xs font-bold text-white shadow-glow hover:shadow-glow-lg transition-all">Créer mon premier moment</Link>
+                </div>
+              </div>
+            </div>
+          );
+        })()
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -380,7 +411,7 @@ export default function HomePage() {
               Ajouter
             </Link>
             <Link href="/moments" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
-              Voir le feed
+              Voir les moments
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -419,6 +450,11 @@ export default function HomePage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={m.mediaUrl} alt={m.caption || "Moment"} className="h-full w-full object-cover" loading="lazy" />
                 )}
+                <div className="absolute top-2 left-2">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${m.type === "VIDEO" ? "bg-outside-500/90 text-white" : "bg-white/90 text-[var(--os-fg)]"}`}>
+                    {m.type === "VIDEO" ? "Clip" : "Publication"}
+                  </span>
+                </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
                   <p className="text-xs font-bold text-white truncate">{m.author.name || "Anonyme"}</p>
                 </div>

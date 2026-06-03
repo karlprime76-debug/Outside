@@ -50,6 +50,9 @@
   html {
     background-color: var(--os-bg);
     color: var(--os-fg);
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   body {
@@ -58,10 +61,14 @@
     font-family: var(--font-geist-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   * {
     border-color: var(--os-card-border);
+    box-sizing: border-box;
   }
 
   /* Focus visible accessible */
@@ -88,6 +95,26 @@
 }
 
 @layer utilities {
+  /* Safe containers to avoid horizontal overflow */
+  .safe-page {
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    padding-bottom: calc(max(env(safe-area-inset-bottom), 16px) + 88px);
+  }
+
+  .safe-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Next.js root wrapper */
+  #__next {
+    width: 100%;
+    max-width: 100%;
+  }
   .text-balance {
     text-wrap: balance;
   }

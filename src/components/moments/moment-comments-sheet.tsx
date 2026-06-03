@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Avatar } from "@/components/ui/avatar";
+import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
 import { X, Send } from "lucide-react";
 
@@ -114,10 +115,14 @@ export function MomentCommentsSheet({ momentId, open, onClose }: MomentCommentsS
           ) : (
             comments.map((c) => (
               <div key={c.id} className="flex gap-2.5">
-                <Avatar src={c.user.image} name={c.user.name} size="sm" />
+                <Link href={`/u/${c.user.username || c.user.id}`} className="shrink-0">
+                  <Avatar src={c.user.image} name={c.user.name} size="sm" />
+                </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-[var(--os-fg)]">{c.user.name || "Anonyme"}</span>
+                    <Link href={`/u/${c.user.username || c.user.id}`} className="text-xs font-bold text-[var(--os-fg)] hover:underline">
+                      {c.user.name || "Anonyme"}
+                    </Link>
                     <span className="text-[10px] text-[var(--os-muted)]">{timeAgo(c.createdAt)}</span>
                   </div>
                   <p className="text-xs text-[var(--os-fg)] mt-0.5 break-words">{c.content}</p>

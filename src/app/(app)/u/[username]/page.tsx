@@ -16,6 +16,9 @@ import { TrustSignals } from "@/components/trust/trust-signals";
 import { TrustReviewButton } from "@/components/trust/trust-review-button";
 import { UserBadges } from "@/components/profile/user-badges";
 import type { TrustData } from "@/lib/trust";
+import { PublicProfileMoments, type PublicMomentItem } from "@/components/profile/public-profile-moments";
+import { PublicProfileTabs } from "@/components/profile/public-profile-tabs";
+import { PublicProfilePlans } from "@/components/profile/public-profile-plans";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -81,6 +84,66 @@ export default async function PublicProfilePage({ params }: Props) {
     trust = defaultTrust;
   }
 
+  // Charger quelques moments publics récents (sans données sensibles)
+  const recent = await db.moment.findMany({
+    where: {
+      authorId: user.id,
+      visibility: "PUBLIC",
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    include: {
+      author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
+      _count: { select: { likes: true, comments: true } },
+    },
+  });
+
+  let likedSet = new Set<string>();
+  if (currentUserId && recent.length > 0) {
+    const likes = await db.momentLike.findMany({
+      where: { userId: currentUserId, momentId: { in: recent.map((m) => m.id) } },
+      select: { momentId: true },
+    });
+    likedSet = new Set(likes.map((l) => l.momentId));
+  }
+
+  const publicMoments: PublicMomentItem[] = recent.map((m) => ({
+    id: m.id,
+    type: m.type,
+    mediaUrl: m.mediaUrl,
+    caption: m.caption,
+    city: m.city,
+    countryCode: m.countryCode,
+    visibility: m.visibility,
+    createdAt: m.createdAt.toISOString(),
+    author: m.author,
+    _count: { likes: m._count.likes, comments: m._count.comments },
+    viewerState: {
+      likedByMe: likedSet.has(m.id),
+      canDelete: currentUserId === m.authorId || session?.user?.role === "ADMIN" || session?.user?.role === "MODERATOR",
+      canReport: currentUserId !== m.authorId,
+    },
+  }));
+
+  // Stats basiques
+  const [followersCount, momentsCount, publicPlansCount] = await Promise.all([
+    db.follow.count({ where: { followingId: user.id } }),
+    db.moment.count({ where: { authorId: user.id, visibility: "PUBLIC" } }),
+    db.plan.count({ where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } } }).catch(() => 0),
+  ]);
+
+  const recentPlans = await db.plan.findMany({
+    where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } },
+    orderBy: { startDate: "asc" },
+    take: 6,
+    include: {
+      city: { select: { name: true } },
+      creator: { select: { name: true, image: true } },
+      _count: { select: { participants: true } },
+    },
+  });
+
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-fade-in">
       {/* Header card */}
@@ -129,23 +192,40 @@ export default async function PublicProfilePage({ params }: Props) {
       <UserBadges userId={user.id} />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 animate-slide-up">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-slide-up">
+        <div className="os-card p-5 text-center">
+          <p className="text-2xl font-black text-outside-600">{momentsCount}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Moments</p>
+        </div>
         <div className="os-card p-5 text-center">
           <p className="text-2xl font-black text-outside-600">{friendCount}</p>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Amis</p>
         </div>
         <div className="os-card p-5 text-center">
-          <p className="text-2xl font-black text-accent-600">{user.country || "Pays non défini"}</p>
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Pays</p>
+          <p className="text-2xl font-black text-outside-600">{followersCount}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Abonnés</p>
+        </div>
+        <div className="os-card p-5 text-center">
+          <p className="text-2xl font-black text-outside-600">{publicPlansCount}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Plans</p>
         </div>
       </div>
 
-      {/* Bio */}
-      <div className="os-card p-5 animate-slide-up">
-        <p className="text-sm text-[var(--os-fg)] leading-relaxed">
-          {user.bio || "Aucune bio pour le moment."}
-        </p>
-      </div>
+      {/* Tabs: Moments / Plans / À propos */}
+      <PublicProfileTabs
+        moments={<PublicProfileMoments initial={publicMoments} mode="grid" />}
+        plans={<PublicProfilePlans initial={recentPlans.map((p) => ({ id: p.id, title: p.title, mood: p.mood, budgetLevel: p.budgetLevel, startDate: p.startDate as unknown as string, maxParticipants: p.maxParticipants, status: p.status, city: { name: p.city.name }, creator: { name: user.name, image: user.image || undefined }, creatorUsername: user.username || null, creatorId: user.id, _count: { participants: p._count.participants } }))} />}
+        about={(
+          <div className="space-y-3">
+            <div className="text-sm text-[var(--os-fg)] leading-relaxed">{user.bio || "Aucune bio pour le moment."}</div>
+            {(isSelf || user.userSettings?.showCityOnProfile !== false) && (
+              <div className="text-xs text-[var(--os-muted)]">Ville: {user.activeCity?.name || user.homeCity?.name || "Non définie"}</div>
+            )}
+            <div className="text-xs text-[var(--os-muted)]">Pays: {user.country || "Non défini"}</div>
+            <div className="text-xs text-[var(--os-muted)]">Inscrit(e) depuis {user.createdAt?.toLocaleDateString?.("fr-FR") || ""}</div>
+          </div>
+        )}
+      />
 
       {/* Actions */}
       {!isSelf && currentUserId && (

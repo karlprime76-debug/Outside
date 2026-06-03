@@ -17,6 +17,9 @@ interface Plan {
   status: string;
   city: { name: string };
   creator: { name: string | null; image?: string | null };
+  // Optionnels pour cliquabilité profil
+  creatorUsername?: string | null;
+  creatorId?: string | null;
   _count: { participants: number };
 }
 
@@ -89,8 +92,17 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
         <MapPin className="h-3.5 w-3.5" />
         <span>{plan.city.name}</span>
         <span className="text-[var(--os-card-border)]">·</span>
-        <Avatar src={plan.creator.image} name={plan.creator.name} size="sm" />
-        <span>{plan.creator.name || t.plans.anonymous}</span>
+        {plan.creatorUsername || plan.creatorId ? (
+          <Link href={`/u/${plan.creatorUsername || plan.creatorId}`} className="flex items-center gap-2 hover:underline">
+            <Avatar src={plan.creator.image} name={plan.creator.name} size="sm" />
+            <span className="text-[var(--os-fg)]">{plan.creator.name || t.plans.anonymous}</span>
+          </Link>
+        ) : (
+          <>
+            <Avatar src={plan.creator.image} name={plan.creator.name} size="sm" />
+            <span>{plan.creator.name || t.plans.anonymous}</span>
+          </>
+        )}
       </div>
 
       {/* Spots + CTA */}

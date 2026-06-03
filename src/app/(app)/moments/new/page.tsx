@@ -13,6 +13,8 @@ export default function NewMomentPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [isVerticalVideo, setIsVerticalVideo] = useState<boolean>(false);
+  const [publishAsClip, setPublishAsClip] = useState<boolean>(false);
   const [caption, setCaption] = useState("");
   const [visibility, setVisibility] = useState("PUBLIC");
   const [city, setCity] = useState("");
@@ -53,6 +55,27 @@ export default function NewMomentPage() {
     setFile(selected);
     const url = URL.createObjectURL(selected);
     setPreview(url);
+
+    // Detect simple orientation for video to suggest Clip UX
+    if (selected.type.startsWith("video/")) {
+      try {
+        const v = document.createElement("video");
+        v.preload = "metadata";
+        v.src = url;
+        v.onloadedmetadata = () => {
+          const vertical = v.videoHeight > v.videoWidth;
+          setIsVerticalVideo(vertical);
+          setPublishAsClip(vertical);
+          URL.revokeObjectURL(v.src);
+        };
+      } catch {
+        setIsVerticalVideo(false);
+        setPublishAsClip(false);
+      }
+    } else {
+      setIsVerticalVideo(false);
+      setPublishAsClip(false);
+    }
   }
 
   async function submit() {
@@ -108,6 +131,9 @@ export default function NewMomentPage() {
         <p className="mt-1 text-sm text-[var(--os-muted)]">
           Un Moment doit montrer ce qui se passe dehors.
         </p>
+        <p className="mt-1 text-[11px] text-[var(--os-muted)]">
+          Les clips montrent l&apos;ambiance dehors en vidéo.
+        </p>
       </div>
 
       {!file ? (
@@ -149,6 +175,22 @@ export default function NewMomentPage() {
       />
 
       <div className="space-y-4">
+        {file?.type.startsWith("video/") && (
+          <div className="flex items-center justify-between rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] p-3">
+            <div>
+              <p className="text-sm font-bold text-[var(--os-fg)]">Publier comme clip</p>
+              <p className="text-xs text-[var(--os-muted)]">{isVerticalVideo ? "Vidéo verticale détectée" : "Vidéo classique"}</p>
+            </div>
+            <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={publishAsClip}
+                onChange={(e) => setPublishAsClip(e.target.checked)}
+                className="h-4 w-4 accent-outside-500"
+              />
+            </label>
+          </div>
+        )}
         <div>
           <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Légende (optionnel)</label>
           <textarea

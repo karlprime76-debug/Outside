@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { createNotification } from "@/lib/notifications";
+import type { NotificationType } from "@prisma/client";
 
 export async function POST(
   _req: Request,
@@ -32,6 +34,19 @@ export async function POST(
     });
 
     const likesCount = await db.momentLike.count({ where: { momentId: id } });
+    // Notifier l'auteur du moment (sauf si like par soi-même)
+    if (moment.authorId !== user.id) {
+      await createNotification({
+        type: "MOMENT_LIKE" as unknown as NotificationType,
+        title: "Nouveau like sur ton moment",
+        body: user.name ? `${user.name} a aimé ton moment` : "Quelqu'un a aimé ton moment",
+        recipientId: moment.authorId,
+        actorId: user.id,
+        actorName: user.name || null,
+        actorImage: user.image || null,
+        data: { momentId: id, userId: user.id, username: user.username || undefined },
+      });
+    }
     return NextResponse.json({ liked: true, likesCount });
   } catch (error) {
     console.error("Like moment error:", error);

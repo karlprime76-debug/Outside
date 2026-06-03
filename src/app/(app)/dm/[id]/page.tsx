@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, SendHorizontal, Trash2, Flag, ArrowLeft } from "lucide-react";
+import { Loader2, SendHorizontal, Trash2, Flag, ArrowLeft, User } from "lucide-react";
 import { OutsideHeader } from "@/components/ui/outside-header";
 import { OutsidePage } from "@/components/ui/outside-page";
 import { useSession } from "next-auth/react";
@@ -29,6 +29,11 @@ export default function DmConversationPage() {
   const [content, setContent] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const myId = session?.user?.id || "";
+  const otherId = useMemo(() => {
+    // Trouve un message envoyé par l'autre pour récupérer son id (fallback fiable)
+    const otherMsg = messages.find((m) => m.senderId !== myId);
+    return otherMsg?.senderId || null;
+  }, [messages, myId]);
 
   function formatFromNow(iso: string) {
     const now = new Date();
@@ -165,6 +170,11 @@ export default function DmConversationPage() {
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
+        right={otherId ? (
+          <a href={`/u/${otherId}`} className="rounded-lg px-2 py-1.5 text-xs font-bold text-outside-600 hover:bg-[var(--os-card-border)] inline-flex items-center gap-1">
+            <User className="h-4 w-4" /> Profil
+          </a>
+        ) : undefined}
         sticky
       />
       <div className="max-w-2xl mx-auto px-4 py-4 h-[calc(100dvh-6.5rem)] flex flex-col gap-3">

@@ -18,7 +18,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
       </main>
       <footer className="border-t border-[var(--os-card-border)] py-8 text-center text-xs text-[var(--os-muted)]">
         <div className="mx-auto max-w-3xl px-4">
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
             <Link href="/legal/terms" className="hover:text-[var(--os-fg)]">Conditions</Link>
             <Link href="/legal/privacy" className="hover:text-[var(--os-fg)]">Confidentialité</Link>
             <Link href="/legal/community-guidelines" className="hover:text-[var(--os-fg)]">Règles</Link>

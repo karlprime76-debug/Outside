@@ -11,6 +11,7 @@ export default function MomentsPage() {
     <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh]">
       <OutsideHeader
         title="Moments"
+        subtitle="Ce qui se passe dehors, maintenant."
         right={(
           <Link
             href="/moments/new"

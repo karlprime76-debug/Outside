@@ -545,7 +545,7 @@ export default function LandingPage() {
               <p className="text-lg font-black gradient-text">OUTSIDE</p>
               <p className="mt-1 text-sm text-[var(--os-muted)]">Le monde est dehors.</p>
             </div>
-            <div className="flex items-center gap-6 text-sm text-[var(--os-muted)]">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-[var(--os-muted)]">
               <Link href="/login" className="hover:text-[var(--os-fg)] transition-colors font-medium">
                 Se connecter
               </Link>
@@ -564,8 +564,8 @@ export default function LandingPage() {
               <Link href="/legal/cookies" className="hover:text-[var(--os-fg)] transition-colors font-medium">
                 Cookies
               </Link>
-              <span className="text-[var(--os-card-border)]">|</span>
-              <span>&copy; {new Date().getFullYear()} OUTSIDE</span>
+              <span className="hidden sm:inline text-[var(--os-card-border)]">|</span>
+              <span className="text-xs sm:text-sm">&copy; {new Date().getFullYear()} OUTSIDE</span>
             </div>
           </div>
         </div>

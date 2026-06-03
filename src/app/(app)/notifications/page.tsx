@@ -141,6 +141,7 @@ export default function NotificationsPage() {
     if (n.link) return n.link;
     if (n.data?.planId) return `/plans/${n.data.planId}`;
     if (n.data?.liveId) return `/live/${n.data.liveId}`;
+    if (n.data?.conversationId) return `/dm/${n.data.conversationId}`;
     if (n.data?.username) return `/u/${n.data.username}`;
     if (n.data?.userId) return `/u/${n.data.userId}`;
     return "/home";
@@ -201,7 +202,9 @@ export default function NotificationsPage() {
                 }`}
               >
                 {n.actorImage ? (
-                  <Avatar src={n.actorImage} name={n.actorName || undefined} size="md" />
+                  <Link href={href} className="shrink-0">
+                    <Avatar src={n.actorImage} name={n.actorName || undefined} size="md" />
+                  </Link>
                 ) : (
                   <div className={`rounded-xl p-2 ${colorFor(n.type)}`}>
                     <Icon className="h-4 w-4" />
