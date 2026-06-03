@@ -82,7 +82,7 @@ export default async function PublicProfilePage({ params }: Props) {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4">
+    <div className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-fade-in">
       {/* Header card */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow">
         <div className="relative z-10 flex items-center gap-4">
@@ -121,7 +121,7 @@ export default async function PublicProfilePage({ params }: Props) {
       </div>
 
       {/* Trust signals */}
-      <div className="os-card p-5">
+      <div className="os-card p-5 animate-slide-up">
         <h3 className="text-sm font-bold text-[var(--os-fg)] mb-3">Signaux de confiance</h3>
         <TrustSignals signals={trust.signals} compact />
       </div>
@@ -129,7 +129,7 @@ export default async function PublicProfilePage({ params }: Props) {
       <UserBadges userId={user.id} />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 animate-slide-up">
         <div className="os-card p-5 text-center">
           <p className="text-2xl font-black text-outside-600">{friendCount}</p>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Amis</p>
@@ -141,7 +141,7 @@ export default async function PublicProfilePage({ params }: Props) {
       </div>
 
       {/* Bio */}
-      <div className="os-card p-5">
+      <div className="os-card p-5 animate-slide-up">
         <p className="text-sm text-[var(--os-fg)] leading-relaxed">
           {user.bio || "Aucune bio pour le moment."}
         </p>

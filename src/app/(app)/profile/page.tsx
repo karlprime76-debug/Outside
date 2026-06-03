@@ -8,6 +8,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
 import { MapPin, Mail, User, Globe, Wallet, CheckCircle, Building, Users, Pencil, Image as ImageIcon, Shield } from "lucide-react";
+import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
 import { UserBadges } from "@/components/profile/user-badges";
@@ -153,12 +154,11 @@ export default async function ProfilePage() {
           </Link>
         </div>
         {friends.length === 0 ? (
-          <div className="text-center py-6">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--os-bg)] mb-3">
-              <Users className="h-5 w-5 text-[var(--os-muted)]" />
-            </div>
-            <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis. Explore les plans pour en rencontrer !</p>
-          </div>
+          <OutsideEmptyState
+            icon={Users}
+            title="Aucun ami pour l’instant"
+            description="Explore les plans pour rencontrer des personnes réelles."
+          />
         ) : (
           <div className="flex flex-wrap gap-3">
             {friends.map((friend) => (
