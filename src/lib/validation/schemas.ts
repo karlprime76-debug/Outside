@@ -65,6 +65,7 @@ export const updateProfileSchema = z.object({
   preferredBudget: z.nativeEnum(BudgetLevel).optional(),
   preferredMoods: z.array(z.nativeEnum(Mood)).optional(),
   isAvailable: z.boolean().optional(),
+  birthDate: z.string().optional(),
 });
 
 export const reportSchema = z.object({

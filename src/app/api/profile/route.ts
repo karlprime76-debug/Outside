@@ -11,6 +11,7 @@ const profileUpdateSchema = z.object({
   gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(),
   countryCode: z.string().length(2, "Code pays invalide").optional(),
   homeCity: z.string().min(2, "La ville doit contenir au moins 2 caractères").max(120, "La ville est trop longue").optional(),
+  birthDate: z.string().optional(),
 });
 
 export async function GET() {
@@ -45,6 +46,7 @@ export async function GET() {
       language: user.language,
       preferredBudget: user.preferredBudget,
       isVerified: user.isVerified,
+      birthDate: user.birthDate ? user.birthDate.toISOString() : null,
     });
   } catch {
     return NextResponse.json({ error: "Impossible de charger le profil." }, { status: 500 });
@@ -69,7 +71,7 @@ export async function PUT(req: Request) {
       );
     }
 
-    const { name, username, bio, gender, countryCode, homeCity } = parsed.data;
+    const { name, username, bio, gender, countryCode, homeCity, birthDate } = parsed.data as { name?: string; username?: string; bio?: string; gender?: string; countryCode?: string; homeCity?: string; birthDate?: string };
 
     const existingUser = await db.user.findUnique({
       where: { email: session.user.email },
@@ -91,6 +93,28 @@ export async function PUT(req: Request) {
     if (username !== undefined) updateData.username = username;
     if (bio !== undefined) updateData.bio = bio;
     if (gender !== undefined) updateData.gender = gender;
+
+    // birthDate (complétion légale). On autorise uniquement si absente côté DB.
+    if (birthDate !== undefined) {
+      if (existingUser.birthDate) {
+        // On ignore silencieusement si déjà défini pour éviter les downgrades.
+      } else {
+        const bd = new Date(birthDate);
+        // Calcul exact pour >= 18 ans
+        const today = new Date();
+        let age = today.getFullYear() - bd.getFullYear();
+        const m = today.getMonth() - bd.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) age--;
+        if (isNaN(bd.getTime())) {
+          return NextResponse.json({ error: "Date de naissance invalide." }, { status: 400 });
+        }
+        if (age < 18) {
+          return NextResponse.json({ error: "Tu dois avoir au moins 18 ans pour utiliser OUTSIDE." }, { status: 403 });
+        }
+        updateData.birthDate = bd;
+        updateData.isAdultConfirmed = true;
+      }
+    }
 
     if (countryCode !== undefined) {
       if (!isValidCountryCode(countryCode)) {

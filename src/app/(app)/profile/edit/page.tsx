@@ -23,6 +23,7 @@ interface ProfileData {
   countryCode: string | null;
   homeCity: string | null;
   activeCity: string | null;
+  birthDate?: string | null;
 }
 
 export default function EditProfilePage() {
@@ -44,6 +45,7 @@ export default function EditProfilePage() {
   const [countryCode, setCountryCode] = useState("");
   const [homeCity, setHomeCity] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [birthDate, setBirthDate] = useState("");
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -64,6 +66,9 @@ export default function EditProfilePage() {
       setCountryCode(data.countryCode || "");
       setHomeCity(data.homeCity || "");
       setPreviewImage(data.image);
+      if (!data.birthDate) {
+        setBirthDate("");
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur de chargement.");
     } finally {
@@ -138,17 +143,22 @@ export default function EditProfilePage() {
     setSuccess("");
 
     try {
+      const payload: Record<string, unknown> = {
+        name: name.trim() || undefined,
+        username: username.trim() || undefined,
+        bio: bio.trim() || undefined,
+        gender: gender || undefined,
+        countryCode: countryCode || undefined,
+        homeCity: homeCity.trim() || undefined,
+      };
+      if (profile && !profile.birthDate && birthDate) {
+        payload.birthDate = birthDate; // complétion légale
+      }
+
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim() || undefined,
-          username: username.trim() || undefined,
-          bio: bio.trim() || undefined,
-          gender: gender || undefined,
-          countryCode: countryCode || undefined,
-          homeCity: homeCity.trim() || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
@@ -306,6 +316,19 @@ export default function EditProfilePage() {
             disabled={!countryCode}
           />
         </div>
+
+        {!profile?.birthDate && (
+          <div>
+            <label className="mb-1.5 block text-sm font-bold text-[var(--os-muted)]">Date de naissance (non modifiable)</label>
+            <input
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-3 text-sm text-[var(--os-fg)] focus:border-outside-400 focus:outline-none focus:ring-2 focus:ring-outside-400/20 transition-all"
+            />
+            <p className="text-[10px] text-[var(--os-muted)] mt-1">Tu dois avoir au moins 18 ans pour utiliser OUTSIDE. Cette information ne pourra pas être modifiée.</p>
+          </div>
+        )}
 
         <button
           type="submit"
