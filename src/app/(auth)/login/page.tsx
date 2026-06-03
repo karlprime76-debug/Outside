@@ -30,7 +30,18 @@ function LoginForm() {
     });
 
     if (res?.error) {
-      setError("Email ou mot de passe incorrect.");
+      // Map NextAuth errors for better UX
+      if (res.error === "CredentialsSignin") {
+        setError("Email ou mot de passe incorrect.");
+      } else if (res.error === "AUTH_SERVER_ERROR") {
+        setError("Connexion temporairement indisponible. Réessaie dans quelques instants.");
+      } else if (res.error === "NO_PASSWORD") {
+        setError("Ce compte n’a pas de mot de passe configuré. Réinitialise ton mot de passe.");
+      } else if (res.error === "MISSING_FIELDS") {
+        setError("Champs manquants. Vérifie ton email et ton mot de passe.");
+      } else {
+        setError("Impossible de te connecter pour le moment.");
+      }
       setLoading(false);
       return;
     }

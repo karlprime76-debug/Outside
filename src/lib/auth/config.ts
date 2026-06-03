@@ -12,38 +12,55 @@ export const authConfig: NextAuthConfig = {
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
-        const parsed = loginSchema.safeParse(credentials);
-        if (!parsed.success) return null;
+        try {
+          const parsed = loginSchema.safeParse(credentials);
+          if (!parsed.success) {
+            throw new Error("MISSING_FIELDS");
+          }
 
-        // Normalize inputs to reduce false negatives from autofill/spaces/case
-        const emailNorm = parsed.data.email.trim().toLowerCase();
-        const passwordNorm = parsed.data.password.trim();
+          // Normalize inputs to reduce false negatives from autofill/spaces/case
+          const emailNorm = parsed.data.email.trim().toLowerCase();
+          const passwordNorm = parsed.data.password.trim();
 
-        const user = await db.user.findFirst({
-          where: { email: { equals: emailNorm, mode: "insensitive" } },
-          include: {
-            homeCity: true,
-            activeCity: true,
-          },
-        });
+          const user = await db.user.findFirst({
+            where: { email: { equals: emailNorm, mode: "insensitive" } },
+            include: {
+              homeCity: true,
+              activeCity: true,
+            },
+          });
 
-        if (!user || !user.password) return null;
+          if (!user) return null; // user not found → invalid credentials
+          if (!user.password) throw new Error("NO_PASSWORD");
 
-        const valid = await bcrypt.compare(passwordNorm, user.password);
-        if (!valid) return null;
+          const valid = await bcrypt.compare(passwordNorm, user.password);
+          if (!valid) return null; // wrong password → invalid credentials
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          username: user.username,
-          image: user.image,
-          role: user.role,
-          country: user.country,
-          countryCode: user.countryCode,
-          homeCity: user.homeCity?.name || null,
-          activeCity: user.activeCity?.name || null,
-        };
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            username: user.username,
+            image: user.image,
+            role: user.role,
+            country: user.country,
+            countryCode: user.countryCode,
+            homeCity: user.homeCity?.name || null,
+            activeCity: user.activeCity?.name || null,
+          };
+        } catch (error: unknown) {
+          // Server/Prisma error → log securely and surface as AUTH_SERVER_ERROR
+          // eslint-disable-next-line no-console
+          {
+            const err = error as { message?: string; name?: string; code?: string };
+            console.error("[AUTH_LOGIN_ERROR]", {
+              message: err?.message,
+              name: err?.name,
+              code: err?.code,
+            });
+            throw new Error(err?.message === "NO_PASSWORD" ? "NO_PASSWORD" : "AUTH_SERVER_ERROR");
+          }
+        }
       },
     }),
   ],

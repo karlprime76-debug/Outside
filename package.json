@@ -14,7 +14,8 @@
     "db:seed": "dotenv -e .env.local -- tsx prisma/seed.ts",
     "db:seed:demo": "dotenv -e .env.local -- tsx prisma/seed-demo.ts",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "auth:check": "tsx scripts/check-user-auth.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.7.2",
