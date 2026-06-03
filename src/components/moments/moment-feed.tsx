@@ -5,6 +5,7 @@ import { MomentCard } from "./moment-card";
 import { MomentCommentsSheet } from "./moment-comments-sheet";
 import { Loader2, Camera } from "lucide-react";
 import Link from "next/link";
+import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 
 interface Author {
   id: string;
@@ -152,7 +153,7 @@ export function MomentFeed() {
             >
               {SCOPE_LABELS[s]}
               {scope === s && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-outside-500" />
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-outside-500 transition-all duration-300" />
               )}
             </button>
           ))}
@@ -164,7 +165,7 @@ export function MomentFeed() {
         {initialLoading ? (
           <div className="space-y-6 p-4">
             {[1, 2].map((i) => (
-              <div key={i} className="rounded-2xl bg-[var(--os-card)] border border-[var(--os-card-border)] overflow-hidden">
+              <div key={i} className="rounded-2xl bg-[var(--os-card)] border border-[var(--os-card-border)] overflow-hidden animate-fade-in">
                 <div className="h-[calc(100dvh-180px)] sm:h-[70vh] md:h-[600px] shimmer" />
                 <div className="p-3 flex gap-4">
                   <div className="h-5 w-5 rounded bg-[var(--os-bg)] shimmer" />
@@ -185,20 +186,20 @@ export function MomentFeed() {
             </button>
           </div>
         ) : moments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-10 text-center min-h-[50vh]">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--os-bg)] mb-3">
-              <Camera className="h-6 w-6 text-[var(--os-muted)]" />
-            </div>
-            <h3 className="text-sm font-bold text-[var(--os-fg)]">Aucun moment pour l&apos;instant</h3>
-            <p className="mt-1 text-xs text-[var(--os-muted)] max-w-xs">
-              Montre ce qui se passe dehors.
-            </p>
-            <Link
-              href="/moments/new"
-              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-            >
-              Ajouter un moment
-            </Link>
+          <div className="p-6">
+            <OutsideEmptyState
+              icon={Camera}
+              title="Aucun moment pour l'instant"
+              description="Montre ce qui se passe dehors."
+              action={(
+                <Link
+                  href="/moments/new"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+                >
+                  Ajouter un moment
+                </Link>
+              )}
+            />
           </div>
         ) : (
           <div className="divide-y divide-[var(--os-card-border)]">

@@ -147,7 +147,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete }: M
   };
 
   return (
-    <div ref={cardRef} className="relative w-full flex-shrink-0 snap-start">
+    <div ref={cardRef} className="relative w-full flex-shrink-0 snap-start animate-fade-in">
       {/* Media container - full viewport height on mobile */}
       <div className="relative h-[calc(100dvh-180px)] sm:h-[70vh] md:h-[600px] w-full bg-black rounded-none sm:rounded-2xl overflow-hidden">
         {isVideo ? (
@@ -227,7 +227,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete }: M
               <MoreHorizontal className="h-4 w-4" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] shadow-xl py-1 z-50">
+              <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] shadow-xl py-1 z-50 animate-fade-in">
                 {moment.viewerState.canDelete && (
                   <button
                     onClick={() => { setMenuOpen(false); handleDelete(); }}
@@ -274,7 +274,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete }: M
       </div>
 
       {/* Actions bar */}
-      <div className="flex items-center justify-between px-2 py-3">
+      <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-4">
           <button
             onClick={handleLike}
