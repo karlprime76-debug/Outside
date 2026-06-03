@@ -10,7 +10,45 @@ import type { Prisma } from "@prisma/client";
 export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
+    const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
     if (!user) {
+      if (DEMO_GLOBAL) {
+        const { searchParams } = new URL(req.url);
+        const cursor = searchParams.get("cursor");
+        let limit = parseInt(searchParams.get("limit") || "10", 10);
+        if (isNaN(limit) || limit < 1) limit = 10;
+        if (limit > 20) limit = 20;
+        const now = new Date();
+
+        const moments = await db.moment.findMany({
+          where: { isDemo: true, OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+          orderBy: { createdAt: "desc" },
+          take: limit,
+          skip: cursor ? 1 : 0,
+          cursor: cursor ? { id: cursor } : undefined,
+          include: {
+            author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
+            _count: { select: { likes: true, comments: true } },
+          },
+        });
+
+        return NextResponse.json({
+          moments: moments.map((m) => ({
+            id: m.id,
+            type: m.type,
+            mediaUrl: m.mediaUrl,
+            caption: m.caption,
+            city: m.city,
+            countryCode: m.countryCode,
+            visibility: m.visibility,
+            createdAt: m.createdAt.toISOString(),
+            author: m.author,
+            _count: m._count,
+            viewerState: { likedByMe: false, canDelete: false, canReport: true },
+          })),
+          nextCursor: moments.length === limit ? moments[moments.length - 1].id : null,
+        });
+      }
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
@@ -36,7 +74,6 @@ export async function GET(req: Request) {
     const followingIds = followingRows.map((f) => f.followingId);
 
     const now = new Date();
-    const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
     const activeCityName = user.activeCity?.name || null;
 
     let baseWhere: Prisma.MomentWhereInput = {
