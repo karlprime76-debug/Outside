@@ -1,0 +1,99 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth/session";
+
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const moment = await db.moment.findUnique({ where: { id } });
+    if (!moment) {
+      return NextResponse.json({ error: "Moment introuvable." }, { status: 404 });
+    }
+
+    const comments = await db.momentComment.findMany({
+      where: { momentId: id, isDeleted: false },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: {
+        user: {
+          select: { id: true, name: true, username: true, image: true },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      comments: comments.map((c) => ({
+        id: c.id,
+        content: c.content,
+        createdAt: c.createdAt.toISOString(),
+        user: c.user,
+      })),
+    });
+  } catch (error) {
+    console.error("Get comments error:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const moment = await db.moment.findUnique({ where: { id } });
+    if (!moment) {
+      return NextResponse.json({ error: "Moment introuvable." }, { status: 404 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const content = String(body.content || "").trim();
+
+    if (!content || content.length > 300) {
+      return NextResponse.json(
+        { error: "Le commentaire doit faire entre 1 et 300 caractères." },
+        { status: 400 }
+      );
+    }
+
+    const comment = await db.momentComment.create({
+      data: {
+        momentId: id,
+        userId: user.id,
+        content,
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, username: true, image: true },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      comment: {
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt.toISOString(),
+        user: comment.user,
+      },
+    });
+  } catch (error) {
+    console.error("Create comment error:", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

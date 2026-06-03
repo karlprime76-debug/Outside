@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, ChangeEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
@@ -17,6 +17,19 @@ export default function NewMomentPage() {
   const [visibility, setVisibility] = useState("PUBLIC");
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.user?.activeCity?.name) {
+          setCity(data.user.activeCity.name);
+        } else if (data?.user?.homeCity?.name) {
+          setCity(data.user.homeCity.name);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0];
@@ -63,6 +76,7 @@ export default function NewMomentPage() {
       if (res.ok) {
         addToast("Moment publié !", "success");
         router.push("/moments");
+        router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
         addToast(data.error || "Erreur lors de la publication", "error");
@@ -92,7 +106,7 @@ export default function NewMomentPage() {
           Ajouter un moment
         </h1>
         <p className="mt-1 text-sm text-[var(--os-muted)]">
-          Montre ce qui se passe dehors maintenant.
+          Un Moment doit montrer ce qui se passe dehors.
         </p>
       </div>
 
@@ -112,10 +126,10 @@ export default function NewMomentPage() {
       ) : (
         <div className="relative rounded-2xl overflow-hidden bg-black">
           {file.type.startsWith("video/") ? (
-            <video src={preview || undefined} className="w-full max-h-80 object-contain" controls />
+            <video src={preview || undefined} className="w-full aspect-video object-cover" controls />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview || undefined} alt="Aperçu du moment" className="w-full max-h-80 object-contain" />
+            <img src={preview || undefined} alt="Aperçu du moment" className="w-full aspect-video object-cover" />
           )}
           <button
             onClick={() => { setFile(null); setPreview(null); }}

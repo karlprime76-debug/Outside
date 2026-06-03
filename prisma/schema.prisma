@@ -275,6 +275,8 @@ model User {
   identityVerification IdentityVerification?
   trustSignals      TrustSignal[]
   userSettings      UserSettings?
+  momentLikes       MomentLike[]
+  momentComments    MomentComment[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -465,10 +467,42 @@ model Moment {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
+  likes       MomentLike[]
+  comments    MomentComment[]
+
   @@index([city, createdAt])
   @@index([authorId])
   @@index([planId])
   @@index([placeId])
+}
+
+model MomentLike {
+  id        String   @id @default(cuid())
+  momentId  String
+  moment    Moment   @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([momentId, userId])
+  @@index([momentId])
+  @@index([userId])
+}
+
+model MomentComment {
+  id        String   @id @default(cuid())
+  momentId  String
+  moment    Moment   @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  isDeleted Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([momentId, createdAt])
+  @@index([userId])
 }
 
 model Badge {

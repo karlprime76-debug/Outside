@@ -147,7 +147,7 @@ export default function HomePage() {
     fetch("/api/moments")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        setMoments(data?.moments?.slice(0, 6) || []);
+        setMoments(data?.moments?.slice(0, 3) || []);
         setLoadingMoments(false);
       })
       .catch(() => setLoadingMoments(false));
@@ -380,7 +380,7 @@ export default function HomePage() {
               Ajouter
             </Link>
             <Link href="/moments" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
-              Voir tout
+              Voir le feed
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -407,7 +407,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
-            {moments.map((m) => (
+            {moments.slice(0, 3).map((m) => (
               <Link
                 key={m.id}
                 href="/moments"

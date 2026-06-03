@@ -5,6 +5,7 @@ import { canViewPlan } from "@/lib/plans/permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateMomentFile, buildMomentPath, ensureMomentsBucket, MOMENTS_BUCKET } from "@/lib/supabase/moments-storage";
 import { MomentVisibility } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 export async function GET(req: Request) {
   try {
@@ -14,8 +15,11 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const city = searchParams.get("city");
-    const type = searchParams.get("type"); // 'photo' | 'video'
+    const cursor = searchParams.get("cursor");
+    let limit = parseInt(searchParams.get("limit") || "10", 10);
+    if (isNaN(limit) || limit < 1) limit = 10;
+    if (limit > 20) limit = 20;
+    const scope = searchParams.get("scope") || "for-you";
 
     const friendRows = await db.friendship.findMany({
       where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
@@ -25,41 +29,93 @@ export async function GET(req: Request) {
       f.initiatorId === user.id ? f.receiverId : f.initiatorId
     );
 
+    const followingRows = await db.follow.findMany({
+      where: { followerId: user.id },
+      select: { followingId: true },
+    });
+    const followingIds = followingRows.map((f) => f.followingId);
+
     const now = new Date();
+    const activeCityName = user.activeCity?.name || null;
 
-    const baseWhere: Record<string, unknown> = {};
-    if (city) baseWhere.city = city;
-    if (type === "photo") baseWhere.type = "PHOTO";
-    if (type === "video") baseWhere.type = "VIDEO";
+    let baseWhere: Prisma.MomentWhereInput = {
+      AND: [
+        {
+          OR: [
+            { visibility: "PUBLIC" },
+            { authorId: user.id },
+            { visibility: "FRIENDS", authorId: { in: friendIds } },
+            { visibility: "PLAN_PARTICIPANTS", planId: { not: null } },
+          ],
+        },
+        {
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gt: now } },
+          ],
+        },
+      ],
+    };
 
-    const moments = await db.moment.findMany({
-      where: {
-        ...baseWhere,
+    if (scope === "city" && activeCityName) {
+      baseWhere = {
         AND: [
+          baseWhere,
+          { city: { equals: activeCityName, mode: "insensitive" } },
+        ],
+      };
+    } else if (scope === "friends") {
+      baseWhere = {
+        AND: [
+          baseWhere,
           {
             OR: [
-              { visibility: "PUBLIC" },
+              { authorId: { in: friendIds } },
               { authorId: user.id },
-              { visibility: "FRIENDS", authorId: { in: friendIds } },
-              { visibility: "PLAN_PARTICIPANTS", planId: { not: null } },
-            ],
-          },
-          {
-            OR: [
-              { expiresAt: null },
-              { expiresAt: { gt: now } },
             ],
           },
         ],
-      },
+      };
+    } else if (scope === "following") {
+      baseWhere = {
+        AND: [
+          baseWhere,
+          {
+            OR: [
+              { authorId: { in: followingIds } },
+              { authorId: user.id },
+            ],
+          },
+        ],
+      };
+    }
+
+    const moments = await db.moment.findMany({
+      where: baseWhere,
       orderBy: { createdAt: "desc" },
-      take: 30,
+      take: limit,
+      skip: cursor ? 1 : 0,
+      cursor: cursor ? { id: cursor } : undefined,
       include: {
-        author: { select: { id: true, name: true, username: true, image: true } },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+            role: true,
+            isVerified: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
       },
     });
 
-    // Filter PLAN_PARTICIPANTS to only show if user is a participant
     const filtered = await Promise.all(
       moments.map(async (m) => {
         if (m.visibility === "PLAN_PARTICIPANTS" && m.planId) {
@@ -72,8 +128,46 @@ export async function GET(req: Request) {
         return m;
       })
     );
+    const visibleMoments = filtered.filter(Boolean) as typeof moments;
 
-    return NextResponse.json({ moments: filtered.filter(Boolean) });
+    const momentIds = visibleMoments.map((m) => m.id);
+    const userLikes = await db.momentLike.findMany({
+      where: { momentId: { in: momentIds }, userId: user.id },
+      select: { momentId: true },
+    });
+    const likedSet = new Set(userLikes.map((l) => l.momentId));
+
+    const result = visibleMoments.map((m) => ({
+      id: m.id,
+      type: m.type,
+      mediaUrl: m.mediaUrl,
+      caption: m.caption,
+      city: m.city,
+      countryCode: m.countryCode,
+      visibility: m.visibility,
+      createdAt: m.createdAt.toISOString(),
+      author: {
+        id: m.author.id,
+        name: m.author.name,
+        username: m.author.username,
+        image: m.author.image,
+        role: m.author.role,
+        isVerified: m.author.isVerified,
+      },
+      _count: {
+        likes: m._count.likes,
+        comments: m._count.comments,
+      },
+      viewerState: {
+        likedByMe: likedSet.has(m.id),
+        canDelete: m.authorId === user.id || user.role === "ADMIN" || user.role === "MODERATOR",
+        canReport: m.authorId !== user.id,
+      },
+    }));
+
+    const nextCursor = visibleMoments.length === limit ? visibleMoments[visibleMoments.length - 1].id : null;
+
+    return NextResponse.json({ moments: result, nextCursor });
   } catch (error) {
     console.error("List moments error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
@@ -107,7 +201,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Require at least one context
     if (!city && !planId && !placeId && !eventId && !liveId) {
       return NextResponse.json(
         { error: "Un moment doit être lié à une sortie, un lieu ou une ville." },
@@ -115,7 +208,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate plan visibility if linked
     if (planId) {
       const canView = await canViewPlan(user.id, planId);
       if (!canView) {
