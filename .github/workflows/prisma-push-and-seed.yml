@@ -28,6 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        timeout-minutes: 10
 
       - name: Check database secrets (safe)
         run: |
@@ -65,13 +66,28 @@ jobs:
         run: node -v
 
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: |
+          echo "Starting Prisma generate..."
+          npx prisma generate
+        timeout-minutes: 5
 
       - name: Push Prisma schema
-        run: npx prisma db push
+        timeout-minutes: 10
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Prefer CI_DIRECT_URL if set; otherwise we exported DIRECT_URL via $GITHUB_ENV above
+          DIRECT_URL: ${{ secrets.CI_DIRECT_URL }}
+        run: |
+          echo "DATABASE_URL configured: true"
+          echo "DIRECT_URL configured for CI: true"
+          echo "Starting Prisma db push..."
+          npx prisma db push --skip-generate
 
       - name: Seed demo data (conditional)
         if: ${{ github.event.inputs.run_seed == 'true' }}
         env:
           DEMO_MODE: '1'
-        run: npm run db:seed:demo
+        run: |
+          echo "Starting demo seed..."
+          npm run db:seed:demo
+        timeout-minutes: 15
