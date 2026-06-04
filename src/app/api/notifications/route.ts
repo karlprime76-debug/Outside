@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { auth } from "@/lib/auth";
 import { markNotificationsAsRead } from "@/lib/notifications";
 
 export async function GET() {
+  const perfLabel = "[PERF] GET /api/notifications";
+  logPerfStart(perfLabel);
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -99,14 +102,18 @@ export async function GET() {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 25);
 
+    logPerfEnd(perfLabel);
     return NextResponse.json({ notifications });
   } catch (error) {
-    console.error("Notifications error:", error);
+    logPerfEnd(perfLabel);
+    logError("[NOTIFICATION_ERROR]", "GET /api/notifications failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
+  const perfLabel = "[PERF] POST /api/notifications";
+  logPerfStart(perfLabel);
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -118,9 +125,11 @@ export async function POST(req: Request) {
 
     await markNotificationsAsRead(session.user.id, ids);
 
+    logPerfEnd(perfLabel);
     return NextResponse.json({ message: "Notifications marquées comme lues." });
   } catch (error) {
-    console.error("Mark notifications read error:", error);
+    logPerfEnd(perfLabel);
+    logError("[NOTIFICATION_ERROR]", "POST /api/notifications failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

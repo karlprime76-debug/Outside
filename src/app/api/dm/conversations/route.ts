@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canSendDirectMessage, getOrCreateDirectConversation } from "@/lib/dm";
 
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/dm/conversations";
-  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+  logPerfStart(perfLabel);
 
   try {
     const user = await getCurrentUser();
@@ -60,11 +61,11 @@ export async function GET(req: Request) {
 
     const nextCursor = conversations.length === limit ? conversations[conversations.length - 1].id : null;
 
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
+    logPerfEnd(perfLabel);
     return NextResponse.json({ conversations: items, nextCursor });
   } catch (e) {
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
-    console.error("DM conversations GET error:", e);
+    logPerfEnd(perfLabel);
+    logError("[DM_ERROR]", "GET /api/dm/conversations failed", { error: String(e) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -98,7 +99,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ conversationId: conv.id });
   } catch (e) {
-    console.error("DM conversations POST error:", e);
+    logError("[DM_ERROR]", "POST /api/dm/conversations failed", { error: String(e) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
