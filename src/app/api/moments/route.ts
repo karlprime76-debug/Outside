@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canViewPlan } from "@/lib/plans/permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -9,7 +10,7 @@ import type { Prisma } from "@prisma/client";
 
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/moments";
-  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+  logPerfStart(perfLabel);
 
   try {
     const user = await getCurrentUser();
@@ -35,7 +36,7 @@ export async function GET(req: Request) {
           },
         });
 
-        if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
+        logPerfEnd(perfLabel);
         return NextResponse.json({
           moments: moments.map((m) => ({
             id: m.id,
@@ -189,11 +190,11 @@ export async function GET(req: Request) {
         ? visibleMoments[visibleMoments.length - 1].id
         : null;
 
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
+    logPerfEnd(perfLabel);
     return NextResponse.json({ moments: result, nextCursor });
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
-    console.error("List moments error:", error);
+    logPerfEnd(perfLabel);
+    logError("[MOMENT_ERROR]", "GET /api/moments failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

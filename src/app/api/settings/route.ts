@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 
 const ALLOWED_FIELDS = [
@@ -17,7 +18,7 @@ const ALLOWED_FIELDS = [
 
 export async function GET() {
   const perfLabel = "[PERF] GET /api/settings";
-  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+  logPerfStart(perfLabel);
 
   try {
     const user = await getCurrentUser();
@@ -35,18 +36,18 @@ export async function GET() {
       });
     }
 
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
+    logPerfEnd(perfLabel);
     return NextResponse.json({ settings });
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
-    console.error("Settings GET error:", error);
+    logPerfEnd(perfLabel);
+    logError("[SETTINGS_ERROR]", "GET /api/settings failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
 export async function PATCH(req: Request) {
   const perfLabel = "[PERF] PATCH /api/settings";
-  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+  logPerfStart(perfLabel);
 
   try {
     const user = await getCurrentUser();
@@ -84,11 +85,11 @@ export async function PATCH(req: Request) {
       });
     }
 
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
+    logPerfEnd(perfLabel);
     return NextResponse.json({ message: "Paramètres mis à jour.", settings });
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
-    console.error("Settings PATCH error:", error);
+    logPerfEnd(perfLabel);
+    logError("[SETTINGS_ERROR]", "PATCH /api/settings failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

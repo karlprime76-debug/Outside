@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createPlanSchema } from "@/lib/validation/schemas";
 import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
@@ -7,7 +8,7 @@ import { PlanVisibility } from "@prisma/client";
 
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/plans";
-  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+  logPerfStart(perfLabel);
 
   try {
     const user = await getCurrentUser();
@@ -105,11 +106,11 @@ export async function GET(req: Request) {
       },
     });
 
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
+    logPerfEnd(perfLabel);
     return NextResponse.json({ plans });
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
-    console.error("List plans error:", error);
+    logPerfEnd(perfLabel);
+    logError("[PLAN_ERROR]", "GET /api/plans failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
