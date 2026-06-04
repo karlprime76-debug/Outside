@@ -81,77 +81,87 @@ export function TrustReviewModal({ reviewedId, planId, reviewedName, onClose, on
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center px-0 sm:px-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-white p-6 shadow-2xl dark:bg-surface-card dark:border dark:border-surface-border max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-black text-[var(--os-fg)]">
+    <div className="fixed inset-0 z-[100]" role="dialog" aria-modal="true">
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Bottom sheet (mobile) / centered (sm+) */}
+      <div className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:translate-x-[-50%] sm:bottom-auto sm:top-1/2 sm:translate-y-[-50%] w-full sm:w-[min(100%,24rem)] max-h-[calc(100dvh-80px)] sm:max-h-[90vh] rounded-t-3xl sm:rounded-2xl bg-white dark:bg-surface-card shadow-2xl border-t border-[var(--os-card-border)] sm:border dark:border-surface-border flex flex-col">
+        {/* Header */}
+        <div className="shrink-0 flex items-center justify-between p-4">
+          <h3 className="text-base sm:text-lg font-black text-[var(--os-fg)]">
             Valider {reviewedName || "la confiance"}
           </h3>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+          <button onClick={onClose} aria-label="Fermer" className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
             <X className="h-4 w-4 text-[var(--os-muted)]" />
           </button>
         </div>
 
-        <p className="text-sm text-[var(--os-muted)] mb-4">
-          Ton retour reste anonyme et aide la communauté.
-        </p>
+        {/* Content */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+          <p className="text-sm text-[var(--os-muted)] mb-4">
+            Ton retour reste anonyme et aide la communauté.
+          </p>
 
-        <div className="space-y-4">
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold text-[var(--os-fg)] mb-2">
-              <UserCheck className="h-4 w-4 text-outside-500" />
-              Cette personne était-elle présente ?
-            </label>
-            <Toggle value={wasPresent} onChange={setWasPresent} yesLabel="Oui, présent.e" noLabel="Non, absent.e" />
-          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-[var(--os-fg)] mb-2">
+                <UserCheck className="h-4 w-4 text-outside-500" />
+                Cette personne était-elle présente ?
+              </label>
+              <Toggle value={wasPresent} onChange={setWasPresent} yesLabel="Oui, présent.e" noLabel="Non, absent.e" />
+            </div>
 
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold text-[var(--os-fg)] mb-2">
-              <CheckCircle className="h-4 w-4 text-outside-500" />
-              Était-elle respectueuse ?
-            </label>
-            <Toggle value={respectful} onChange={setRespectful} yesLabel="Oui" noLabel="Non" />
-          </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-[var(--os-fg)] mb-2">
+                <CheckCircle className="h-4 w-4 text-outside-500" />
+                Était-elle respectueuse ?
+              </label>
+              <Toggle value={respectful} onChange={setRespectful} yesLabel="Oui" noLabel="Non" />
+            </div>
 
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold text-[var(--os-fg)] mb-2">
-              <MapPin className="h-4 w-4 text-outside-500" />
-              Ce profil semble-t-il réel ?
-            </label>
-            <Toggle value={realProfile} onChange={setRealProfile} yesLabel="Oui" noLabel="Non" />
-          </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-[var(--os-fg)] mb-2">
+                <MapPin className="h-4 w-4 text-outside-500" />
+                Ce profil semble-t-il réel ?
+              </label>
+              <Toggle value={realProfile} onChange={setRealProfile} yesLabel="Oui" noLabel="Non" />
+            </div>
 
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold text-[var(--os-fg)] mb-2">
-              <MessageSquare className="h-4 w-4 text-outside-500" />
-              Le plan était-il réel ?
-            </label>
-            <Toggle value={realPlan} onChange={setRealPlan} yesLabel="Oui" noLabel="Non" />
-          </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-[var(--os-fg)] mb-2">
+                <MessageSquare className="h-4 w-4 text-outside-500" />
+                Le plan était-il réel ?
+              </label>
+              <Toggle value={realPlan} onChange={setRealPlan} yesLabel="Oui" noLabel="Non" />
+            </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Commentaire (optionnel)</label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={2}
-              maxLength={200}
-              className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] p-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500 resize-none"
-              placeholder="Décris brièvement ton expérience..."
-            />
-            <p className="text-[10px] text-[var(--os-muted)] text-right">{comment.length}/200</p>
+            <div>
+              <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Commentaire (optionnel)</label>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={2}
+                maxLength={200}
+                className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] p-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500 resize-none"
+                placeholder="Décris brièvement ton expérience..."
+              />
+              <p className="text-[10px] text-[var(--os-muted)] text-right">{comment.length}/200</p>
+            </div>
           </div>
         </div>
 
-        <button
-          onClick={submit}
-          disabled={loading}
-          className="mt-5 w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          <CheckCircle className="h-4 w-4" />
-          {loading ? "Envoi..." : "Envoyer mon retour"}
-        </button>
+        {/* Footer */}
+        <div className="shrink-0 border-t border-[var(--os-card-border)] bg-white/95 dark:bg-surface-card/95 p-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
+          <button
+            onClick={submit}
+            disabled={loading}
+            className="w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <CheckCircle className="h-4 w-4" />
+            {loading ? "Envoi..." : "Envoyer mon retour"}
+          </button>
+        </div>
       </div>
     </div>
   );
