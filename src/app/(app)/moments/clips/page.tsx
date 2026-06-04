@@ -277,7 +277,7 @@ export default function ClipsPage() {
   return (
     <div className="fixed inset-0 z-[60] bg-black flex flex-col">
       {/* Top bar */}
-      <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-3 safe-top">
+      <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-3 pt-safe">
         <button
           onClick={() => router.back()}
           className="rounded-full bg-black/40 p-2.5 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
