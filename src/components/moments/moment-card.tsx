@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { Heart, MessageCircle, Share2, Flag, MoreHorizontal, Trash2, Play, Send, SendHorizonal } from "lucide-react";
+import { Heart, MessageCircle, Share2, Flag, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck } from "lucide-react";
 import { ShareMomentSheet } from "./share-moment-sheet";
 import { MomentMedia } from "./moment-media";
 
@@ -55,6 +55,8 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [likeAnim, setLikeAnim] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const isVideo = moment.type === "VIDEO";
   const isMe = moment.viewerState.canDelete;
@@ -65,6 +67,10 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     const newLiked = !liked;
     setLiked(newLiked);
     setLikesCount((c) => (newLiked ? c + 1 : Math.max(0, c - 1)));
+    if (newLiked) {
+      setLikeAnim(true);
+      setTimeout(() => setLikeAnim(false), 300);
+    }
 
     try {
       const res = await fetch(`/api/moments/${moment.id}/like`, {
@@ -185,11 +191,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     </span>
   ) : null;
 
-  const OverflowMenu = ({ dark = false }: { dark?: boolean }) => (
+  const OverflowMenu = () => (
     <div className="relative">
       <button
         onClick={() => setMenuOpen((o) => !o)}
-        className={`rounded-full p-2 transition-colors ${dark ? "bg-black/30 text-white backdrop-blur-sm hover:bg-black/50" : "text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)]"}`}
+        className="rounded-full p-2 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors"
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>
@@ -249,19 +255,24 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
 
   return (
     <div ref={cardRef} className="relative w-full flex-shrink-0 snap-start animate-fade-in">
-      <div className="bg-[var(--os-card)] border border-[var(--os-card-border)] rounded-none sm:rounded-2xl overflow-hidden max-w-lg mx-auto">
+      <div className="bg-[var(--os-card)] border border-[var(--os-card-border)] rounded-none sm:rounded-2xl overflow-hidden max-w-[560px] mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2.5">
-          <Link href={authorLink} className="flex items-center gap-2.5 min-w-0">
-            <Avatar src={moment.author.image} name={moment.author.name} size="sm" />
+        <div className="flex items-center justify-between px-3.5 py-3">
+          <Link href={authorLink} className="flex items-center gap-3 min-w-0 group">
+            <div className="relative">
+              <Avatar src={moment.author.image} name={moment.author.name} size="sm" />
+              {moment.author.role === "OFFICIAL" && (
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-outside-500 border-2 border-[var(--os-card)]" />
+              )}
+            </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-[var(--os-fg)] truncate">
+              <p className="text-sm font-bold text-[var(--os-fg)] truncate group-hover:underline">
                 {moment.author.name || "Anonyme"}{VerifiedBadge}
               </p>
-              <p className="text-xs text-[var(--os-muted)] truncate">@{moment.author.username || "user"}</p>
+              <p className="text-[11px] text-[var(--os-muted)] truncate leading-tight">@{moment.author.username || "user"}</p>
             </div>
           </Link>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {!isMe && (
               <button
                 onClick={handleFollow}
@@ -283,7 +294,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         {isVideo ? (
           <Link
             href={`/moments/clips?start=${moment.id}&scope=for-you`}
-            className="block relative w-full aspect-[4/5] bg-black overflow-hidden"
+            className="block relative w-full aspect-[4/5] bg-black overflow-hidden sm:rounded-xl"
           >
             <MomentMedia
               type={moment.type}
@@ -309,7 +320,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             </div>
           </Link>
         ) : (
-          <div className="relative w-full aspect-square bg-black overflow-hidden">
+          <div className="relative w-full aspect-square bg-black overflow-hidden sm:rounded-xl">
             <MomentMedia
               type={moment.type}
               src={moment.mediaUrl}
@@ -320,41 +331,53 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         )}
 
         {/* Actions & info */}
-        <div className="px-3 py-2.5">
+        <div className="px-3.5 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
               <button
                 onClick={handleLike}
                 disabled={likeLoading}
                 className={`flex items-center gap-1.5 transition-colors ${liked ? "text-red-500" : "text-[var(--os-muted)] hover:text-red-500"}`}
+                aria-label={liked ? "Retirer le J'aime" : "J'aime"}
               >
-                <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />
-                <span className="text-xs font-semibold">{likesCount}</span>
+                <Heart
+                  className={`h-[22px] w-[22px] transition-transform duration-200 ${
+                    likeAnim ? "scale-125" : "scale-100"
+                  } ${liked ? "fill-red-500" : ""}`}
+                />
               </button>
               <button
                 onClick={() => onOpenComments(moment)}
-                className="flex items-center gap-1.5 text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+                className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+                aria-label="Commenter"
               >
-                <MessageCircle className="h-5 w-5" />
-                <span className="text-xs font-semibold">{moment._count.comments}</span>
+                <MessageCircle className="h-[22px] w-[22px]" />
               </button>
               <button
                 onClick={() => setShowShareSheet(true)}
                 className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
                 aria-label="Envoyer en DM"
               >
-                <SendHorizonal className="h-5 w-5" />
+                <SendHorizonal className="h-[22px] w-[22px]" />
               </button>
               <button
                 onClick={handleShare}
                 className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+                aria-label="Partager"
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-[22px] w-[22px]" />
               </button>
             </div>
+            <button
+              onClick={() => setSaved((s) => !s)}
+              className={`transition-colors ${saved ? "text-outside-500" : "text-[var(--os-muted)] hover:text-[var(--os-fg)]"}`}
+              aria-label={saved ? "Retirer des favoris" : "Sauvegarder"}
+            >
+              {saved ? <BookmarkCheck className="h-[22px] w-[22px]" /> : <Bookmark className="h-[22px] w-[22px]" />}
+            </button>
           </div>
 
-          <div className="mt-2 space-y-1">
+          <div className="mt-2.5 space-y-1">
             {likesCount > 0 && (
               <p className="text-sm font-bold text-[var(--os-fg)]">{likesCount} J&apos;aime</p>
             )}
@@ -367,7 +390,18 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               </p>
             )}
             {moment.city && (
-              <p className="text-xs text-outside-500">{moment.city}</p>
+              <p className="text-xs text-outside-500 flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-outside-500" />
+                {moment.city}
+              </p>
+            )}
+            {moment._count.comments > 0 && (
+              <button
+                onClick={() => onOpenComments(moment)}
+                className="text-xs text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
+              >
+                Voir les {moment._count.comments} commentaire{moment._count.comments > 1 ? "s" : ""}
+              </button>
             )}
             <p className="text-[10px] text-[var(--os-muted)] uppercase tracking-wide">{timeAgo(moment.createdAt)}</p>
           </div>
