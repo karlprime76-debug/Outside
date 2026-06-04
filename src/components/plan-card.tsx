@@ -2,22 +2,26 @@
 
 import Link from "next/link";
 import { useDictionary } from "@/hooks/use-dictionary";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin, Users, Tag, Wallet } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeProps } from "@/components/ui/badge";
+import { formatBudget } from "@/lib/currency";
 
 interface Plan {
   id: string;
   title: string;
   mood: string;
+  planCategory: string;
   budgetLevel: string;
+  budgetAmount: unknown;
+  budgetCurrency: string | null;
+  budgetIsFrom: boolean;
   startDate: string;
   maxParticipants: number;
   status: string;
   city: { name: string };
   creator: { name: string | null; image?: string | null };
-  // Optionnels pour cliquabilité profil
   creatorUsername?: string | null;
   creatorId?: string | null;
   _count: { participants: number };
@@ -55,6 +59,19 @@ const MOOD_BADGE: Record<string, BadgeProps["variant"]> = {
   FITNESS: "green",
 };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  CHILL: "Chill",
+  FOOD: "Food",
+  SPORT: "Sport",
+  MUSIC: "Musique",
+  SORTIE: "Sortie",
+  CULTURE: "Culture",
+  BUSINESS: "Business",
+  VOYAGE: "Voyage",
+  ETUDES: "Études",
+  AUTRE: "Autre",
+};
+
 export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: boolean }) {
   const t = useDictionary();
 
@@ -76,7 +93,10 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
         </div>
         <div className="flex items-center gap-1.5">
           <Badge variant={MOOD_BADGE[plan.mood] || "default"}>{plan.mood}</Badge>
-          <Badge variant="slate">{plan.budgetLevel}</Badge>
+          <Badge variant="slate">
+            <Wallet className="h-3 w-3 mr-1 inline" />
+            {formatBudget(plan.budgetAmount, plan.budgetCurrency, plan.budgetIsFrom)}
+          </Badge>
         </div>
       </div>
 
@@ -87,8 +107,12 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
         </h3>
       </Link>
 
-      {/* Location + creator */}
-      <div className="mt-2 flex items-center gap-2 text-xs text-[var(--os-muted)]">
+      {/* Category + Location + creator */}
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--os-muted)]">
+        <Badge variant="outline" className="text-[10px]">
+          <Tag className="h-3 w-3 mr-1 inline" />
+          {CATEGORY_LABELS[plan.planCategory] || plan.planCategory}
+        </Badge>
         <MapPin className="h-3.5 w-3.5" />
         <span>{plan.city.name}</span>
         <span className="text-[var(--os-card-border)]">·</span>

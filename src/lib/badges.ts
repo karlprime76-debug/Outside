@@ -73,7 +73,7 @@ export async function evaluateBadgesAfterPlanJoined(userId: string) {
     where: {
       userId,
       status: { in: ["PENDING", "CONFIRMED"] },
-      plan: { category: "RESTAURANT" },
+      plan: { planCategory: "FOOD" },
     },
   });
   if (foodCount >= 3) {

@@ -40,7 +40,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       city: plan.city?.name || null,
       startDate: plan.startDate.toISOString(),
       endDate: plan.endDate?.toISOString() || null,
-      category: plan.category,
+      planCategory: plan.planCategory,
       mood: plan.mood,
       budgetLevel: plan.budgetLevel,
       maxParticipants: plan.maxParticipants,

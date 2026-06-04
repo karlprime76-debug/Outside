@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BudgetLevel, Mood, PlanVisibility, PlaceCategory, SafetyLevel } from "@/types";
+import { BudgetLevel, Mood, PlanVisibility, PlanCategory, SafetyLevel } from "@/types";
 
 export const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -36,11 +36,15 @@ export const onboardingSchema = z.object({
 export const createPlanSchema = z.object({
   title: z.string().min(3, "Titre trop court").max(100),
   description: z.string().max(500).optional(),
-  category: z.nativeEnum(PlaceCategory),
+  planCategory: z.nativeEnum(PlanCategory),
   mood: z.nativeEnum(Mood),
-  budgetLevel: z.nativeEnum(BudgetLevel),
+  budgetLevel: z.nativeEnum(BudgetLevel).optional(),
+  budgetAmount: z.number().nonnegative().optional(),
+  budgetCurrency: z.string().optional(),
+  budgetIsFrom: z.boolean().default(false),
   estimatedCost: z.number().nonnegative().optional(),
   cityId: z.string().min(1),
+  countryCode: z.string().optional(),
   placeId: z.string().optional(),
   neighborhood: z.string().optional(),
   latitude: z.number().optional(),

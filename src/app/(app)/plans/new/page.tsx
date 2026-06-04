@@ -8,18 +8,25 @@ import { InputField } from "@/components/ui/input-field";
 import { Badge } from "@/components/ui/badge";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { ArrowLeft } from "lucide-react";
+import { getCurrencyForCountry } from "@/lib/currency";
 
 const MOODS = [
   "CHILL", "FOOD", "SPORT", "PARTY", "MUSIC", "DATING",
   "FRIENDS", "STUDY", "BUSINESS", "CULTURE", "TRAVEL", "GAMING", "FITNESS"
 ];
 
-const CATEGORIES = [
-  "RESTAURANT", "CAFE", "LOUNGE", "MAQUIS", "BEACH", "GYM",
-  "CINEMA", "CULTURE", "SPORT", "EVENT", "SHOP", "OTHER"
+const PLAN_CATEGORIES = [
+  { value: "CHILL", label: "Chill" },
+  { value: "FOOD", label: "Food" },
+  { value: "SPORT", label: "Sport" },
+  { value: "MUSIC", label: "Musique" },
+  { value: "SORTIE", label: "Sortie" },
+  { value: "CULTURE", label: "Culture" },
+  { value: "BUSINESS", label: "Business" },
+  { value: "VOYAGE", label: "Voyage" },
+  { value: "ETUDES", label: "Études" },
+  { value: "AUTRE", label: "Autre" },
 ];
-
-const BUDGETS = ["FREE", "LOW", "MEDIUM", "PREMIUM"];
 const VISIBILITY = ["PUBLIC", "FRIENDS", "FRIENDS_OF_FRIENDS", "INVITE_ONLY", "PRIVATE"];
 const VISIBILITY_LABELS: Record<string, string> = {
   PUBLIC: "Public",
@@ -42,6 +49,9 @@ export default function NewPlanPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedMood, setSelectedMood] = useState("");
+  const [selectedCountryCode, setSelectedCountryCode] = useState("");
+  const [budgetMode, setBudgetMode] = useState<"free" | "exact">("exact");
+  const [budgetIsFrom, setBudgetIsFrom] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,13 +59,21 @@ export default function NewPlanPage() {
     setError("");
 
     const form = new FormData(e.currentTarget);
+    const cityId = form.get("cityId") as string;
+    const budgetAmountRaw = form.get("budgetAmount") as string;
+    const budgetAmount = budgetMode === "free" ? 0 : budgetAmountRaw ? parseFloat(budgetAmountRaw) : undefined;
+
     const data = {
       title: form.get("title") as string,
       description: (form.get("description") as string) || undefined,
-      category: form.get("category") as string,
+      planCategory: form.get("planCategory") as string,
       mood: selectedMood || (form.get("mood") as string),
-      budgetLevel: form.get("budgetLevel") as string,
-      cityId: form.get("cityId") as string,
+      budgetLevel: budgetMode === "free" ? "FREE" : "MEDIUM",
+      budgetAmount,
+      budgetCurrency: getCurrencyForCountry(selectedCountryCode),
+      budgetIsFrom: budgetMode !== "free" && budgetIsFrom,
+      cityId,
+      countryCode: (form.get("countryCode") as string) || undefined,
       placeId: (form.get("placeId") as string) || undefined,
       neighborhood: (form.get("neighborhood") as string) || undefined,
       startDate: new Date(form.get("startDate") as string).toISOString(),
@@ -116,18 +134,59 @@ export default function NewPlanPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{t.newPlan.selectCategory}</label>
-            <select name="category" required className={inputBase}>
-              <option value="">{t.newPlan.selectCategory}</option>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Catégorie</label>
+            <select name="planCategory" required className={inputBase}>
+              <option value="">Choisir une catégorie</option>
+              {PLAN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{t.newPlan.selectBudget}</label>
-            <select name="budgetLevel" required className={inputBase}>
-              <option value="">{t.newPlan.selectBudget}</option>
-              {BUDGETS.map((b) => <option key={b} value={b}>{b}</option>)}
-            </select>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Budget</label>
+            <div className="flex items-center gap-2 mb-2">
+              <button
+                type="button"
+                onClick={() => setBudgetMode("free")}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                  budgetMode === "free"
+                    ? "bg-outside-500 text-white border-outside-500"
+                    : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
+                }`}
+              >
+                Gratuit
+              </button>
+              <button
+                type="button"
+                onClick={() => setBudgetMode("exact")}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                  budgetMode === "exact"
+                    ? "bg-outside-500 text-white border-outside-500"
+                    : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
+                }`}
+              >
+                Montant
+              </button>
+            </div>
+            {budgetMode === "exact" && (
+              <div className="space-y-1.5">
+                <input
+                  name="budgetAmount"
+                  type="number"
+                  min={0}
+                  step={100}
+                  placeholder="Montant"
+                  className={inputBase}
+                />
+                <label className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  <input
+                    type="checkbox"
+                    checked={budgetIsFrom}
+                    onChange={(e) => setBudgetIsFrom(e.target.checked)}
+                    className="rounded accent-outside-500"
+                  />
+                  À partir de ce montant
+                </label>
+              </div>
+            )}
           </div>
         </div>
 
@@ -153,7 +212,10 @@ export default function NewPlanPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Ville</label>
-            <CitySelect name="cityId" required />
+            <CitySelect name="cityId" required onChange={(_value, countryCode) => {
+              setSelectedCountryCode(countryCode);
+            }} />
+            <input type="hidden" name="countryCode" value={selectedCountryCode} />
           </div>
           <InputField name="neighborhood" label={t.auth.neighborhood} placeholder="Ton quartier" />
         </div>

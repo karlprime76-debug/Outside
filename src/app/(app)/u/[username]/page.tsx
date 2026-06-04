@@ -117,12 +117,7 @@ export default async function PublicProfilePage({ params }: Props) {
     _count: { likes: number; comments: number };
   }> = [];
   let likedSet = new Set<string>();
-  let recentPlans: Array<{
-    id: string; title: string; mood: string; budgetLevel: string; startDate: Date;
-    maxParticipants: number; status: string; city: { name: string };
-    creator: { name: string | null; image: string | null };
-    _count: { participants: number };
-  }> = [];
+  let recentPlans: unknown[] = [];
 
   if (currentUserId) {
     try {
@@ -269,7 +264,7 @@ export default async function PublicProfilePage({ params }: Props) {
       {/* Tabs: Moments / Plans / À propos */}
       <PublicProfileTabs
         moments={<PublicProfileMoments initial={publicMoments} mode="grid" />}
-        plans={<PublicProfilePlans initial={recentPlans.map((p) => ({ id: p.id, title: p.title, mood: p.mood, budgetLevel: p.budgetLevel, startDate: p.startDate as unknown as string, maxParticipants: p.maxParticipants, status: p.status, city: { name: p.city.name }, creator: { name: user.name, image: user.image || undefined }, creatorUsername: user.username || null, creatorId: user.id, _count: { participants: p._count.participants } }))} />}
+        plans={<PublicProfilePlans initial={(recentPlans as Array<{ id: string; title: string; mood: string; planCategory: string; budgetLevel: string; budgetAmount: unknown; budgetCurrency: string | null; budgetIsFrom: boolean; startDate: Date; maxParticipants: number; status: string; city: { name: string }; creator: { name: string | null; image: string | null }; _count: { participants: number } }>).map((p) => ({ id: p.id, title: p.title, mood: p.mood, planCategory: p.planCategory, budgetLevel: p.budgetLevel, budgetAmount: p.budgetAmount, budgetCurrency: p.budgetCurrency, budgetIsFrom: p.budgetIsFrom, startDate: p.startDate as unknown as string, maxParticipants: p.maxParticipants, status: p.status, city: { name: p.city.name }, creator: { name: user.name, image: user.image || undefined }, creatorUsername: user.username || null, creatorId: user.id, _count: { participants: p._count.participants } }))} />}
         about={(
           <div className="space-y-3">
             <div className="text-sm text-[var(--os-fg)] leading-relaxed">{user.bio || "Aucune bio pour le moment."}</div>

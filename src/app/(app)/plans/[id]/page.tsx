@@ -8,15 +8,20 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ReportButton } from "@/components/report-button";
-import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, X, Star, Send, Flag } from "lucide-react";
+import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, X, Star, Send, Flag, Tag, Wallet } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
+import { formatBudget } from "@/lib/currency";
 
 interface PlanDetail {
   id: string;
   title: string;
   description: string | null;
   mood: string;
+  planCategory: string;
   budgetLevel: string;
+  budgetAmount: unknown;
+  budgetCurrency: string | null;
+  budgetIsFrom: boolean;
   startDate: string;
   endDate: string | null;
   maxParticipants: number;
@@ -53,6 +58,19 @@ const VISIBILITY_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]
   FRIENDS_OF_FRIENDS: "purple",
   INVITE_ONLY: "orange",
   PRIVATE: "slate",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  CHILL: "Chill",
+  FOOD: "Food",
+  SPORT: "Sport",
+  MUSIC: "Musique",
+  SORTIE: "Sortie",
+  CULTURE: "Culture",
+  BUSINESS: "Business",
+  VOYAGE: "Voyage",
+  ETUDES: "Études",
+  AUTRE: "Autre",
 };
 
 const MOOD_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]> = {
@@ -146,7 +164,14 @@ export default function PlanDetailPage() {
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={MOOD_VARIANTS[plan.mood] || "default"}>{plan.mood}</Badge>
-          <Badge variant="slate">{plan.budgetLevel}</Badge>
+          <Badge variant="outline">
+            <Tag className="h-3 w-3 mr-1 inline" />
+            {CATEGORY_LABELS[plan.planCategory] || plan.planCategory}
+          </Badge>
+          <Badge variant="slate">
+            <Wallet className="h-3 w-3 mr-1 inline" />
+            {formatBudget(plan.budgetAmount, plan.budgetCurrency, plan.budgetIsFrom)}
+          </Badge>
           <Badge variant={plan.status === "ACTIVE" ? "green" : plan.status === "FULL" ? "orange" : plan.status === "CANCELLED" ? "red" : "default"}>
             {plan.status}
           </Badge>

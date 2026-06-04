@@ -1,4 +1,4 @@
-import { PrismaClient, MomentType, MomentVisibility, BudgetLevel, Mood, PlaceCategory, PlanStatus, PlanVisibility, LiveStatus, LiveVisibility } from "@prisma/client";
+import { PrismaClient, MomentType, MomentVisibility, BudgetLevel, Mood, PlaceCategory, PlanCategory, PlanStatus, PlanVisibility, LiveStatus, LiveVisibility } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -127,7 +127,7 @@ async function main() {
         data: {
           title: pick(["Afterwork chill", "Concert local", "Sortie food", "Balade urbaine"]),
           description: pick(["Bonne humeur.", "Découverte.", "Entre amis.", "Impromptu."]),
-          category: pick([PlaceCategory.CAFE, PlaceCategory.LOUNGE, PlaceCategory.CULTURE, PlaceCategory.SPORT]),
+          planCategory: pick([PlanCategory.CHILL, PlanCategory.FOOD, PlanCategory.CULTURE, PlanCategory.SPORT]),
           mood: pick([Mood.CHILL, Mood.FOOD, Mood.MUSIC, Mood.SPORT, Mood.FRIENDS]),
           budgetLevel: pick([BudgetLevel.FREE, BudgetLevel.LOW, BudgetLevel.MEDIUM]),
           cityId: city.id,

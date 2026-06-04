@@ -157,6 +157,19 @@ enum PlaceCategory {
   OTHER
 }
 
+enum PlanCategory {
+  CHILL
+  FOOD
+  SPORT
+  MUSIC
+  SORTIE
+  CULTURE
+  BUSINESS
+  VOYAGE
+  ETUDES
+  AUTRE
+}
+
 enum SafetyLevel {
   LOW
   MEDIUM
@@ -485,12 +498,16 @@ model Plan {
   id                String          @id @default(cuid())
   title             String
   description       String?
-  category          PlaceCategory
+  planCategory      PlanCategory    @default(AUTRE)
   mood              Mood
-  budgetLevel       BudgetLevel
+  budgetLevel       BudgetLevel     @default(MEDIUM)
+  budgetAmount      Decimal?
+  budgetCurrency    String?
+  budgetIsFrom      Boolean         @default(false)
   estimatedCost     Float?
   cityId            String
   city              City            @relation(fields: [cityId], references: [id])
+  countryCode       String?
   placeId           String?
   place             Place?          @relation(fields: [placeId], references: [id])
   neighborhood      String?
@@ -521,6 +538,7 @@ model Plan {
   @@index([status])
   @@index([visibility])
   @@index([mood])
+  @@index([planCategory])
   @@index([startDate])
   @@index([createdAt])
 }

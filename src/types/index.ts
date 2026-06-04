@@ -1,8 +1,8 @@
-import { UserRole, BudgetLevel, Mood, PlanVisibility, PlanStatus, PlaceCategory, SafetyLevel, ReportStatus, ReportReason, ParticipantStatus } from "@prisma/client";
+import { UserRole, BudgetLevel, Mood, PlanVisibility, PlanStatus, PlaceCategory, PlanCategory, SafetyLevel, ReportStatus, ReportReason, ParticipantStatus } from "@prisma/client";
 
 export type { User, City, Place, Plan, PlanParticipant, PlanMessage, Report, UserBlock, UserVisitedCity } from "@prisma/client";
 
-export { UserRole, BudgetLevel, Mood, PlanVisibility, PlanStatus, PlaceCategory, SafetyLevel, ReportStatus, ReportReason, ParticipantStatus };
+export { UserRole, BudgetLevel, Mood, PlanVisibility, PlanStatus, PlaceCategory, PlanCategory, SafetyLevel, ReportStatus, ReportReason, ParticipantStatus };
 
 export interface GeoLocation {
   latitude: number;
@@ -13,21 +13,26 @@ export interface PlanFilters {
   cityId?: string;
   mood?: Mood;
   budgetLevel?: BudgetLevel;
-  category?: PlaceCategory;
+  planCategory?: PlanCategory;
   dateFrom?: Date;
   dateTo?: Date;
   isTravelerFriendly?: boolean;
   searchQuery?: string;
+  isFree?: boolean;
 }
 
 export interface CreatePlanInput {
   title: string;
   description?: string;
-  category: PlaceCategory;
+  planCategory: PlanCategory;
   mood: Mood;
   budgetLevel: BudgetLevel;
+  budgetAmount?: number;
+  budgetCurrency?: string;
+  budgetIsFrom?: boolean;
   estimatedCost?: number;
   cityId: string;
+  countryCode?: string;
   placeId?: string;
   neighborhood?: string;
   latitude?: number;

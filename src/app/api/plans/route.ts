@@ -20,7 +20,10 @@ export async function GET(req: Request) {
     const cityId = searchParams.get("cityId");
     const mood = searchParams.get("mood");
     const budgetLevel = searchParams.get("budgetLevel");
-    const category = searchParams.get("category");
+    const planCategory = searchParams.get("planCategory");
+    const isFree = searchParams.get("isFree");
+    const dateFrom = searchParams.get("dateFrom");
+    const dateTo = searchParams.get("dateTo");
     const travelerFriendly = searchParams.get("travelerFriendly");
     let limit = parseInt(searchParams.get("limit") || "50", 10);
     if (isNaN(limit) || limit < 1) limit = 50;
@@ -64,7 +67,20 @@ export async function GET(req: Request) {
     if (cityId) baseWhere.cityId = cityId;
     if (mood) baseWhere.mood = mood;
     if (budgetLevel) baseWhere.budgetLevel = budgetLevel;
-    if (category) baseWhere.category = category;
+    if (planCategory) baseWhere.planCategory = planCategory;
+    if (isFree === "true") {
+      baseWhere.OR = [
+        { budgetAmount: { equals: 0 } },
+        { budgetAmount: null, budgetLevel: "FREE" },
+      ];
+    } else if (isFree === "false") {
+      baseWhere.AND = { NOT: { budgetAmount: { equals: 0 } } };
+    }
+    if (dateFrom || dateTo) {
+      baseWhere.startDate = {};
+      if (dateFrom) (baseWhere.startDate as Record<string, unknown>).gte = new Date(dateFrom);
+      if (dateTo) (baseWhere.startDate as Record<string, unknown>).lte = new Date(dateTo);
+    }
     if (travelerFriendly === "true") baseWhere.isTravelerFriendly = true;
 
     const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
@@ -138,11 +154,15 @@ export async function POST(req: Request) {
       data: {
         title: data.title,
         description: data.description,
-        category: data.category,
+        planCategory: data.planCategory,
         mood: data.mood,
-        budgetLevel: data.budgetLevel,
+        budgetLevel: data.budgetLevel || "MEDIUM",
+        budgetAmount: data.budgetAmount ?? undefined,
+        budgetCurrency: data.budgetCurrency,
+        budgetIsFrom: data.budgetIsFrom,
         estimatedCost: data.estimatedCost,
         cityId: data.cityId,
+        countryCode: data.countryCode,
         placeId: data.placeId,
         neighborhood: data.neighborhood,
         latitude: data.latitude,

@@ -44,7 +44,11 @@ interface Plan {
   id: string;
   title: string;
   mood: string;
+  planCategory: string;
   budgetLevel: string;
+  budgetAmount: unknown;
+  budgetCurrency: string | null;
+  budgetIsFrom: boolean;
   startDate: string;
   maxParticipants: number;
   status: string;
