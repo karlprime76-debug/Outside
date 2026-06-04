@@ -18,7 +18,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const t = useDictionary();
 
-  if (pathname.startsWith("/live/")) return null;
+  if (pathname.startsWith("/live/") || pathname.startsWith("/moments/clips")) return null;
 
   return (
     <nav

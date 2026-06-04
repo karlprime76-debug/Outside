@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { Heart, MessageCircle, Share2, Flag, MapPin, MoreHorizontal, Trash2, Volume2, VolumeX, Play } from "lucide-react";
+import { Heart, MessageCircle, Share2, Flag, MapPin, MoreHorizontal, Trash2, Volume2, VolumeX, Play, Clapperboard } from "lucide-react";
 import { MomentMedia } from "./moment-media";
 
 interface Author {
@@ -54,9 +54,12 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [videoMuted, setVideoMuted] = useState(true);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [following, setFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const isVideo = moment.type === "VIDEO";
+  const isMe = moment.viewerState.canDelete;
 
   useEffect(() => {
     const el = cardRef.current;
@@ -151,6 +154,27 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     }
   };
 
+  const handleFollow = useCallback(async () => {
+    if (followLoading || isMe) return;
+    setFollowLoading(true);
+    const newFollowing = !following;
+    setFollowing(newFollowing);
+    try {
+      const res = await fetch(`/api/follow?userId=${moment.author.id}`, {
+        method: newFollowing ? "POST" : "DELETE",
+      });
+      if (!res.ok) {
+        setFollowing(!newFollowing);
+      } else {
+        addToast(newFollowing ? "Abonnement confirmé" : "Désabonnement confirmé", "success");
+      }
+    } catch {
+      setFollowing(!newFollowing);
+    } finally {
+      setFollowLoading(false);
+    }
+  }, [following, followLoading, isMe, moment.author.id, addToast]);
+
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const minutes = Math.floor(diff / 60000);
@@ -239,13 +263,36 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             </div>
           </Link>
 
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((o) => !o)}
-              className="rounded-full bg-black/30 p-2 text-white backdrop-blur-sm hover:bg-black/50 transition-colors"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
+          <div className="flex items-center gap-2">
+            {!isMe && (
+              <button
+                onClick={handleFollow}
+                disabled={followLoading}
+                className={`rounded-full px-3 py-1.5 text-[10px] font-bold backdrop-blur-sm transition-colors ${
+                  following
+                    ? "bg-white/20 text-white hover:bg-white/30"
+                    : "bg-white text-black hover:bg-white/90"
+                }`}
+              >
+                {following ? "Abonné" : "Suivre"}
+              </button>
+            )}
+            {isVideo && (
+              <Link
+                href={`/moments/clips?start=${moment.id}&scope=for-you`}
+                className="rounded-full bg-black/30 p-2 text-white backdrop-blur-sm hover:bg-black/50 transition-colors"
+                aria-label="Ouvrir en clips"
+              >
+                <Clapperboard className="h-4 w-4" />
+              </Link>
+            )}
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                className="rounded-full bg-black/30 p-2 text-white backdrop-blur-sm hover:bg-black/50 transition-colors"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
             {menuOpen && (
               <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] shadow-xl py-1 z-50 animate-fade-in">
                 {moment.viewerState.canDelete && (
@@ -283,8 +330,9 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             )}
           </div>
         </div>
+      </div>
 
-        {/* Bottom info */}
+      {/* Bottom info */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
           {moment.city && (
             <div className="flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm w-fit px-2.5 py-1 mb-2">

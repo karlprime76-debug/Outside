@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { MomentCard } from "./moment-card";
 import { MomentCommentsSheet } from "./moment-comments-sheet";
 import { MomentTypeFilter } from "./moment-type-filter";
+import { AccountDiscovery } from "./account-discovery";
 import { Loader2, Camera } from "lucide-react";
 import Link from "next/link";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
@@ -288,15 +289,20 @@ export function MomentFeed() {
           </div>
         ) : (
           <div className="divide-y divide-[var(--os-card-border)]">
-            {moments.map((moment) => (
-              <MomentCard
-                key={moment.id}
-                moment={moment}
-                onLikeToggle={handleLikeToggle}
-                onOpenComments={setCommentMoment}
-                onDelete={handleDelete}
-                onHide={handleHide}
-              />
+            {moments.map((moment, index) => (
+              <>
+                <MomentCard
+                  key={moment.id}
+                  moment={moment}
+                  onLikeToggle={handleLikeToggle}
+                  onOpenComments={setCommentMoment}
+                  onDelete={handleDelete}
+                  onHide={handleHide}
+                />
+                {index === 1 && scope === "for-you" && media === "all" && (
+                  <AccountDiscovery />
+                )}
+              </>
             ))}
             {/* Sentinel */}
             <div ref={sentinelRef} className="h-20 flex items-center justify-center">
