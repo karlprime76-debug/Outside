@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Avatar } from "@/components/ui/avatar";
-import { MapPin } from "lucide-react";
+import { MapPin, BadgeCheck } from "lucide-react";
 import Link from "next/link";
 import { getRelationshipStatus } from "@/lib/social/friendship";
 import { getFriendCount } from "@/lib/social/friendship";
@@ -71,6 +71,7 @@ export default async function PublicProfilePage({ params }: Props) {
     homeCity: { name: string } | null;
     activeCity: { name: string } | null;
     userSettings: { showCityOnProfile: boolean } | null;
+    proAccount: { status: string; businessName: string } | null;
   } | null = null;
 
   try {
@@ -90,6 +91,7 @@ export default async function PublicProfilePage({ params }: Props) {
         homeCity: { select: { name: true } },
         activeCity: { select: { name: true } },
         userSettings: { select: { showCityOnProfile: true } },
+        proAccount: { select: { status: true, businessName: true } },
       },
     });
   } catch (err) {
@@ -223,6 +225,12 @@ export default async function PublicProfilePage({ params }: Props) {
               </div>
             )}
             <div className="mt-3 flex items-center gap-2 flex-wrap">
+              {user.proAccount?.status === "APPROVED" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-900 shadow">
+                  <BadgeCheck className="h-3 w-3" />
+                  Pro vérifié
+                </span>
+              )}
               <TrustBadge badge={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
               {!isSelf && currentUserId && (
                 <MessageButton username={user.username || ""} />

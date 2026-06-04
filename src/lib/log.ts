@@ -7,7 +7,9 @@ export type LogTag =
   | "[LIVE_ERROR]"
   | "[NOTIFICATION_ERROR]"
   | "[SETTINGS_ERROR]"
-  | "[PUSH_ERROR]";
+  | "[PUSH_ERROR]"
+  | "[ADMIN_PRO]"
+  | "[ADMIN_PRO_ERROR]";
 
 function safeSerialize(obj: unknown) {
   try {

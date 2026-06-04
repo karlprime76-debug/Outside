@@ -40,17 +40,24 @@ export async function POST(req: Request) {
     phone,
     email: contactEmail,
     website,
+    socialMedia,
+    documentUrl,
+    category,
+    logoUrl,
   } = body;
 
   if (!businessName || typeof businessName !== "string" || businessName.trim().length < 2) {
     return NextResponse.json({ error: "Le nom de l'établissement est requis." }, { status: 400 });
   }
 
+  const validBusinessTypes = ["ORGANIZER", "VENUE", "BRAND", "RESTAURANT_BAR", "EVENT_AGENCY", "PROMOTER", "ARTIST_TEAM", "OTHER"];
+  const safeBusinessType = validBusinessTypes.includes(businessType) ? businessType : "OTHER";
+
   const pro = await db.proAccount.create({
     data: {
       userId: user.id,
       businessName: businessName.trim(),
-      businessType: businessType?.trim() || null,
+      businessType: safeBusinessType,
       description: description?.trim() || null,
       country: country?.trim() || null,
       countryCode: countryCode?.trim() || null,
@@ -59,6 +66,10 @@ export async function POST(req: Request) {
       phone: phone?.trim() || null,
       email: contactEmail?.trim() || null,
       website: website?.trim() || null,
+      logoUrl: logoUrl?.trim() || null,
+      socialMedia: socialMedia && typeof socialMedia === "object" ? socialMedia : null,
+      documentUrl: documentUrl?.trim() || null,
+      category: category?.trim() || null,
       status: "PENDING",
     },
   });

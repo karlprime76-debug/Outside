@@ -226,6 +226,17 @@ enum ProAccountStatus {
   SUSPENDED
 }
 
+enum ProBusinessType {
+  ORGANIZER
+  VENUE
+  BRAND
+  RESTAURANT_BAR
+  EVENT_AGENCY
+  PROMOTER
+  ARTIST_TEAM
+  OTHER
+}
+
 enum EventStatus {
   DRAFT
   PUBLISHED
@@ -908,7 +919,7 @@ model ProAccount {
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   businessName    String
-  businessType    String?
+  businessType    ProBusinessType   @default(OTHER)
   description     String?
   country         String?
   countryCode     String?
@@ -918,6 +929,10 @@ model ProAccount {
   email           String?
   website         String?
   logoUrl         String?
+
+  socialMedia     Json?
+  documentUrl     String?
+  category        String?
 
   status          ProAccountStatus  @default(PENDING)
   verifiedAt      DateTime?
