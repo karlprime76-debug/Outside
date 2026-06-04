@@ -89,8 +89,8 @@ export default function EditProfilePage() {
       return;
     }
 
-    if (file.size > 3 * 1024 * 1024) {
-      setError("Cette image est trop lourde. Maximum 3 Mo.");
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Cette image est trop lourde. Maximum 5 Mo.");
       return;
     }
 

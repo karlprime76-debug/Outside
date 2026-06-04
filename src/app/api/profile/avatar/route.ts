@@ -101,7 +101,7 @@ export async function POST(req: Request) {
     if (file.size > AVATAR_MAX_SIZE) {
       console.log("[AVATAR_UPLOAD] FILE_TOO_LARGE:", file.size);
       return NextResponse.json(
-        { message: "Cette image est trop lourde. Taille maximale : 3 Mo.", code: "FILE_TOO_LARGE" },
+        { message: "Cette image est trop lourde. Taille maximale : 5 Mo.", code: "FILE_TOO_LARGE" },
         { status: 400 }
       );
     }

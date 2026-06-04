@@ -1,5 +1,5 @@
 export const AVATARS_BUCKET = "avatars";
-export const AVATAR_MAX_SIZE = 3 * 1024 * 1024;
+export const AVATAR_MAX_SIZE = 5 * 1024 * 1024;
 
 export const ALLOWED_AVATAR_TYPES = [
   "image/jpeg",
