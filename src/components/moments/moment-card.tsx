@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { Heart, MessageCircle, Share2, Flag, MapPin, MoreHorizontal, Trash2, Volume2, VolumeX, Play, Clapperboard, Send, SendHorizonal } from "lucide-react";
+import { Heart, MessageCircle, Share2, Flag, MoreHorizontal, Trash2, Play, Send, SendHorizonal } from "lucide-react";
 import { ShareMomentSheet } from "./share-moment-sheet";
 import { MomentMedia } from "./moment-media";
 
@@ -53,40 +53,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [likeLoading, setLikeLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showShareSheet, setShowShareSheet] = useState(false);
-  const [videoMuted, setVideoMuted] = useState(true);
-  const [videoPlaying, setVideoPlaying] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const isVideo = moment.type === "VIDEO";
   const isMe = moment.viewerState.canDelete;
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el || !isVideo) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-      },
-      { threshold: 0.6 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [isVideo]);
-
-  useEffect(() => {
-    if (!isVideo || !videoRef.current) return;
-    if (isVisible) {
-      videoRef.current.play().catch(() => {});
-      setVideoPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setVideoPlaying(false);
-    }
-  }, [isVisible, isVideo]);
 
   const handleLike = useCallback(async () => {
     if (likeLoading) return;
@@ -278,134 +249,66 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
 
   return (
     <div ref={cardRef} className="relative w-full flex-shrink-0 snap-start animate-fade-in">
-      {isVideo ? (
-        /* VIDEO — immersive story layout */
-        <div className="relative h-[calc(100dvh-150px)] sm:h-[70vh] md:h-[600px] w-full max-w-full bg-black rounded-none sm:rounded-2xl overflow-hidden">
-          <MomentMedia
-            ref={videoRef}
-            type={moment.type}
-            src={moment.mediaUrl}
-            className="h-full w-full object-cover"
-            muted={videoMuted}
-            loop
-            playsInline
-            preload="metadata"
-          />
-          {/* Click-to-play overlay */}
-          <div
-            className="absolute inset-0"
-            onClick={() => {
-              if (videoRef.current) {
-                if (videoRef.current.paused) {
-                  videoRef.current.play().catch(() => {});
-                  setVideoPlaying(true);
-                } else {
-                  videoRef.current.pause();
-                  setVideoPlaying(false);
-                }
-              }
-            }}
-          />
-          {!videoPlaying && (
+      <div className="bg-[var(--os-card)] border border-[var(--os-card-border)] rounded-none sm:rounded-2xl overflow-hidden max-w-lg mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 py-2.5">
+          <Link href={authorLink} className="flex items-center gap-2.5 min-w-0">
+            <Avatar src={moment.author.image} name={moment.author.name} size="sm" />
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-[var(--os-fg)] truncate">
+                {moment.author.name || "Anonyme"}{VerifiedBadge}
+              </p>
+              <p className="text-xs text-[var(--os-muted)] truncate">@{moment.author.username || "user"}</p>
+            </div>
+          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            {!isMe && (
+              <button
+                onClick={handleFollow}
+                disabled={followLoading}
+                className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${
+                  following
+                    ? "bg-[var(--os-card-border)] text-[var(--os-muted)] hover:text-[var(--os-fg)]"
+                    : "bg-[var(--os-fg)] text-[var(--os-bg)] hover:bg-[var(--os-fg)]/90"
+                }`}
+              >
+                {following ? "Abonné" : "Suivre"}
+              </button>
+            )}
+            <OverflowMenu />
+          </div>
+        </div>
+
+        {/* Media */}
+        {isVideo ? (
+          <Link
+            href={`/moments/clips?start=${moment.id}&scope=for-you`}
+            className="block relative w-full aspect-[4/5] bg-black overflow-hidden"
+          >
+            <MomentMedia
+              type={moment.type}
+              src={moment.mediaUrl}
+              className="h-full w-full object-cover"
+              preload="metadata"
+              muted
+              loop
+              playsInline
+              controls={false}
+            />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/40 pointer-events-none" />
+            {/* Play button */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="rounded-full bg-black/40 p-4 backdrop-blur-sm">
+              <div className="rounded-full bg-black/50 p-4 backdrop-blur-md">
                 <Play className="h-8 w-8 text-white" />
               </div>
             </div>
-          )}
-          <button
-            onClick={(e) => { e.stopPropagation(); setVideoMuted((m) => !m); }}
-            className="absolute top-3 right-3 rounded-full bg-black/40 p-2 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
-          >
-            {videoMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-          </button>
-
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none" />
-
-          {/* Top bar */}
-          <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between">
-            <Link href={authorLink} className="flex items-center gap-2.5">
-              <Avatar src={moment.author.image} name={moment.author.name} size="sm" />
-              <div>
-                <p className="text-sm font-bold text-white drop-shadow-md">
-                  {moment.author.name || "Anonyme"}{VerifiedBadge}
-                </p>
-                <p className="text-xs text-white/70 drop-shadow-md">@{moment.author.username || "user"}</p>
-              </div>
-            </Link>
-            <div className="flex items-center gap-2">
-              {!isMe && (
-                <button
-                  onClick={handleFollow}
-                  disabled={followLoading}
-                  className={`rounded-full px-3 py-1.5 text-[10px] font-bold backdrop-blur-sm transition-colors ${
-                    following
-                      ? "bg-white/20 text-white hover:bg-white/30"
-                      : "bg-white text-black hover:bg-white/90"
-                  }`}
-                >
-                  {following ? "Abonné" : "Suivre"}
-                </button>
-              )}
-              <Link
-                href={`/moments/clips?start=${moment.id}&scope=for-you`}
-                className="rounded-full bg-black/30 p-2 text-white backdrop-blur-sm hover:bg-black/50 transition-colors"
-                aria-label="Ouvrir en clips"
-              >
-                <Clapperboard className="h-4 w-4" />
-              </Link>
-              <OverflowMenu dark />
+            {/* Clip badge */}
+            <div className="absolute top-3 left-3 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-glow">
+              Clip
             </div>
-          </div>
-
-          {/* Bottom info */}
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            {moment.city && (
-              <div className="flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm w-fit px-2.5 py-1 mb-2">
-                <MapPin className="h-3 w-3 text-white/80" />
-                <span className="text-xs font-semibold text-white/90">{moment.city}</span>
-              </div>
-            )}
-            {moment.caption && (
-              <p className="text-sm text-white/95 drop-shadow-md line-clamp-3 mb-2">{moment.caption}</p>
-            )}
-            <p className="text-[10px] text-white/50">{timeAgo(moment.createdAt)}</p>
-          </div>
-        </div>
-      ) : (
-        /* PHOTO — social post layout */
-        <div className="bg-[var(--os-card)] border border-[var(--os-card-border)] rounded-none sm:rounded-2xl overflow-hidden max-w-lg mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2.5">
-            <Link href={authorLink} className="flex items-center gap-2.5 min-w-0">
-              <Avatar src={moment.author.image} name={moment.author.name} size="sm" />
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-[var(--os-fg)] truncate">
-                  {moment.author.name || "Anonyme"}{VerifiedBadge}
-                </p>
-                <p className="text-xs text-[var(--os-muted)] truncate">@{moment.author.username || "user"}</p>
-              </div>
-            </Link>
-            <div className="flex items-center gap-2 shrink-0">
-              {!isMe && (
-                <button
-                  onClick={handleFollow}
-                  disabled={followLoading}
-                  className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${
-                    following
-                      ? "bg-[var(--os-card-border)] text-[var(--os-muted)] hover:text-[var(--os-fg)]"
-                      : "bg-[var(--os-fg)] text-[var(--os-bg)] hover:bg-[var(--os-fg)]/90"
-                  }`}
-                >
-                  {following ? "Abonné" : "Suivre"}
-                </button>
-              )}
-              <OverflowMenu />
-            </div>
-          </div>
-
-          {/* Photo — square social format */}
+          </Link>
+        ) : (
           <div className="relative w-full aspect-square bg-black overflow-hidden">
             <MomentMedia
               type={moment.type}
@@ -414,62 +317,62 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               preload="metadata"
             />
           </div>
+        )}
 
-          {/* Actions & info */}
-          <div className="px-3 py-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={handleLike}
-                  disabled={likeLoading}
-                  className={`flex items-center gap-1.5 transition-colors ${liked ? "text-red-500" : "text-[var(--os-muted)] hover:text-red-500"}`}
-                >
-                  <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />
-                  <span className="text-xs font-semibold">{likesCount}</span>
-                </button>
-                <button
-                  onClick={() => onOpenComments(moment)}
-                  className="flex items-center gap-1.5 text-[var(--os-muted)] hover:text-outside-500 transition-colors"
-                >
-                  <MessageCircle className="h-5 w-5" />
-                  <span className="text-xs font-semibold">{moment._count.comments}</span>
-                </button>
-                <button
-                  onClick={() => setShowShareSheet(true)}
-                  className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
-                  aria-label="Envoyer en DM"
-                >
-                  <SendHorizonal className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
-                >
-                  <Share2 className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-2 space-y-1">
-              {likesCount > 0 && (
-                <p className="text-sm font-bold text-[var(--os-fg)]">{likesCount} J&apos;aime</p>
-              )}
-              {moment.caption && (
-                <p className="text-sm text-[var(--os-fg)]">
-                  <Link href={authorLink} className="font-bold hover:underline">
-                    {moment.author.name || moment.author.username || "Anonyme"}
-                  </Link>{" "}
-                  <span className="text-[var(--os-muted)]">{moment.caption}</span>
-                </p>
-              )}
-              {moment.city && (
-                <p className="text-xs text-outside-500">{moment.city}</p>
-              )}
-              <p className="text-[10px] text-[var(--os-muted)] uppercase tracking-wide">{timeAgo(moment.createdAt)}</p>
+        {/* Actions & info */}
+        <div className="px-3 py-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleLike}
+                disabled={likeLoading}
+                className={`flex items-center gap-1.5 transition-colors ${liked ? "text-red-500" : "text-[var(--os-muted)] hover:text-red-500"}`}
+              >
+                <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />
+                <span className="text-xs font-semibold">{likesCount}</span>
+              </button>
+              <button
+                onClick={() => onOpenComments(moment)}
+                className="flex items-center gap-1.5 text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span className="text-xs font-semibold">{moment._count.comments}</span>
+              </button>
+              <button
+                onClick={() => setShowShareSheet(true)}
+                className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+                aria-label="Envoyer en DM"
+              >
+                <SendHorizonal className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleShare}
+                className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
             </div>
           </div>
+
+          <div className="mt-2 space-y-1">
+            {likesCount > 0 && (
+              <p className="text-sm font-bold text-[var(--os-fg)]">{likesCount} J&apos;aime</p>
+            )}
+            {moment.caption && (
+              <p className="text-sm text-[var(--os-fg)]">
+                <Link href={authorLink} className="font-bold hover:underline">
+                  {moment.author.name || moment.author.username || "Anonyme"}
+                </Link>{" "}
+                <span className="text-[var(--os-muted)]">{moment.caption}</span>
+              </p>
+            )}
+            {moment.city && (
+              <p className="text-xs text-outside-500">{moment.city}</p>
+            )}
+            <p className="text-[10px] text-[var(--os-muted)] uppercase tracking-wide">{timeAgo(moment.createdAt)}</p>
+          </div>
         </div>
-      )}
+      </div>
 
       {showShareSheet && (
         <ShareMomentSheet momentId={moment.id} onClose={() => setShowShareSheet(false)} />

@@ -10,6 +10,7 @@ interface MomentMediaProps {
   loop?: boolean;
   playsInline?: boolean;
   preload?: "none" | "metadata" | "auto";
+  controls?: boolean;
 }
 
 function normalizeMediaUrl(url: string): string {
@@ -29,7 +30,7 @@ function isVideoByExtension(url: string): boolean {
 }
 
 export const MomentMedia = forwardRef<HTMLVideoElement, MomentMediaProps>(function MomentMedia(
-  { type, src, className, muted = true, loop = true, playsInline = true, preload = "metadata" },
+  { type, src, className, muted = true, loop = true, playsInline = true, preload = "metadata", controls = true },
   ref
 ) {
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export const MomentMedia = forwardRef<HTMLVideoElement, MomentMediaProps>(functi
         muted={muted}
         loop={loop}
         playsInline={playsInline}
-        controls
+        controls={controls}
         preload={preload}
         onError={() => setError("error")}
       />
