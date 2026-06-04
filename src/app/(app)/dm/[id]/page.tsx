@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin, Calendar, X } from "lucide-react";
 import { DmConversationHeader } from "@/components/dm/dm-conversation-header";
 import { DmMessageBubble, type DmMessage } from "@/components/dm/dm-message-bubble";
 import { DmDateSeparator } from "@/components/dm/dm-date-separator";
@@ -36,6 +36,19 @@ export default function DmConversationPage() {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [other, setOther] = useState<OtherUser | null>(null);
+  const [planSelectorOpen, setPlanSelectorOpen] = useState(false);
+  const [plansList, setPlansList] = useState<Array<{
+    id: string;
+    title: string;
+    city: { name: string } | null;
+    place: { name: string } | null;
+    startDate: string;
+    mood: string;
+    budgetLevel: string;
+    status: string;
+    _count: { participants: number };
+  }>>([]);
+  const [plansLoading, setPlansLoading] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
@@ -315,7 +328,82 @@ export default function DmConversationPage() {
         </div>
       )}
 
-      <DmMessageComposer onSend={onSend} sending={sending} conversationId={id} />
+      <DmMessageComposer onSend={onSend} sending={sending} conversationId={id} onOpenPlanSelector={() => {
+        setPlanSelectorOpen(true);
+        setPlansLoading(true);
+        fetch("/api/plans/my")
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => setPlansList(data?.plans || []))
+          .finally(() => setPlansLoading(false));
+      }} />
+
+      {/* Plan selector modal */}
+      {planSelectorOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setPlanSelectorOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-surface-card dark:border dark:border-surface-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">Inviter à un plan</h3>
+              <button
+                onClick={() => setPlanSelectorOpen(false)}
+                className="rounded-lg p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <X className="h-4 w-4 text-zinc-500" />
+              </button>
+            </div>
+            {plansLoading ? (
+              <div className="flex items-center justify-center py-8 text-[var(--os-muted)]">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : plansList.length === 0 ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Aucun plan disponible.</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {plansList.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      onSend("", {
+                        type: "PLAN_INVITE",
+                        metadata: {
+                          planId: p.id,
+                          title: p.title,
+                          city: p.city?.name || null,
+                          startDate: p.startDate,
+                          mood: p.mood,
+                          budgetLevel: p.budgetLevel,
+                          status: p.status,
+                        },
+                      });
+                      setPlanSelectorOpen(false);
+                    }}
+                    className="w-full text-left flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{p.title}</p>
+                      <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        {p.city && (
+                          <span className="flex items-center gap-0.5">
+                            <MapPin className="h-3 w-3" />
+                            {p.city.name}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-0.5">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(p.startDate).toLocaleDateString("fr-FR")}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase bg-outside-100 text-outside-700 px-1.5 py-0.5 rounded-full dark:bg-outside-900/30 dark:text-outside-300">
+                      {p.mood}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </OutsidePage>
   );
 }

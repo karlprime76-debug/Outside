@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Trash2, Flag, ImageOff } from "lucide-react";
+import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus } from "lucide-react";
 
 export interface DmMessage {
   id: string;
@@ -74,6 +74,91 @@ function MomentCardInBubble({ momentId, metadata, isMine }: { momentId: string; 
   );
 }
 
+interface PlanMeta {
+  planId: string;
+  title: string;
+  city: string | null;
+  startDate: string;
+  endDate?: string | null;
+  category: string;
+  mood: string;
+  budgetLevel: string;
+  maxParticipants: number;
+  status: string;
+  creatorId: string;
+}
+
+function PlanInviteCard({ metadata, isMine }: { metadata?: string | null; isMine: boolean }) {
+  let parsed: PlanMeta | null = null;
+  try {
+    if (metadata) parsed = JSON.parse(metadata);
+  } catch { /* noop */ }
+
+  if (!parsed) {
+    return <span className="italic opacity-70">Invitation indisponible</span>;
+  }
+
+  const isUnavailable = parsed.status === "CANCELLED" || parsed.status === "COMPLETED";
+
+  return (
+    <div
+      className={`block rounded-xl overflow-hidden border transition-colors ${
+        isMine
+          ? "border-white/20 bg-white/10"
+          : "border-[var(--os-card-border)] bg-[var(--os-bg)]"
+      }`}
+    >
+      <div className="p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <h4 className={`text-sm font-bold ${isMine ? "text-white" : "text-[var(--os-fg)]"}`}>{parsed.title}</h4>
+          {isUnavailable && (
+            <span className="text-[10px] font-bold uppercase bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">Indisponible</span>
+          )}
+        </div>
+        {parsed.city && (
+          <div className={`flex items-center gap-1 text-xs ${isMine ? "text-white/80" : "text-[var(--os-muted)]"}`}>
+            <MapPin className="h-3 w-3" />
+            {parsed.city}
+          </div>
+        )}
+        <div className={`flex items-center gap-1 text-xs ${isMine ? "text-white/80" : "text-[var(--os-muted)]"}`}>
+          <Calendar className="h-3 w-3" />
+          {new Date(parsed.startDate).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${isMine ? "bg-white/20 text-white" : "bg-[var(--os-card-border)] text-[var(--os-muted)]"}`}>
+            {parsed.mood}
+          </span>
+          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${isMine ? "bg-white/20 text-white" : "bg-[var(--os-card-border)] text-[var(--os-muted)]"}`}>
+            {parsed.budgetLevel}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 pt-1">
+          <Link
+            href={`/plans/${parsed.planId}`}
+            className={`inline-flex items-center gap-1 text-xs font-semibold ${isMine ? "text-white hover:text-white/80" : "text-outside-500 hover:text-outside-600"}`}
+          >
+            <ExternalLink className="h-3 w-3" />
+            Voir
+          </Link>
+          {!isUnavailable && (
+            <button
+              onClick={async () => {
+                const res = await fetch(`/api/plans/${parsed.planId}/join`, { method: "POST" });
+                if (res.ok) window.location.href = `/plans/${parsed.planId}`;
+              }}
+              className={`inline-flex items-center gap-1 text-xs font-semibold ${isMine ? "text-white hover:text-white/80" : "text-outside-500 hover:text-outside-600"}`}
+            >
+              <UserPlus className="h-3 w-3" />
+              Rejoindre
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DmMessageBubble({
   message,
   isMine,
@@ -87,6 +172,7 @@ export function DmMessageBubble({
   const isImage = message.type === "IMAGE" && message.mediaUrl && !message.isDeleted;
   const isVideo = message.type === "VIDEO" && message.mediaUrl && !message.isDeleted;
   const isAudio = message.type === "AUDIO" && message.mediaUrl && !message.isDeleted;
+  const isPlanInvite = message.type === "PLAN_INVITE" && !message.isDeleted;
 
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1`}>
@@ -115,6 +201,8 @@ export function DmMessageBubble({
             <span className="italic opacity-70">Message supprimé</span>
           ) : isMoment ? (
             <MomentCardInBubble momentId={message.momentId || ""} metadata={message.metadata} isMine={isMine} />
+          ) : isPlanInvite ? (
+            <PlanInviteCard metadata={message.metadata} isMine={isMine} />
           ) : isImage ? (
             <a href={message.mediaUrl || ""} target="_blank" rel="noopener noreferrer">
               <img

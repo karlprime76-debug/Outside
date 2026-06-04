@@ -8,9 +8,10 @@ interface DmMessageComposerProps {
   onSend: (text: string, opts?: { type?: string; mediaUrl?: string; momentId?: string; metadata?: Record<string, unknown> }) => void;
   sending?: boolean;
   conversationId: string;
+  onOpenPlanSelector?: () => void;
 }
 
-export function DmMessageComposer({ onSend, sending, conversationId }: DmMessageComposerProps) {
+export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanSelector }: DmMessageComposerProps) {
   const [text, setText] = useState("");
   const [showPlus, setShowPlus] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -98,7 +99,9 @@ export function DmMessageComposer({ onSend, sending, conversationId }: DmMessage
       cameraRef.current?.click();
     } else if (action === "audio") {
       audioRef.current?.click();
-    } else if (action === "plan" || action === "profile" || action === "moment") {
+    } else if (action === "plan") {
+      onOpenPlanSelector?.();
+    } else if (action === "profile" || action === "moment") {
       addToast("Bientôt disponible.", "info");
     }
   }

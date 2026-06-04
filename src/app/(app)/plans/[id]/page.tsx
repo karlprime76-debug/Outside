@@ -70,8 +70,11 @@ export default function PlanDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteByMessageOpen, setInviteByMessageOpen] = useState(false);
   const [friends, setFriends] = useState<{ id: string; name: string | null; image: string | null }[]>([]);
+  const [conversations, setConversations] = useState<{ id: string; other: { id: string; name: string | null; image: string | null } }[]>([]);
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewTarget, setReviewTarget] = useState<{ id: string; name: string | null } | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -212,6 +215,20 @@ export default function PlanDetailPage() {
           >
             <UserPlus className="h-4 w-4" />
             Inviter
+          </button>
+        )}
+        {isParticipant && (
+          <button
+            onClick={() => {
+              setInviteByMessageOpen(true);
+              fetch("/api/dm/conversations")
+                .then((r) => r.json())
+                .then((data) => setConversations(data.conversations || []));
+            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            <MessageSquare className="h-4 w-4" />
+            Inviter par message
           </button>
         )}
         <button
@@ -446,6 +463,65 @@ export default function PlanDetailPage() {
                       className="rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1.5 text-xs font-bold text-white shadow-glow disabled:opacity-50"
                     >
                       Inviter
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Invite by message modal */}
+      {inviteByMessageOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setInviteByMessageOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-surface-card dark:border dark:border-surface-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">Inviter par message</h3>
+              <button
+                onClick={() => setInviteByMessageOpen(false)}
+                className="rounded-lg p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <X className="h-4 w-4 text-zinc-500" />
+              </button>
+            </div>
+            {conversations.length === 0 ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Aucune conversation.</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {conversations.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/50">
+                    <div className="flex items-center gap-2">
+                      <Avatar src={c.other.image} name={c.other.name} size="sm" />
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{c.other.name || "Anonyme"}</span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setShareLoading(true);
+                        try {
+                          const res = await fetch("/api/dm/share-plan", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ conversationId: c.id, planId: plan.id }),
+                          });
+                          if (res.ok) {
+                            alert("Invitation envoyée !");
+                            setInviteByMessageOpen(false);
+                          } else {
+                            const data = await res.json();
+                            alert(data.error || "Erreur");
+                          }
+                        } catch {
+                          alert("Erreur réseau");
+                        } finally {
+                          setShareLoading(false);
+                        }
+                      }}
+                      disabled={shareLoading}
+                      className="rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1.5 text-xs font-bold text-white shadow-glow disabled:opacity-50"
+                    >
+                      Envoyer
                     </button>
                   </div>
                 ))}

@@ -132,6 +132,7 @@ enum DirectMessageType {
   MOMENT
   PROFILE
   PLAN
+  PLAN_INVITE
   SYSTEM
 }
 
