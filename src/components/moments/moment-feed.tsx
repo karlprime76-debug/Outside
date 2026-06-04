@@ -277,8 +277,15 @@ export function MomentFeed() {
         {initialLoading ? (
           <div className="space-y-6 p-4">
             {[1, 2].map((i) => (
-              <div key={i} className="rounded-2xl bg-[var(--os-card)] border border-[var(--os-card-border)] overflow-hidden animate-fade-in">
-                <div className="h-[calc(100dvh-180px)] sm:h-[70vh] md:h-[600px] shimmer" />
+              <div key={i} className="rounded-2xl bg-[var(--os-card)] border border-[var(--os-card-border)] overflow-hidden animate-fade-in max-w-lg mx-auto">
+                <div className="flex items-center gap-2.5 px-3 py-2.5">
+                  <div className="h-8 w-8 rounded-full bg-[var(--os-bg)] shimmer" />
+                  <div className="space-y-1">
+                    <div className="h-3.5 w-24 rounded bg-[var(--os-bg)] shimmer" />
+                    <div className="h-2.5 w-14 rounded bg-[var(--os-bg)] shimmer" />
+                  </div>
+                </div>
+                <div className="aspect-square w-full bg-[var(--os-bg)] shimmer" />
                 <div className="p-3 flex gap-4">
                   <div className="h-5 w-5 rounded bg-[var(--os-bg)] shimmer" />
                   <div className="h-5 w-5 rounded bg-[var(--os-bg)] shimmer" />

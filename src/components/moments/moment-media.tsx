@@ -61,5 +61,5 @@ export const MomentMedia = forwardRef<HTMLVideoElement, MomentMediaProps>(functi
   }
 
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={safeSrc} alt="Moment" className={className || "h-full w-full object-cover"} onError={() => setError("error")} />;
+  return <img src={safeSrc} alt="Moment" className={className || "h-full w-full object-cover"} loading="lazy" onError={() => setError("error")} />;
 });

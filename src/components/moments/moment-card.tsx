@@ -207,98 +207,147 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     return `Il y a ${days} j`;
   };
 
+  const authorLink = `/u/${moment.author.username || moment.author.id}`;
+  const VerifiedBadge = moment.author.isVerified ? (
+    <span className="ml-1 inline-block align-middle">
+      <svg className="h-3.5 w-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 003.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 002.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+    </span>
+  ) : null;
+
+  const OverflowMenu = ({ dark = false }: { dark?: boolean }) => (
+    <div className="relative">
+      <button
+        onClick={() => setMenuOpen((o) => !o)}
+        className={`rounded-full p-2 transition-colors ${dark ? "bg-black/30 text-white backdrop-blur-sm hover:bg-black/50" : "text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)]"}`}
+      >
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+      {menuOpen && (
+        <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] shadow-xl py-1 z-50 animate-fade-in">
+          {moment.viewerState.canDelete && (
+            <button
+              onClick={() => { setMenuOpen(false); handleDelete(); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              Supprimer
+            </button>
+          )}
+          {moment.viewerState.canReport && (
+            <button
+              onClick={() => { setMenuOpen(false); handleReport(); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+            >
+              <Flag className="h-4 w-4" />
+              Signaler
+            </button>
+          )}
+          <button
+            onClick={() => { setMenuOpen(false); handleHideLocal(); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+          >
+            Masquer
+          </button>
+          {!isMe && moment.author.username && (
+            <button
+              onClick={() => { setMenuOpen(false); handleMessage(); }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+            >
+              <Send className="h-4 w-4" />
+              Message
+            </button>
+          )}
+          <button
+            onClick={() => { setMenuOpen(false); setShowShareSheet(true); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+          >
+            <SendHorizonal className="h-4 w-4" />
+            Envoyer en DM
+          </button>
+          <button
+            onClick={() => { setMenuOpen(false); handleShare(); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+          >
+            <Share2 className="h-4 w-4" />
+            Partager
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div ref={cardRef} className="relative w-full flex-shrink-0 snap-start animate-fade-in">
-      {/* Media container - immersive on mobile, centered on desktop */}
-      <div className="relative h-[calc(100dvh-150px)] sm:h-[70vh] md:h-[600px] w-full max-w-full bg-black rounded-none sm:rounded-2xl overflow-hidden">
-        {isVideo ? (
-          <>
-            <MomentMedia
-              ref={videoRef}
-              type={moment.type}
-              src={moment.mediaUrl}
-              className="h-full w-full object-cover"
-              muted={videoMuted}
-              loop
-              playsInline
-              preload="metadata"
-            />
-            {/* Click-to-play overlay keeps working via videoRef */}
-            <div
-              className="absolute inset-0"
-              onClick={() => {
-                if (videoRef.current) {
-                  if (videoRef.current.paused) {
-                    videoRef.current.play().catch(() => {});
-                    setVideoPlaying(true);
-                  } else {
-                    videoRef.current.pause();
-                    setVideoPlaying(false);
-                  }
-                }
-              }}
-            />
-            {!videoPlaying && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="rounded-full bg-black/40 p-4 backdrop-blur-sm">
-                  <Play className="h-8 w-8 text-white" />
-                </div>
-              </div>
-            )}
-            <button
-              onClick={(e) => { e.stopPropagation(); setVideoMuted((m) => !m); }}
-              className="absolute top-3 right-3 rounded-full bg-black/40 p-2 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
-            >
-              {videoMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </button>
-          </>
-        ) : (
+      {isVideo ? (
+        /* VIDEO — immersive story layout */
+        <div className="relative h-[calc(100dvh-150px)] sm:h-[70vh] md:h-[600px] w-full max-w-full bg-black rounded-none sm:rounded-2xl overflow-hidden">
           <MomentMedia
+            ref={videoRef}
             type={moment.type}
             src={moment.mediaUrl}
             className="h-full w-full object-cover"
+            muted={videoMuted}
+            loop
+            playsInline
             preload="metadata"
           />
-        )}
-
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none" />
-
-        {/* Top bar */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between">
-          <Link
-            href={`/u/${moment.author.username || moment.author.id}`}
-            className="flex items-center gap-2.5"
-          >
-            <Avatar src={moment.author.image} name={moment.author.name} size="sm" />
-            <div>
-              <p className="text-sm font-bold text-white drop-shadow-md">
-                {moment.author.name || "Anonyme"}
-                {moment.author.isVerified && (
-                  <span className="ml-1 inline-block align-middle">
-                    <svg className="h-3.5 w-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 003.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 002.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                  </span>
-                )}
-              </p>
-              <p className="text-xs text-white/70 drop-shadow-md">@{moment.author.username || "user"}</p>
+          {/* Click-to-play overlay */}
+          <div
+            className="absolute inset-0"
+            onClick={() => {
+              if (videoRef.current) {
+                if (videoRef.current.paused) {
+                  videoRef.current.play().catch(() => {});
+                  setVideoPlaying(true);
+                } else {
+                  videoRef.current.pause();
+                  setVideoPlaying(false);
+                }
+              }
+            }}
+          />
+          {!videoPlaying && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="rounded-full bg-black/40 p-4 backdrop-blur-sm">
+                <Play className="h-8 w-8 text-white" />
+              </div>
             </div>
-          </Link>
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); setVideoMuted((m) => !m); }}
+            className="absolute top-3 right-3 rounded-full bg-black/40 p-2 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
+          >
+            {videoMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
 
-          <div className="flex items-center gap-2">
-            {!isMe && (
-              <button
-                onClick={handleFollow}
-                disabled={followLoading}
-                className={`rounded-full px-3 py-1.5 text-[10px] font-bold backdrop-blur-sm transition-colors ${
-                  following
-                    ? "bg-white/20 text-white hover:bg-white/30"
-                    : "bg-white text-black hover:bg-white/90"
-                }`}
-              >
-                {following ? "Abonné" : "Suivre"}
-              </button>
-            )}
-            {isVideo && (
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 pointer-events-none" />
+
+          {/* Top bar */}
+          <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between">
+            <Link href={authorLink} className="flex items-center gap-2.5">
+              <Avatar src={moment.author.image} name={moment.author.name} size="sm" />
+              <div>
+                <p className="text-sm font-bold text-white drop-shadow-md">
+                  {moment.author.name || "Anonyme"}{VerifiedBadge}
+                </p>
+                <p className="text-xs text-white/70 drop-shadow-md">@{moment.author.username || "user"}</p>
+              </div>
+            </Link>
+            <div className="flex items-center gap-2">
+              {!isMe && (
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={`rounded-full px-3 py-1.5 text-[10px] font-bold backdrop-blur-sm transition-colors ${
+                    following
+                      ? "bg-white/20 text-white hover:bg-white/30"
+                      : "bg-white text-black hover:bg-white/90"
+                  }`}
+                >
+                  {following ? "Abonné" : "Suivre"}
+                </button>
+              )}
               <Link
                 href={`/moments/clips?start=${moment.id}&scope=for-you`}
                 className="rounded-full bg-black/30 p-2 text-white backdrop-blur-sm hover:bg-black/50 transition-colors"
@@ -306,131 +355,121 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               >
                 <Clapperboard className="h-4 w-4" />
               </Link>
-            )}
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen((o) => !o)}
-                className="rounded-full bg-black/30 p-2 text-white backdrop-blur-sm hover:bg-black/50 transition-colors"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            {menuOpen && (
-              <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] shadow-xl py-1 z-50 animate-fade-in">
-                {moment.viewerState.canDelete && (
-                  <button
-                    onClick={() => { setMenuOpen(false); handleDelete(); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Supprimer
-                  </button>
-                )}
-                {moment.viewerState.canReport && (
-                  <button
-                    onClick={() => { setMenuOpen(false); handleReport(); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
-                  >
-                    <Flag className="h-4 w-4" />
-                    Signaler
-                  </button>
-                )}
-                <button
-                  onClick={() => { setMenuOpen(false); handleHideLocal(); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
-                >
-                  Masquer
-                </button>
-                {!isMe && moment.author.username && (
-                  <button
-                    onClick={() => { setMenuOpen(false); handleMessage(); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
-                  >
-                    <Send className="h-4 w-4" />
-                    Message
-                  </button>
-                )}
-                <button
-                  onClick={() => { setMenuOpen(false); setShowShareSheet(true); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
-                >
-                  <SendHorizonal className="h-4 w-4" />
-                  Envoyer en DM
-                </button>
-                <button
-                  onClick={() => { setMenuOpen(false); handleShare(); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
-                >
-                  <Share2 className="h-4 w-4" />
-                  Partager
-                </button>
+              <OverflowMenu dark />
+            </div>
+          </div>
+
+          {/* Bottom info */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            {moment.city && (
+              <div className="flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm w-fit px-2.5 py-1 mb-2">
+                <MapPin className="h-3 w-3 text-white/80" />
+                <span className="text-xs font-semibold text-white/90">{moment.city}</span>
               </div>
             )}
+            {moment.caption && (
+              <p className="text-sm text-white/95 drop-shadow-md line-clamp-3 mb-2">{moment.caption}</p>
+            )}
+            <p className="text-[10px] text-white/50">{timeAgo(moment.createdAt)}</p>
           </div>
         </div>
-      </div>
-
-      {/* Bottom info */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          {moment.city && (
-            <div className="flex items-center gap-1 rounded-full bg-black/30 backdrop-blur-sm w-fit px-2.5 py-1 mb-2">
-              <MapPin className="h-3 w-3 text-white/80" />
-              <span className="text-xs font-semibold text-white/90">{moment.city}</span>
+      ) : (
+        /* PHOTO — social post layout */
+        <div className="bg-[var(--os-card)] border border-[var(--os-card-border)] rounded-none sm:rounded-2xl overflow-hidden max-w-lg mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <Link href={authorLink} className="flex items-center gap-2.5 min-w-0">
+              <Avatar src={moment.author.image} name={moment.author.name} size="sm" />
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-[var(--os-fg)] truncate">
+                  {moment.author.name || "Anonyme"}{VerifiedBadge}
+                </p>
+                <p className="text-xs text-[var(--os-muted)] truncate">@{moment.author.username || "user"}</p>
+              </div>
+            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              {!isMe && (
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${
+                    following
+                      ? "bg-[var(--os-card-border)] text-[var(--os-muted)] hover:text-[var(--os-fg)]"
+                      : "bg-[var(--os-fg)] text-[var(--os-bg)] hover:bg-[var(--os-fg)]/90"
+                  }`}
+                >
+                  {following ? "Abonné" : "Suivre"}
+                </button>
+              )}
+              <OverflowMenu />
             </div>
-          )}
-          {moment.caption && (
-            <p className="text-sm text-white/95 drop-shadow-md line-clamp-3 mb-2">{moment.caption}</p>
-          )}
-          <p className="text-[10px] text-white/50">{timeAgo(moment.createdAt)}</p>
-        </div>
-      </div>
+          </div>
 
-      {/* Actions bar */}
-      <div className="flex items-center justify-between px-3 py-3">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={handleLike}
-            disabled={likeLoading}
-            className={`flex items-center gap-1.5 transition-colors ${liked ? "text-red-500" : "text-[var(--os-muted)] hover:text-red-500"}`}
-          >
-            <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />
-            <span className="text-xs font-semibold">{likesCount}</span>
-          </button>
-          <button
-            onClick={() => onOpenComments(moment)}
-            className="flex items-center gap-1.5 text-[var(--os-muted)] hover:text-outside-500 transition-colors"
-          >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-xs font-semibold">{moment._count.comments}</span>
-          </button>
-          <button
-            onClick={() => setShowShareSheet(true)}
-            className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
-            aria-label="Envoyer en DM"
-          >
-            <SendHorizonal className="h-5 w-5" />
-          </button>
-          <button
-            onClick={handleShare}
-            className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
-          >
-            <Share2 className="h-5 w-5" />
-          </button>
+          {/* Photo — square social format */}
+          <div className="relative w-full aspect-square bg-black overflow-hidden">
+            <MomentMedia
+              type={moment.type}
+              src={moment.mediaUrl}
+              className="h-full w-full object-cover"
+              preload="metadata"
+            />
+          </div>
+
+          {/* Actions & info */}
+          <div className="px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleLike}
+                  disabled={likeLoading}
+                  className={`flex items-center gap-1.5 transition-colors ${liked ? "text-red-500" : "text-[var(--os-muted)] hover:text-red-500"}`}
+                >
+                  <Heart className={`h-5 w-5 ${liked ? "fill-red-500" : ""}`} />
+                  <span className="text-xs font-semibold">{likesCount}</span>
+                </button>
+                <button
+                  onClick={() => onOpenComments(moment)}
+                  className="flex items-center gap-1.5 text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  <span className="text-xs font-semibold">{moment._count.comments}</span>
+                </button>
+                <button
+                  onClick={() => setShowShareSheet(true)}
+                  className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+                  aria-label="Envoyer en DM"
+                >
+                  <SendHorizonal className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+                >
+                  <Share2 className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-2 space-y-1">
+              {likesCount > 0 && (
+                <p className="text-sm font-bold text-[var(--os-fg)]">{likesCount} J&apos;aime</p>
+              )}
+              {moment.caption && (
+                <p className="text-sm text-[var(--os-fg)]">
+                  <Link href={authorLink} className="font-bold hover:underline">
+                    {moment.author.name || moment.author.username || "Anonyme"}
+                  </Link>{" "}
+                  <span className="text-[var(--os-muted)]">{moment.caption}</span>
+                </p>
+              )}
+              {moment.city && (
+                <p className="text-xs text-outside-500">{moment.city}</p>
+              )}
+              <p className="text-[10px] text-[var(--os-muted)] uppercase tracking-wide">{timeAgo(moment.createdAt)}</p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/u/${moment.author.username || moment.author.id}`}
-            className="text-[10px] text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
-          >
-            Voir le profil
-          </Link>
-          <button
-            onClick={() => onOpenComments(moment)}
-            className="text-[10px] text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
-          >
-            Voir les commentaires
-          </button>
-        </div>
-      </div>
+      )}
 
       {showShareSheet && (
         <ShareMomentSheet momentId={moment.id} onClose={() => setShowShareSheet(false)} />
