@@ -1,6 +1,7 @@
 "use client";
 
-import { Trash2, Flag } from "lucide-react";
+import Link from "next/link";
+import { Trash2, Flag, ImageOff } from "lucide-react";
 
 export interface DmMessage {
   id: string;
@@ -9,6 +10,9 @@ export interface DmMessage {
   isDeleted: boolean;
   createdAt: string;
   status?: string | null;
+  type?: string | null;
+  momentId?: string | null;
+  metadata?: string | null;
 }
 
 interface DmMessageBubbleProps {
@@ -25,6 +29,50 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
+function MomentCardInBubble({ momentId, metadata, isMine }: { momentId: string; metadata?: string | null; isMine: boolean }) {
+  let parsed: { mediaUrl?: string; caption?: string | null } | null = null;
+  try {
+    if (metadata) parsed = JSON.parse(metadata);
+  } catch { /* noop */ }
+
+  return (
+    <Link
+      href={`/moments?highlight=${momentId}`}
+      className={`block rounded-xl overflow-hidden border transition-colors ${
+        isMine
+          ? "border-white/20 bg-white/10 hover:bg-white/20"
+          : "border-[var(--os-card-border)] bg-[var(--os-bg)] hover:bg-[var(--os-card)]"
+      }`}
+    >
+      {parsed?.mediaUrl ? (
+        <div className="relative h-32 w-full bg-black">
+          <img
+            src={parsed.mediaUrl}
+            alt="Moment partagé"
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-24 bg-[var(--os-card)]">
+          <div className="text-center">
+            <ImageOff className={`h-8 w-8 mx-auto mb-1 ${isMine ? "text-white/50" : "text-[var(--os-muted)]"}`} />
+            <span className={`text-xs ${isMine ? "text-white/60" : "text-[var(--os-muted)]"}`}>Moment indisponible</span>
+          </div>
+        </div>
+      )}
+      <div className="p-2.5">
+        {parsed?.caption ? (
+          <p className={`text-xs line-clamp-2 ${isMine ? "text-white/90" : "text-[var(--os-fg)]"}`}>{parsed.caption}</p>
+        ) : (
+          <p className={`text-xs ${isMine ? "text-white/60" : "text-[var(--os-muted)]"}`}>Moment partagé</p>
+        )}
+        <span className={`text-[10px] ${isMine ? "text-white/50" : "text-outside-500"}`}>Ouvrir le moment →</span>
+      </div>
+    </Link>
+  );
+}
+
 export function DmMessageBubble({
   message,
   isMine,
@@ -34,6 +82,8 @@ export function DmMessageBubble({
   onDelete,
   onReport,
 }: DmMessageBubbleProps) {
+  const isMoment = message.type === "MOMENT" && !message.isDeleted;
+
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1`}>
       <div className="flex items-end gap-1.5 max-w-[80%]">
@@ -59,6 +109,8 @@ export function DmMessageBubble({
         >
           {message.isDeleted ? (
             <span className="italic opacity-70">Message supprimé</span>
+          ) : isMoment ? (
+            <MomentCardInBubble momentId={message.momentId || ""} metadata={message.metadata} isMine={isMine} />
           ) : (
             <span className="whitespace-pre-wrap break-words">{message.content || ""}</span>
           )}

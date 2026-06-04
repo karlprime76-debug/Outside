@@ -124,6 +124,16 @@ enum MessageStatus {
   DELETED
 }
 
+enum DirectMessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  MOMENT
+  PROFILE
+  PLAN
+  SYSTEM
+}
+
 enum DirectMessagePermission {
   FRIENDS_ONLY
   FRIENDS_AND_FOLLOWING
@@ -370,13 +380,17 @@ model ConversationParticipant {
 }
 
 model DirectMessage {
-  id             String        @id @default(cuid())
+  id             String           @id @default(cuid())
   conversationId String
-  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
-  sender         User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sender         User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
   content        String?
   mediaUrl       String?
+
+  type           DirectMessageType @default(TEXT)
+  momentId       String?
+  metadata       String?          // JSON stringifié
 
   status         MessageStatus @default(SENT)
   isDeleted      Boolean       @default(false)
@@ -386,6 +400,7 @@ model DirectMessage {
 
   @@index([conversationId, createdAt])
   @@index([senderId])
+  @@index([momentId])
 }
 
 model City {

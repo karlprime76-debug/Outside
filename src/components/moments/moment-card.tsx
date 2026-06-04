@@ -4,7 +4,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { Heart, MessageCircle, Share2, Flag, MapPin, MoreHorizontal, Trash2, Volume2, VolumeX, Play, Clapperboard, Send } from "lucide-react";
+import { Heart, MessageCircle, Share2, Flag, MapPin, MoreHorizontal, Trash2, Volume2, VolumeX, Play, Clapperboard, Send, SendHorizonal } from "lucide-react";
+import { ShareMomentSheet } from "./share-moment-sheet";
 import { MomentMedia } from "./moment-media";
 
 interface Author {
@@ -51,6 +52,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [likesCount, setLikesCount] = useState(moment._count.likes);
   const [likeLoading, setLikeLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
   const [videoMuted, setVideoMuted] = useState(true);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -348,6 +350,13 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
                   </button>
                 )}
                 <button
+                  onClick={() => { setMenuOpen(false); setShowShareSheet(true); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+                >
+                  <SendHorizonal className="h-4 w-4" />
+                  Envoyer en DM
+                </button>
+                <button
                   onClick={() => { setMenuOpen(false); handleShare(); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
                 >
@@ -394,6 +403,13 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             <span className="text-xs font-semibold">{moment._count.comments}</span>
           </button>
           <button
+            onClick={() => setShowShareSheet(true)}
+            className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
+            aria-label="Envoyer en DM"
+          >
+            <SendHorizonal className="h-5 w-5" />
+          </button>
+          <button
             onClick={handleShare}
             className="text-[var(--os-muted)] hover:text-outside-500 transition-colors"
           >
@@ -415,6 +431,10 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
           </button>
         </div>
       </div>
+
+      {showShareSheet && (
+        <ShareMomentSheet momentId={moment.id} onClose={() => setShowShareSheet(false)} />
+      )}
     </div>
   );
 }

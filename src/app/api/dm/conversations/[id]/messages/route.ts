@@ -39,6 +39,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         isDeleted: m.isDeleted,
         createdAt: m.createdAt.toISOString(),
         status: m.status,
+        type: m.type,
+        momentId: m.momentId,
+        metadata: m.metadata,
       })),
       nextCursor,
     });
@@ -61,23 +64,30 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const part = await db.conversationParticipant.findFirst({ where: { conversationId: id, userId: user.id } });
     if (!part) return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
 
-    const body = await req.json().catch(() => ({}));
-    const content = (body.content || "").toString().trim();
-    if (!content || content.length > 2000) {
-      return NextResponse.json({ error: "Message invalide." }, { status: 400 });
-    }
-
     // Block/permission check vs other participant
     const otherPart = await db.conversationParticipant.findFirst({ where: { conversationId: id, userId: { not: user.id } } });
     if (!otherPart) return NextResponse.json({ error: "Conversation invalide." }, { status: 400 });
     const can = await canSendDirectMessage(user.id, otherPart.userId);
     if (!can) return NextResponse.json({ error: "Cet utilisateur n'accepte pas les messages privés." }, { status: 403 });
 
+    const body = await req.json().catch(() => ({}));
+    const content = (body.content || "").toString().trim();
+    const type = body.type || "TEXT";
+    const momentId = body.momentId || null;
+    const metadata = body.metadata ? JSON.stringify(body.metadata) : null;
+
+    if (type === "TEXT" && (!content || content.length > 2000)) {
+      return NextResponse.json({ error: "Message invalide." }, { status: 400 });
+    }
+
     const msg = await db.directMessage.create({
       data: {
         conversationId: id,
         senderId: user.id,
-        content,
+        content: content || null,
+        type,
+        momentId,
+        metadata,
       },
     });
 
@@ -106,6 +116,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         isDeleted: msg.isDeleted,
         createdAt: msg.createdAt.toISOString(),
         status: msg.status,
+        type: msg.type,
+        momentId: msg.momentId,
+        metadata: msg.metadata,
       },
     });
   } catch (e) {

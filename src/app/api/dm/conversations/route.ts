@@ -52,7 +52,7 @@ export async function GET(req: Request) {
       return {
         id: c.id,
         other,
-        lastMessage: lastMessage ? { id: lastMessage.id, content: lastMessage.content, createdAt: lastMessage.createdAt.toISOString(), senderId: lastMessage.senderId } : null,
+        lastMessage: lastMessage ? { id: lastMessage.id, content: lastMessage.content, createdAt: lastMessage.createdAt.toISOString(), senderId: lastMessage.senderId, type: lastMessage.type } : null,
         unread,
         updatedAt: c.updatedAt.toISOString(),
       };
