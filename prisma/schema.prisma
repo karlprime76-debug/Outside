@@ -482,6 +482,7 @@ model Plan {
   @@index([visibility])
   @@index([mood])
   @@index([startDate])
+  @@index([createdAt])
 }
 
 model PlanInvitation {

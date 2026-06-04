@@ -6,6 +6,9 @@ import { createNotification } from "@/lib/notifications";
 import { NotificationType } from "@prisma/client";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const perfLabel = "[PERF] GET /api/dm/conversations/[id]/messages";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Tu dois être connecté." }, { status: 401 });
@@ -27,6 +30,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     });
 
     const nextCursor = messages.length === limit ? messages[messages.length - 1].id : null;
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({
       messages: messages.map((m) => ({
         id: m.id,
@@ -39,12 +43,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       nextCursor,
     });
   } catch (e) {
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     console.error("DM messages GET error:", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const perfLabel = "[PERF] POST /api/dm/conversations/[id]/messages";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Tu dois être connecté." }, { status: 401 });
@@ -63,7 +71,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const otherPart = await db.conversationParticipant.findFirst({ where: { conversationId: id, userId: { not: user.id } } });
     if (!otherPart) return NextResponse.json({ error: "Conversation invalide." }, { status: 400 });
     const can = await canSendDirectMessage(user.id, otherPart.userId);
-    if (!can) return NextResponse.json({ error: "Cet utilisateur n’accepte pas les messages privés." }, { status: 403 });
+    if (!can) return NextResponse.json({ error: "Cet utilisateur n'accepte pas les messages privés." }, { status: 403 });
 
     const msg = await db.directMessage.create({
       data: {
@@ -89,6 +97,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       });
     }
 
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({
       message: {
         id: msg.id,
@@ -100,6 +109,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       },
     });
   } catch (e) {
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     console.error("DM messages POST error:", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
