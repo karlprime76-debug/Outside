@@ -14,6 +14,7 @@ export async function GET() {
       following: { select: { id: true, name: true, username: true, image: true, activeCity: { select: { name: true } } } },
     },
     orderBy: { createdAt: "desc" },
+    take: 100,
   });
 
   return NextResponse.json({ following: following.map((f) => f.following) });

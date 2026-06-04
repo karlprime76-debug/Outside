@@ -22,80 +22,76 @@ export async function GET() {
     const cityId = activeCity?.id;
     const cityName = activeCity?.name;
 
-    // Plans publics in active city
-    const plans = cityId
-      ? await db.plan.findMany({
-          where: {
-            cityId,
-            status: "ACTIVE",
-            visibility: "PUBLIC",
-          },
-          orderBy: { startDate: "asc" },
-          take: 10,
-          include: {
-            creator: { select: { id: true, name: true, image: true } },
-            city: { select: { name: true } },
-            place: { select: { name: true } },
-            _count: { select: { participants: true } },
-          },
-        })
-      : [];
-
-    // Lives in active city (status LIVE or SCHEDULED soon)
-    const lives = cityName
-      ? await db.liveSession.findMany({
-          where: {
-            city: cityName,
-            status: { in: ["LIVE", "SCHEDULED"] },
-          },
-          orderBy: [{ status: "desc" }, { startedAt: "desc" }],
-          take: 10,
-          include: {
-            host: { select: { id: true, name: true, image: true } },
-          },
-        })
-      : [];
-
-    // Pro events in active city
-    const events = cityName
-      ? await db.proEvent.findMany({
-          where: {
-            city: cityName,
-            status: "PUBLISHED",
-            startsAt: { gte: new Date() },
-          },
-          orderBy: { startsAt: "asc" },
-          take: 10,
-          select: {
-            id: true,
-            title: true,
-            category: true,
-            coverImageUrl: true,
-            city: true,
-            venueName: true,
-            startsAt: true,
-            priceLabel: true,
-          },
-        })
-      : [];
-
-    // Popular places in active city
-    const places = cityId
-      ? await db.place.findMany({
-          where: { cityId, isVisible: true },
-          orderBy: { popularityScore: "desc" },
-          take: 10,
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            neighborhood: true,
-            images: true,
-            popularityScore: true,
-            _count: { select: { plans: true } },
-          },
-        })
-      : [];
+    // Parallelize independent city data queries
+    const [plans, lives, events, places] = await Promise.all([
+      cityId
+        ? db.plan.findMany({
+            where: {
+              cityId,
+              status: "ACTIVE",
+              visibility: "PUBLIC",
+            },
+            orderBy: { startDate: "asc" },
+            take: 10,
+            include: {
+              creator: { select: { id: true, name: true, image: true } },
+              city: { select: { name: true } },
+              place: { select: { name: true } },
+              _count: { select: { participants: true } },
+            },
+          })
+        : Promise.resolve([]),
+      cityName
+        ? db.liveSession.findMany({
+            where: {
+              city: cityName,
+              status: { in: ["LIVE", "SCHEDULED"] },
+            },
+            orderBy: [{ status: "desc" }, { startedAt: "desc" }],
+            take: 10,
+            include: {
+              host: { select: { id: true, name: true, image: true } },
+            },
+          })
+        : Promise.resolve([]),
+      cityName
+        ? db.proEvent.findMany({
+            where: {
+              city: cityName,
+              status: "PUBLISHED",
+              startsAt: { gte: new Date() },
+            },
+            orderBy: { startsAt: "asc" },
+            take: 10,
+            select: {
+              id: true,
+              title: true,
+              category: true,
+              coverImageUrl: true,
+              city: true,
+              venueName: true,
+              startsAt: true,
+              priceLabel: true,
+            },
+          })
+        : Promise.resolve([]),
+      cityId
+        ? db.place.findMany({
+            where: { cityId, isVisible: true },
+            orderBy: { popularityScore: "desc" },
+            take: 10,
+            select: {
+              id: true,
+              name: true,
+              category: true,
+              neighborhood: true,
+              images: true,
+              popularityScore: true,
+              _count: { select: { plans: true } },
+            },
+          })
+        : Promise.resolve([]),
+    ]);
 
     // Activity summary by zone (neighborhood / venue)
     const zones = new Map<string, { name: string; plans: number; lives: number; events: number; places: number }>();

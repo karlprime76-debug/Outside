@@ -21,6 +21,7 @@ export async function GET() {
         receiver: { select: { id: true, name: true, username: true, image: true, activeCity: { select: { name: true } } } },
       },
       orderBy: { createdAt: "desc" },
+      take: 100,
     });
 
     const friends = friendships.map((f) =>

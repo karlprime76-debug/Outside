@@ -7,6 +7,7 @@ export async function GET() {
     const cities = await db.city.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
+      take: 500,
     });
 
     return NextResponse.json({ cities });

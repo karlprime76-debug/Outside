@@ -25,6 +25,7 @@ export async function GET() {
         sender: { select: { id: true, name: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
+      take: 50,
     });
 
     return NextResponse.json({ invitations });

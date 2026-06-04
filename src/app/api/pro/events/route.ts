@@ -29,6 +29,7 @@ export async function GET() {
   const events = await db.proEvent.findMany({
     where: { proAccountId: proAccount.id },
     orderBy: { startsAt: "asc" },
+    take: 100,
   });
 
   return NextResponse.json({ events });

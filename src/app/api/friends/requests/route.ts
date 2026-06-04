@@ -17,6 +17,7 @@ export async function GET() {
         sender: { select: { id: true, name: true, username: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
+      take: 50,
     }),
     db.friendRequest.findMany({
       where: { senderId: userId, status: "PENDING" },
@@ -24,6 +25,7 @@ export async function GET() {
         receiver: { select: { id: true, name: true, username: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
+      take: 50,
     }),
   ]);
 

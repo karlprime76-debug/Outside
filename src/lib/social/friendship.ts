@@ -101,3 +101,79 @@ export async function getRelationshipStatus(
 
   return "NONE";
 }
+
+export async function getRelationshipStatuses(
+  currentUserId: string,
+  targetUserIds: string[]
+): Promise<Map<string, RelationshipStatus>> {
+  const result = new Map<string, RelationshipStatus>();
+  if (targetUserIds.length === 0) return result;
+
+  const ids = targetUserIds.filter((id) => id !== currentUserId);
+  ids.forEach((id) => result.set(id, "NONE"));
+
+  const [
+    friendships,
+    blocks,
+    sentRequests,
+    receivedRequests,
+    follows,
+  ] = await Promise.all([
+    db.friendship.findMany({
+      where: {
+        OR: ids.flatMap((id) => [
+          { initiatorId: currentUserId, receiverId: id },
+          { initiatorId: id, receiverId: currentUserId },
+        ]),
+      },
+      select: { initiatorId: true, receiverId: true },
+    }),
+    db.userBlock.findMany({
+      where: {
+        OR: ids.flatMap((id) => [
+          { blockerId: currentUserId, blockedId: id },
+          { blockerId: id, blockedId: currentUserId },
+        ]),
+      },
+      select: { blockerId: true, blockedId: true },
+    }),
+    db.friendRequest.findMany({
+      where: { senderId: currentUserId, receiverId: { in: ids }, status: "PENDING" },
+      select: { receiverId: true },
+    }),
+    db.friendRequest.findMany({
+      where: { senderId: { in: ids }, receiverId: currentUserId, status: "PENDING" },
+      select: { senderId: true },
+    }),
+    db.follow.findMany({
+      where: { followerId: currentUserId, followingId: { in: ids } },
+      select: { followingId: true },
+    }),
+  ]);
+
+  const friendSet = new Set(
+    friendships.map((f) => (f.initiatorId === currentUserId ? f.receiverId : f.initiatorId))
+  );
+  const blockedSet = new Set(
+    blocks.flatMap((b) => (b.blockerId === currentUserId ? [b.blockedId] : [b.blockerId]))
+  );
+  const sentSet = new Set(sentRequests.map((r) => r.receiverId));
+  const receivedSet = new Set(receivedRequests.map((r) => r.senderId));
+  const followSet = new Set(follows.map((f) => f.followingId));
+
+  for (const id of ids) {
+    if (blockedSet.has(id)) {
+      result.set(id, "BLOCKED");
+    } else if (friendSet.has(id)) {
+      result.set(id, "FRIENDS");
+    } else if (sentSet.has(id)) {
+      result.set(id, "REQUEST_SENT");
+    } else if (receivedSet.has(id)) {
+      result.set(id, "REQUEST_RECEIVED");
+    } else if (followSet.has(id)) {
+      result.set(id, "FOLLOWING");
+    }
+  }
+
+  return result;
+}

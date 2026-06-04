@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getRelationshipStatus } from "@/lib/social/friendship";
+import { getRelationshipStatuses } from "@/lib/social/friendship";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -42,17 +42,18 @@ export async function GET(req: Request) {
     take: 20,
   });
 
-  const results = await Promise.all(
-    users.map(async (u) => ({
-      id: u.id,
-      name: u.name,
-      username: u.username,
-      image: u.image,
-      activeCity: u.activeCity?.name || null,
-      country: u.country,
-      relationshipStatus: await getRelationshipStatus(currentUserId, u.id),
-    }))
-  );
+  const userIds = users.map((u) => u.id);
+  const relationshipMap = await getRelationshipStatuses(currentUserId, userIds);
+
+  const results = users.map((u) => ({
+    id: u.id,
+    name: u.name,
+    username: u.username,
+    image: u.image,
+    activeCity: u.activeCity?.name || null,
+    country: u.country,
+    relationshipStatus: relationshipMap.get(u.id) || "NONE",
+  }));
 
   return NextResponse.json({ users: results });
 }

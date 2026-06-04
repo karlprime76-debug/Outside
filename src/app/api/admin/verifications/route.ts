@@ -15,6 +15,7 @@ export async function GET() {
       include: {
         user: { select: { id: true, name: true, username: true, email: true, image: true } },
       },
+      take: 100,
     });
 
     return NextResponse.json({ verifications });

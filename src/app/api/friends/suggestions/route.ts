@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getRelationshipStatus } from "@/lib/social/friendship";
+import { getRelationshipStatuses } from "@/lib/social/friendship";
 
 export async function GET() {
   const session = await auth();
@@ -85,29 +85,30 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
 
-  const results = await Promise.all(
-    suggestions.map(async (u) => {
-      let reason = "Autour de toi";
-      if (u.activeCity?.name && currentUser.activeCityId) {
-        reason = "Même ville";
-      } else if (u.countryCode && u.countryCode === currentUser.countryCode) {
-        reason = "Même pays";
-      } else if (u.createdAt > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) {
-        reason = "Nouveau sur OUTSIDE";
-      }
+  const suggestionIds = suggestions.map((u) => u.id);
+  const relationshipMap = await getRelationshipStatuses(currentUserId, suggestionIds);
 
-      return {
-        id: u.id,
-        name: u.name,
-        username: u.username,
-        image: u.image,
-        activeCity: u.activeCity?.name || null,
-        country: u.country,
-        reason,
-        relationshipStatus: await getRelationshipStatus(currentUserId, u.id),
-      };
-    })
-  );
+  const results = suggestions.map((u) => {
+    let reason = "Autour de toi";
+    if (u.activeCity?.name && currentUser.activeCityId) {
+      reason = "Même ville";
+    } else if (u.countryCode && u.countryCode === currentUser.countryCode) {
+      reason = "Même pays";
+    } else if (u.createdAt > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) {
+      reason = "Nouveau sur OUTSIDE";
+    }
+
+    return {
+      id: u.id,
+      name: u.name,
+      username: u.username,
+      image: u.image,
+      activeCity: u.activeCity?.name || null,
+      country: u.country,
+      reason,
+      relationshipStatus: relationshipMap.get(u.id) || "NONE",
+    };
+  });
 
   return NextResponse.json({ suggestions: results });
 }
