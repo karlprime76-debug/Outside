@@ -41,6 +41,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         status: m.status,
         type: m.type,
         momentId: m.momentId,
+        mediaUrl: m.mediaUrl,
         metadata: m.metadata,
       })),
       nextCursor,
@@ -74,6 +75,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const content = (body.content || "").toString().trim();
     const type = body.type || "TEXT";
     const momentId = body.momentId || null;
+    const mediaUrl = body.mediaUrl || null;
     const metadata = body.metadata ? JSON.stringify(body.metadata) : null;
 
     if (type === "TEXT" && (!content || content.length > 2000)) {
@@ -87,6 +89,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         content: content || null,
         type,
         momentId,
+        mediaUrl,
         metadata,
       },
     });
@@ -118,6 +121,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         status: msg.status,
         type: msg.type,
         momentId: msg.momentId,
+        mediaUrl: msg.mediaUrl,
         metadata: msg.metadata,
       },
     });

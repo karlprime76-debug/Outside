@@ -13,6 +13,7 @@ export interface DmMessage {
   type?: string | null;
   momentId?: string | null;
   metadata?: string | null;
+  mediaUrl?: string | null;
 }
 
 interface DmMessageBubbleProps {
@@ -83,6 +84,9 @@ export function DmMessageBubble({
   onReport,
 }: DmMessageBubbleProps) {
   const isMoment = message.type === "MOMENT" && !message.isDeleted;
+  const isImage = message.type === "IMAGE" && message.mediaUrl && !message.isDeleted;
+  const isVideo = message.type === "VIDEO" && message.mediaUrl && !message.isDeleted;
+  const isAudio = message.type === "AUDIO" && message.mediaUrl && !message.isDeleted;
 
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1`}>
@@ -111,6 +115,21 @@ export function DmMessageBubble({
             <span className="italic opacity-70">Message supprimé</span>
           ) : isMoment ? (
             <MomentCardInBubble momentId={message.momentId || ""} metadata={message.metadata} isMine={isMine} />
+          ) : isImage ? (
+            <a href={message.mediaUrl || ""} target="_blank" rel="noopener noreferrer">
+              <img
+                src={message.mediaUrl || ""}
+                alt="Image"
+                className="max-w-full max-h-64 rounded-lg object-cover"
+                loading="lazy"
+              />
+            </a>
+          ) : isVideo ? (
+            <video controls className="max-w-full max-h-64 rounded-lg">
+              <source src={message.mediaUrl || ""} />
+            </video>
+          ) : isAudio ? (
+            <audio controls className="w-48" src={message.mediaUrl || ""} />
           ) : (
             <span className="whitespace-pre-wrap break-words">{message.content || ""}</span>
           )}

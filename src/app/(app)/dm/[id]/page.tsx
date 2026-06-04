@@ -181,27 +181,40 @@ export default function DmConversationPage() {
 
   const ordered = useMemo(() => [...messages].reverse(), [messages]);
 
-  async function onSend(text: string) {
-    if (!text.trim() || sending) return;
+  async function onSend(
+    text: string,
+    opts?: { type?: string; mediaUrl?: string; momentId?: string; metadata?: Record<string, unknown> }
+  ) {
+    if ((!text.trim() && !opts?.mediaUrl) || sending) return;
     setSending(true);
-    // Optimistic
     const tempId = `temp-${Date.now()}`;
     const optimistic: DmMessage = {
       id: tempId,
       senderId: myId,
-      content: text.trim(),
+      content: text.trim() || null,
       isDeleted: false,
       createdAt: new Date().toISOString(),
       status: "SENDING",
-      type: "TEXT",
+      type: opts?.type || "TEXT",
+      mediaUrl: opts?.mediaUrl || null,
+      momentId: opts?.momentId || null,
+      metadata: opts?.metadata ? JSON.stringify(opts.metadata) : null,
     };
     setMessages((prev) => [...prev, optimistic]);
     isNearBottomRef.current = true;
     try {
+      const body: Record<string, unknown> = {
+        content: text.trim() || null,
+        type: opts?.type || "TEXT",
+      };
+      if (opts?.mediaUrl) body.mediaUrl = opts.mediaUrl;
+      if (opts?.momentId) body.momentId = opts.momentId;
+      if (opts?.metadata) body.metadata = opts.metadata;
+
       const res = await fetch(`/api/dm/conversations/${id}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: text.trim() }),
+        body: JSON.stringify(body),
       });
       const j = await res.json();
       if (!res.ok) {
@@ -209,7 +222,9 @@ export default function DmConversationPage() {
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
         return;
       }
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...j.message, createdAt: j.message.createdAt } : m)));
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...j.message, createdAt: j.message.createdAt } : m))
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur.");
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
@@ -300,7 +315,7 @@ export default function DmConversationPage() {
         </div>
       )}
 
-      <DmMessageComposer onSend={onSend} sending={sending} />
+      <DmMessageComposer onSend={onSend} sending={sending} conversationId={id} />
     </OutsidePage>
   );
 }
