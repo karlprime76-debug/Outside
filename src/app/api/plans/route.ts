@@ -6,6 +6,9 @@ import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
 import { PlanVisibility } from "@prisma/client";
 
 export async function GET(req: Request) {
+  const perfLabel = "[PERF] GET /api/plans";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -18,6 +21,9 @@ export async function GET(req: Request) {
     const budgetLevel = searchParams.get("budgetLevel");
     const category = searchParams.get("category");
     const travelerFriendly = searchParams.get("travelerFriendly");
+    let limit = parseInt(searchParams.get("limit") || "50", 10);
+    if (isNaN(limit) || limit < 1) limit = 50;
+    if (limit > 50) limit = 50;
 
     const friendRows = await db.friendship.findMany({
       where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
@@ -90,7 +96,7 @@ export async function GET(req: Request) {
             ],
           },
       orderBy: { startDate: "asc" },
-      take: 50,
+      take: limit,
       include: {
         creator: { select: { id: true, name: true, image: true } },
         city: { select: { id: true, name: true } },
@@ -99,8 +105,10 @@ export async function GET(req: Request) {
       },
     });
 
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({ plans });
   } catch (error) {
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     console.error("List plans error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

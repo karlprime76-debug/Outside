@@ -4,6 +4,9 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { canSendDirectMessage, getOrCreateDirectConversation } from "@/lib/dm";
 
 export async function GET(req: Request) {
+  const perfLabel = "[PERF] GET /api/dm/conversations";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   try {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Tu dois être connecté." }, { status: 401 });
@@ -37,7 +40,6 @@ export async function GET(req: Request) {
     const items = await Promise.all(conversations.map(async (c) => {
       const other = c.participants.find((p) => p.userId !== user.id)?.user;
       const lastMessage = c.messages[0] || null;
-      // unread count in this conversation
       const selfPart = c.participants.find((p) => p.userId === user.id);
       const unread = await db.directMessage.count({
         where: {
@@ -57,8 +59,11 @@ export async function GET(req: Request) {
     }));
 
     const nextCursor = conversations.length === limit ? conversations[conversations.length - 1].id : null;
+
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({ conversations: items, nextCursor });
   } catch (e) {
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     console.error("DM conversations GET error:", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const perfLabel = "[PERF] GET /api/lives";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Tu dois être connecté." }, { status: 401 });
   }
+
+  const { searchParams } = new URL(req.url);
+  let limit = parseInt(searchParams.get("limit") || "50", 10);
+  if (isNaN(limit) || limit < 1) limit = 50;
+  if (limit > 50) limit = 50;
 
   const user = await db.user.findUnique({
     where: { email: session.user.email },
@@ -41,9 +49,10 @@ export async function GET() {
     include: {
       host: { select: { id: true, name: true, image: true } },
     },
-    take: 50,
+    take: limit,
   });
 
+  if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
   return NextResponse.json({ lives });
 }
 

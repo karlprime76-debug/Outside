@@ -16,6 +16,9 @@ const ALLOWED_FIELDS = [
 ] as const;
 
 export async function GET() {
+  const perfLabel = "[PERF] GET /api/settings";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -32,14 +35,19 @@ export async function GET() {
       });
     }
 
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({ settings });
   } catch (error) {
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     console.error("Settings GET error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
 export async function PATCH(req: Request) {
+  const perfLabel = "[PERF] PATCH /api/settings";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -76,8 +84,10 @@ export async function PATCH(req: Request) {
       });
     }
 
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({ message: "Paramètres mis à jour.", settings });
   } catch (error) {
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     console.error("Settings PATCH error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

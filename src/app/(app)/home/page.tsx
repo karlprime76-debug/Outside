@@ -98,7 +98,7 @@ export default function HomePage() {
   const preferredMoods = userProfile?.preferredMoods || [];
 
   useEffect(() => {
-    fetch("/api/plans")
+    fetch("/api/plans?limit=6")
       .then((r) => r.json())
       .then((data) => {
         setPlans(data.plans?.slice(0, 6) || []);
@@ -106,7 +106,7 @@ export default function HomePage() {
       })
       .catch(() => setLoadingPlans(false));
 
-    fetch("/api/places")
+    fetch("/api/places?limit=6")
       .then((r) => r.json())
       .then((data) => {
         setPlaces(data.places?.slice(0, 6) || []);
@@ -121,7 +121,7 @@ export default function HomePage() {
       })
       .catch(() => {});
 
-    fetch("/api/lives")
+    fetch("/api/lives?limit=3")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         setLives(data?.lives?.slice(0, 3) || []);
@@ -129,7 +129,7 @@ export default function HomePage() {
       })
       .catch(() => setLoadingLives(false));
 
-    fetch("/api/events")
+    fetch("/api/events?limit=3")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         setEvents(data?.events?.slice(0, 3) || []);
@@ -144,7 +144,7 @@ export default function HomePage() {
       })
       .catch(() => {});
 
-    fetch("/api/moments")
+    fetch("/api/moments?limit=3")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         setMoments(data?.moments?.slice(0, 3) || []);

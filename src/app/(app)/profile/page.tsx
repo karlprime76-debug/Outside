@@ -34,6 +34,9 @@ const defaultTrust: TrustData = {
 };
 
 export default async function ProfilePage() {
+  const perfLabel = "[PERF] /profile";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   const session = await auth();
   if (!session?.user?.email) redirect("/login");
 
@@ -45,6 +48,7 @@ export default async function ProfilePage() {
       include: { homeCity: true, activeCity: true },
     });
   } catch {
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return (
       <AnimatedPage className="p-6 max-w-2xl mx-auto">
         <div className="os-card p-8 text-center">
@@ -61,40 +65,42 @@ export default async function ProfilePage() {
 
   if (!user) redirect("/login");
 
-  // Appels DB secondaires résilients — un échec n'effondre pas la page
+  // Parallelize resilient secondary lookups
   let joinedPlansCount = 0;
   let createdPlansCount = 0;
   let friends: { id: string; name: string | null; username: string | null; image: string | null }[] = [];
   let trust = defaultTrust;
 
-  try {
-    [joinedPlansCount, createdPlansCount] = await Promise.all([
+  const [plansRes, friendsRes, trustRes] = await Promise.allSettled([
+    Promise.all([
       db.planParticipant.count({ where: { userId: user.id } }),
       db.plan.count({ where: { creatorId: user.id } }),
-    ]);
-  } catch {
-    // Valeurs par défaut conservées
-  }
-
-  try {
-    const friendships = await db.friendship.findMany({
+    ]),
+    db.friendship.findMany({
       where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
       include: {
         initiator: { select: { id: true, name: true, username: true, image: true } },
         receiver: { select: { id: true, name: true, username: true, image: true } },
       },
       take: 10,
-    });
-    friends = friendships.map((f) => (f.initiatorId === user.id ? f.receiver : f.initiator));
-  } catch {
-    // Valeur par défaut conservée
+    }),
+    getTrustData(user.id),
+  ]);
+
+  if (plansRes.status === "fulfilled") {
+    joinedPlansCount = plansRes.value[0];
+    createdPlansCount = plansRes.value[1];
   }
 
-  try {
-    trust = await getTrustData(user.id);
-  } catch {
-    // Valeur par défaut conservée
+  if (friendsRes.status === "fulfilled") {
+    friends = friendsRes.value.map((f) => (f.initiatorId === user.id ? f.receiver : f.initiator));
   }
+
+  if (trustRes.status === "fulfilled") {
+    trust = trustRes.value;
+  }
+
+  if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
 
   return (
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 animate-slide-up pb-24 md:pb-4">

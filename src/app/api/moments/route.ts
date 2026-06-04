@@ -8,6 +8,9 @@ import { MomentVisibility, MomentType } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(req: Request) {
+  const perfLabel = "[PERF] GET /api/moments";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   try {
     const user = await getCurrentUser();
     const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
@@ -32,6 +35,7 @@ export async function GET(req: Request) {
           },
         });
 
+        if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
         return NextResponse.json({
           moments: moments.map((m) => ({
             id: m.id,
@@ -60,22 +64,19 @@ export async function GET(req: Request) {
     const scope = searchParams.get("scope") || "for-you";
     const media = (searchParams.get("media") || "all").toLowerCase();
 
-    const friendRows = await db.friendship.findMany({
-      where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
-      select: { initiatorId: true, receiverId: true },
-    });
-    const friendIds = friendRows.map((f) =>
-      f.initiatorId === user.id ? f.receiverId : f.initiatorId
-    );
-
-    const followingRows = await db.follow.findMany({
-      where: { followerId: user.id },
-      select: { followingId: true },
-    });
-    const followingIds = followingRows.map((f) => f.followingId);
-
     const now = new Date();
     const activeCityName = user.activeCity?.name || null;
+
+    // Parallelize social graph lookups
+    const [friendRows, followingRows] = await Promise.all([
+      db.friendship.findMany({
+        where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
+        select: { initiatorId: true, receiverId: true },
+      }),
+      db.follow.findMany({ where: { followerId: user.id }, select: { followingId: true } }),
+    ]);
+    const friendIds = friendRows.map((f) => (f.initiatorId === user.id ? f.receiverId : f.initiatorId));
+    const followingIds = followingRows.map((f) => f.followingId);
 
     let baseWhere: Prisma.MomentWhereInput = {
       AND: [
@@ -87,73 +88,25 @@ export async function GET(req: Request) {
             { visibility: "PLAN_PARTICIPANTS", planId: { not: null } },
           ],
         },
-        {
-          OR: [
-            { expiresAt: null },
-            { expiresAt: { gt: now } },
-          ],
-        },
+        { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
       ],
     };
 
     if (scope === "city" && activeCityName) {
-      baseWhere = {
-        AND: [
-          baseWhere,
-          { city: { equals: activeCityName, mode: "insensitive" } },
-        ],
-      };
+      baseWhere = { AND: [baseWhere, { city: { equals: activeCityName, mode: "insensitive" } }] };
     } else if (scope === "friends") {
-      baseWhere = {
-        AND: [
-          baseWhere,
-          {
-            OR: [
-              { authorId: { in: friendIds } },
-              { authorId: user.id },
-            ],
-          },
-        ],
-      };
+      baseWhere = { AND: [baseWhere, { OR: [{ authorId: { in: friendIds } }, { authorId: user.id }] }] };
     } else if (scope === "following") {
-      baseWhere = {
-        AND: [
-          baseWhere,
-          {
-            OR: [
-              { authorId: { in: followingIds } },
-              { authorId: user.id },
-            ],
-          },
-        ],
-      };
+      baseWhere = { AND: [baseWhere, { OR: [{ authorId: { in: followingIds } }, { authorId: user.id }] }] };
     }
 
-    // Apply media filter: posts=PHOTO, clips=VIDEO, all=no filter
     const mediaWhere: Prisma.MomentWhereInput | undefined =
-      media === "posts"
-        ? { type: MomentType.PHOTO }
-        : media === "clips"
-        ? { type: MomentType.VIDEO }
-        : undefined;
+      media === "posts" ? { type: MomentType.PHOTO } : media === "clips" ? { type: MomentType.VIDEO } : undefined;
 
-    const finalWhere: Prisma.MomentWhereInput = mediaWhere
-      ? { AND: [baseWhere, mediaWhere] }
-      : baseWhere;
+    const finalWhere: Prisma.MomentWhereInput = mediaWhere ? { AND: [baseWhere, mediaWhere] } : baseWhere;
 
     const demoWhere: Prisma.MomentWhereInput | undefined = DEMO_GLOBAL
-      ? {
-          OR: [
-            finalWhere,
-            {
-              AND: [
-                { isDemo: true },
-                { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
-                mediaWhere ? mediaWhere : {},
-              ],
-            },
-          ],
-        }
+      ? { OR: [finalWhere, { AND: [{ isDemo: true }, { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }, mediaWhere ?? {}] }] }
       : undefined;
 
     const moments = await db.moment.findMany({
@@ -163,45 +116,41 @@ export async function GET(req: Request) {
       skip: cursor ? 1 : 0,
       cursor: cursor ? { id: cursor } : undefined,
       include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-            role: true,
-            isVerified: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true,
-          },
-        },
+        author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
+        _count: { select: { likes: true, comments: true } },
       },
     });
 
-    const filtered = await Promise.all(
-      moments.map(async (m) => {
-        if (m.visibility === "PLAN_PARTICIPANTS" && m.planId) {
-          const participant = await db.planParticipant.findUnique({
-            where: { planId_userId: { planId: m.planId, userId: user.id } },
-          });
-          const plan = await db.plan.findUnique({ where: { id: m.planId }, select: { creatorId: true } });
-          if (!participant && plan?.creatorId !== user.id) return null;
-        }
-        return m;
-      })
-    );
-    const visibleMoments = filtered.filter(Boolean) as typeof moments;
+    // Batch-check PLAN_PARTICIPANTS visibility instead of N+1
+    const planMomentIds = moments
+      .filter((m) => m.visibility === "PLAN_PARTICIPANTS" && m.planId)
+      .map((m) => m.planId!);
+    let allowedPlanIds = new Set<string>();
+    if (planMomentIds.length > 0) {
+      const [participants, plans] = await Promise.all([
+        db.planParticipant.findMany({
+          where: { planId: { in: planMomentIds }, userId: user.id },
+          select: { planId: true },
+        }),
+        db.plan.findMany({ where: { id: { in: planMomentIds }, creatorId: user.id }, select: { id: true } }),
+      ]);
+      allowedPlanIds = new Set([...participants.map((p) => p.planId), ...plans.map((p) => p.id)]);
+    }
+
+    const visibleMoments = moments.filter((m) => {
+      if (m.visibility !== "PLAN_PARTICIPANTS" || !m.planId) return true;
+      return allowedPlanIds.has(m.planId);
+    });
 
     const momentIds = visibleMoments.map((m) => m.id);
-    const userLikes = await db.momentLike.findMany({
-      where: { momentId: { in: momentIds }, userId: user.id },
-      select: { momentId: true },
-    });
-    const likedSet = new Set(userLikes.map((l) => l.momentId));
+    let likedSet = new Set<string>();
+    if (momentIds.length > 0) {
+      const userLikes = await db.momentLike.findMany({
+        where: { momentId: { in: momentIds }, userId: user.id },
+        select: { momentId: true },
+      });
+      likedSet = new Set(userLikes.map((l) => l.momentId));
+    }
 
     const result = visibleMoments.map((m) => ({
       id: m.id,
@@ -220,10 +169,7 @@ export async function GET(req: Request) {
         role: m.author.role,
         isVerified: m.author.isVerified,
       },
-      _count: {
-        likes: m._count.likes,
-        comments: m._count.comments,
-      },
+      _count: { likes: m._count.likes, comments: m._count.comments },
       viewerState: {
         likedByMe: likedSet.has(m.id),
         canDelete: m.authorId === user.id || user.role === "ADMIN" || user.role === "MODERATOR",
@@ -233,8 +179,10 @@ export async function GET(req: Request) {
 
     const nextCursor = visibleMoments.length === limit ? visibleMoments[visibleMoments.length - 1].id : null;
 
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({ moments: result, nextCursor });
   } catch (error) {
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     console.error("List moments error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

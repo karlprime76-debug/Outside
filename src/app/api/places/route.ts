@@ -3,6 +3,9 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export async function GET(req: Request) {
+  const perfLabel = "[PERF] GET /api/places";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -12,6 +15,9 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const cityId = searchParams.get("cityId");
     const category = searchParams.get("category");
+    let limit = parseInt(searchParams.get("limit") || "50", 10);
+    if (isNaN(limit) || limit < 1) limit = 50;
+    if (limit > 50) limit = 50;
 
     const where: Record<string, unknown> = { isVisible: true };
     if (cityId) where.cityId = cityId;
@@ -20,12 +26,14 @@ export async function GET(req: Request) {
     const places = await db.place.findMany({
       where,
       orderBy: { popularityScore: "desc" },
-      take: 50,
+      take: limit,
       include: { city: { select: { name: true } } },
     });
 
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({ places });
   } catch (error) {
+    if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     console.error("List places error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

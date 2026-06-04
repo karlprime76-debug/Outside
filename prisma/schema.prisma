@@ -312,6 +312,8 @@ model User {
   @@index([homeCityId])
   @@index([activeCityId])
   @@index([isAvailable])
+  @@index([username])
+  @@index([countryCode])
 }
 
 model UserSettings {
@@ -555,6 +557,8 @@ model Moment {
   @@index([authorId])
   @@index([planId])
   @@index([placeId])
+  @@index([createdAt])
+  @@index([visibility])
 }
 
 model MomentLike {

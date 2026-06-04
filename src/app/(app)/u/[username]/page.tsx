@@ -47,6 +47,9 @@ function normalizeUsername(raw: string): string {
 }
 
 export default async function PublicProfilePage({ params }: Props) {
+  const perfLabel = "[PERF] /u/[username]";
+  if (process.env.NODE_ENV !== "production") console.time(perfLabel);
+
   const { username: rawUsername } = await params;
   const username = normalizeUsername(rawUsername);
   if (!username || username.length < 2) notFound();
@@ -129,35 +132,20 @@ export default async function PublicProfilePage({ params }: Props) {
     }
   }
 
-  try {
-    friendCount = await getFriendCount(user.id);
-  } catch {
-    friendCount = 0;
-  }
+  // Parallelize independent stat lookups
+  const [friendCountRes, trustRes, followersCountRes, momentsCountRes, publicPlansCountRes] = await Promise.allSettled([
+    getFriendCount(user.id),
+    getTrustData(user.id),
+    db.follow.count({ where: { followingId: user.id } }),
+    db.moment.count({ where: { authorId: user.id, visibility: "PUBLIC" } }),
+    db.plan.count({ where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } } }),
+  ]);
 
-  try {
-    trust = await getTrustData(user.id);
-  } catch {
-    trust = defaultTrust;
-  }
-
-  try {
-    followersCount = await db.follow.count({ where: { followingId: user.id } });
-  } catch {
-    followersCount = 0;
-  }
-
-  try {
-    momentsCount = await db.moment.count({ where: { authorId: user.id, visibility: "PUBLIC" } });
-  } catch {
-    momentsCount = 0;
-  }
-
-  try {
-    publicPlansCount = await db.plan.count({ where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } } });
-  } catch {
-    publicPlansCount = 0;
-  }
+  friendCount = friendCountRes.status === "fulfilled" ? friendCountRes.value : 0;
+  trust = trustRes.status === "fulfilled" ? trustRes.value : defaultTrust;
+  followersCount = followersCountRes.status === "fulfilled" ? followersCountRes.value : 0;
+  momentsCount = momentsCountRes.status === "fulfilled" ? momentsCountRes.value : 0;
+  publicPlansCount = publicPlansCountRes.status === "fulfilled" ? publicPlansCountRes.value : 0;
 
   try {
     recent = await db.moment.findMany({
@@ -221,6 +209,8 @@ export default async function PublicProfilePage({ params }: Props) {
       canReport: currentUserId !== m.author.id,
     },
   }));
+
+  if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
 
   return (
     <div className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-fade-in">
