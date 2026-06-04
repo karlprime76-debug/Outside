@@ -25,7 +25,7 @@ export function ThemeToggle() {
   const options = [
     { value: "light", icon: Sun, label: "Clair" },
     { value: "dark", icon: Moon, label: "Sombre" },
-    { value: "system", icon: Monitor, label: "Auto" },
+    { value: "system", icon: Monitor, label: "Automatique" },
   ] as const;
 
   return (

@@ -38,7 +38,7 @@ function ThemeContextBridge({ children }: { children: ReactNode }) {
 
 export function OutsideThemeProvider({ children }: { children: ReactNode }) {
   return (
-    <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <ThemeContextBridge>{children}</ThemeContextBridge>
     </NextThemesProvider>
   );
