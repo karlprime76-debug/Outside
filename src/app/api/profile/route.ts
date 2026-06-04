@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { z } from "zod";
 import { normalizeUsername, validateUsername } from "@/lib/username";
 import { isValidCountryCode, getCountryName } from "@/lib/countries";
+import { logError } from "@/lib/log";
 
 const profileUpdateSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(80, "Le nom est trop long").optional(),
@@ -49,7 +50,8 @@ export async function GET() {
       isVerified: user.isVerified,
       birthDate: user.birthDate ? user.birthDate.toISOString() : null,
     });
-  } catch {
+  } catch (error) {
+    logError("[PROFILE_ERROR]", "GET /api/profile failed", { error: String(error) });
     return NextResponse.json({ error: "Impossible de charger le profil." }, { status: 500 });
   }
 }
@@ -185,7 +187,8 @@ export async function PUT(req: Request) {
       activeCity: updated.activeCity?.name || null,
       message: "Profil mis à jour.",
     });
-  } catch {
+  } catch (error) {
+    logError("[PROFILE_ERROR]", "PUT /api/profile failed", { error: String(error) });
     return NextResponse.json({ error: "Impossible de mettre à jour le profil." }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { logError } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canViewPlan } from "@/lib/plans/permissions";
 
@@ -36,7 +37,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json({ plan });
   } catch (error) {
-    console.error("Get plan error:", error);
+    logError("[PLAN_ERROR]", "GET /api/plans/[id] failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -72,7 +73,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     return NextResponse.json({ plan });
   } catch (error) {
-    console.error("Update plan error:", error);
+    logError("[PLAN_ERROR]", "PATCH /api/plans/[id] failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -99,7 +100,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete plan error:", error);
+    logError("[PLAN_ERROR]", "DELETE /api/plans/[id] failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { logError } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createNotification } from "@/lib/notifications";
 import type { NotificationType } from "@prisma/client";
@@ -49,7 +50,7 @@ export async function POST(
     }
     return NextResponse.json({ liked: true, likesCount });
   } catch (error) {
-    console.error("Like moment error:", error);
+    logError("[MOMENT_ERROR]", "POST /api/moments/[id]/like failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -73,7 +74,7 @@ export async function DELETE(
     const likesCount = await db.momentLike.count({ where: { momentId: id } });
     return NextResponse.json({ liked: false, likesCount });
   } catch (error) {
-    console.error("Unlike moment error:", error);
+    logError("[MOMENT_ERROR]", "DELETE /api/moments/[id]/like failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

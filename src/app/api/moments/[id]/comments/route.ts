@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createNotification } from "@/lib/notifications";
 import type { NotificationType } from "@prisma/client";
@@ -8,6 +9,8 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const perfLabel = "[PERF] GET /api/moments/[id]/comments";
+  logPerfStart(perfLabel);
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -32,6 +35,7 @@ export async function GET(
       },
     });
 
+    logPerfEnd(perfLabel);
     return NextResponse.json({
       comments: comments.map((c) => ({
         id: c.id,
@@ -41,7 +45,8 @@ export async function GET(
       })),
     });
   } catch (error) {
-    console.error("Get comments error:", error);
+    logPerfEnd(perfLabel);
+    logError("[MOMENT_ERROR]", "GET /api/moments/[id]/comments failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -50,6 +55,8 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const perfLabel = "[PERF] POST /api/moments/[id]/comments";
+  logPerfStart(perfLabel);
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -100,6 +107,7 @@ export async function POST(
       });
     }
 
+    logPerfEnd(perfLabel);
     return NextResponse.json({
       comment: {
         id: comment.id,
@@ -109,7 +117,8 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error("Create comment error:", error);
+    logPerfEnd(perfLabel);
+    logError("[MOMENT_ERROR]", "POST /api/moments/[id]/comments failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
