@@ -38,6 +38,7 @@ import {
   Compass,
 } from "lucide-react";
 import { AvailabilitySheet } from "@/components/availability/availability-sheet";
+import { useMomentPolling } from "@/hooks/use-moment-polling";
 
 interface Plan {
   id: string;
@@ -91,6 +92,7 @@ export default function HomePage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [moments, setMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null } }[]>([]);
   const [loadingMoments, setLoadingMoments] = useState(true);
+  const { hasNew } = useMomentPolling({ scope: "for-you", media: "all", enabled: !loadingMoments });
 
   const userName = session?.user?.name || "";
   const activeCity = userProfile?.activeCity;
@@ -397,6 +399,12 @@ export default function HomePage() {
             <h2 className="text-lg font-black text-[var(--os-fg)] flex items-center gap-2">
               <ImageIcon className="h-5 w-5 text-outside-500" />
               Moments dehors maintenant
+              {hasNew && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-glow animate-pulse">
+                  <Sparkles className="h-3 w-3" />
+                  Nouveau
+                </span>
+              )}
             </h2>
             <p className="text-xs text-[var(--os-muted)] mt-0.5">
               Regarde ce qui se passe dans ta ville.

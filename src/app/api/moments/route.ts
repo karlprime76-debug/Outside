@@ -58,6 +58,8 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const cursor = searchParams.get("cursor");
+    const sinceParam = searchParams.get("since");
+    const since = sinceParam ? new Date(sinceParam) : null;
     let limit = parseInt(searchParams.get("limit") || "10", 10);
     if (isNaN(limit) || limit < 1) limit = 10;
     if (limit > 20) limit = 20;
@@ -109,12 +111,16 @@ export async function GET(req: Request) {
       ? { OR: [finalWhere, { AND: [{ isDemo: true }, { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }, mediaWhere ?? {}] }] }
       : undefined;
 
+    const finalWhereWithSince: Prisma.MomentWhereInput = since
+      ? { AND: [demoWhere ?? finalWhere, { createdAt: { gt: since } }] }
+      : (demoWhere ?? finalWhere);
+
     const moments = await db.moment.findMany({
-      where: demoWhere ?? finalWhere,
+      where: finalWhereWithSince,
       orderBy: { createdAt: "desc" },
       take: limit,
-      skip: cursor ? 1 : 0,
-      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor && !since ? 1 : 0,
+      cursor: cursor && !since ? { id: cursor } : undefined,
       include: {
         author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
         _count: { select: { likes: true, comments: true } },
@@ -177,7 +183,11 @@ export async function GET(req: Request) {
       },
     }));
 
-    const nextCursor = visibleMoments.length === limit ? visibleMoments[visibleMoments.length - 1].id : null;
+    const nextCursor = since
+      ? null
+      : visibleMoments.length === limit
+        ? visibleMoments[visibleMoments.length - 1].id
+        : null;
 
     if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({ moments: result, nextCursor });

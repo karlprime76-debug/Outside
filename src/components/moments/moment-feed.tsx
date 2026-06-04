@@ -5,9 +5,10 @@ import { MomentCard } from "./moment-card";
 import { MomentCommentsSheet } from "./moment-comments-sheet";
 import { MomentTypeFilter } from "./moment-type-filter";
 import { AccountDiscovery } from "./account-discovery";
-import { Loader2, Camera } from "lucide-react";
+import { Loader2, Camera, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
+import { useMomentPolling } from "@/hooks/use-moment-polling";
 
 interface Author {
   id: string;
@@ -60,6 +61,26 @@ export function MomentFeed() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const isFetchingRef = useRef(false);
+  const feedRef = useRef<HTMLDivElement>(null);
+
+  // Live polling for new moments
+  const { newMoments, hasNew, clearNew } = useMomentPolling({
+    scope,
+    media,
+    enabled: !initialLoading,
+  });
+
+  const handleInjectNew = useCallback(() => {
+    if (newMoments.length === 0) return;
+    const existingIds = new Set(moments.map((m) => m.id));
+    const trulyNew = newMoments.filter((m) => !existingIds.has(m.id));
+    if (trulyNew.length > 0) {
+      setMoments((prev) => [...trulyNew, ...prev]);
+    }
+    clearNew();
+    // Smooth scroll to top
+    feedRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [newMoments, moments, clearNew]);
   const [hiddenSet, setHiddenSet] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();
     try {
@@ -230,6 +251,7 @@ export function MomentFeed() {
 
       {/* Feed: strong snap only for Clips */}
       <div
+        ref={feedRef}
         className={`flex-1 overflow-y-auto ${media === "clips" ? "snap-y snap-mandatory" : "snap-none"} scrollbar-hide`}
         onScroll={() => {
           if (showClipHint) {
@@ -238,6 +260,18 @@ export function MomentFeed() {
           }
         }}
       >
+        {/* New moments banner */}
+        {hasNew && !initialLoading && (
+          <div className="sticky top-0 z-40 flex justify-center pt-2 pb-1">
+            <button
+              onClick={handleInjectNew}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-xs font-bold text-white shadow-glow animate-fade-in hover:shadow-glow-lg transition-all"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Nouveaux moments disponibles
+            </button>
+          </div>
+        )}
         {initialLoading ? (
           <div className="space-y-6 p-4">
             {[1, 2].map((i) => (

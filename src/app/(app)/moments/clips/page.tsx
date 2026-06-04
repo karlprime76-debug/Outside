@@ -13,11 +13,13 @@ import {
   MoreHorizontal,
   Flag,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
 import { MomentCommentsSheet } from "@/components/moments/moment-comments-sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMomentPolling } from "@/hooks/use-moment-polling";
 
 interface ClipAuthor {
   id: string;
@@ -64,6 +66,24 @@ export default function ClipsPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
   const isFetchingRef = useRef(false);
+
+  const { newMoments, hasNew, clearNew } = useMomentPolling({
+    scope,
+    media: "clips",
+    enabled: !loading && clips.length > 0,
+  });
+
+  const handleInjectNew = useCallback(() => {
+    if (newMoments.length === 0) return;
+    const existingIds = new Set(clips.map((c) => c.id));
+    const trulyNew = newMoments.filter((m) => !existingIds.has(m.id));
+    if (trulyNew.length > 0) {
+      setClips((prev) => [...trulyNew, ...prev]);
+      // Scroll to first new clip
+      containerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    clearNew();
+  }, [newMoments, clips, clearNew]);
 
   const fetchClips = useCallback(
     async (cursor?: string) => {
@@ -280,6 +300,18 @@ export default function ClipsPage() {
         ref={containerRef}
         className="flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-hide"
       >
+        {/* New clips banner */}
+        {hasNew && !loading && clips.length > 0 && (
+          <div className="sticky top-0 z-50 flex justify-center pt-3 pb-1">
+            <button
+              onClick={handleInjectNew}
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-xs font-bold text-white shadow-glow animate-fade-in hover:shadow-glow-lg transition-all"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Nouveaux clips disponibles
+            </button>
+          </div>
+        )}
         {clips.map((clip, index) => (
           <div
             key={clip.id}
