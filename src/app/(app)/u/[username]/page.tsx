@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Avatar } from "@/components/ui/avatar";
+import { ProfileAvatarViewer } from "@/components/profile/profile-avatar-viewer";
 import { MapPin, BadgeCheck } from "lucide-react";
 import Link from "next/link";
 import { getRelationshipStatus } from "@/lib/social/friendship";
@@ -214,7 +214,7 @@ export default async function PublicProfilePage({ params }: Props) {
       {/* Header card */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow">
         <div className="relative z-10 flex items-center gap-4">
-          <Avatar src={user.image} name={user.name} size="xl" />
+          <ProfileAvatarViewer src={user.image} name={user.name} size="xl" />
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black truncate">{user.name || "Utilisateur OUTSIDE"}</h1>
             <p className="text-sm text-white/80 truncate">@{user.username || "username non défini"}</p>

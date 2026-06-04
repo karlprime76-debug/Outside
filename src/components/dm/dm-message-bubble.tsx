@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus } from "lucide-react";
+import { MediaViewer } from "@/components/media/media-viewer";
 
 export interface DmMessage {
   id: string;
@@ -159,6 +161,38 @@ function PlanInviteCard({ metadata, isMine }: { metadata?: string | null; isMine
   );
 }
 
+function MediaMessage({
+  url,
+  type,
+}: {
+  url: string;
+  type: "image" | "video";
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="block p-0 border-0 bg-transparent text-left"
+      >
+        {type === "image" ? (
+          <img
+            src={url}
+            alt="Image"
+            className="max-w-full max-h-64 rounded-lg object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <video className="max-w-full max-h-64 rounded-lg" preload="metadata">
+            <source src={url} />
+          </video>
+        )}
+      </button>
+      {open && <MediaViewer src={url} type={type} alt="DM media" onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
 export function DmMessageBubble({
   message,
   isMine,
@@ -204,18 +238,9 @@ export function DmMessageBubble({
           ) : isPlanInvite ? (
             <PlanInviteCard metadata={message.metadata} isMine={isMine} />
           ) : isImage ? (
-            <a href={message.mediaUrl || ""} target="_blank" rel="noopener noreferrer">
-              <img
-                src={message.mediaUrl || ""}
-                alt="Image"
-                className="max-w-full max-h-64 rounded-lg object-cover"
-                loading="lazy"
-              />
-            </a>
+            <MediaMessage url={message.mediaUrl || ""} type="image" />
           ) : isVideo ? (
-            <video controls className="max-w-full max-h-64 rounded-lg">
-              <source src={message.mediaUrl || ""} />
-            </video>
+            <MediaMessage url={message.mediaUrl || ""} type="video" />
           ) : isAudio ? (
             <audio controls className="w-48" src={message.mediaUrl || ""} />
           ) : (

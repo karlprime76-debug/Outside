@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
+import { ProfileAvatarViewer } from "@/components/profile/profile-avatar-viewer";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
@@ -107,7 +108,7 @@ export default async function ProfilePage() {
       {/* Header card */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow animate-fade-in">
         <div className="relative z-10 flex items-center gap-4">
-          <Avatar src={user.image} name={user.name} size="xl" />
+          <ProfileAvatarViewer src={user.image} name={user.name} size="xl" />
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black truncate">{user.name || "Utilisateur OUTSIDE"}</h1>
             <p className="text-sm text-white/80 truncate">@{user.username || "username non défini"}</p>

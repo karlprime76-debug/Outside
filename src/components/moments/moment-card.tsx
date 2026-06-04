@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast";
 import { Heart, MessageCircle, Share2, Flag, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck } from "lucide-react";
 import { ShareMomentSheet } from "./share-moment-sheet";
 import { MomentMedia } from "./moment-media";
+import { MediaViewer } from "@/components/media/media-viewer";
 
 interface Author {
   id: string;
@@ -57,6 +58,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [followLoading, setFollowLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [likeAnim, setLikeAnim] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const isVideo = moment.type === "VIDEO";
   const isMe = moment.viewerState.canDelete;
@@ -320,14 +322,25 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             </div>
           </Link>
         ) : (
-          <div className="relative w-full aspect-square bg-black overflow-hidden sm:rounded-xl">
+          <button
+            onClick={() => setViewerOpen(true)}
+            className="relative aspect-square bg-black overflow-hidden sm:rounded-xl block w-full text-left p-0 border-0"
+          >
             <MomentMedia
               type={moment.type}
               src={moment.mediaUrl}
               className="h-full w-full object-cover"
               preload="metadata"
             />
-          </div>
+          </button>
+        )}
+        {viewerOpen && (
+          <MediaViewer
+            src={moment.mediaUrl}
+            type="image"
+            alt={moment.caption || "Moment"}
+            onClose={() => setViewerOpen(false)}
+          />
         )}
 
         {/* Actions & info */}

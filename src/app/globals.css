@@ -77,6 +77,18 @@
     box-sizing: border-box;
   }
 
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
   /* Focus visible accessible */
   :focus-visible {
     outline: 2px solid var(--os-focus);
