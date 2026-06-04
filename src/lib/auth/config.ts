@@ -47,6 +47,8 @@ export const authConfig: NextAuthConfig = {
             countryCode: user.countryCode,
             homeCity: user.homeCity?.name || null,
             activeCity: user.activeCity?.name || null,
+            homeCityId: user.homeCityId,
+            activeCityId: user.activeCityId,
           };
         } catch (error: unknown) {
           // Server/Prisma error → log securely and surface as AUTH_SERVER_ERROR
@@ -74,6 +76,8 @@ export const authConfig: NextAuthConfig = {
         token.countryCode = user.countryCode;
         token.homeCity = user.homeCity;
         token.activeCity = user.activeCity;
+        token.homeCityId = user.homeCityId;
+        token.activeCityId = user.activeCityId;
       }
       // Mise à jour du token lors d'un update() client
       if (trigger === "update" && session?.image) {
@@ -105,6 +109,12 @@ export const authConfig: NextAuthConfig = {
       }
       if (token.activeCity) {
         session.user.activeCity = token.activeCity as string;
+      }
+      if (token.homeCityId) {
+        session.user.homeCityId = token.homeCityId as string;
+      }
+      if (token.activeCityId) {
+        session.user.activeCityId = token.activeCityId as string;
       }
       if (token.image) {
         session.user.image = token.image as string;

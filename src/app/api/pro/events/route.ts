@@ -19,11 +19,11 @@ export async function GET() {
 
   const proAccount = await db.proAccount.findUnique({
     where: { userId: user.id },
-    select: { id: true },
+    select: { id: true, status: true },
   });
 
-  if (!proAccount) {
-    return NextResponse.json({ error: "Aucun compte pro trouvé." }, { status: 403 });
+  if (!proAccount || proAccount.status !== "APPROVED") {
+    return NextResponse.json({ error: "Seuls les pros approuvés peuvent accéder aux événements." }, { status: 403 });
   }
 
   const events = await db.proEvent.findMany({

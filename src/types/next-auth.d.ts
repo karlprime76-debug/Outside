@@ -9,6 +9,8 @@ declare module "next-auth" {
     countryCode?: string | null;
     homeCity?: string | null;
     activeCity?: string | null;
+    homeCityId?: string | null;
+    activeCityId?: string | null;
   }
 
   interface Session {
@@ -20,6 +22,8 @@ declare module "next-auth" {
       countryCode?: string | null;
       homeCity?: string | null;
       activeCity?: string | null;
+      homeCityId?: string | null;
+      activeCityId?: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -33,5 +37,7 @@ declare module "next-auth/jwt" {
     countryCode?: string | null;
     homeCity?: string | null;
     activeCity?: string | null;
+    homeCityId?: string | null;
+    activeCityId?: string | null;
   }
 }
