@@ -14,6 +14,12 @@ const ALLOWED_FIELDS = [
   "notificationCityLives",
   "notificationProEvents",
   "notificationMoments",
+  "pushEnabled",
+  "pushDm",
+  "pushPlans",
+  "pushMoments",
+  "pushLive",
+  "pushPro",
 ] as const;
 
 export async function GET() {

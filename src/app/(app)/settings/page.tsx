@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast";
 import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AnimatedPage } from "@/components/ui/animated-page";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 import {
   ArrowLeft,
   Bell,
@@ -25,6 +26,8 @@ import {
   Radio,
   Calendar,
   Image,
+  MessageSquare,
+  Zap,
 } from "lucide-react";
 
 interface UserSettingsData {
@@ -38,6 +41,13 @@ interface UserSettingsData {
   notificationCityLives: boolean;
   notificationProEvents: boolean;
   notificationMoments: boolean;
+
+  pushEnabled: boolean;
+  pushDm: boolean;
+  pushPlans: boolean;
+  pushMoments: boolean;
+  pushLive: boolean;
+  pushPro: boolean;
 }
 
 const DEFAULT_SETTINGS: UserSettingsData = {
@@ -51,11 +61,19 @@ const DEFAULT_SETTINGS: UserSettingsData = {
   notificationCityLives: true,
   notificationProEvents: true,
   notificationMoments: true,
+
+  pushEnabled: false,
+  pushDm: true,
+  pushPlans: true,
+  pushMoments: true,
+  pushLive: true,
+  pushPro: true,
 };
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const { addToast } = useToast();
+  const push = usePushNotifications();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<UserSettingsData>(DEFAULT_SETTINGS);
@@ -352,6 +370,94 @@ export default function SettingsPage() {
           onChange={(v) => updateSetting("allowFriendSuggestions", v)}
           icon={Users}
         />
+      </Section>
+
+      {/* Notifications push */}
+      <Section title="Notifications push">
+        {push.permission === "unsupported" ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 py-2">
+            Ton navigateur ne supporte pas les notifications push.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between py-3 border-b border-[var(--os-card-border)]">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-outside-100 p-2">
+                  <Bell className="h-4 w-4 text-outside-600" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-[var(--os-fg)]">Activer les notifications push</span>
+                  <p className="text-xs text-[var(--os-muted)]">Recevoir des alertes même quand l&apos;app est fermée</p>
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  if (settings.pushEnabled) {
+                    await push.unsubscribe();
+                    updateSetting("pushEnabled", false);
+                    addToast("Notifications push désactivées.", "info");
+                  } else {
+                    const ok = await push.subscribe();
+                    if (ok) {
+                      updateSetting("pushEnabled", true);
+                      addToast("Notifications push activées.", "success");
+                      // Send test notification
+                      fetch("/api/push/test", { method: "POST" }).catch(() => {});
+                    } else {
+                      addToast("Permission refusée ou erreur.", "error");
+                    }
+                  }
+                }}
+                disabled={push.loading}
+                className={`relative h-7 w-12 rounded-full transition-colors pressable ${
+                  settings.pushEnabled ? "bg-outside-500" : "bg-zinc-300 dark:bg-zinc-700"
+                }`}
+                aria-pressed={settings.pushEnabled}
+              >
+                <span
+                  className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+                    settings.pushEnabled ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {settings.pushEnabled && (
+              <>
+                <Toggle
+                  label="Messages privés"
+                  value={settings.pushDm}
+                  onChange={(v) => updateSetting("pushDm", v)}
+                  icon={MessageSquare}
+                />
+                <Toggle
+                  label="Plans"
+                  value={settings.pushPlans}
+                  onChange={(v) => updateSetting("pushPlans", v)}
+                  icon={Calendar}
+                />
+                <Toggle
+                  label="Moments"
+                  value={settings.pushMoments}
+                  onChange={(v) => updateSetting("pushMoments", v)}
+                  icon={Image}
+                />
+                <Toggle
+                  label="Lives"
+                  value={settings.pushLive}
+                  onChange={(v) => updateSetting("pushLive", v)}
+                  icon={Radio}
+                />
+                <Toggle
+                  label="Événements pro"
+                  value={settings.pushPro}
+                  onChange={(v) => updateSetting("pushPro", v)}
+                  icon={Zap}
+                />
+              </>
+            )}
+          </div>
+        )}
       </Section>
 
       {/* Notifications */}

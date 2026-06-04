@@ -6,7 +6,8 @@ export type LogTag =
   | "[PLAN_ERROR]"
   | "[LIVE_ERROR]"
   | "[NOTIFICATION_ERROR]"
-  | "[SETTINGS_ERROR]";
+  | "[SETTINGS_ERROR]"
+  | "[PUSH_ERROR]";
 
 function safeSerialize(obj: unknown) {
   try {
