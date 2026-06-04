@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { Heart, MessageCircle, Share2, Flag, MapPin, MoreHorizontal, Trash2, Volume2, VolumeX, Play, Clapperboard } from "lucide-react";
+import { Heart, MessageCircle, Share2, Flag, MapPin, MoreHorizontal, Trash2, Volume2, VolumeX, Play, Clapperboard, Send } from "lucide-react";
 import { MomentMedia } from "./moment-media";
 
 interface Author {
@@ -153,6 +153,25 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
       addToast("Erreur lors de la suppression.", "error");
     }
   };
+
+  const handleMessage = useCallback(async () => {
+    if (!moment.author.username) return;
+    try {
+      const res = await fetch("/api/dm/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: moment.author.username }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.conversationId) {
+        window.location.href = `/dm/${data.conversationId}`;
+      } else {
+        addToast(data.error || "Impossible de démarrer la conversation", "error");
+      }
+    } catch {
+      addToast("Erreur lors de l'envoi du message", "error");
+    }
+  }, [moment.author.username, addToast]);
 
   const handleFollow = useCallback(async () => {
     if (followLoading || isMe) return;
@@ -319,6 +338,15 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
                 >
                   Masquer
                 </button>
+                {!isMe && moment.author.username && (
+                  <button
+                    onClick={() => { setMenuOpen(false); handleMessage(); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+                  >
+                    <Send className="h-4 w-4" />
+                    Message
+                  </button>
+                )}
                 <button
                   onClick={() => { setMenuOpen(false); handleShare(); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
@@ -372,12 +400,20 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             <Share2 className="h-5 w-5" />
           </button>
         </div>
-        <button
-          onClick={() => onOpenComments(moment)}
-          className="text-[10px] text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
-        >
-          Voir les commentaires
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/u/${moment.author.username || moment.author.id}`}
+            className="text-[10px] text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
+          >
+            Voir le profil
+          </Link>
+          <button
+            onClick={() => onOpenComments(moment)}
+            className="text-[10px] text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
+          >
+            Voir les commentaires
+          </button>
+        </div>
       </div>
     </div>
   );

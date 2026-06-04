@@ -248,10 +248,10 @@ export default async function PublicProfilePage({ params }: Props) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-slide-up">
-        <div className="os-card p-5 text-center">
+        <Link href="/moments" className="os-card p-5 text-center block hover:border-outside-300 transition-colors">
           <p className="text-2xl font-black text-outside-600">{momentsCount}</p>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Moments</p>
-        </div>
+        </Link>
         <div className="os-card p-5 text-center">
           <p className="text-2xl font-black text-outside-600">{friendCount}</p>
           <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Amis</p>

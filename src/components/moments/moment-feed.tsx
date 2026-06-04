@@ -5,6 +5,8 @@ import { MomentCard } from "./moment-card";
 import { MomentCommentsSheet } from "./moment-comments-sheet";
 import { MomentTypeFilter } from "./moment-type-filter";
 import { AccountDiscovery } from "./account-discovery";
+import { CityActiveDiscovery } from "./city-active-discovery";
+import { TopCreatorsDiscovery } from "./top-creators-discovery";
 import { Loader2, Camera, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
@@ -335,6 +337,12 @@ export function MomentFeed() {
                 />
                 {index === 1 && scope === "for-you" && media === "all" && (
                   <AccountDiscovery />
+                )}
+                {index === 3 && scope === "for-you" && media === "all" && (
+                  <CityActiveDiscovery />
+                )}
+                {index === 5 && scope === "for-you" && media === "all" && (
+                  <TopCreatorsDiscovery />
                 )}
               </>
             ))}
