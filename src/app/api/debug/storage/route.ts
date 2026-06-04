@@ -13,6 +13,7 @@ export async function GET() {
   }
 
   const hasSupabaseUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const hasAnonKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   let avatarsBucketExists = false;
@@ -37,6 +38,7 @@ export async function GET() {
   return NextResponse.json({
     env: {
       hasSupabaseUrl,
+      hasAnonKey,
       hasServiceRoleKey,
     },
     storage: {
