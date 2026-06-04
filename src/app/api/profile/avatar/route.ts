@@ -211,3 +211,56 @@ export async function POST(req: Request) {
     );
   }
 }
+
+export async function DELETE() {
+  try {
+    const session = await auth();
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { message: "Tu dois être connecté.", code: "UNAUTHORIZED" },
+        { status: 401 }
+      );
+    }
+
+    const user = await db.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, image: true },
+    });
+    if (!user) {
+      return NextResponse.json(
+        { message: "Utilisateur non trouvé.", code: "USER_NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
+    try {
+      if (user.image && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        const publicBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/`;
+        if (user.image.startsWith(publicBase)) {
+          const remainder = user.image.substring(publicBase.length); // e.g. "avatars/users/uid/avatar-123.jpg"
+          const firstSlash = remainder.indexOf("/");
+          if (firstSlash > 0) {
+            const bucketName = remainder.substring(0, firstSlash);
+            const objectPath = remainder.substring(firstSlash + 1);
+            if (bucketName === AVATARS_BUCKET && objectPath) {
+              const supabase = createSupabaseServerClient();
+              await supabase.storage.from(AVATARS_BUCKET).remove([objectPath]);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[AVATAR_DELETE] storage delete warning:", err instanceof Error ? err.message : String(err));
+    }
+
+    await db.user.update({ where: { id: user.id }, data: { image: null } });
+
+    return NextResponse.json({ message: "Photo de profil supprimée.", image: null, code: "SUCCESS" });
+  } catch (error) {
+    console.error("[AVATAR_DELETE] Unexpected error:", error);
+    return NextResponse.json(
+      { message: "Une erreur est survenue. Veuillez réessayer.", code: "UNEXPECTED_ERROR" },
+      { status: 500 }
+    );
+  }
+}

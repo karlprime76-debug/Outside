@@ -93,6 +93,22 @@ export default function LiveDetailPage() {
     );
   }
 
+  if (live && live.status && live.status !== "LIVE") {
+    const endedText = live.status === "ENDED" ? "Ce live est terminé." : live.status === "CANCELLED" ? "Ce live a été annulé." : "Ce live n'est pas en direct.";
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center bg-black text-white p-6 text-center">
+        <p className="text-sm font-semibold text-white/80 mb-2">{endedText}</p>
+        <Link
+          href="/live"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Retour aux lives
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <LiveKitRoomView
       token={tokenData.token}

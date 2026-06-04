@@ -89,7 +89,15 @@ export default function LivePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <StatusBadge status={live.status === "LIVE" ? "live" : "soon"} text={live.status === "LIVE" ? "En direct" : "Prévu"} />
+                  {live.status === "LIVE" && (
+                    <StatusBadge status="live" text="En direct" />
+                  )}
+                  {live.status === "SCHEDULED" && (
+                    <StatusBadge status="soon" text="Prévu" />
+                  )}
+                  {live.status === "ENDED" && (
+                    <StatusBadge status="ended" text="Terminé" />
+                  )}
                 </div>
                 <p className="text-sm font-bold text-[var(--os-fg)] truncate">{live.title}</p>
                 <p className="text-xs text-[var(--os-muted)] mt-1">
