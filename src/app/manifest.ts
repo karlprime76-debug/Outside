@@ -4,12 +4,11 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "OUTSIDE",
     short_name: "OUTSIDE",
-    description:
-      "Trouve quoi faire autour de toi. Plans, lieux et gens près de toi.",
+    description: "Le monde est dehors.",
     start_url: "/home",
     display: "standalone",
-    background_color: "#0a0a0f",
-    theme_color: "#ff6b35",
+    background_color: "#050509",
+    theme_color: "#ff3d5a",
     orientation: "portrait",
     scope: "/",
     lang: "fr",
