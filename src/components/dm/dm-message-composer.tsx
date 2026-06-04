@@ -67,8 +67,7 @@ export function DmMessageComposer({ onSend, sending }: DmMessageComposerProps) {
           <textarea
             ref={inputRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
-            onInput={handleInput}
+            onChange={handleInput}
             onKeyDown={handleKeyDown}
             placeholder="Votre message..."
             rows={1}

@@ -24,7 +24,7 @@ type Tab = "primary" | "requests" | "general";
 interface ConversationItem {
   id: string;
   other?: { id: string; name: string | null; username: string | null; image: string | null };
-  lastMessage: { id: string; content: string | null; createdAt: string; senderId: string } | null;
+  lastMessage: { id: string; content: string | null; createdAt: string; senderId: string; type?: string | null } | null;
   unread: number;
   updatedAt: string;
 }
@@ -274,9 +274,11 @@ export default function DmInboxPage() {
                 const isUnread = c.unread > 0;
                 const lastText = c.lastMessage?.content
                   ? c.lastMessage.content
-                  : c.lastMessage
-                    ? "Photo"
-                    : "Nouvelle conversation";
+                  : c.lastMessage?.type === "MOMENT"
+                    ? "Moment partagé"
+                    : c.lastMessage
+                      ? "Photo"
+                      : "Nouvelle conversation";
                 const isMe = c.lastMessage?.senderId === myId;
                 return (
                   <Link
@@ -304,7 +306,7 @@ export default function DmInboxPage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        {!isMe && c.lastMessage && (
+                        {isMe && c.lastMessage && (
                           <span className="text-[10px] text-[var(--os-muted)]">Envoyé ·</span>
                         )}
                         <p className={`text-xs truncate ${isUnread ? "text-[var(--os-fg)] font-medium" : "text-[var(--os-muted)]"}`}>

@@ -46,7 +46,7 @@ export default function DmConversationPage() {
   // Fetch conversation info (other participant)
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/dm/conversations?limit=1`, { cache: "no-store" })
+    fetch(`/api/dm/conversations`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data?.conversations) return;
@@ -193,6 +193,7 @@ export default function DmConversationPage() {
       isDeleted: false,
       createdAt: new Date().toISOString(),
       status: "SENDING",
+      type: "TEXT",
     };
     setMessages((prev) => [...prev, optimistic]);
     isNearBottomRef.current = true;
