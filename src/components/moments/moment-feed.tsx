@@ -6,11 +6,12 @@ import { MomentCommentsSheet } from "./moment-comments-sheet";
 import { AccountDiscovery } from "./account-discovery";
 import { CityActiveDiscovery } from "./city-active-discovery";
 import { TopCreatorsDiscovery } from "./top-creators-discovery";
-import { Loader2, Camera, Sparkles, MapPin, Users, UserPlus, Search } from "lucide-react";
+import { Loader2, Camera, Sparkles, MapPin, Users, UserPlus, Search, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { useMomentPolling } from "@/hooks/use-moment-polling";
 import { useHaptic } from "@/hooks/use-haptic";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 
 interface Author {
   id: string;
@@ -265,6 +266,18 @@ export function MomentFeed() {
     setMoments((prev) => prev.filter((m) => m.author.id !== authorId));
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    haptic.medium();
+    setMoments([]);
+    setNextCursor(null);
+    await fetchMoments();
+  }, [fetchMoments, haptic]);
+
+  const { containerRef: pullRefreshRef, isPulling, pullDistance, isRefreshing, progress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    enabled: true,
+  });
+
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
@@ -292,9 +305,25 @@ export function MomentFeed() {
 
       {/* Feed */}
       <div
-        ref={feedRef}
-        className="flex-1 overflow-y-auto scrollbar-hide"
+        ref={(el) => {
+          (feedRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+          (pullRefreshRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        }}
+        className="flex-1 overflow-y-auto scrollbar-hide relative"
       >
+        {/* Pull to refresh indicator */}
+        <div
+          className="absolute top-0 left-0 right-0 flex items-center justify-center pointer-events-none z-50"
+          style={{
+            transform: `translateY(${isPulling ? Math.min(pullDistance, 80) : -80}px)`,
+            opacity: progress,
+          }}
+        >
+          <RefreshCw
+            className={`h-6 w-6 text-outside-500 ${isRefreshing ? "animate-spin" : ""}`}
+            style={{ transform: `rotate(${progress * 360}deg)` }}
+          />
+        </div>
         {/* New moments banner */}
         {hasNew && !initialLoading && (
           <div className="sticky top-0 z-40 flex justify-center pt-2 pb-1">

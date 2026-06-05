@@ -135,6 +135,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     setLikesCount((c) => (newLiked ? c + 1 : Math.max(0, c - 1)));
     if (newLiked) {
       setLikeAnim(true);
+      haptic.light();
       setTimeout(() => setLikeAnim(false), 300);
     }
     try {
@@ -156,7 +157,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     } finally {
       setLikeLoading(false);
     }
-  }, [liked, likeLoading, likesCount, moment.id, onLikeToggle, trackEvent]);
+  }, [liked, likeLoading, likesCount, moment.id, onLikeToggle, trackEvent, haptic]);
 
   const handlePhotoDoubleTap = useCallback(() => {
     const now = Date.now();
@@ -175,6 +176,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     try {
       await navigator.clipboard.writeText(url);
       addToast("Lien copié !", "success");
+      haptic.light();
       trackEvent("SHARE");
     } catch {
       addToast("Impossible de copier le lien", "error");
@@ -252,6 +254,9 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     setFollowLoading(true);
     const newFollowing = !following;
     setFollowing(newFollowing);
+    if (newFollowing) {
+      haptic.light();
+    }
     try {
       const res = await fetch(`/api/follow?userId=${moment.author.id}`, {
         method: newFollowing ? "POST" : "DELETE",
@@ -266,7 +271,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     } finally {
       setFollowLoading(false);
     }
-  }, [following, followLoading, isMe, moment.author.id, addToast]);
+  }, [following, followLoading, isMe, moment.author.id, addToast, haptic]);
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
