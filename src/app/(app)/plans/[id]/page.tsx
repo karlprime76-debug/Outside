@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { ReportButton } from "@/components/report-button";
+import { SavePlanButton } from "@/components/save-plan-button";
 import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
 import { formatBudget } from "@/lib/currency";
@@ -222,6 +223,7 @@ export default function PlanDetailPage() {
             {t.plans.joined}
           </span>
         )}
+        {!isCreator && <SavePlanButton planId={plan.id} variant="button" />}
         {isParticipant && (
           <Link
             href={`/plans/${plan.id}/chat`}

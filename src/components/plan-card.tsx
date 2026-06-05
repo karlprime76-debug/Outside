@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeProps } from "@/components/ui/badge";
 import { formatBudget } from "@/lib/currency";
+import { SavePlanButton } from "@/components/save-plan-button";
 
 interface Plan {
   id: string;
@@ -97,6 +98,7 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
             <Wallet className="h-3 w-3 mr-1 inline" />
             {formatBudget(plan.budgetAmount, plan.budgetCurrency, plan.budgetIsFrom)}
           </Badge>
+          <SavePlanButton planId={plan.id} />
         </div>
       </div>
 

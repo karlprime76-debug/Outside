@@ -347,6 +347,7 @@ model User {
   momentComments    MomentComment[]
   conversationParticipants ConversationParticipant[]
   directMessagesSent       DirectMessage[]
+  savedPlans        SavedPlan[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -546,6 +547,7 @@ model Plan {
   messages          PlanMessage[]
   invitations       PlanInvitation[]
   reports           Report[]
+  savedPlans        SavedPlan[]
 
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
@@ -574,6 +576,19 @@ model PlanInvitation {
 
   @@unique([planId, receiverId])
   @@index([receiverId, status])
+  @@index([planId])
+}
+
+model SavedPlan {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, planId])
+  @@index([userId])
   @@index([planId])
 }
 

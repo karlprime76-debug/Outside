@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle } from "lucide-react";
+import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark } from "lucide-react";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
 
@@ -135,13 +135,23 @@ export default function PlansPage() {
               <h1 className="text-2xl font-black text-white drop-shadow">{t.plans.title}</h1>
               <p className="text-sm text-white/70">Ce soir, trouve ton mood.</p>
             </div>
-            <Link
-              href="/plans/new"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable shrink-0 animate-soft-glow"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t.plans.newPlan}</span>
-            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/plans/saved"
+                className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-4 py-2.5 text-sm font-bold text-white hover:bg-white/30 transition-all"
+                title="Plans enregistrés"
+              >
+                <Bookmark className="h-4 w-4" />
+                <span className="hidden sm:inline">Enregistrés</span>
+              </Link>
+              <Link
+                href="/plans/new"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable animate-soft-glow"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.plans.newPlan}</span>
+              </Link>
+            </div>
           </div>
         </div>
       </ImmersiveBackground>
