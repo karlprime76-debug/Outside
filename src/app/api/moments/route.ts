@@ -217,6 +217,9 @@ export async function POST(req: Request) {
     const placeId = (formData.get("placeId") as string | null) || null;
     const eventId = (formData.get("eventId") as string | null) || null;
     const liveId = (formData.get("liveId") as string | null) || null;
+    const audioTrackId = (formData.get("audioTrackId") as string | null) || null;
+    const audioStartTime = parseInt((formData.get("audioStartTime") as string) || "0", 10);
+    const audioVolume = parseFloat((formData.get("audioVolume") as string) || "1");
 
     if (!file) {
       return NextResponse.json({ error: "Aucun fichier reçu." }, { status: 400 });
@@ -282,11 +285,21 @@ export async function POST(req: Request) {
         placeId,
         eventId,
         liveId,
+        audioTrackId,
+        audioStartTime: isNaN(audioStartTime) ? 0 : audioStartTime,
+        audioVolume: isNaN(audioVolume) ? 1 : Math.min(1, Math.max(0, audioVolume)),
       },
       include: {
         author: { select: { id: true, name: true, username: true, image: true } },
       },
     });
+
+    if (audioTrackId) {
+      await db.audioTrack.update({
+        where: { id: audioTrackId },
+        data: { usageCount: { increment: 1 } },
+      }).catch(() => {});
+    }
 
     if (city) {
       recordTripHistory({

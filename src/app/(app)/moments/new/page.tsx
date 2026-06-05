@@ -6,8 +6,9 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { useMomentDraft } from "@/hooks/use-moment-draft";
-import { X, Image as ImageIcon, Video, Upload, MapPin, ArrowLeft, Save, Volume2 } from "lucide-react";
+import { X, Image as ImageIcon, Video, Upload, MapPin, ArrowLeft, Save, Volume2, Music, Trash2 } from "lucide-react";
 import { AUDIO_RIGHTS_NOTICE } from "@/lib/audio";
+import { AudioPicker } from "@/components/audio/audio-picker";
 
 export default function NewMomentPage() {
   const router = useRouter();
@@ -22,6 +23,10 @@ export default function NewMomentPage() {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [showDraftPrompt, setShowDraftPrompt] = useState(false);
+  const [audioTrack, setAudioTrack] = useState<{ id: string; title: string; artistName: string | null } | null>(null);
+  const [audioVolume, setAudioVolume] = useState(1);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [isOriginalAudio, setIsOriginalAudio] = useState(false);
 
   const draft = useMomentDraft();
 
@@ -118,6 +123,11 @@ export default function NewMomentPage() {
       if (caption.trim()) formData.append("caption", caption.trim());
       formData.append("visibility", visibility);
       if (city.trim()) formData.append("city", city.trim());
+      if (audioTrack) {
+        formData.append("audioTrackId", audioTrack.id);
+        formData.append("audioStartTime", "0");
+        formData.append("audioVolume", String(audioVolume));
+      }
 
       const res = await fetch("/api/moments", { method: "POST", body: formData });
       if (res.ok) {
@@ -271,6 +281,69 @@ export default function NewMomentPage() {
           <Volume2 className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
           <p className="text-xs text-amber-700 dark:text-amber-400">{AUDIO_RIGHTS_NOTICE}</p>
         </div>
+
+        {/* Audio selection */}
+        <div>
+          <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Musique</label>
+          {!audioTrack ? (
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="w-full flex items-center gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] px-3 py-3 text-left hover:bg-[var(--os-card)] transition-colors active:scale-[0.98]"
+            >
+              <div className="rounded-full bg-outside-500/10 p-2">
+                <Music className="h-4 w-4 text-outside-500" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[var(--os-fg)]">
+                  {isOriginalAudio ? "Son original" : "Ajouter une musique"}
+                </p>
+                <p className="text-[11px] text-[var(--os-muted)]">
+                  {isOriginalAudio
+                    ? "L'audio de la vidéo sera conservé"
+                    : "Choisir un son de la bibliothèque ou importer le tien"}
+                </p>
+              </div>
+              <span className="ml-auto text-[11px] text-[var(--os-muted)]">Choisir</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-3 rounded-xl border border-outside-500/20 bg-outside-500/5 px-3 py-3">
+              <div className="rounded-full bg-outside-500/10 p-2">
+                <Music className="h-4 w-4 text-outside-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-[var(--os-fg)] truncate">{audioTrack.title}</p>
+                <p className="text-[11px] text-[var(--os-muted)] truncate">
+                  {audioTrack.artistName || "Artiste inconnu"}
+                </p>
+              </div>
+              {/* Volume */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  value={audioVolume}
+                  onChange={(e) => setAudioVolume(parseFloat(e.target.value))}
+                  className="w-16 accent-outside-500"
+                  aria-label="Volume"
+                />
+                <span className="text-[10px] text-[var(--os-muted)] w-6 text-right">{Math.round(audioVolume * 100)}%</span>
+              </div>
+              <button
+                onClick={() => {
+                  setAudioTrack(null);
+                  setIsOriginalAudio(false);
+                }}
+                className="rounded-full p-1.5 text-[var(--os-muted)] hover:bg-red-50 hover:text-red-500 transition-colors"
+                aria-label="Retirer la musique"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
         <div>
           <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Légende (optionnel)</label>
           <textarea
@@ -326,6 +399,24 @@ export default function NewMomentPage() {
         <Upload className="h-4 w-4" />
         {loading ? "Publication..." : "Publier le moment"}
       </button>
+
+      <AudioPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(track, opts) => {
+          if (opts?.isOriginal) {
+            setIsOriginalAudio(true);
+            setAudioTrack(null);
+          } else if (track) {
+            setAudioTrack(track);
+            setIsOriginalAudio(false);
+          } else {
+            setAudioTrack(null);
+            setIsOriginalAudio(false);
+          }
+        }}
+        selectedTrackId={audioTrack?.id ?? (isOriginalAudio ? null : undefined)}
+      />
     </AnimatedPage>
   );
 }
