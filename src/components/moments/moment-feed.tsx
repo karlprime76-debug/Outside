@@ -6,10 +6,11 @@ import { MomentCommentsSheet } from "./moment-comments-sheet";
 import { AccountDiscovery } from "./account-discovery";
 import { CityActiveDiscovery } from "./city-active-discovery";
 import { TopCreatorsDiscovery } from "./top-creators-discovery";
-import { Loader2, Camera, Sparkles } from "lucide-react";
+import { Loader2, Camera, Sparkles, MapPin, Users, UserPlus, Search } from "lucide-react";
 import Link from "next/link";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { useMomentPolling } from "@/hooks/use-moment-polling";
+import { useHaptic } from "@/hooks/use-haptic";
 
 interface Author {
   id: string;
@@ -50,9 +51,69 @@ const SCOPE_LABELS: Record<Scope, string> = {
   following: "Abonnements",
 };
 
+const EMPTY_STATES: Record<Scope, { title: string; description: string; icon: typeof Camera; action?: React.ReactNode }> = {
+  "for-you": {
+    title: "Découvre ce qui se passe",
+    description: "Publie, suis des comptes et explore ce qui bouge dehors.",
+    icon: Sparkles,
+    action: (
+      <Link
+        href="/moments/new"
+        className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
+      >
+        <Camera className="h-4 w-4" />
+        Ajouter un moment
+      </Link>
+    ),
+  },
+  city: {
+    title: "Ta ville est calme",
+    description: "Aucun Moment dans ta ville pour le moment. Sois le premier à publier.",
+    icon: MapPin,
+    action: (
+      <Link
+        href="/moments/new"
+        className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
+      >
+        <Camera className="h-4 w-4" />
+        Publier ici
+      </Link>
+    ),
+  },
+  friends: {
+    title: "Ajoute des amis",
+    description: "Ajoute des amis pour voir leurs Moments ici.",
+    icon: Users,
+    action: (
+      <Link
+        href="/friends"
+        className="inline-flex items-center gap-1.5 rounded-full bg-outside-100 px-5 py-2.5 text-sm font-bold text-outside-700 hover:bg-outside-200 transition-colors active:scale-95"
+      >
+        <UserPlus className="h-4 w-4" />
+        Trouver des amis
+      </Link>
+    ),
+  },
+  following: {
+    title: "Suis des comptes",
+    description: "Suis des comptes pour remplir cet espace avec leurs Moments.",
+    icon: Search,
+    action: (
+      <Link
+        href="/u"
+        className="inline-flex items-center gap-1.5 rounded-full bg-outside-100 px-5 py-2.5 text-sm font-bold text-outside-700 hover:bg-outside-200 transition-colors active:scale-95"
+      >
+        <Search className="h-4 w-4" />
+        Découvrir
+      </Link>
+    ),
+  },
+};
+
 export function MomentFeed() {
   const [scope, setScope] = useState<Scope>("for-you");
   const media = "all";
+  const haptic = useHaptic();
   const [moments, setMoments] = useState<FeedMoment[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -183,25 +244,24 @@ export function MomentFeed() {
     <div className="flex flex-col h-full">
       {/* Tabs */}
       <div className="sticky top-0 z-30 bg-[var(--os-bg)]/80 backdrop-blur-md border-b border-[var(--os-card-border)]">
-        <div className="flex overflow-x-auto scrollbar-hide px-2">
-          {(Object.keys(SCOPE_LABELS) as Scope[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => setScope(s)}
-              aria-current={scope === s ? "page" : undefined}
-              className={`relative flex-shrink-0 px-3 py-2.5 text-xs font-bold rounded-full transition-colors ${
-                scope === s
-                  ? "text-[var(--os-fg)] bg-[var(--os-card-border)]/60"
-                  : "text-[var(--os-muted)] hover:text-[var(--os-fg)]"
-              }`}
-            >
-              {SCOPE_LABELS[s]}
-              {scope === s && (
-                <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-outside-500 transition-all duration-300" />
-              )}
-            </button>
-          ))}
-          {/* 4 scopes only — media mixed naturally */}
+        <div className="flex items-center justify-center gap-1 px-3 py-2 overflow-x-auto scrollbar-hide">
+          {(Object.keys(SCOPE_LABELS) as Scope[]).map((s) => {
+            const isActive = scope === s;
+            return (
+              <button
+                key={s}
+                onClick={() => { haptic.light(); setScope(s); }}
+                aria-current={isActive ? "page" : undefined}
+                className={`relative flex-shrink-0 px-4 py-1.5 text-[13px] font-bold rounded-full transition-all active:scale-95 ${
+                  isActive
+                    ? "text-white bg-gradient-to-r from-outside-500 to-accent-500 shadow-glow"
+                    : "text-[var(--os-muted)] hover:text-[var(--os-fg)] hover:bg-[var(--os-card-border)]/40"
+                }`}
+              >
+                {SCOPE_LABELS[s]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -259,17 +319,10 @@ export function MomentFeed() {
         ) : moments.length === 0 ? (
           <div className="p-6">
             <OutsideEmptyState
-              icon={Camera}
-              title="Aucun moment pour l'instant"
-              description="Montre ce qui se passe dehors."
-              action={(
-                <Link
-                  href="/moments/new"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-                >
-                  Ajouter un moment
-                </Link>
-              )}
+              icon={EMPTY_STATES[scope].icon}
+              title={EMPTY_STATES[scope].title}
+              description={EMPTY_STATES[scope].description}
+              action={EMPTY_STATES[scope].action}
             />
           </div>
         ) : (
