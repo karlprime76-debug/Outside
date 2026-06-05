@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AnimatedPage } from "@/components/ui/animated-page";
-import { Users, CalendarDays, Store, AlertTriangle, Shield, MapPin, ArrowRight, Briefcase, Video, Building2 } from "lucide-react";
+import { Users, CalendarDays, Store, AlertTriangle, Shield, MapPin, ArrowRight, Briefcase, Video, Building2, Music } from "lucide-react";
 
 export default async function AdminPage() {
   const session = await auth();
@@ -103,6 +103,7 @@ export default async function AdminPage() {
           { label: "Demandes pro", href: "/admin/pro-requests", icon: Briefcase, color: "from-amber-500 to-orange-500" },
           { label: "Lieux vérifiés", href: "/admin/pro/venues", icon: Building2, color: "from-emerald-500 to-teal-500" },
           { label: "Modérer les lives", href: "/admin/lives", icon: Video, color: "from-red-500 to-pink-500" },
+          { label: "Modérer les sons", href: "/admin/audio", icon: Music, color: "from-violet-500 to-purple-500" },
         ].map((link) => (
           <Link
             key={link.href}

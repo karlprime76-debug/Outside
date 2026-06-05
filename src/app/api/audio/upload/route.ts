@@ -17,6 +17,11 @@ export async function POST(req: Request) {
     const title = (formData.get("title") as string | null)?.trim();
     const artistName = (formData.get("artistName") as string | null)?.trim() || null;
     const isOriginal = formData.get("isOriginal") === "true";
+    const rightsConfirmed = formData.get("rightsConfirmed") === "true";
+
+    if (!rightsConfirmed) {
+      return NextResponse.json({ error: "Tu dois confirmer avoir les droits ou l'autorisation d'utiliser ce son." }, { status: 400 });
+    }
 
     if (!file) {
       return NextResponse.json({ error: "Aucun fichier audio reçu." }, { status: 400 });
@@ -64,6 +69,7 @@ export async function POST(req: Request) {
         audioUrl,
         audioPath: path,
         isOriginal,
+        rightsConfirmed: true,
       },
     });
 

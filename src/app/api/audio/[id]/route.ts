@@ -12,7 +12,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const { id } = await params;
 
     const track = await db.audioTrack.findUnique({
-      where: { id, status: "ACTIVE" },
+      where: { id },
     });
 
     if (!track) {

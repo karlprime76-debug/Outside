@@ -213,6 +213,7 @@ enum ReportReason {
   HATE
   SEXUAL_CONTENT
   PRIVATE_INFO
+  COPYRIGHT
   OTHER
 }
 
@@ -346,6 +347,7 @@ model User {
   planInvitationsSent    PlanInvitation[] @relation("PlanInvitationSender")
   planInvitationsReceived PlanInvitation[] @relation("PlanInvitationReceiver")
   moments            Moment[]
+  audioTracks        AudioTrack[]
   userBadges         UserBadge[]
   reportsMade       Report[] @relation("Reporter")
   reportsReceived   Report[] @relation("Reported")
@@ -718,6 +720,7 @@ model Moment {
 model AudioTrack {
   id          String           @id @default(cuid())
   ownerId     String?
+  owner       User?            @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   title       String
   artistName  String?
   sourceType  AudioSourceType  @default(USER_ORIGINAL)
@@ -728,14 +731,17 @@ model AudioTrack {
   duration    Int?
   coverUrl    String?
 
-  isOfficial  Boolean          @default(false)
-  isOriginal  Boolean          @default(false)
-  usageCount  Int              @default(0)
+  isOfficial      Boolean          @default(false)
+  isOriginal      Boolean          @default(false)
+  usageCount      Int              @default(0)
+  rightsConfirmed Boolean          @default(false)
+  rightsNote      String?
+  reportCount     Int              @default(0)
 
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
-  moments     Moment[]
+  moments         Moment[]
 
   @@index([ownerId])
   @@index([status])

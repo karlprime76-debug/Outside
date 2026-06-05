@@ -6,7 +6,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Flag, Send } from "lucide-react";
 import { useHaptic } from "@/hooks/use-haptic";
 
-const REASONS = [
+const BASE_REASONS = [
   { value: "INAPPROPRIATE_CONTENT", label: "Contenu inapproprié" },
   { value: "HARASSMENT", label: "Harcèlement" },
   { value: "SPAM", label: "Spam" },
@@ -18,6 +18,14 @@ const REASONS = [
   { value: "HATE", label: "Discours haineux" },
   { value: "SEXUAL_CONTENT", label: "Contenu sexuel" },
   { value: "PRIVATE_INFO", label: "Infos privées" },
+  { value: "COPYRIGHT", label: "Droits d'auteur" },
+  { value: "OTHER", label: "Autre" },
+];
+
+const AUDIO_REASONS = [
+  { value: "COPYRIGHT", label: "Droits d'auteur" },
+  { value: "INAPPROPRIATE_CONTENT", label: "Contenu inapproprié" },
+  { value: "SPAM", label: "Spam" },
   { value: "OTHER", label: "Autre" },
 ];
 
@@ -33,6 +41,8 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const reasons = targetType === "AUDIO_TRACK" ? AUDIO_REASONS : BASE_REASONS;
 
   async function submit() {
     if (!reason) {
@@ -98,7 +108,7 @@ export function ReportButton({ targetType, targetId }: ReportButtonProps) {
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2">
-            {REASONS.map((r) => (
+            {reasons.map((r: { value: string; label: string }) => (
               <button
                 key={r.value}
                 onClick={() => { haptic.light(); setReason(r.value); }}

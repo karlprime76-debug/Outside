@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     if (isNaN(limit) || limit < 1) limit = 20;
     if (limit > 50) limit = 50;
 
-    const where: Record<string, unknown> = { status: "ACTIVE" };
+    const where: Record<string, unknown> = { status: { not: "BLOCKED" } };
 
     if (q) {
       where.OR = [

@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Avatar } from "@/components/ui/avatar";
 import { useGlobalAudio } from "@/hooks/use-global-audio";
+import { ReportButton } from "@/components/report-button";
 import {
   ArrowLeft,
   Play,
@@ -18,6 +19,7 @@ import {
   Disc,
   Clock,
   BarChart3,
+  AlertTriangle,
 } from "lucide-react";
 
 interface AudioTrackDetail {
@@ -28,6 +30,7 @@ interface AudioTrackDetail {
   coverUrl: string | null;
   duration: number | null;
   usageCount: number;
+  status: string;
   isOfficial: boolean;
   isOriginal: boolean;
   createdAt: string;
@@ -162,6 +165,12 @@ export default function AudioDetailPage() {
               <p className="text-sm text-[var(--os-muted)]">{track.artistName}</p>
             )}
           </div>
+          {track.status === "BLOCKED" && (
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-600 mx-auto">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Son indisponible
+            </div>
+          )}
         </div>
 
         {/* Stats */}
@@ -216,12 +225,23 @@ export default function AudioDetailPage() {
         )}
 
         {/* Use sound button */}
-        <Link
-          href={`/moments/new?audioTrackId=${track.id}`}
-          className="block w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-center text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-        >
-          Utiliser ce son
-        </Link>
+        {track.status !== "BLOCKED" ? (
+          <Link
+            href={`/moments/new?audioTrackId=${track.id}`}
+            className="block w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-center text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+          >
+            Utiliser ce son
+          </Link>
+        ) : (
+          <div className="block w-full rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-4 py-3 text-center text-sm font-bold text-[var(--os-muted)]">
+            Son indisponible
+          </div>
+        )}
+
+        {/* Report */}
+        <div className="flex justify-center">
+          <ReportButton targetType="AUDIO_TRACK" targetId={track.id} />
+        </div>
 
         {/* Moments using this track */}
         {moments.length > 0 && (

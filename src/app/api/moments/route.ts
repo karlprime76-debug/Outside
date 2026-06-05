@@ -170,10 +170,10 @@ export async function GET(req: Request) {
       countryCode: m.countryCode,
       visibility: m.visibility,
       createdAt: m.createdAt.toISOString(),
-      audioTrackId: m.audioTrackId,
-      audioStartTime: m.audioStartTime,
-      audioVolume: m.audioVolume,
-      audioTrack: m.audioTrack
+      audioTrackId: m.audioTrack?.status !== "BLOCKED" ? m.audioTrackId : null,
+      audioStartTime: m.audioTrack?.status !== "BLOCKED" ? m.audioStartTime : null,
+      audioVolume: m.audioTrack?.status !== "BLOCKED" ? m.audioVolume : null,
+      audioTrack: m.audioTrack && m.audioTrack.status !== "BLOCKED"
         ? {
             id: m.audioTrack.id,
             title: m.audioTrack.title,

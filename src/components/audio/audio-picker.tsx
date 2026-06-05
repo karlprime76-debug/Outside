@@ -34,6 +34,7 @@ export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioP
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadArtist, setUploadArtist] = useState("");
   const [uploadOriginal, setUploadOriginal] = useState(false);
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -115,6 +116,7 @@ export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioP
       formData.append("title", uploadTitle.trim());
       if (uploadArtist.trim()) formData.append("artistName", uploadArtist.trim());
       formData.append("isOriginal", String(uploadOriginal));
+      formData.append("rightsConfirmed", String(rightsConfirmed));
 
       const res = await fetch("/api/audio/upload", { method: "POST", body: formData });
       const data = await res.json();
@@ -332,9 +334,21 @@ export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioP
               <span className="text-xs text-[var(--os-fg)]">Ceci est un son original</span>
             </label>
 
+            <label className="flex items-start gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rightsConfirmed}
+                onChange={(e) => setRightsConfirmed(e.target.checked)}
+                className="h-4 w-4 accent-outside-500 mt-0.5"
+              />
+              <span className="text-xs text-[var(--os-fg)] leading-relaxed">
+                Je confirme avoir les droits ou l&apos;autorisation d&apos;utiliser ce son.
+              </span>
+            </label>
+
             <button
               onClick={handleUpload}
-              disabled={uploading || !uploadTitle.trim() || !fileRef.current?.files?.[0]}
+              disabled={uploading || !uploadTitle.trim() || !fileRef.current?.files?.[0] || !rightsConfirmed}
               className="w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Upload className="h-4 w-4" />

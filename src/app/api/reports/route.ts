@@ -11,6 +11,7 @@ const VALID_TARGET_TYPES = [
   "PLAN",
   "LIVE",
   "COMMENT",
+  "AUDIO_TRACK",
 ] as const;
 
 export async function POST(req: Request) {
@@ -76,6 +77,14 @@ export async function POST(req: Request) {
         status: "PENDING",
       },
     });
+
+    // Increment audio track report count
+    if (targetType === "AUDIO_TRACK") {
+      await db.audioTrack.update({
+        where: { id: targetId },
+        data: { reportCount: { increment: 1 } },
+      });
+    }
 
     return NextResponse.json(
       { message: "Signalement envoyé. Merci de nous aider à garder OUTSIDE sûr." },

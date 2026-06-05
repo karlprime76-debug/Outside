@@ -36,4 +36,4 @@ export function formatDuration(seconds: number): string {
 }
 
 export const AUDIO_RIGHTS_NOTICE =
-  "Tu dois posséder les droits ou avoir l'autorisation d'utiliser ce son.";
+  "Utilise uniquement des sons que tu as le droit de publier.";
