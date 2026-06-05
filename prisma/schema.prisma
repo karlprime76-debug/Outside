@@ -805,6 +805,10 @@ model MomentScore {
   profileOpens     Int @default(0)
   followsGenerated Int @default(0)
 
+  avgWatchMs       Int @default(0)
+  replayRate       Float @default(0)
+  quickSkipRate    Float @default(0)
+
   lastCalculatedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -102,7 +102,7 @@ export function calculateSafetyPenalty(
 export async function calculateMomentScore(momentId: string): Promise<number> {
   const now = new Date();
 
-  const [moment, eventCounts] = await Promise.all([
+  const [moment, eventCounts, eventDetails] = await Promise.all([
     db.moment.findUnique({
       where: { id: momentId },
       select: { id: true, createdAt: true, authorId: true },
@@ -111,6 +111,10 @@ export async function calculateMomentScore(momentId: string): Promise<number> {
       by: ["type"],
       where: { momentId },
       _count: { type: true },
+    }),
+    db.momentEvent.findMany({
+      where: { momentId },
+      select: { type: true, watchMs: true, source: true },
     }),
   ]);
 
@@ -132,6 +136,19 @@ export async function calculateMomentScore(momentId: string): Promise<number> {
   const profileOpens = counts["PROFILE_OPEN"] ?? 0;
   const followsGenerated = counts["FOLLOW_FROM_MOMENT"] ?? 0;
   const notInterestedCount = counts["NOT_INTERESTED"] ?? 0;
+  const replays = counts["REPLAY"] ?? 0;
+
+  // Calculate avg watch time from VIEW events
+  const viewEvents = eventDetails.filter((e) => e.type === "VIEW" && e.watchMs !== null);
+  const totalWatchMs = viewEvents.reduce((sum, e) => sum + (e.watchMs ?? 0), 0);
+  const avgWatchMs = views > 0 ? Math.round(totalWatchMs / views) : 0;
+
+  // Calculate replay rate
+  const replayRate = views > 0 ? replays / views : 0;
+
+  // Calculate quick skip rate (views with source "quick_skip")
+  const quickSkipViews = viewEvents.filter((e) => e.source === "quick_skip").length;
+  const quickSkipRate = views > 0 ? quickSkipViews / views : 0;
 
   const freshnessBoost = calculateFreshnessBoost(moment.createdAt);
   const engagementVelocity = calculateEngagementVelocity(
@@ -167,6 +184,9 @@ export async function calculateMomentScore(momentId: string): Promise<number> {
       reports,
       profileOpens,
       followsGenerated,
+      avgWatchMs,
+      replayRate,
+      quickSkipRate,
       lastCalculatedAt: now,
     },
     update: {
@@ -183,6 +203,9 @@ export async function calculateMomentScore(momentId: string): Promise<number> {
       reports,
       profileOpens,
       followsGenerated,
+      avgWatchMs,
+      replayRate,
+      quickSkipRate,
       lastCalculatedAt: now,
     },
   });

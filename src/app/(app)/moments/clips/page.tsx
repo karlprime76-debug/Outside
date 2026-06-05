@@ -72,6 +72,9 @@ export default function ClipsPage() {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
+  const sentThresholdsRef = useRef<Record<number, Set<number>>>({});
+  const startTimeRef = useRef<Record<number, number | null>>({});
+  const playCountRef = useRef<Record<number, number>>({});
   const isFetchingRef = useRef(false);
 
   const { newMoments, hasNew, clearNew } = useMomentPolling({
@@ -130,6 +133,126 @@ export default function ClipsPage() {
     fetchClips();
   }, [fetchClips]);
 
+  // Track video events
+  const trackEvent = useCallback((momentId: string, type: string, data?: Record<string, unknown>) => {
+    fetch(`/api/moments/${momentId}/event`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, ...data }),
+    }).catch(() => {});
+  }, []);
+
+  const handleVideoTimeUpdate = useCallback((index: number) => {
+    const video = videoRefs.current[index];
+    const clip = clips[index];
+    if (!video || !clip) return;
+
+    const currentTime = video.currentTime;
+    const duration = video.duration;
+    if (!duration) return;
+
+    const percent = (currentTime / duration) * 100;
+    const thresholds = sentThresholdsRef.current[index] || new Set<number>();
+
+    // Check thresholds: 25%, 50%, 75%, 90%
+    const THRESHOLDS = [25, 50, 75, 90];
+    for (const threshold of THRESHOLDS) {
+      if (percent >= threshold && !thresholds.has(threshold)) {
+        thresholds.add(threshold);
+        sentThresholdsRef.current[index] = thresholds;
+        trackEvent(clip.id, "VIEW", {
+          percent,
+          watchMs: Math.round(currentTime * 1000),
+        });
+      }
+    }
+
+    // Check complete view (80%)
+    if (percent >= 80 && !thresholds.has(100)) {
+      thresholds.add(100);
+      sentThresholdsRef.current[index] = thresholds;
+      trackEvent(clip.id, "COMPLETE_VIEW", {
+        percent,
+        watchMs: Math.round(currentTime * 1000),
+      });
+    }
+  }, [clips, trackEvent]);
+
+  const handleVideoPlay = useCallback((index: number) => {
+    const clip = clips[index];
+    if (!clip) return;
+
+    if (startTimeRef.current[index] === null) {
+      startTimeRef.current[index] = Date.now();
+    }
+
+    // Track replay (second play)
+    playCountRef.current[index] = (playCountRef.current[index] || 0) + 1;
+    if (playCountRef.current[index] > 1) {
+      trackEvent(clip.id, "REPLAY");
+    }
+  }, [clips, trackEvent]);
+
+  const handleVideoPause = useCallback((index: number) => {
+    const video = videoRefs.current[index];
+    const clip = clips[index];
+    if (!video || !clip || startTimeRef.current[index] === null) return;
+
+    const watchMs = Date.now() - startTimeRef.current[index];
+    const percent = (video.currentTime / video.duration) * 100;
+
+    // Track quick skip (quit within 3 seconds and < 10% watched)
+    if (watchMs < 3000 && percent < 10) {
+      trackEvent(clip.id, "VIEW", {
+        watchMs,
+        percent,
+        source: "quick_skip",
+      });
+    }
+  }, [clips, trackEvent]);
+
+  const handleVideoEnded = useCallback((index: number) => {
+    const video = videoRefs.current[index];
+    const clip = clips[index];
+    if (!video || !clip) return;
+
+    const percent = (video.currentTime / video.duration) * 100;
+    const thresholds = sentThresholdsRef.current[index] || new Set<number>();
+
+    // Ensure complete view is sent
+    if (!thresholds.has(100)) {
+      thresholds.add(100);
+      sentThresholdsRef.current[index] = thresholds;
+      trackEvent(clip.id, "COMPLETE_VIEW", {
+        percent,
+        watchMs: Math.round(video.currentTime * 1000),
+      });
+    }
+  }, [clips, trackEvent]);
+
+  // Attach video event listeners
+  useEffect(() => {
+    Object.entries(videoRefs.current).forEach(([idxStr, video]) => {
+      if (!video) return;
+      const idx = parseInt(idxStr, 10);
+
+      video.addEventListener("timeupdate", () => handleVideoTimeUpdate(idx));
+      video.addEventListener("play", () => handleVideoPlay(idx));
+      video.addEventListener("pause", () => handleVideoPause(idx));
+      video.addEventListener("ended", () => handleVideoEnded(idx));
+    });
+
+    return () => {
+      Object.values(videoRefs.current).forEach((video) => {
+        if (!video) return;
+        video.removeEventListener("timeupdate", () => {});
+        video.removeEventListener("play", () => {});
+        video.removeEventListener("pause", () => {});
+        video.removeEventListener("ended", () => {});
+      });
+    };
+  }, [videoRefs, handleVideoTimeUpdate, handleVideoPlay, handleVideoPause, handleVideoEnded]);
+
   // Pause/play videos based on active index
   useEffect(() => {
     Object.entries(videoRefs.current).forEach(([idxStr, video]) => {
@@ -140,6 +263,10 @@ export default function ClipsPage() {
       } else {
         video.pause();
         video.currentTime = 0;
+        // Reset tracking state
+        sentThresholdsRef.current[idx] = new Set();
+        startTimeRef.current[idx] = null;
+        playCountRef.current[idx] = 0;
       }
     });
   }, [activeIndex]);
@@ -220,9 +347,20 @@ export default function ClipsPage() {
     try {
       await navigator.clipboard.writeText(url);
       addToast("Lien copié !", "success");
+      trackEvent(clip.id, "SHARE");
     } catch {
       addToast("Impossible de copier", "error");
     }
+  };
+
+  const handleProfileOpen = (clip: ClipItem) => {
+    trackEvent(clip.id, "PROFILE_OPEN");
+  };
+
+  const handleFollow = async (clip: ClipItem) => {
+    trackEvent(clip.id, "FOLLOW_FROM_MOMENT");
+    // Navigate to profile (follow action is handled on profile page)
+    router.push(`/u/${clip.author.username || clip.author.id}`);
   };
 
   const handleDelete = async (clip: ClipItem) => {
@@ -442,12 +580,13 @@ export default function ClipsPage() {
             <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 sm:pb-12 z-40">
               {/* Author row */}
               <div className="flex items-center gap-2.5 mb-2">
-                <Link href={`/u/${clip.author.username || clip.author.id}`}>
+                <Link href={`/u/${clip.author.username || clip.author.id}`} onClick={() => handleProfileOpen(clip)}>
                   <Avatar src={clip.author.image} name={clip.author.name} size="sm" />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <Link
                     href={`/u/${clip.author.username || clip.author.id}`}
+                    onClick={() => handleProfileOpen(clip)}
                     className="text-sm font-bold text-white drop-shadow-md truncate block"
                   >
                     {clip.author.name || "Anonyme"}
@@ -463,12 +602,12 @@ export default function ClipsPage() {
                     @{clip.author.username || "user"}
                   </p>
                 </div>
-                <Link
-                  href={`/u/${clip.author.username || clip.author.id}`}
+                <button
+                  onClick={() => handleFollow(clip)}
                   className="rounded-full bg-white/10 backdrop-blur-sm px-3 py-1.5 text-[10px] font-bold text-white hover:bg-white/20 transition-colors"
                 >
-                  Voir le profil
-                </Link>
+                  Suivre
+                </button>
               </div>
 
               {clip.audioTrack && (
