@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { MomentCard } from "./moment-card";
 import { MomentCommentsSheet } from "./moment-comments-sheet";
-import { MomentTypeFilter } from "./moment-type-filter";
 import { AccountDiscovery } from "./account-discovery";
 import { CityActiveDiscovery } from "./city-active-discovery";
 import { TopCreatorsDiscovery } from "./top-creators-discovery";
@@ -53,7 +52,7 @@ const SCOPE_LABELS: Record<Scope, string> = {
 
 export function MomentFeed() {
   const [scope, setScope] = useState<Scope>("for-you");
-  const [media, setMedia] = useState<"all" | "posts" | "clips">("all");
+  const media = "all";
   const [moments, setMoments] = useState<FeedMoment[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -92,24 +91,6 @@ export function MomentFeed() {
       return new Set();
     }
   });
-
-  // Clips swipe-up hint (show once)
-  const [showClipHint, setShowClipHint] = useState<boolean>(false);
-  const clipsHintSeenRef = useRef<boolean>(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      clipsHintSeenRef.current = localStorage.getItem("outside_clips_hint_seen") === "1";
-    } catch {
-      clipsHintSeenRef.current = true; // avoid showing if storage fails
-    }
-  }, []);
-
-  const markClipsHintSeen = useCallback(() => {
-    if (clipsHintSeenRef.current) return;
-    clipsHintSeenRef.current = true;
-    try { localStorage.setItem("outside_clips_hint_seen", "1"); } catch {}
-  }, []);
 
   const fetchMoments = useCallback(
     async (cursor?: string) => {
@@ -150,7 +131,7 @@ export function MomentFeed() {
         isFetchingRef.current = false;
       }
     },
-    [scope, media, hiddenSet]
+    [scope, hiddenSet]
   );
 
   useEffect(() => {
@@ -158,22 +139,7 @@ export function MomentFeed() {
     setNextCursor(null);
     setInitialLoading(true);
     fetchMoments();
-  }, [scope, media, fetchMoments]);
-
-  // Show a brief swipe-up hint the first time user visits Clips
-  useEffect(() => {
-    if (media !== "clips") return;
-    if (clipsHintSeenRef.current) return;
-    const t = setTimeout(() => {
-      setShowClipHint(true);
-      const t2 = setTimeout(() => {
-        setShowClipHint(false);
-        markClipsHintSeen();
-      }, 2200);
-      return () => clearTimeout(t2);
-    }, 200);
-    return () => clearTimeout(t);
-  }, [media, markClipsHintSeen]);
+  }, [scope, fetchMoments]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -235,32 +201,14 @@ export function MomentFeed() {
               )}
             </button>
           ))}
-          {/* Media filter */}
-          <div className="ml-auto">
-            <MomentTypeFilter value={media} onChange={setMedia} />
-          </div>
-
-      {/* Clips swipe hint bubble */}
-      {showClipHint && media === "clips" && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40">
-          <div className="px-3 py-1.5 rounded-full bg-black/70 text-white text-[11px] font-bold shadow-lg">
-            Glissez vers le haut
-          </div>
-        </div>
-      )}
+          {/* 4 scopes only — media mixed naturally */}
         </div>
       </div>
 
-      {/* Feed: strong snap only for Clips */}
+      {/* Feed */}
       <div
         ref={feedRef}
-        className={`flex-1 overflow-y-auto ${media === "clips" ? "snap-y snap-mandatory" : "snap-none"} scrollbar-hide`}
-        onScroll={() => {
-          if (showClipHint) {
-            setShowClipHint(false);
-            markClipsHintSeen();
-          }
-        }}
+        className="flex-1 overflow-y-auto scrollbar-hide"
       >
         {/* New moments banner */}
         {hasNew && !initialLoading && (
@@ -312,18 +260,8 @@ export function MomentFeed() {
           <div className="p-6">
             <OutsideEmptyState
               icon={Camera}
-              title={
-                media === "posts"
-                  ? "Aucune publication pour le moment"
-                  : media === "clips"
-                  ? "Aucun clip pour le moment"
-                  : "Aucun moment pour l'instant"
-              }
-              description={
-                media === "clips"
-                  ? "Montre l'ambiance dehors."
-                  : "Montre ce qui se passe dehors."
-              }
+              title="Aucun moment pour l'instant"
+              description="Montre ce qui se passe dehors."
               action={(
                 <Link
                   href="/moments/new"
@@ -346,13 +284,13 @@ export function MomentFeed() {
                   onDelete={handleDelete}
                   onHide={handleHide}
                 />
-                {index === 1 && scope === "for-you" && media === "all" && (
+                {index === 1 && scope === "for-you" && (
                   <AccountDiscovery />
                 )}
-                {index === 3 && scope === "for-you" && media === "all" && (
+                {index === 3 && scope === "for-you" && (
                   <CityActiveDiscovery />
                 )}
-                {index === 5 && scope === "for-you" && media === "all" && (
+                {index === 5 && scope === "for-you" && (
                   <TopCreatorsDiscovery />
                 )}
               </>
