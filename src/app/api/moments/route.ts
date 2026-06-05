@@ -126,6 +126,7 @@ export async function GET(req: Request) {
       include: {
         author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
         _count: { select: { likes: true, comments: true } },
+        audioTrack: true,
       },
     });
 
@@ -169,6 +170,17 @@ export async function GET(req: Request) {
       countryCode: m.countryCode,
       visibility: m.visibility,
       createdAt: m.createdAt.toISOString(),
+      audioTrackId: m.audioTrackId,
+      audioStartTime: m.audioStartTime,
+      audioVolume: m.audioVolume,
+      audioTrack: m.audioTrack
+        ? {
+            id: m.audioTrack.id,
+            title: m.audioTrack.title,
+            artistName: m.audioTrack.artistName,
+            audioUrl: m.audioTrack.audioUrl,
+          }
+        : null,
       author: {
         id: m.author.id,
         name: m.author.name,

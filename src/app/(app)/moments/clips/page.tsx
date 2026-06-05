@@ -14,6 +14,7 @@ import {
   Flag,
   Trash2,
   Sparkles,
+  Music,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
@@ -46,6 +47,12 @@ interface ClipItem {
     canDelete: boolean;
     canReport: boolean;
   };
+  audioTrack?: {
+    id: string;
+    title: string;
+    artistName: string | null;
+    audioUrl: string;
+  } | null;
 }
 
 export default function ClipsPage() {
@@ -464,6 +471,20 @@ export default function ClipsPage() {
                 </Link>
               </div>
 
+              {clip.audioTrack && (
+                <Link
+                  href={`/audio/${clip.audioTrack.id}`}
+                  className="flex items-center gap-1.5 mb-1.5 group"
+                >
+                  <Music className="h-3 w-3 text-white/80 group-hover:text-outside-400 transition-colors" />
+                  <span className="text-xs text-white/90 drop-shadow-md truncate font-medium group-hover:text-outside-400 transition-colors">
+                    {clip.audioTrack.title}
+                  </span>
+                  {clip.audioTrack.artistName && (
+                    <span className="text-[10px] text-white/60 truncate">· {clip.audioTrack.artistName}</span>
+                  )}
+                </Link>
+              )}
               {clip.caption && (
                 <p className="text-sm text-white/95 drop-shadow-md line-clamp-2 mb-1 max-w-[80%]">
                   {clip.caption}

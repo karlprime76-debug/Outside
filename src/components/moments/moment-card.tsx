@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast";
 import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck } from "lucide-react";
 import { ShareMomentSheet } from "./share-moment-sheet";
 import { MomentMedia } from "./moment-media";
+import { MomentAudioPlayer } from "@/components/audio/moment-audio-player";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
 import { ReportButton } from "@/components/report-button";
@@ -39,6 +40,15 @@ interface MomentItem {
     canDelete: boolean;
     canReport: boolean;
   };
+  audioTrackId?: string | null;
+  audioStartTime?: number | null;
+  audioVolume?: number | null;
+  audioTrack?: {
+    id: string;
+    title: string;
+    artistName: string | null;
+    audioUrl: string;
+  } | null;
 }
 
 interface MomentCardProps {
@@ -335,6 +345,18 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             <div className="absolute top-2.5 left-2.5 rounded-full bg-black/50 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-white border border-white/10">
               Clip
             </div>
+            {moment.audioTrack && (
+              <div className="absolute bottom-2.5 left-2.5 z-10">
+                <MomentAudioPlayer
+                  audioUrl={moment.audioTrack.audioUrl}
+                  trackId={moment.audioTrack.id}
+                  title={moment.audioTrack.title}
+                  artistName={moment.audioTrack.artistName}
+                  volume={moment.audioVolume ?? 1}
+                  startTime={moment.audioStartTime ?? 0}
+                />
+              </div>
+            )}
           </Link>
         ) : (
           <div
@@ -350,6 +372,18 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             {showHeartAnim && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-heart-pop">
                 <Heart className="h-20 w-20 text-white fill-white drop-shadow-lg" />
+              </div>
+            )}
+            {moment.audioTrack && (
+              <div className="absolute bottom-2.5 left-2.5 z-10">
+                <MomentAudioPlayer
+                  audioUrl={moment.audioTrack.audioUrl}
+                  trackId={moment.audioTrack.id}
+                  title={moment.audioTrack.title}
+                  artistName={moment.audioTrack.artistName}
+                  volume={moment.audioVolume ?? 1}
+                  startTime={moment.audioStartTime ?? 0}
+                />
               </div>
             )}
           </div>

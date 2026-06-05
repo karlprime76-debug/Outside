@@ -40,6 +40,15 @@ interface FeedMoment {
     canDelete: boolean;
     canReport: boolean;
   };
+  audioTrackId?: string | null;
+  audioStartTime?: number | null;
+  audioVolume?: number | null;
+  audioTrack?: {
+    id: string;
+    title: string;
+    artistName: string | null;
+    audioUrl: string;
+  } | null;
 }
 
 type Scope = "for-you" | "city" | "friends" | "following";
