@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useGlobalAudio } from "@/hooks/use-global-audio";
 import { Volume2, VolumeX, Music } from "lucide-react";
+import Link from "next/link";
 
 interface MomentAudioPlayerProps {
   audioUrl: string;
@@ -11,6 +12,7 @@ interface MomentAudioPlayerProps {
   artistName: string | null;
   volume?: number;
   startTime?: number;
+  linkToDetail?: boolean;
 }
 
 export function MomentAudioPlayer({
@@ -20,6 +22,7 @@ export function MomentAudioPlayer({
   artistName,
   volume = 1,
   startTime = 0,
+  linkToDetail = true,
 }: MomentAudioPlayerProps) {
   const { state, play, pause, toggleMute, stop } = useGlobalAudio();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,7 +82,17 @@ export function MomentAudioPlayer({
   return (
     <div ref={containerRef} className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-sm rounded-full">
       <Music className="h-3 w-3 text-white/80 shrink-0" />
-      <span className="text-xs text-white/90 truncate font-medium">{title}</span>
+      {linkToDetail ? (
+        <Link
+          href={`/audio/${trackId}`}
+          onClick={(e) => e.stopPropagation()}
+          className="text-xs text-white/90 truncate font-medium hover:underline"
+        >
+          {title}
+        </Link>
+      ) : (
+        <span className="text-xs text-white/90 truncate font-medium">{title}</span>
+      )}
       {artistName && <span className="text-[10px] text-white/60 truncate">· {artistName}</span>}
       <button
         onClick={handleToggle}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, ChangeEvent, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
@@ -12,6 +12,7 @@ import { AudioPicker } from "@/components/audio/audio-picker";
 
 export default function NewMomentPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { addToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -53,6 +54,25 @@ export default function NewMomentPage() {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Pre-populate audio track from URL query param
+  useEffect(() => {
+    const audioTrackId = searchParams.get("audioTrackId");
+    if (audioTrackId) {
+      fetch(`/api/audio/${audioTrackId}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data?.track) {
+            setAudioTrack({
+              id: data.track.id,
+              title: data.track.title,
+              artistName: data.track.artistName,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [searchParams]);
 
   // Auto-save draft on field changes
   useEffect(() => {

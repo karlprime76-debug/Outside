@@ -31,6 +31,12 @@ interface AudioTrackDetail {
   isOfficial: boolean;
   isOriginal: boolean;
   createdAt: string;
+  owner: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    image: string | null;
+  } | null;
 }
 
 interface MomentUsingTrack {
@@ -62,12 +68,10 @@ export default function AudioDetailPage() {
   const fetchData = useCallback(async () => {
     try {
       const [trackRes, momentsRes] = await Promise.all([
-        fetch(`/api/audio/tracks?q=&limit=1`).then((r) => r.json()),
+        fetch(`/api/audio/${id}`).then((r) => r.ok ? r.json() : null),
         fetch(`/api/audio/${id}/moments`).then((r) => r.ok ? r.json() : { moments: [] }),
       ]);
-      // Find the specific track from the list
-      const found = trackRes.tracks?.find((t: AudioTrackDetail) => t.id === id);
-      setTrack(found || null);
+      setTrack(trackRes?.track || null);
       setMoments(momentsRes.moments || []);
     } catch {
       addToast("Erreur lors du chargement", "error");
@@ -200,10 +204,21 @@ export default function AudioDetailPage() {
           </button>
         </div>
 
+        {/* Owner */}
+        {track.owner && (
+          <div className="flex items-center gap-2.5 justify-center">
+            <Avatar src={track.owner.image} name={track.owner.name} size="sm" />
+            <div className="text-left">
+              <p className="text-xs font-bold text-[var(--os-fg)]">{track.owner.name || "Anonyme"}</p>
+              <p className="text-[10px] text-[var(--os-muted)]">@{track.owner.username || "user"}</p>
+            </div>
+          </div>
+        )}
+
         {/* Use sound button */}
         <Link
-          href="/moments/new"
-          className="block w-full rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-4 py-3 text-center text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+          href={`/moments/new?audioTrackId=${track.id}`}
+          className="block w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-center text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
         >
           Utiliser ce son
         </Link>
