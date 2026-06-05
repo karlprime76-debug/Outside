@@ -7,10 +7,12 @@ import { useSession } from "next-auth/react";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { ReportButton } from "@/components/report-button";
-import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, X, Star, Send, Flag, Tag, Wallet } from "lucide-react";
+import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
 import { formatBudget } from "@/lib/currency";
+import { useHaptic } from "@/hooks/use-haptic";
 
 interface PlanDetail {
   id: string;
@@ -83,6 +85,7 @@ export default function PlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: session } = useSession();
   const t = useDictionary();
+  const haptic = useHaptic();
   const [plan, setPlan] = useState<PlanDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -440,121 +443,109 @@ export default function PlanDetailPage() {
       </div>
 
       {/* Invite modal */}
-      {inviteOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setInviteOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-surface-card dark:border dark:border-surface-border">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">Inviter un ami</h3>
-              <button
-                onClick={() => setInviteOpen(false)}
-                className="rounded-lg p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <X className="h-4 w-4 text-zinc-500" />
-              </button>
-            </div>
-            {friends.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Tu n&apos;as pas encore d&apos;amis à inviter.</p>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {friends.map((f) => (
-                  <div key={f.id} className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/50">
-                    <div className="flex items-center gap-2">
-                      <Avatar src={f.image} name={f.name} size="sm" />
-                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{f.name || "Anonyme"}</span>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        setInviteLoading(true);
-                        try {
-                          const res = await fetch(`/api/plans/${plan.id}/invite`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ userId: f.id }),
-                          });
-                          if (res.ok) {
-                            alert("Invitation envoyée !");
-                          } else {
-                            const data = await res.json();
-                            alert(data.error || "Erreur");
-                          }
-                        } catch {
-                          alert("Erreur réseau");
-                        } finally {
-                          setInviteLoading(false);
-                        }
-                      }}
-                      disabled={inviteLoading}
-                      className="rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1.5 text-xs font-bold text-white shadow-glow disabled:opacity-50"
-                    >
-                      Inviter
-                    </button>
-                  </div>
-                ))}
+      <BottomSheet
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        title="Inviter un ami"
+      >
+        {friends.length === 0 ? (
+          <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis à inviter.</p>
+        ) : (
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {friends.map((f) => (
+              <div key={f.id} className="flex items-center justify-between rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <Avatar src={f.image} name={f.name} size="sm" />
+                  <span className="text-sm font-semibold text-[var(--os-fg)]">{f.name || "Anonyme"}</span>
+                </div>
+                <button
+                  onClick={async () => {
+                    haptic.medium();
+                    setInviteLoading(true);
+                    try {
+                      const res = await fetch(`/api/plans/${plan.id}/invite`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ userId: f.id }),
+                      });
+                      if (res.ok) {
+                        haptic.success();
+                        alert("Invitation envoyée !");
+                      } else {
+                        haptic.error();
+                        const data = await res.json();
+                        alert(data.error || "Erreur");
+                      }
+                    } catch {
+                      haptic.error();
+                      alert("Erreur réseau");
+                    } finally {
+                      setInviteLoading(false);
+                    }
+                  }}
+                  disabled={inviteLoading}
+                  className="rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1.5 text-xs font-bold text-white shadow-glow disabled:opacity-50 active:scale-95"
+                >
+                  Inviter
+                </button>
               </div>
-            )}
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </BottomSheet>
 
       {/* Invite by message modal */}
-      {inviteByMessageOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setInviteByMessageOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-surface-card dark:border dark:border-surface-border">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">Inviter par message</h3>
-              <button
-                onClick={() => setInviteByMessageOpen(false)}
-                className="rounded-lg p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <X className="h-4 w-4 text-zinc-500" />
-              </button>
-            </div>
-            {conversations.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Aucune conversation.</p>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {conversations.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/50">
-                    <div className="flex items-center gap-2">
-                      <Avatar src={c.other.image} name={c.other.name} size="sm" />
-                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{c.other.name || "Anonyme"}</span>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        setShareLoading(true);
-                        try {
-                          const res = await fetch("/api/dm/share-plan", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ conversationId: c.id, planId: plan.id }),
-                          });
-                          if (res.ok) {
-                            alert("Invitation envoyée !");
-                            setInviteByMessageOpen(false);
-                          } else {
-                            const data = await res.json();
-                            alert(data.error || "Erreur");
-                          }
-                        } catch {
-                          alert("Erreur réseau");
-                        } finally {
-                          setShareLoading(false);
-                        }
-                      }}
-                      disabled={shareLoading}
-                      className="rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1.5 text-xs font-bold text-white shadow-glow disabled:opacity-50"
-                    >
-                      Envoyer
-                    </button>
-                  </div>
-                ))}
+      <BottomSheet
+        open={inviteByMessageOpen}
+        onClose={() => setInviteByMessageOpen(false)}
+        title="Inviter par message"
+      >
+        {conversations.length === 0 ? (
+          <p className="text-sm text-[var(--os-muted)]">Aucune conversation.</p>
+        ) : (
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {conversations.map((c) => (
+              <div key={c.id} className="flex items-center justify-between rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <Avatar src={c.other.image} name={c.other.name} size="sm" />
+                  <span className="text-sm font-semibold text-[var(--os-fg)]">{c.other.name || "Anonyme"}</span>
+                </div>
+                <button
+                  onClick={async () => {
+                    haptic.medium();
+                    setShareLoading(true);
+                    try {
+                      const res = await fetch("/api/dm/share-plan", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ conversationId: c.id, planId: plan.id }),
+                      });
+                      if (res.ok) {
+                        haptic.success();
+                        alert("Invitation envoyée !");
+                        setInviteByMessageOpen(false);
+                      } else {
+                        haptic.error();
+                        const data = await res.json();
+                        alert(data.error || "Erreur");
+                      }
+                    } catch {
+                      haptic.error();
+                      alert("Erreur réseau");
+                    } finally {
+                      setShareLoading(false);
+                    }
+                  }}
+                  disabled={shareLoading}
+                  className="rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1.5 text-xs font-bold text-white shadow-glow disabled:opacity-50 active:scale-95"
+                >
+                  Envoyer
+                </button>
               </div>
-            )}
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </BottomSheet>
     </div>
   );
 }

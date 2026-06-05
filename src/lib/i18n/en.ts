@@ -20,6 +20,8 @@ export const en: Dictionary = {
   bottomNav: {
     home: "Home",
     plans: "Plans",
+    live: "Live",
+    moments: "Moments",
     places: "Places",
     friends: "Friends",
     profile: "Profile",

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/toast";
-import { ThumbsUp, ThumbsDown, X, Star } from "lucide-react";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { ThumbsUp, ThumbsDown, Send } from "lucide-react";
+import { useHaptic } from "@/hooks/use-haptic";
 
 interface Props {
   planId: string;
@@ -14,6 +16,7 @@ interface Props {
 
 export function TrustReviewDialog({ planId, reviewedId, reviewedName, onClose, onSubmitted }: Props) {
   const { addToast } = useToast();
+  const haptic = useHaptic();
   const [loading, setLoading] = useState(false);
   const [wasPresent, setWasPresent] = useState<boolean | null>(null);
   const [respectful, setRespectful] = useState<boolean | null>(null);
@@ -39,14 +42,17 @@ export function TrustReviewDialog({ planId, reviewedId, reviewedName, onClose, o
       });
 
       if (res.ok) {
+        haptic.success();
         addToast("Retour envoyé ! Merci.", "success");
         onSubmitted?.();
         onClose();
       } else {
         const data = await res.json().catch(() => ({}));
+        haptic.error();
         addToast(data.error || "Erreur lors de l'envoi", "error");
       }
     } catch {
+      haptic.error();
       addToast("Erreur réseau", "error");
     } finally {
       setLoading(false);
@@ -62,8 +68,8 @@ export function TrustReviewDialog({ planId, reviewedId, reviewedName, onClose, o
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => onChange(true)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            onClick={() => { haptic.light(); onChange(true); }}
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors active:scale-95 ${
               value === true
                 ? "bg-emerald-100 text-emerald-700"
                 : "bg-[var(--os-bg)] text-[var(--os-muted)] hover:bg-emerald-50"
@@ -74,8 +80,8 @@ export function TrustReviewDialog({ planId, reviewedId, reviewedName, onClose, o
           </button>
           <button
             type="button"
-            onClick={() => onChange(false)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+            onClick={() => { haptic.light(); onChange(false); }}
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors active:scale-95 ${
               value === false
                 ? "bg-red-100 text-red-700"
                 : "bg-[var(--os-bg)] text-[var(--os-muted)] hover:bg-red-50"
@@ -90,49 +96,44 @@ export function TrustReviewDialog({ planId, reviewedId, reviewedName, onClose, o
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-surface-card dark:border dark:border-surface-border">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-black text-[var(--os-fg)] flex items-center gap-2">
-            <Star className="h-5 w-5 text-outside-500" />
-            Donner un retour
-          </h3>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-            <X className="h-4 w-4 text-[var(--os-muted)]" />
-          </button>
-        </div>
-
-        <p className="text-sm text-[var(--os-muted)] mb-4">
-          Ton retour sur <span className="font-semibold text-[var(--os-fg)]">{reviewedName}</span> reste anonyme.
-        </p>
-
-        <div className="space-y-4">
-          <Toggle label="Cette personne était présente ?" value={wasPresent} onChange={setWasPresent} />
-          <Toggle label="Respectueuse ?" value={respectful} onChange={setRespectful} />
-          <Toggle label="Le plan était réel ?" value={realPlan} onChange={setRealPlan} />
-          <Toggle label="Bonne ambiance ?" value={goodVibe} onChange={setGoodVibe} />
-
-          <div>
-            <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Commentaire (optionnel)</label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={3}
-              className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] p-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500"
-              placeholder="Décris brièvement ton expérience..."
-            />
-          </div>
-        </div>
-
+    <BottomSheet
+      open
+      onClose={onClose}
+      title="Donner un retour"
+      footer={(
         <button
           onClick={submit}
           disabled={!canSubmit || loading}
-          className="mt-5 w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50"
+          className="w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98]"
         >
+          <Send className="h-4 w-4" />
           {loading ? "Envoi..." : "Envoyer le retour"}
         </button>
+      )}
+    >
+      <div className="space-y-5">
+        <p className="text-sm text-[var(--os-muted)]">
+          Ton retour sur <span className="font-semibold text-[var(--os-fg)]">{reviewedName}</span> reste anonyme.
+        </p>
+
+        <Toggle label="Cette personne était présente ?" value={wasPresent} onChange={setWasPresent} />
+        <Toggle label="Respectueuse ?" value={respectful} onChange={setRespectful} />
+        <Toggle label="Le plan était réel ?" value={realPlan} onChange={setRealPlan} />
+        <Toggle label="Bonne ambiance ?" value={goodVibe} onChange={setGoodVibe} />
+
+        <div>
+          <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Commentaire (optionnel)</label>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+            maxLength={200}
+            className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] p-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500 resize-none"
+            placeholder="Décris brièvement ton expérience..."
+          />
+          <p className="text-[10px] text-[var(--os-muted)] text-right">{comment.length}/200</p>
+        </div>
       </div>
-    </div>
+    </BottomSheet>
   );
 }

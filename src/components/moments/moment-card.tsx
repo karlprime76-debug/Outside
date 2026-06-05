@@ -421,9 +421,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         </div>
       </div>
 
-      {showShareSheet && (
-        <ShareMomentSheet momentId={moment.id} onClose={() => setShowShareSheet(false)} />
-      )}
+      <ShareMomentSheet
+        open={showShareSheet}
+        momentId={moment.id}
+        onClose={() => setShowShareSheet(false)}
+      />
     </div>
   );
 }

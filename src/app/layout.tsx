@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { ThemeMeta } from "@/components/theme-meta";
 import { PwaRegister } from "@/components/pwa-register";
+import { AppContainer } from "@/components/app-container";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,10 +57,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col overflow-x-hidden">
         <ThemeMeta />
         <PwaRegister />
-        <Providers>{children}</Providers>
+        <Providers>
+          <AppContainer>{children}</AppContainer>
+        </Providers>
       </body>
     </html>
   );

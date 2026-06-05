@@ -3,6 +3,7 @@
 import { useState, useCallback, createContext, useContext } from "react";
 import { cn } from "@/lib/cn";
 import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { useStandaloneMode } from "@/hooks/use-standalone-mode";
 
 interface Toast {
   id: string;
@@ -25,6 +26,8 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const mode = useStandaloneMode();
+  const isStandalone = mode !== "browser";
 
   const addToast = useCallback((message: string, type: Toast["type"] = "info") => {
     const id = Math.random().toString(36).slice(2);
@@ -41,7 +44,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
-      <div className="fixed bottom-20 left-0 right-0 z-[60] flex flex-col items-center gap-2 px-4 pointer-events-none md:bottom-4">
+      <div className={cn(
+        "fixed left-0 right-0 z-[60] flex flex-col items-center gap-2 px-4 pointer-events-none transition-all",
+        isStandalone ? "bottom-24" : "bottom-20",
+        "md:bottom-4"
+      )}>
         {toasts.map((toast) => (
           <div
             key={toast.id}
@@ -58,7 +65,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <span>{toast.message}</span>
             <button
               onClick={() => removeToast(toast.id)}
-              className="ml-1 rounded-full p-0.5 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+              className="ml-1 rounded-full p-0.5 hover:bg-black/5 dark:hover:bg-white/10 transition-colors active:scale-95"
             >
               <X className="h-3.5 w-3.5" />
             </button>

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { ArrowLeft, MoreVertical, Phone, ShieldAlert, User, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useState } from "react";
+import { useHaptic } from "@/hooks/use-haptic";
 
 interface DmConversationHeaderProps {
   other: {
@@ -17,6 +19,7 @@ interface DmConversationHeaderProps {
 
 export function DmConversationHeader({ other, onBack }: DmConversationHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const haptic = useHaptic();
 
   return (
     <div className="sticky top-0 z-40 border-b border-[var(--os-card-border)] bg-[var(--os-bg)]/95 backdrop-blur-md px-3 py-2.5">
@@ -25,7 +28,7 @@ export function DmConversationHeader({ other, onBack }: DmConversationHeaderProp
           <button
             onClick={onBack}
             aria-label="Retour"
-            className="rounded-full p-2 hover:bg-[var(--os-card-border)] transition-colors shrink-0"
+            className="rounded-full p-2 hover:bg-[var(--os-card-border)] transition-colors shrink-0 active:scale-95"
           >
             <ArrowLeft className="h-5 w-5 text-[var(--os-fg)]" />
           </button>
@@ -68,48 +71,47 @@ export function DmConversationHeader({ other, onBack }: DmConversationHeaderProp
             </button>
           )}
 
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label="Options"
-              className="rounded-full p-2 text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors"
-            >
-              <MoreVertical className="h-5 w-5" />
-            </button>
+          <button
+            onClick={() => { haptic.light(); setMenuOpen(true); }}
+            aria-label="Options"
+            className="rounded-full p-2 text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors active:scale-95"
+          >
+            <MoreVertical className="h-5 w-5" />
+          </button>
 
-            {menuOpen && (
-              <>
-                <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-full mt-1 w-52 rounded-2xl bg-[var(--os-card)] border border-[var(--os-card-border)] shadow-xl py-1.5 z-40 animate-fade-in">
-                  {other && (
-                    <Link
-                      href={`/u/${other.username || other.id}`}
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
-                    >
-                      <User className="h-4 w-4 text-[var(--os-muted)]" />
-                      Voir le profil
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => { setMenuOpen(false); alert("Signalement bientôt disponible."); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
-                  >
-                    <ShieldAlert className="h-4 w-4 text-red-500" />
-                    Signaler
-                  </button>
-                  <div className="my-1 border-t border-[var(--os-card-border)]" />
-                  <button
-                    onClick={() => { setMenuOpen(false); alert("Suppression bientôt disponible."); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Supprimer la conversation
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          <BottomSheet
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            title="Options"
+          >
+            <div className="space-y-1">
+              {other && (
+                <Link
+                  href={`/u/${other.username || other.id}`}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
+                >
+                  <User className="h-4 w-4 text-[var(--os-muted)]" />
+                  Voir le profil
+                </Link>
+              )}
+              <button
+                onClick={() => { haptic.medium(); setMenuOpen(false); alert("Signalement bientôt disponible."); }}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
+              >
+                <ShieldAlert className="h-4 w-4 text-red-500" />
+                Signaler
+              </button>
+              <div className="my-1 border-t border-[var(--os-card-border)]" />
+              <button
+                onClick={() => { haptic.medium(); setMenuOpen(false); alert("Suppression bientôt disponible."); }}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors active:scale-[0.98]"
+              >
+                <Trash2 className="h-4 w-4" />
+                Supprimer la conversation
+              </button>
+            </div>
+          </BottomSheet>
         </div>
       </div>
     </div>

@@ -394,6 +394,102 @@
     transform: scale(0.98);
   }
 
+  /* Standalone app mode styles */
+  .ios-standalone .safe-header,
+  .ios-standalone .safe-public-header {
+    padding-top: max(env(safe-area-inset-top), 44px);
+  }
+
+  .android-standalone .safe-header,
+  .android-standalone .safe-public-header {
+    padding-top: max(env(safe-area-inset-top), 24px);
+  }
+
+  .ios-standalone .mobile-page-padding {
+    padding-top: calc(max(env(safe-area-inset-top), 44px) + 12px);
+  }
+
+  .android-standalone .mobile-page-padding {
+    padding-top: calc(max(env(safe-area-inset-top), 24px) + 12px);
+  }
+
+  .pt-safe-ios {
+    padding-top: max(env(safe-area-inset-top), 44px);
+  }
+
+  .pt-safe-android {
+    padding-top: max(env(safe-area-inset-top), 24px);
+  }
+
+  /* Hide web-only UI in standalone */
+  .ios-standalone .browser-only,
+  .android-standalone .browser-only {
+    display: none !important;
+  }
+
+  /* Native scroll feel */
+  .ios-standalone,
+  .android-standalone {
+    overscroll-behavior-y: none;
+  }
+
+  .ios-standalone main,
+  .android-standalone main {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent horizontal scroll in app mode */
+  .ios-standalone body,
+  .android-standalone body {
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar hide utility */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Native press feedback */
+  .native-press {
+    transition: transform 0.1s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .native-press:active {
+    transform: scale(0.96);
+    opacity: 0.85;
+  }
+
+  /* Splash loading bar */
+  @keyframes loading-bar {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0%; margin-left: 100%; }
+  }
+
+  /* Sheet slide animation helper */
+  @keyframes sheetSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes sheetBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Smooth page transitions */
+  .page-transition {
+    animation: pageEnter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-auth-fade,
     .animate-auth-slide,

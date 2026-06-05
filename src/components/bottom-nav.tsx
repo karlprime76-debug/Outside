@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Calendar, Radio, Image, User } from "lucide-react";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { useStandaloneMode } from "@/hooks/use-standalone-mode";
+import { useHaptic } from "@/hooks/use-haptic";
 import { cn } from "@/lib/cn";
 
 const ITEMS = [
@@ -17,6 +19,9 @@ const ITEMS = [
 export function BottomNav() {
   const pathname = usePathname();
   const t = useDictionary();
+  const mode = useStandaloneMode();
+  const haptic = useHaptic();
+  const isStandalone = mode !== "browser";
 
   if (pathname.startsWith("/live/") || pathname.startsWith("/moments/clips")) return null;
 
@@ -24,10 +29,14 @@ export function BottomNav() {
     <nav
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50 border-t pb-safe safe-bottom-nav backdrop-blur-xl md:hidden",
-        "border-[var(--os-card-border)] bg-[var(--os-bg)]/80"
+        "border-[var(--os-card-border)] bg-[var(--os-bg)]/90",
+        isStandalone && "bg-[var(--os-bg)]/95 border-opacity-60"
       )}
     >
-      <div className="mx-auto flex h-[4.5rem] max-w-md items-center justify-around px-3">
+      <div className={cn(
+        "mx-auto flex max-w-md items-center justify-around px-3",
+        isStandalone ? "h-16" : "h-[4.5rem]"
+      )}>
         {ITEMS.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -35,7 +44,8 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="relative flex flex-col items-center gap-1 px-3 py-1.5 transition-colors pressable"
+              onClick={() => haptic.light()}
+              className="relative flex flex-col items-center gap-1 px-3 py-1.5 transition-colors active:scale-95"
               aria-current={isActive ? "page" : undefined}
             >
               {isActive && (
@@ -58,7 +68,7 @@ export function BottomNav() {
                     : "text-[var(--os-muted)]"
                 )}
               >
-                {(t.bottomNav as Record<string, string>)[item.labelKey]}
+                {t.bottomNav[item.labelKey]}
               </span>
             </Link>
           );

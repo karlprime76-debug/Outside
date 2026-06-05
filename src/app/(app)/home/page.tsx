@@ -531,15 +531,17 @@ export default function HomePage() {
         )}
       </div>
 
-      {sheetOpen && (
-        <AvailabilitySheet onClose={() => setSheetOpen(false)} onSubmitted={() => {
+      <AvailabilitySheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onSubmitted={() => {
           fetch("/api/availability?mine=1")
             .then((r) => r.json())
             .then((data) => {
               if (data?.availability) setMyAvailability(data.availability);
             });
-        }} />
-      )}
+        }}
+      />
 
       {/* Plans du jour */}
       <section id="plans-section">

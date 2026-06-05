@@ -18,6 +18,8 @@ export interface Dictionary {
   bottomNav: {
     home: string;
     plans: string;
+    live: string;
+    moments: string;
     places: string;
     friends: string;
     profile: string;
