@@ -537,6 +537,24 @@ export default function SettingsPage() {
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
+        <div className="flex items-center justify-between py-3">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-emerald-100 p-2">
+              <Users className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-[var(--os-fg)]">Contacts de confiance</span>
+              <p className="text-xs text-[var(--os-muted)]">Mode sécurité pour les plans</p>
+            </div>
+          </div>
+          <Link
+            href="/settings/safety"
+            className="text-sm font-bold text-outside-600 flex items-center gap-1"
+          >
+            Gérer
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:bg-red-50"

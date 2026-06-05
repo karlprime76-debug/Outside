@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { ReportButton } from "@/components/report-button";
 import { SavePlanButton } from "@/components/save-plan-button";
-import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download, Bell } from "lucide-react";
+import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download, Bell, ShieldCheck, Home, AlertTriangle } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
 import { formatBudget } from "@/lib/currency";
 import { useHaptic } from "@/hooks/use-haptic";
@@ -106,6 +106,10 @@ export default function PlanDetailPage() {
   const [qrOpen, setQrOpen] = useState(false);
   const [qrData, setQrData] = useState<{ qr: string; url: string; title: string; city: string } | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
+  const [safetyShare, setSafetyShare] = useState<{ id: string; status: string; trustedUser: { id: string; name: string | null; image: string | null } } | null>(null);
+  const [safetyLoading, setSafetyLoading] = useState(false);
+  const [safetyContacts, setSafetyContacts] = useState<{ id: string; trustedUser: { id: string; name: string | null; image: string | null } }[]>([]);
+  const [showSafetySheet, setShowSafetySheet] = useState(false);
 
   useEffect(() => {
     fetch(`/api/plans/${id}`)
@@ -123,6 +127,16 @@ export default function PlanDetailPage() {
         setChatLoading(false);
       })
       .catch(() => setChatLoading(false));
+
+    fetch(`/api/plans/${id}/safety`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setSafetyShare(data?.share || null))
+      .catch(() => {});
+
+    fetch("/api/safety/contacts")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setSafetyContacts(data?.contacts || []))
+      .catch(() => {});
   }, [id]);
 
   const isFull = plan?.status === "FULL";
@@ -355,6 +369,84 @@ export default function PlanDetailPage() {
           <QrCode className="h-4 w-4" />
           QR code
         </button>
+        {isParticipant && (
+          <>
+            {!safetyShare ? (
+              <button
+                onClick={() => {
+                  if (safetyContacts.length === 0) {
+                    alert("Ajoute d'abord un contact de confiance dans tes paramètres.");
+                    return;
+                  }
+                  setShowSafetySheet(true);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Mode sécurité
+              </button>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {safetyShare.status === "SHARED" && (
+                  <button
+                    onClick={async () => {
+                      setSafetyLoading(true);
+                      try {
+                        const res = await fetch(`/api/plans/${id}/safety`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ action: "ARRIVED" }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          setSafetyShare((prev) => (prev ? { ...prev, status: data.status } : null));
+                        }
+                      } finally {
+                        setSafetyLoading(false);
+                      }
+                    }}
+                    disabled={safetyLoading}
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-200 transition-colors disabled:opacity-50"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Je suis arrivé
+                  </button>
+                )}
+                {safetyShare.status === "ARRIVED" && (
+                  <button
+                    onClick={async () => {
+                      setSafetyLoading(true);
+                      try {
+                        const res = await fetch(`/api/plans/${id}/safety`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ action: "RETURNED" }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          setSafetyShare((prev) => (prev ? { ...prev, status: data.status } : null));
+                        }
+                      } finally {
+                        setSafetyLoading(false);
+                      }
+                    }}
+                    disabled={safetyLoading}
+                    className="inline-flex items-center gap-2 rounded-xl bg-sky-100 px-4 py-2 text-sm font-bold text-sky-700 hover:bg-sky-200 transition-colors disabled:opacity-50"
+                  >
+                    <Home className="h-4 w-4" />
+                    Je suis rentré
+                  </button>
+                )}
+                {safetyShare.status === "RETURNED" && (
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2 text-sm font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                    <Home className="h-4 w-4" />
+                    Rentré
+                  </span>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Participants */}
@@ -668,6 +760,65 @@ export default function PlanDetailPage() {
             </>
           ) : (
             <p className="text-sm text-[var(--os-muted)]">Impossible de générer le QR code.</p>
+          )}
+        </div>
+      </BottomSheet>
+
+      {/* Safety mode bottom sheet */}
+      <BottomSheet
+        open={showSafetySheet}
+        onClose={() => setShowSafetySheet(false)}
+        title="Mode sécurité"
+      >
+        <div className="space-y-4 p-2">
+          <div className="rounded-xl bg-amber-50 p-3 flex items-start gap-2 dark:bg-amber-950/20">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              Ce mode aide à informer un proche, mais ne remplace pas les mesures de prudence.
+            </p>
+          </div>
+          <p className="text-sm font-semibold text-[var(--os-fg)]">Choisir un contact de confiance</p>
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            {safetyContacts.map((c) => (
+              <button
+                key={c.id}
+                onClick={async () => {
+                  setSafetyLoading(true);
+                  try {
+                    const res = await fetch(`/api/plans/${id}/safety`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ trustedUserId: c.trustedUser.id }),
+                    });
+                    if (res.ok) {
+                      const data = await res.json();
+                      setSafetyShare(data.share);
+                      setShowSafetySheet(false);
+                    } else {
+                      const json = await res.json();
+                      alert(json.error || "Erreur");
+                    }
+                  } catch {
+                    alert("Erreur réseau");
+                  } finally {
+                    setSafetyLoading(false);
+                  }
+                }}
+                disabled={safetyLoading}
+                className="flex w-full items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                <Avatar src={c.trustedUser.image} name={c.trustedUser.name} size="md" />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-[var(--os-fg)]">{c.trustedUser.name || "Anonyme"}</p>
+                </div>
+                <span className="text-xs font-bold text-outside-600">Partager</span>
+              </button>
+            ))}
+          </div>
+          {safetyContacts.length === 0 && (
+            <p className="text-xs text-[var(--os-muted)] text-center">
+              Aucun contact de confiance. Ajoute-en dans tes paramètres.
+            </p>
           )}
         </div>
       </BottomSheet>

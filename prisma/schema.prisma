@@ -365,6 +365,9 @@ model User {
   savedPlans        SavedPlan[]
   planReminders     PlanReminder[]
   proVenues         ProVenue[]
+  safetyContacts    SafetyContact[] @relation("UserSafetyContacts")
+  trustedByContacts SafetyContact[] @relation("TrustedByContacts")
+  safetyShares      PlanSafetyShare[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -1070,4 +1073,33 @@ model ProEvent {
   @@index([status])
   @@index([city])
   @@index([startsAt])
+}
+
+model SafetyContact {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade, name: "UserSafetyContacts")
+  trustedUserId String
+  trustedUser   User     @relation(fields: [trustedUserId], references: [id], onDelete: Cascade, name: "TrustedByContacts")
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, trustedUserId])
+  @@index([userId])
+  @@index([trustedUserId])
+}
+
+model PlanSafetyShare {
+  id            String    @id @default(cuid())
+  userId        String
+  planId        String
+  trustedUserId String
+  trustedUser   User      @relation(fields: [trustedUserId], references: [id], onDelete: Cascade)
+  status        String    @default("SHARED")
+  arrivedAt     DateTime?
+  returnedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([planId])
+  @@index([trustedUserId])
 }
