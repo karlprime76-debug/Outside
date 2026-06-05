@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
+import { notifyLiveStarted } from "@/lib/live-notifications";
 
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/lives";
@@ -124,6 +125,11 @@ export async function POST(req: Request) {
         host: { select: { id: true, name: true, image: true } },
       },
     });
+
+    // Notifier si le live est créé directement en LIVE
+    if (live.status === "LIVE") {
+      notifyLiveStarted(live.id).catch(() => {});
+    }
 
     logPerfEnd(perfLabel);
     return NextResponse.json({ live: liveWithRoom, message: "Live créé." }, { status: 201 });

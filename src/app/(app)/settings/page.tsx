@@ -38,6 +38,7 @@ interface UserSettingsData {
   allowFriendSuggestions: boolean;
   notificationFriendRequests: boolean;
   notificationPlanInvites: boolean;
+  notificationLiveStarted: boolean;
   notificationCityLives: boolean;
   notificationProEvents: boolean;
   notificationMoments: boolean;
@@ -58,6 +59,7 @@ const DEFAULT_SETTINGS: UserSettingsData = {
   allowFriendSuggestions: true,
   notificationFriendRequests: true,
   notificationPlanInvites: true,
+  notificationLiveStarted: true,
   notificationCityLives: true,
   notificationProEvents: true,
   notificationMoments: true,
@@ -473,6 +475,12 @@ export default function SettingsPage() {
           value={settings.notificationPlanInvites}
           onChange={(v) => updateSetting("notificationPlanInvites", v)}
           icon={Calendar}
+        />
+        <Toggle
+          label="Lives des personnes que je suis"
+          value={settings.notificationLiveStarted}
+          onChange={(v) => updateSetting("notificationLiveStarted", v)}
+          icon={Radio}
         />
         <Toggle
           label="Lives dans ma ville"

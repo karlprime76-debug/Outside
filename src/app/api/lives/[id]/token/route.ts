@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createLiveKitToken, createLiveKitRoomName, getLiveKitEnv } from "@/lib/livekit";
+import { notifyLiveStarted } from "@/lib/live-notifications";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -106,6 +107,9 @@ export async function POST(req: Request, { params }: Params) {
         where: { id: live.id },
         data: { status: "LIVE", startedAt: new Date() },
       });
+
+      // Notifier abonnés, amis et utilisateurs concernés
+      notifyLiveStarted(live.id).catch(() => {});
     }
 
     const token = await createLiveKitToken({

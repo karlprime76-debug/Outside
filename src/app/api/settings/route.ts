@@ -11,6 +11,7 @@ const ALLOWED_FIELDS = [
   "allowFriendSuggestions",
   "notificationFriendRequests",
   "notificationPlanInvites",
+  "notificationLiveStarted",
   "notificationCityLives",
   "notificationProEvents",
   "notificationMoments",

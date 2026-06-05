@@ -367,6 +367,7 @@ model UserSettings {
 
   notificationFriendRequests Boolean @default(true)
   notificationPlanInvites    Boolean @default(true)
+  notificationLiveStarted    Boolean @default(true)
   notificationCityLives      Boolean @default(true)
   notificationProEvents      Boolean @default(true)
   notificationMoments        Boolean @default(true)
