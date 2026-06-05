@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
-import { X, Image as ImageIcon, Video, Upload, MapPin, ArrowLeft } from "lucide-react";
+import { useMomentDraft } from "@/hooks/use-moment-draft";
+import { X, Image as ImageIcon, Video, Upload, MapPin, ArrowLeft, Save } from "lucide-react";
 
 export default function NewMomentPage() {
   const router = useRouter();
@@ -19,19 +20,41 @@ export default function NewMomentPage() {
   const [visibility, setVisibility] = useState("PUBLIC");
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showDraftPrompt, setShowDraftPrompt] = useState(false);
 
+  const draft = useMomentDraft();
+
+  // Load city from user profile, then check for draft
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.user?.activeCity?.name) {
-          setCity(data.user.activeCity.name);
-        } else if (data?.user?.homeCity?.name) {
-          setCity(data.user.homeCity.name);
+        const fallbackCity = data?.user?.activeCity?.name || data?.user?.homeCity?.name || "";
+
+        // Check for existing draft
+        const existing = draft.restoreDraft();
+        if (existing) {
+          setShowDraftPrompt(true);
+          // Use draft city if present, else fallback
+          setCity(existing.city || fallbackCity);
+          setCaption(existing.caption || "");
+          setVisibility(existing.visibility || "PUBLIC");
+          setPublishAsClip(existing.publishAsClip || false);
+        } else {
+          setCity(fallbackCity);
         }
       })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-save draft on field changes
+  useEffect(() => {
+    if (caption || city || visibility !== "PUBLIC" || publishAsClip) {
+      draft.saveDraft({ caption, visibility, city, publishAsClip });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caption, visibility, city, publishAsClip]);
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0];
@@ -97,6 +120,7 @@ export default function NewMomentPage() {
 
       const res = await fetch("/api/moments", { method: "POST", body: formData });
       if (res.ok) {
+        draft.clearDraft();
         addToast("Moment publié !", "success");
         router.push("/moments");
         router.refresh();
@@ -135,6 +159,57 @@ export default function NewMomentPage() {
           Les clips montrent l&apos;ambiance dehors en vidéo.
         </p>
       </div>
+
+      {/* Draft prompt */}
+      {showDraftPrompt && (
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 space-y-3 dark:border-sky-900 dark:bg-sky-950/20">
+          <p className="text-sm font-bold text-sky-800 dark:text-sky-300">
+            Reprendre ton brouillon ?
+          </p>
+          <p className="text-xs text-sky-600 dark:text-sky-400">
+            Tu avais commencé un Moment sans le publier.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowDraftPrompt(false)}
+              className="rounded-lg bg-sky-600 px-4 py-2 text-xs font-bold text-white hover:bg-sky-700 transition-colors"
+            >
+              Reprendre
+            </button>
+            <button
+              onClick={() => {
+                draft.clearDraft();
+                setShowDraftPrompt(false);
+                setCaption("");
+                setVisibility("PUBLIC");
+                setPublishAsClip(false);
+                setCity("");
+              }}
+              className="rounded-lg border border-sky-300 px-4 py-2 text-xs font-bold text-sky-700 hover:bg-sky-100 transition-colors dark:border-sky-700 dark:text-sky-300 dark:hover:bg-sky-900/30"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Draft restored but no media */}
+      {draft.draft && !showDraftPrompt && !file && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-start gap-2 dark:border-amber-900 dark:bg-amber-950/20">
+          <MapPin className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            Ajoute à nouveau ton média pour publier ce brouillon.
+          </p>
+        </div>
+      )}
+
+      {/* Auto-save indicator */}
+      {draft.savedAt && !showDraftPrompt && (
+        <div className="flex items-center gap-1.5 text-[10px] text-[var(--os-muted)] animate-fade-in">
+          <Save className="h-3 w-3" />
+          <span>Brouillon enregistré</span>
+        </div>
+      )}
 
       {!file ? (
         <div
