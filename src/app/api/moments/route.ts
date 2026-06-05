@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canViewPlan } from "@/lib/plans/permissions";
+import { recordTripHistory } from "@/lib/passport";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateMomentFile, buildMomentPath, ensureMomentsBucket, MOMENTS_BUCKET } from "@/lib/supabase/moments-storage";
 import { MomentVisibility, MomentType } from "@prisma/client";
@@ -286,6 +287,16 @@ export async function POST(req: Request) {
         author: { select: { id: true, name: true, username: true, image: true } },
       },
     });
+
+    if (city) {
+      recordTripHistory({
+        userId: user.id,
+        city,
+        countryCode,
+        source: "MOMENT_PUBLISHED",
+        momentId: moment.id,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ moment }, { status: 201 });
   } catch (error) {

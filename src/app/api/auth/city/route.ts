@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { recordTripHistory } from "@/lib/passport";
 
 export async function PATCH(req: Request) {
   try {
@@ -10,6 +11,15 @@ export async function PATCH(req: Request) {
     }
 
     const { activeCityId, travelModeEnabled } = await req.json();
+
+    let cityData: { name: string; countryCode: string | null } | null = null;
+    if (activeCityId) {
+      const city = await db.city.findUnique({
+        where: { id: activeCityId },
+        select: { name: true, countryCode: true },
+      });
+      if (city) cityData = city;
+    }
 
     const updated = await db.user.update({
       where: { id: user.id },
@@ -24,6 +34,15 @@ export async function PATCH(req: Request) {
         travelModeEnabled: true,
       },
     });
+
+    if (cityData && travelModeEnabled === true) {
+      recordTripHistory({
+        userId: user.id,
+        city: cityData.name,
+        countryCode: cityData.countryCode,
+        source: "TRAVEL_MODE",
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ user: updated });
   } catch (error) {

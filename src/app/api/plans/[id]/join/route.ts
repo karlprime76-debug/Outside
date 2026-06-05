@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { canJoinPlan } from "@/lib/plans/permissions";
 import { evaluateBadgesAfterPlanJoined } from "@/lib/badges";
 import { createPlanReminders } from "@/lib/plan-reminders";
+import { recordTripHistory } from "@/lib/passport";
 
 const VALID_ATTENDANCE = ["GOING", "MAYBE"] as const;
 
@@ -26,7 +27,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const plan = await db.plan.findUnique({
       where: { id },
-      include: { participants: { where: { attendance: "GOING" } } },
+      include: { participants: { where: { attendance: "GOING" } }, city: { select: { name: true, countryCode: true } } },
     });
 
     if (!plan) {
@@ -72,6 +73,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     createPlanReminders(user.id, id, plan.startDate).catch(() => {});
     evaluateBadgesAfterPlanJoined(user.id).catch(() => {});
+
+    if (plan.city) {
+      recordTripHistory({
+        userId: user.id,
+        city: plan.city.name,
+        countryCode: plan.city.countryCode,
+        source: "PLAN_JOINED",
+        planId: id,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

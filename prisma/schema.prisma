@@ -1103,3 +1103,19 @@ model PlanSafetyShare {
   @@index([planId])
   @@index([trustedUserId])
 }
+
+model UserTripHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  city        String
+  countryCode String?
+  source      String
+  planId      String?
+  eventId     String?
+  momentId    String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([city])
+  @@index([createdAt])
+}

@@ -21,6 +21,7 @@ import {
   Star,
   Calendar,
   AlertTriangle,
+  TrendingUp,
 } from "lucide-react";
 
 interface City {
@@ -50,12 +51,36 @@ interface UserProfile {
   countryCode?: string | null;
 }
 
+interface PassportStats {
+  joinedPlans: number;
+  createdPlans: number;
+  momentsPublished: number;
+  eventsParticipated: number;
+  citiesExplored: number;
+}
+
+interface CityExplored {
+  city: string;
+  count: number;
+}
+
+interface TripHistoryEntry {
+  id: string;
+  city: string;
+  countryCode: string | null;
+  source: string;
+  createdAt: string;
+}
+
 export default function PassportPage() {
   const router = useRouter();
   useSession();
   const [cities, setCities] = useState<City[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [passportStats, setPassportStats] = useState<PassportStats | null>(null);
+  const [citiesExplored, setCitiesExplored] = useState<CityExplored[]>([]);
+  const [history, setHistory] = useState<TripHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [geoDetecting, setGeoDetecting] = useState(false);
@@ -70,11 +95,17 @@ export default function PassportPage() {
       fetch("/api/cities").then((r) => r.json()),
       fetch("/api/auth/me").then((r) => (r.ok ? r.json() : null)),
       fetch("/api/plans").then((r) => r.json()),
+      fetch("/api/passport").then((r) => (r.ok ? r.json() : null)),
     ])
-      .then(([citiesData, meData, plansData]) => {
+      .then(([citiesData, meData, plansData, passportData]) => {
         setCities(citiesData.cities || []);
         if (meData?.user) setUserProfile(meData.user);
         setPlans(plansData.plans?.slice(0, 4) || []);
+        if (passportData) {
+          setPassportStats(passportData.stats);
+          setCitiesExplored(passportData.citiesExplored || []);
+          setHistory(passportData.history || []);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -413,27 +444,109 @@ export default function PassportPage() {
         )}
       </section>
 
-      {/* Villes visitées */}
+      {/* Stats */}
+      {passportStats && (
+        <section className="os-card p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-[var(--os-fg)]">Statistiques</h2>
+              <p className="text-xs text-[var(--os-muted)]">Ton activité sur OUTSIDE.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-[var(--os-bg)] p-4 text-center">
+              <p className="text-2xl font-black text-outside-600">{passportStats.joinedPlans}</p>
+              <p className="text-xs text-[var(--os-muted)]">Plans rejoints</p>
+            </div>
+            <div className="rounded-xl bg-[var(--os-bg)] p-4 text-center">
+              <p className="text-2xl font-black text-outside-600">{passportStats.momentsPublished}</p>
+              <p className="text-xs text-[var(--os-muted)]">Moments publiés</p>
+            </div>
+            <div className="rounded-xl bg-[var(--os-bg)] p-4 text-center">
+              <p className="text-2xl font-black text-outside-600">{passportStats.citiesExplored}</p>
+              <p className="text-xs text-[var(--os-muted)]">Villes explorées</p>
+            </div>
+            <div className="rounded-xl bg-[var(--os-bg)] p-4 text-center">
+              <p className="text-2xl font-black text-outside-600">{passportStats.createdPlans}</p>
+              <p className="text-xs text-[var(--os-muted)]">Plans créés</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Villes explorées */}
       <section className="os-card p-6">
         <div className="flex items-center gap-2 mb-4">
           <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center">
             <MapPin className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-[var(--os-fg)]">Villes visitées</h2>
+            <h2 className="text-lg font-bold text-[var(--os-fg)]">Villes explorées</h2>
             <p className="text-xs text-[var(--os-muted)]">Ton historique de villes OUTSIDE.</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl bg-[var(--os-bg)] p-4">
-          <div className="h-10 w-10 rounded-full bg-[var(--os-card-border)] flex items-center justify-center">
-            <Globe className="h-5 w-5 text-[var(--os-muted)]" />
+        {citiesExplored.length === 0 ? (
+          <div className="flex items-center gap-3 rounded-xl bg-[var(--os-bg)] p-4">
+            <div className="h-10 w-10 rounded-full bg-[var(--os-card-border)] flex items-center justify-center">
+              <Globe className="h-5 w-5 text-[var(--os-muted)]" />
+            </div>
+            <p className="text-sm text-[var(--os-muted)]">
+              Tu n&apos;as pas encore visité d&apos;autres villes. Change de ville active pour commencer.
+            </p>
           </div>
-          <p className="text-sm text-[var(--os-muted)]">
-            Tu n&apos;as pas encore visité d&apos;autres villes. Change de ville active pour commencer.
-          </p>
-        </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {citiesExplored.map((c) => (
+              <div
+                key={c.city}
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400"
+              >
+                <MapPin className="h-3.5 w-3.5" />
+                {c.city}
+                <span className="text-xs font-normal text-emerald-500">({c.count})</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
+
+      {/* Historique des sorties */}
+      {history.length > 0 && (
+        <section className="os-card p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-10 w-10 rounded-xl bg-sky-100 flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-sky-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-[var(--os-fg)]">Historique des sorties</h2>
+              <p className="text-xs text-[var(--os-muted)]">Ton historique mensuel.</p>
+            </div>
+          </div>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {history.map((h) => (
+              <div
+                key={h.id}
+                className="flex items-center justify-between rounded-xl bg-[var(--os-bg)] p-3"
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-[var(--os-muted)]" />
+                  <span className="text-sm font-semibold text-[var(--os-fg)]">{h.city}</span>
+                  <span className="text-xs text-[var(--os-muted)]">
+                    {h.source === "PLAN_JOINED" ? "Plan" : h.source === "MOMENT_PUBLISHED" ? "Moment" : h.source === "TRAVEL_MODE" ? "Voyage" : "Événement"}
+                  </span>
+                </div>
+                <span className="text-xs text-[var(--os-muted)]">
+                  {new Date(h.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Conseils pour sortir en sécurité */}
       <section className="os-card p-6">
