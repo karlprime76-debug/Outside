@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, MoreVertical, Phone, ShieldAlert, User, Trash2 } from "lucide-react";
+import { ArrowLeft, MoreVertical, Phone, User, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useState } from "react";
 import { useHaptic } from "@/hooks/use-haptic";
+import { ReportButton } from "@/components/report-button";
 
 interface DmConversationHeaderProps {
   other: {
@@ -95,13 +96,11 @@ export function DmConversationHeader({ other, onBack }: DmConversationHeaderProp
                   Voir le profil
                 </Link>
               )}
-              <button
-                onClick={() => { haptic.medium(); setMenuOpen(false); alert("Signalement bientôt disponible."); }}
-                className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-              >
-                <ShieldAlert className="h-4 w-4 text-red-500" />
-                Signaler
-              </button>
+              {other && (
+                <div className="px-3 py-1">
+                  <ReportButton targetType="USER" targetId={other.id} />
+                </div>
+              )}
               <div className="my-1 border-t border-[var(--os-card-border)]" />
               <button
                 onClick={() => { haptic.medium(); setMenuOpen(false); alert("Suppression bientôt disponible."); }}

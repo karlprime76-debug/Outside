@@ -85,7 +85,7 @@ export default function PlaceDetailPage() {
       )}
 
       <div className="flex justify-end">
-        <ReportButton placeId={place.id} />
+        <ReportButton targetType="PLAN" targetId={place.id} />
       </div>
     </div>
   );

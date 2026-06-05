@@ -193,6 +193,11 @@ enum ReportReason {
   FAKE_PROFILE
   DANGEROUS_PLAN
   UNDERAGE
+  SCAM
+  VIOLENCE
+  HATE
+  SEXUAL_CONTENT
+  PRIVATE_INFO
   OTHER
 }
 
@@ -702,6 +707,7 @@ model Report {
   updatedAt       DateTime     @updatedAt
 
   @@index([reporterId])
+  @@index([targetType, targetId])
   @@index([status])
 }
 

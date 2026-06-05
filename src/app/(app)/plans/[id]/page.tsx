@@ -439,7 +439,7 @@ export default function PlanDetailPage() {
 
       {/* Report */}
       <div className="flex justify-end">
-        <ReportButton planId={plan.id} />
+        <ReportButton targetType="PLAN" targetId={plan.id} />
       </div>
 
       {/* Invite modal */}

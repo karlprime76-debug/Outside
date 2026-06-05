@@ -13,16 +13,20 @@ const REASONS = [
   { value: "FAKE_PROFILE", label: "Faux profil" },
   { value: "DANGEROUS_PLAN", label: "Plan dangereux" },
   { value: "UNDERAGE", label: "Mineur" },
+  { value: "SCAM", label: "Arnaque" },
+  { value: "VIOLENCE", label: "Violence" },
+  { value: "HATE", label: "Discours haineux" },
+  { value: "SEXUAL_CONTENT", label: "Contenu sexuel" },
+  { value: "PRIVATE_INFO", label: "Infos privées" },
   { value: "OTHER", label: "Autre" },
 ];
 
 interface ReportButtonProps {
-  planId?: string;
-  placeId?: string;
-  reportedUserId?: string;
+  targetType: string;
+  targetId: string;
 }
 
-export function ReportButton({ planId, placeId, reportedUserId }: ReportButtonProps) {
+export function ReportButton({ targetType, targetId }: ReportButtonProps) {
   const { addToast } = useToast();
   const haptic = useHaptic();
   const [open, setOpen] = useState(false);
@@ -42,22 +46,22 @@ export function ReportButton({ planId, placeId, reportedUserId }: ReportButtonPr
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          targetType,
+          targetId,
           reason,
           description: description.trim() || undefined,
-          planId,
-          placeId,
-          reportedUserId,
         }),
       });
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok || res.status === 200) {
         haptic.success();
-        addToast("Signalement envoyé", "success");
+        addToast(data.message || "Signalement envoyé", "success");
         setOpen(false);
         setReason("");
         setDescription("");
       } else {
         haptic.error();
-        addToast("Erreur lors du signalement", "error");
+        addToast(data.error || "Erreur lors du signalement", "error");
       }
     } catch {
       haptic.error();

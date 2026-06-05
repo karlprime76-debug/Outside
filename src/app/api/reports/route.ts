@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import { ReportReason } from "@prisma/client";
+
+const VALID_TARGET_TYPES = [
+  "USER",
+  "MOMENT",
+  "DIRECT_MESSAGE",
+  "PLAN",
+  "LIVE",
+  "COMMENT",
+] as const;
 
 export async function POST(req: Request) {
   try {
@@ -13,31 +23,67 @@ export async function POST(req: Request) {
     const limit = rateLimit(`report:${user.id}`, 5, 60000);
     if (!limit.success) {
       return NextResponse.json(
-        { error: "Too many reports. Please try again later." },
+        { error: "Trop de signalements. Réessaie plus tard." },
         { status: 429, headers: getRateLimitHeaders(limit) }
       );
     }
 
     const body = await req.json();
+    const { targetType, targetId, reason, description } = body;
 
-    if (!body.reason) {
-      return NextResponse.json({ error: "Reason required" }, { status: 400 });
+    if (!targetType || !VALID_TARGET_TYPES.includes(targetType)) {
+      return NextResponse.json({ error: "Type de cible invalide" }, { status: 400 });
     }
 
-    const report = await db.report.create({
-      data: {
+    if (!targetId || typeof targetId !== "string") {
+      return NextResponse.json({ error: "ID de cible requis" }, { status: 400 });
+    }
+
+    if (!reason || !Object.values(ReportReason).includes(reason)) {
+      return NextResponse.json({ error: "Raison requise" }, { status: 400 });
+    }
+
+    // Anti auto-signalement
+    if (targetType === "USER" && targetId === user.id) {
+      return NextResponse.json({ error: "Tu ne peux pas te signaler toi-même." }, { status: 400 });
+    }
+
+    // Anti-doublon : empêcher un signalement identique dans les 24h
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const existing = await db.report.findFirst({
+      where: {
         reporterId: user.id,
-        reportedUserId: body.reportedUserId || null,
-        planId: body.planId || null,
-        placeId: body.placeId || null,
-        reason: body.reason,
-        description: body.description || null,
+        targetType,
+        targetId,
+        createdAt: { gte: yesterday },
       },
     });
 
-    return NextResponse.json({ report }, { status: 201 });
+    if (existing) {
+      return NextResponse.json(
+        { message: "Signalement envoyé. Merci de nous aider à garder OUTSIDE sûr." },
+        { status: 200 }
+      );
+    }
+
+    await db.report.create({
+      data: {
+        reporterId: user.id,
+        targetType,
+        targetId,
+        reason,
+        description: description?.trim() || null,
+        status: "PENDING",
+      },
+    });
+
+    return NextResponse.json(
+      { message: "Signalement envoyé. Merci de nous aider à garder OUTSIDE sûr." },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error("Create report error:", error);
+    console.error("[REPORT_ERROR]", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+

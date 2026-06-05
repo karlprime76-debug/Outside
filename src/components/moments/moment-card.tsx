@@ -4,12 +4,13 @@ import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { Heart, MessageCircle, Share2, Flag, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck } from "lucide-react";
 import { ShareMomentSheet } from "./share-moment-sheet";
 import { MomentMedia } from "./moment-media";
 import { MediaViewer } from "@/components/media/media-viewer";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
+import { ReportButton } from "@/components/report-button";
 
 interface Author {
   id: string;
@@ -107,11 +108,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     }
   };
 
-  const handleReport = async () => {
-    if (!confirm("Signaler ce moment ?")) return;
-    const res = await fetch(`/api/moments/${moment.id}/report`, { method: "POST" });
-    if (res.ok) addToast("Moment signalé.", "success");
-  };
+  // Report handled by <ReportButton />
 
   const handleHideLocal = () => {
     try {
@@ -241,13 +238,9 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             Masquer
           </button>
           {moment.viewerState.canReport && (
-            <button
-              onClick={() => { haptic.medium(); setMenuOpen(false); handleReport(); }}
-              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors active:scale-[0.98]"
-            >
-              <Flag className="h-4 w-4" />
-              Signaler
-            </button>
+            <div className="px-3 py-1">
+              <ReportButton targetType="MOMENT" targetId={moment.id} />
+            </div>
           )}
           {moment.viewerState.canDelete && (
             <button

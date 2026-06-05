@@ -16,6 +16,7 @@ import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
 import { TrustReviewButton } from "@/components/trust/trust-review-button";
 import { UserBadges } from "@/components/profile/user-badges";
+import { ReportButton } from "@/components/report-button";
 import type { TrustData } from "@/lib/trust";
 import { PublicProfileMoments, type PublicMomentItem } from "@/components/profile/public-profile-moments";
 import { PublicProfileTabs } from "@/components/profile/public-profile-tabs";
@@ -293,6 +294,7 @@ export default async function PublicProfilePage({ params }: Props) {
             <FollowButton userId={user.id} relation={relation} />
           )}
           <TrustReviewButton reviewedId={user.id} reviewedName={user.name || undefined} />
+          <ReportButton targetType="USER" targetId={user.id} />
         </div>
       )}
 

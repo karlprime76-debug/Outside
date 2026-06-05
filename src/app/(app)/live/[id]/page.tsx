@@ -7,6 +7,7 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { ReportButton } from "@/components/report-button";
 
 const LiveKitRoomView = dynamic(() => import("@/components/live/livekit-room-view"), { ssr: false });
 
@@ -95,6 +96,7 @@ export default function LiveDetailPage() {
 
   if (live && live.status && live.status !== "LIVE") {
     const endedText = live.status === "ENDED" ? "Ce live est terminé." : live.status === "CANCELLED" ? "Ce live a été annulé." : "Ce live n'est pas en direct.";
+    const isHost = session?.user?.id === live.hostId;
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center bg-black text-white p-6 text-center">
         <p className="text-sm font-semibold text-white/80 mb-2">{endedText}</p>
@@ -105,6 +107,11 @@ export default function LiveDetailPage() {
           <ArrowLeft className="h-3.5 w-3.5" />
           Retour aux lives
         </Link>
+        {!isHost && (
+          <div className="mt-6">
+            <ReportButton targetType="LIVE" targetId={live.id} />
+          </div>
+        )}
       </div>
     );
   }
