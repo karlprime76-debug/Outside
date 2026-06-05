@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { AnimatedPage } from "@/components/ui/animated-page";
-import { ArrowLeft, Briefcase, CheckCircle, Globe, CalendarDays, TrendingUp, Star } from "lucide-react";
+import { ArrowLeft, Briefcase, CheckCircle, Globe, CalendarDays, TrendingUp, Star, Building2 } from "lucide-react";
 
 export default function ProPage() {
   return (
@@ -54,6 +54,24 @@ export default function ProPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Venue CTA */}
+      <div className="os-card p-6 text-center">
+        <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+          <Building2 className="h-5 w-5 text-emerald-600" />
+        </div>
+        <h2 className="text-lg font-black text-[var(--os-fg)] mb-2">Tu gères un lieu ?</h2>
+        <p className="text-sm text-[var(--os-muted)] mb-4">
+          Bar, restaurant, rooftop, salle... Fais vérifier ton lieu et obtiens le badge &quot;Lieu vérifié&quot;.
+        </p>
+        <Link
+          href="/pro/venue/apply"
+          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
+        >
+          <CheckCircle className="h-4 w-4" />
+          Vérifier mon lieu
+        </Link>
       </div>
 
       {/* CTA */}

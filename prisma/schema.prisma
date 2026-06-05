@@ -269,6 +269,14 @@ enum IdentityVerificationStatus {
   REJECTED
 }
 
+enum VenueVerificationStatus {
+  NOT_SUBMITTED
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
 enum TrustSignalType {
   PROFILE_PHOTO
   EMAIL_VERIFIED
@@ -356,6 +364,7 @@ model User {
   directMessagesSent       DirectMessage[]
   savedPlans        SavedPlan[]
   planReminders     PlanReminder[]
+  proVenues         ProVenue[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -996,6 +1005,37 @@ model ProAccount {
   @@index([userId])
   @@index([status])
   @@index([city])
+}
+
+model ProVenue {
+  id              String                  @id @default(cuid())
+  ownerId         String
+  owner           User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  name            String
+  category        String?
+  description     String?
+  country         String?
+  countryCode     String?
+  city            String?
+  area            String?
+  addressPublic   String?
+  phone           String?
+  email           String?
+  instagram       String?
+  tiktok          String?
+  logoUrl         String?
+  documentUrl     String?
+
+  status          VenueVerificationStatus @default(PENDING)
+  rejectionReason String?
+
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([ownerId])
+  @@index([city])
+  @@index([status])
 }
 
 model ProEvent {
