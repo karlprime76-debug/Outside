@@ -17,6 +17,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { OutsideHeader } from "@/components/ui/outside-header";
 import { OutsidePage } from "@/components/ui/outside-page";
+import { AccountSuggestions } from "@/components/users/account-suggestions";
 import { useSession } from "next-auth/react";
 
 type Tab = "primary" | "requests" | "general";
@@ -209,6 +210,11 @@ export default function DmInboxPage() {
               );
             })}
           </div>
+        </div>
+
+        {/* Account suggestions */}
+        <div className="px-4 pb-2">
+          <AccountSuggestions title="Personnes à qui parler" limit={5} />
         </div>
 
         {error && (

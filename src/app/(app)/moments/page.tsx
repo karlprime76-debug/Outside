@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { MomentFeed } from "@/components/moments/moment-feed";
+import { AccountSuggestions } from "@/components/users/account-suggestions";
 import { OutsidePage } from "@/components/ui/outside-page";
 import { OutsideHeader } from "@/components/ui/outside-header";
 
@@ -22,8 +23,13 @@ export default function MomentsPage() {
           </Link>
         )}
       />
-      <div className="flex-1 overflow-hidden">
-        <MomentFeed />
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-shrink-0 p-4 pb-2">
+          <AccountSuggestions title="Comptes à découvrir" limit={5} />
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <MomentFeed />
+        </div>
       </div>
     </OutsidePage>
   );

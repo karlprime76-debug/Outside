@@ -37,6 +37,7 @@ import {
   Image as ImageIcon,
   Compass,
 } from "lucide-react";
+import { AccountSuggestions } from "@/components/users/account-suggestions";
 import { AvailabilitySheet } from "@/components/availability/availability-sheet";
 import { useMomentPolling } from "@/hooks/use-moment-polling";
 
@@ -228,6 +229,12 @@ export default function HomePage() {
           );
         })()
       )}
+
+      {/* Account suggestions */}
+      <section className="animate-slide-up animate-stagger-1">
+        <AccountSuggestions title="Personnes à suivre" limit={5} />
+      </section>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
