@@ -7,7 +7,6 @@ import { useToast } from "@/components/ui/toast";
 import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck } from "lucide-react";
 import { ShareMomentSheet } from "./share-moment-sheet";
 import { MomentMedia } from "./moment-media";
-import { MediaViewer } from "@/components/media/media-viewer";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
 import { ReportButton } from "@/components/report-button";
@@ -62,8 +61,9 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [followLoading, setFollowLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [likeAnim, setLikeAnim] = useState(false);
-  const [viewerOpen, setViewerOpen] = useState(false);
+  const [showHeartAnim, setShowHeartAnim] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef(0);
   const isVideo = moment.type === "VIDEO";
   const isMe = moment.viewerState.canDelete;
 
@@ -77,7 +77,6 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
       setLikeAnim(true);
       setTimeout(() => setLikeAnim(false), 300);
     }
-
     try {
       const res = await fetch(`/api/moments/${moment.id}/like`, {
         method: newLiked ? "POST" : "DELETE",
@@ -97,6 +96,18 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
       setLikeLoading(false);
     }
   }, [liked, likeLoading, likesCount, moment.id, onLikeToggle]);
+
+  const handlePhotoDoubleTap = useCallback(() => {
+    const now = Date.now();
+    const isDoubleTap = now - lastTapRef.current < 350;
+    lastTapRef.current = now;
+
+    if (isDoubleTap && !liked) {
+      handleLike();
+      setShowHeartAnim(true);
+      setTimeout(() => setShowHeartAnim(false), 700);
+    }
+  }, [liked, handleLike]);
 
   const handleShare = async () => {
     const url = `${window.location.origin}/moments?highlight=${moment.id}`;
@@ -326,9 +337,9 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             </div>
           </Link>
         ) : (
-          <button
-            onClick={() => setViewerOpen(true)}
-            className="relative aspect-[4/5] bg-black overflow-hidden block w-full text-left p-0 border-0"
+          <div
+            className="relative aspect-[4/5] bg-black overflow-hidden w-full select-none"
+            onClick={handlePhotoDoubleTap}
           >
             <MomentMedia
               type={moment.type}
@@ -336,15 +347,12 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               className="h-full w-full object-cover"
               preload="metadata"
             />
-          </button>
-        )}
-        {viewerOpen && (
-          <MediaViewer
-            src={moment.mediaUrl}
-            type="image"
-            alt={moment.caption || "Moment"}
-            onClose={() => setViewerOpen(false)}
-          />
+            {showHeartAnim && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-heart-pop">
+                <Heart className="h-20 w-20 text-white fill-white drop-shadow-lg" />
+              </div>
+            )}
+          </div>
         )}
 
         {/* Actions & info */}

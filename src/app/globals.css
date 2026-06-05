@@ -356,6 +356,17 @@
   .animate-stagger-5 { animation-delay: 0.40s; }
   .animate-stagger-6 { animation-delay: 0.48s; }
 
+  .animate-heart-pop {
+    animation: heartPop 0.7s ease-out both;
+  }
+
+  @keyframes heartPop {
+    0% { opacity: 0; transform: scale(0.2) translateY(10px); }
+    30% { opacity: 1; transform: scale(1.2) translateY(-4px); }
+    60% { opacity: 1; transform: scale(1) translateY(-8px); }
+    100% { opacity: 0; transform: scale(0.6) translateY(-20px); }
+  }
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
