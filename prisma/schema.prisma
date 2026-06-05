@@ -143,6 +143,20 @@ enum DirectMessagePermission {
   EVERYONE
 }
 
+enum AudioSourceType {
+  OUTSIDE_LIBRARY
+  USER_ORIGINAL
+  ARTIST_UPLOAD
+  MOMENT_ORIGINAL
+}
+
+enum AudioStatus {
+  ACTIVE
+  PENDING_REVIEW
+  BLOCKED
+  DELETED
+}
+
 enum PlaceCategory {
   RESTAURANT
   CAFE
@@ -681,6 +695,11 @@ model Moment {
   eventId     String?
   liveId      String?
 
+  audioTrackId String?
+  audioStartTime Int?           @default(0)
+  audioVolume Float?             @default(1)
+  audioTrack   AudioTrack?       @relation(fields: [audioTrackId], references: [id], onDelete: SetNull)
+
   expiresAt   DateTime?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -694,6 +713,34 @@ model Moment {
   @@index([placeId])
   @@index([createdAt])
   @@index([visibility])
+}
+
+model AudioTrack {
+  id          String           @id @default(cuid())
+  ownerId     String?
+  title       String
+  artistName  String?
+  sourceType  AudioSourceType  @default(USER_ORIGINAL)
+  status      AudioStatus      @default(ACTIVE)
+
+  audioUrl    String
+  audioPath   String?
+  duration    Int?
+  coverUrl    String?
+
+  isOfficial  Boolean          @default(false)
+  isOriginal  Boolean          @default(false)
+  usageCount  Int              @default(0)
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  moments     Moment[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([sourceType])
+  @@index([usageCount])
 }
 
 model MomentLike {

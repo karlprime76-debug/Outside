@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { useMomentDraft } from "@/hooks/use-moment-draft";
-import { X, Image as ImageIcon, Video, Upload, MapPin, ArrowLeft, Save } from "lucide-react";
+import { X, Image as ImageIcon, Video, Upload, MapPin, ArrowLeft, Save, Volume2 } from "lucide-react";
+import { AUDIO_RIGHTS_NOTICE } from "@/lib/audio";
 
 export default function NewMomentPage() {
   const router = useRouter();
@@ -266,6 +267,10 @@ export default function NewMomentPage() {
             </label>
           </div>
         )}
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
+          <Volume2 className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+          <p className="text-xs text-amber-700 dark:text-amber-400">{AUDIO_RIGHTS_NOTICE}</p>
+        </div>
         <div>
           <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Légende (optionnel)</label>
           <textarea
