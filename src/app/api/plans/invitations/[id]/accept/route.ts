@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+const VALID_ATTENDANCE = ["GOING", "MAYBE"] as const;
+
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -10,10 +12,20 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     }
 
     const { id } = await params;
+    const body = await req.json().catch(() => ({}));
+    const attendance = VALID_ATTENDANCE.includes(body.attendance) ? body.attendance : "GOING";
 
     const invitation = await db.planInvitation.findUnique({
       where: { id },
-      include: { plan: { select: { id: true, maxParticipants: true, status: true, _count: { select: { participants: true } } } } },
+      include: {
+        plan: {
+          select: {
+            id: true,
+            maxParticipants: true,
+            status: true,
+          },
+        },
+      },
     });
 
     if (!invitation) {
@@ -37,14 +49,28 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       where: { planId_userId: { planId: invitation.planId, userId: user.id } },
     });
 
-    if (!existingParticipant) {
+    if (existingParticipant) {
+      await db.planParticipant.update({
+        where: { planId_userId: { planId: invitation.planId, userId: user.id } },
+        data: { attendance },
+      });
+    } else {
+      // Check capacity for GOING only
+      if (attendance === "GOING" && invitation.plan.status === "FULL") {
+        return NextResponse.json({ error: "Plan complet" }, { status: 409 });
+      }
+
       await db.planParticipant.create({
-        data: { planId: invitation.planId, userId: user.id, status: "CONFIRMED" },
+        data: { planId: invitation.planId, userId: user.id, status: "CONFIRMED", attendance },
       });
 
-      const updatedCount = invitation.plan._count.participants + 1;
-      if (updatedCount >= invitation.plan.maxParticipants && invitation.plan.status === "ACTIVE") {
-        await db.plan.update({ where: { id: invitation.planId }, data: { status: "FULL" } });
+      if (attendance === "GOING" && invitation.plan.status === "ACTIVE") {
+        const goingCount = await db.planParticipant.count({
+          where: { planId: invitation.planId, attendance: "GOING" },
+        });
+        if (goingCount >= invitation.plan.maxParticipants) {
+          await db.plan.update({ where: { id: invitation.planId }, data: { status: "FULL" } });
+        }
       }
     }
 

@@ -256,7 +256,7 @@ export default function PlansPage() {
                 <div className="flex gap-2 shrink-0">
                   <button
                     onClick={async () => {
-                      const res = await fetch(`/api/plans/invitations/${inv.id}/accept`, { method: "POST" });
+                      const res = await fetch(`/api/plans/invitations/${inv.id}/accept`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ attendance: "GOING" }) });
                       if (res.ok) {
                         setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
                         window.location.reload();
@@ -266,6 +266,19 @@ export default function PlansPage() {
                     title="Accepter"
                   >
                     <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const res = await fetch(`/api/plans/invitations/${inv.id}/accept`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ attendance: "MAYBE" }) });
+                      if (res.ok) {
+                        setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
+                        window.location.reload();
+                      }
+                    }}
+                    className="rounded-lg bg-amber-100 p-2 text-amber-700 hover:bg-amber-200 transition-colors"
+                    title="Peut-être"
+                  >
+                    <Bookmark className="h-4 w-4" />
                   </button>
                   <button
                     onClick={async () => {

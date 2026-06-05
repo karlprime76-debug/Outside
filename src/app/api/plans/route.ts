@@ -118,12 +118,21 @@ export async function GET(req: Request) {
         creator: { select: { id: true, name: true, image: true } },
         city: { select: { id: true, name: true } },
         place: { select: { id: true, name: true } },
-        _count: { select: { participants: true } },
+        participants: { select: { attendance: true } },
       },
     });
 
+    const plansWithCounts = plans.map((plan) => {
+      const going = plan.participants.filter((p) => p.attendance === "GOING").length;
+      const maybe = plan.participants.filter((p) => p.attendance === "MAYBE").length;
+      return {
+        ...plan,
+        _count: { participants: going + maybe, going, maybe },
+      };
+    });
+
     logPerfEnd(perfLabel);
-    return NextResponse.json({ plans });
+    return NextResponse.json({ plans: plansWithCounts });
   } catch (error) {
     logPerfEnd(perfLabel);
     logError("[PLAN_ERROR]", "GET /api/plans failed", { error: String(error) });

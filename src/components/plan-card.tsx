@@ -25,7 +25,7 @@ interface Plan {
   creator: { name: string | null; image?: string | null };
   creatorUsername?: string | null;
   creatorId?: string | null;
-  _count: { participants: number };
+  _count: { participants: number; going?: number; maybe?: number };
 }
 
 const MOOD_ACCENT: Record<string, string> = {
@@ -79,8 +79,8 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
   const start = new Date(plan.startDate);
   const timeStr = start.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-  const isFull = plan.status === "FULL" || plan._count.participants >= plan.maxParticipants;
-  const spotsLeft = Math.max(0, plan.maxParticipants - plan._count.participants);
+  const goingCount = plan._count.going ?? plan._count.participants;
+  const isFull = plan.status === "FULL" || goingCount >= plan.maxParticipants;
 
   return (
     <div
@@ -139,7 +139,8 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
             <Badge variant="pink">{t.planCard.full}</Badge>
           ) : (
             <span className="font-medium text-[var(--os-fg)]">
-              {spotsLeft} {t.planCard.spots}
+              {(plan._count.going ?? plan._count.participants)} y vont
+              {(plan._count.maybe && plan._count.maybe > 0) ? ` · ${plan._count.maybe} intéressés` : ""}
             </span>
           )}
         </div>

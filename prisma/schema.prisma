@@ -207,6 +207,12 @@ enum ParticipantStatus {
   REJECTED
 }
 
+enum PlanAttendanceStatus {
+  GOING
+  MAYBE
+  LEFT
+}
+
 enum LiveStatus {
   SCHEDULED
   LIVE
@@ -598,8 +604,9 @@ model PlanParticipant {
   plan      Plan              @relation(fields: [planId], references: [id], onDelete: Cascade)
   userId    String
   user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status    ParticipantStatus @default(PENDING)
-  joinedAt  DateTime          @default(now())
+  status      ParticipantStatus   @default(PENDING)
+  attendance  PlanAttendanceStatus @default(GOING)
+  joinedAt    DateTime            @default(now())
 
   @@unique([planId, userId])
   @@index([planId])

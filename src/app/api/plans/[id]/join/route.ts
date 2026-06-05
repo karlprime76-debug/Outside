@@ -4,7 +4,9 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { canJoinPlan } from "@/lib/plans/permissions";
 import { evaluateBadgesAfterPlanJoined } from "@/lib/badges";
 
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+const VALID_ATTENDANCE = ["GOING", "MAYBE"] as const;
+
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -13,6 +15,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
     const { id } = await params;
 
+    const body = await req.json().catch(() => ({}));
+    const attendance = VALID_ATTENDANCE.includes(body.attendance) ? body.attendance : "GOING";
+
     const allowed = await canJoinPlan(user.id, id);
     if (!allowed) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
@@ -20,22 +25,19 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
     const plan = await db.plan.findUnique({
       where: { id },
-      include: { _count: { select: { participants: true } } },
+      include: { participants: { where: { attendance: "GOING" } } },
     });
 
     if (!plan) {
       return NextResponse.json({ error: "Plan introuvable" }, { status: 404 });
     }
 
-    if (plan.status === "FULL") {
-      return NextResponse.json({ error: "Plan complet" }, { status: 409 });
-    }
-
     if (plan.status === "CANCELLED") {
       return NextResponse.json({ error: "Plan annulé" }, { status: 409 });
     }
 
-    if (plan._count.participants >= plan.maxParticipants) {
+    const goingCount = plan.participants.length;
+    if (attendance === "GOING" && (plan.status === "FULL" || goingCount >= plan.maxParticipants)) {
       return NextResponse.json({ error: "Plan complet" }, { status: 409 });
     }
 
@@ -44,15 +46,20 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     });
 
     if (existing) {
-      return NextResponse.json({ error: "Déjà rejoint" }, { status: 409 });
+      // Update attendance if already participating
+      await db.planParticipant.update({
+        where: { planId_userId: { planId: id, userId: user.id } },
+        data: { attendance },
+      });
+      return NextResponse.json({ success: true, updated: true });
     }
 
     await db.planParticipant.create({
-      data: { planId: id, userId: user.id, status: "CONFIRMED" },
+      data: { planId: id, userId: user.id, status: "CONFIRMED", attendance },
     });
 
-    const updatedCount = plan._count.participants + 1;
-    if (updatedCount >= plan.maxParticipants) {
+    const newGoingCount = goingCount + (attendance === "GOING" ? 1 : 0);
+    if (newGoingCount >= plan.maxParticipants) {
       await db.plan.update({ where: { id }, data: { status: "FULL" } });
     }
 

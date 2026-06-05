@@ -25,10 +25,10 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
     const plan = await db.plan.findUnique({
       where: { id },
-      include: { _count: { select: { participants: true } } },
+      include: { participants: { where: { attendance: "GOING" }, select: { id: true } } },
     });
 
-    if (plan && plan.status === "FULL" && plan._count.participants < plan.maxParticipants) {
+    if (plan && plan.status === "FULL" && plan.participants.length < plan.maxParticipants) {
       await db.plan.update({ where: { id }, data: { status: "ACTIVE" } });
     }
 

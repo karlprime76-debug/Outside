@@ -27,7 +27,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
         participants: {
           include: { user: { select: { id: true, name: true, image: true } } },
         },
-        _count: { select: { participants: true } },
       },
     });
 
@@ -35,7 +34,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Plan introuvable" }, { status: 404 });
     }
 
-    return NextResponse.json({ plan });
+    const going = plan.participants.filter((p) => p.attendance === "GOING").length;
+    const maybe = plan.participants.filter((p) => p.attendance === "MAYBE").length;
+
+    const planWithCounts = {
+      ...plan,
+      _count: { participants: going + maybe, going, maybe },
+    };
+
+    return NextResponse.json({ plan: planWithCounts });
   } catch (error) {
     logError("[PLAN_ERROR]", "GET /api/plans/[id] failed", { error: String(error) });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

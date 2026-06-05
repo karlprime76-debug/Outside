@@ -36,8 +36,8 @@ interface PlanDetail {
   creator: { id: string; name: string | null; image: string | null };
   city: { name: string };
   place: { name: string } | null;
-  participants: { user: { id: string; name: string | null; image: string | null } }[];
-  _count: { participants: number };
+  participants: { attendance: string; user: { id: string; name: string | null; image: string | null } }[];
+  _count: { participants: number; going: number; maybe: number };
 }
 
 interface ChatMessage {
@@ -123,15 +123,22 @@ export default function PlanDetailPage() {
   }, [id]);
 
   const isFull = plan?.status === "FULL";
-  const isParticipant = session?.user?.id
-    ? plan?.participants.some((p) => p.user.id === session.user.id)
-    : false;
+  const myParticipant = session?.user?.id
+    ? plan?.participants.find((p) => p.user.id === session.user.id)
+    : undefined;
+  const isParticipant = !!myParticipant && myParticipant.attendance !== "LEFT";
+  const myAttendance = myParticipant?.attendance;
   const isCreator = session?.user?.id === plan?.creator.id;
 
-  async function joinPlan() {
+  async function setAttendance(attendance: "GOING" | "MAYBE") {
     setActionLoading(true);
     setActionError("");
-    const res = await fetch(`/api/plans/${id}/join`, { method: "POST" });
+    const endpoint = isParticipant ? `/api/plans/${id}/attendance` : `/api/plans/${id}/join`;
+    const res = await fetch(endpoint, {
+      method: isParticipant ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ attendance }),
+    });
     if (res.ok) {
       window.location.reload();
     } else {
@@ -144,7 +151,11 @@ export default function PlanDetailPage() {
   async function leavePlan() {
     setActionLoading(true);
     setActionError("");
-    const res = await fetch(`/api/plans/${id}/leave`, { method: "POST" });
+    const res = await fetch(`/api/plans/${id}/attendance`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ attendance: "LEFT" }),
+    });
     if (res.ok) {
       window.location.reload();
     } else {
@@ -197,7 +208,7 @@ export default function PlanDetailPage() {
         <InfoRow icon={Calendar} label={t.planDetail.when} value={new Date(plan.startDate).toLocaleString("fr-FR")} />
         {plan.rules && <InfoRow icon={Shield} label={t.planDetail.rules} value={plan.rules} />}
         <InfoRow icon={Shield} label={t.planDetail.safety} value={plan.safetyLevel} />
-        <InfoRow icon={Users} label={t.planDetail.spots} value={`${plan._count.participants} / ${plan.maxParticipants}`} />
+        <InfoRow icon={Users} label={t.planDetail.spots} value={`${plan._count.going} y vont · ${plan._count.maybe} intéressés / ${plan.maxParticipants} max`} />
       </div>
 
       {actionError && (
@@ -208,21 +219,56 @@ export default function PlanDetailPage() {
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">
-        {isFull ? (
-          <span className="rounded-xl bg-zinc-200 px-6 py-3 text-sm font-bold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">{t.planDetail.full}</span>
-        ) : !isParticipant ? (
-          <button
-            onClick={joinPlan}
-            disabled={actionLoading}
-            className="rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-8 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50"
-          >
-            {actionLoading ? t.planDetail.joining : t.planDetail.joinPlan}
-          </button>
-        ) : (
-          <span className="rounded-xl bg-emerald-50 px-6 py-3 text-sm font-bold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
-            {t.plans.joined}
-          </span>
-        )}
+        {!isParticipant && !isCreator ? (
+          <>
+            <button
+              onClick={() => setAttendance("GOING")}
+              disabled={actionLoading || isFull}
+              className="rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50"
+            >
+              {actionLoading ? t.planDetail.joining : "J&apos;y vais"}
+            </button>
+            <button
+              onClick={() => setAttendance("MAYBE")}
+              disabled={actionLoading}
+              className="rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Peut-être
+            </button>
+          </>
+        ) : isParticipant ? (
+          <>
+            <button
+              onClick={() => setAttendance("GOING")}
+              disabled={actionLoading || myAttendance === "GOING"}
+              className={`rounded-xl px-6 py-3 text-sm font-bold transition-all disabled:opacity-50 ${
+                myAttendance === "GOING"
+                  ? "bg-gradient-to-r from-outside-500 to-accent-500 text-white shadow-glow"
+                  : "border border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              }`}
+            >
+              J&apos;y vais
+            </button>
+            <button
+              onClick={() => setAttendance("MAYBE")}
+              disabled={actionLoading || myAttendance === "MAYBE"}
+              className={`rounded-xl px-6 py-3 text-sm font-bold transition-all disabled:opacity-50 ${
+                myAttendance === "MAYBE"
+                  ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"
+                  : "border border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              }`}
+            >
+              Peut-être
+            </button>
+            <button
+              onClick={leavePlan}
+              disabled={actionLoading}
+              className="rounded-xl border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Je ne viens plus
+            </button>
+          </>
+        ) : null}
         {!isCreator && <SavePlanButton planId={plan.id} variant="button" />}
         {isParticipant && (
           <Link
@@ -278,21 +324,12 @@ export default function PlanDetailPage() {
           <Share2 className="h-4 w-4" />
           Partager
         </button>
-        {isParticipant && !isCreator && (
-          <button
-            onClick={leavePlan}
-            disabled={actionLoading}
-            className="rounded-xl border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            {t.planDetail.leave}
-          </button>
-        )}
       </div>
 
       {/* Participants */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{t.planDetail.participantsTitle} ({plan._count.participants})</h3>
+          <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{t.planDetail.participantsTitle} ({plan._count.going} y vont · {plan._count.maybe} intéressés)</h3>
           {plan.status === "COMPLETED" && isParticipant && (
             <span className="text-xs text-[var(--os-muted)]">Clique sur un participant pour lui donner un retour</span>
           )}
