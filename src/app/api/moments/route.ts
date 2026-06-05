@@ -6,8 +6,8 @@ import { canViewPlan } from "@/lib/plans/permissions";
 import { recordTripHistory } from "@/lib/passport";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateMomentFile, buildMomentPath, ensureMomentsBucket, MOMENTS_BUCKET } from "@/lib/supabase/moments-storage";
-import { MomentVisibility, MomentType } from "@prisma/client";
-import type { Prisma } from "@prisma/client";
+import { MomentVisibility } from "@prisma/client";
+import { buildFeed } from "@/lib/algorithm/feed-builder";
 
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/moments";
@@ -65,11 +65,8 @@ export async function GET(req: Request) {
     let limit = parseInt(searchParams.get("limit") || "10", 10);
     if (isNaN(limit) || limit < 1) limit = 10;
     if (limit > 20) limit = 20;
-    const scope = searchParams.get("scope") || "for-you";
-    const media = (searchParams.get("media") || "all").toLowerCase();
-
-    const now = new Date();
-    const activeCityName = user.activeCity?.name || null;
+    const scope = (searchParams.get("scope") || "for-you") as "for-you" | "city" | "friends" | "following";
+    const media = (searchParams.get("media") || "all").toLowerCase() as "all" | "posts" | "clips";
 
     // Parallelize social graph lookups
     const [friendRows, followingRows] = await Promise.all([
@@ -82,129 +79,24 @@ export async function GET(req: Request) {
     const friendIds = friendRows.map((f) => (f.initiatorId === user.id ? f.receiverId : f.initiatorId));
     const followingIds = followingRows.map((f) => f.followingId);
 
-    let baseWhere: Prisma.MomentWhereInput = {
-      AND: [
-        {
-          OR: [
-            { visibility: "PUBLIC" },
-            { authorId: user.id },
-            { visibility: "FRIENDS", authorId: { in: friendIds } },
-            { visibility: "PLAN_PARTICIPANTS", planId: { not: null } },
-          ],
-        },
-        { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
-      ],
-    };
-
-    if (scope === "city" && activeCityName) {
-      baseWhere = { AND: [baseWhere, { city: { equals: activeCityName, mode: "insensitive" } }] };
-    } else if (scope === "friends") {
-      baseWhere = { AND: [baseWhere, { OR: [{ authorId: { in: friendIds } }, { authorId: user.id }] }] };
-    } else if (scope === "following") {
-      baseWhere = { AND: [baseWhere, { OR: [{ authorId: { in: followingIds } }, { authorId: user.id }] }] };
-    }
-
-    const mediaWhere: Prisma.MomentWhereInput | undefined =
-      media === "posts" ? { type: MomentType.PHOTO } : media === "clips" ? { type: MomentType.VIDEO } : undefined;
-
-    const finalWhere: Prisma.MomentWhereInput = mediaWhere ? { AND: [baseWhere, mediaWhere] } : baseWhere;
-
-    const demoWhere: Prisma.MomentWhereInput | undefined = DEMO_GLOBAL
-      ? { OR: [finalWhere, { AND: [{ isDemo: true }, { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }, mediaWhere ?? {}] }] }
-      : undefined;
-
-    const finalWhereWithSince: Prisma.MomentWhereInput = since
-      ? { AND: [demoWhere ?? finalWhere, { createdAt: { gt: since } }] }
-      : (demoWhere ?? finalWhere);
-
-    const moments = await db.moment.findMany({
-      where: finalWhereWithSince,
-      orderBy: { createdAt: "desc" },
-      take: limit,
-      skip: cursor && !since ? 1 : 0,
-      cursor: cursor && !since ? { id: cursor } : undefined,
-      include: {
-        author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
-        _count: { select: { likes: true, comments: true } },
-        audioTrack: true,
+    const { moments, nextCursor } = await buildFeed(
+      {
+        userId: user.id,
+        activeCity: user.activeCity?.name || null,
+        countryCode: user.countryCode || null,
+        role: user.role,
+        friendIds,
+        followingIds,
       },
-    });
-
-    // Batch-check PLAN_PARTICIPANTS visibility instead of N+1
-    const planMomentIds = moments
-      .filter((m) => m.visibility === "PLAN_PARTICIPANTS" && m.planId)
-      .map((m) => m.planId!);
-    let allowedPlanIds = new Set<string>();
-    if (planMomentIds.length > 0) {
-      const [participants, plans] = await Promise.all([
-        db.planParticipant.findMany({
-          where: { planId: { in: planMomentIds }, userId: user.id },
-          select: { planId: true },
-        }),
-        db.plan.findMany({ where: { id: { in: planMomentIds }, creatorId: user.id }, select: { id: true } }),
-      ]);
-      allowedPlanIds = new Set([...participants.map((p) => p.planId), ...plans.map((p) => p.id)]);
-    }
-
-    const visibleMoments = moments.filter((m) => {
-      if (m.visibility !== "PLAN_PARTICIPANTS" || !m.planId) return true;
-      return allowedPlanIds.has(m.planId);
-    });
-
-    const momentIds = visibleMoments.map((m) => m.id);
-    let likedSet = new Set<string>();
-    if (momentIds.length > 0) {
-      const userLikes = await db.momentLike.findMany({
-        where: { momentId: { in: momentIds }, userId: user.id },
-        select: { momentId: true },
-      });
-      likedSet = new Set(userLikes.map((l) => l.momentId));
-    }
-
-    const result = visibleMoments.map((m) => ({
-      id: m.id,
-      type: m.type,
-      mediaUrl: m.mediaUrl,
-      caption: m.caption,
-      city: m.city,
-      countryCode: m.countryCode,
-      visibility: m.visibility,
-      createdAt: m.createdAt.toISOString(),
-      audioTrackId: m.audioTrack?.status !== "BLOCKED" ? m.audioTrackId : null,
-      audioStartTime: m.audioTrack?.status !== "BLOCKED" ? m.audioStartTime : null,
-      audioVolume: m.audioTrack?.status !== "BLOCKED" ? m.audioVolume : null,
-      audioTrack: m.audioTrack && m.audioTrack.status !== "BLOCKED"
-        ? {
-            id: m.audioTrack.id,
-            title: m.audioTrack.title,
-            artistName: m.audioTrack.artistName,
-            audioUrl: m.audioTrack.audioUrl,
-          }
-        : null,
-      author: {
-        id: m.author.id,
-        name: m.author.name,
-        username: m.author.username,
-        image: m.author.image,
-        role: m.author.role,
-        isVerified: m.author.isVerified,
-      },
-      _count: { likes: m._count.likes, comments: m._count.comments },
-      viewerState: {
-        likedByMe: likedSet.has(m.id),
-        canDelete: m.authorId === user.id || user.role === "ADMIN" || user.role === "MODERATOR",
-        canReport: m.authorId !== user.id,
-      },
-    }));
-
-    const nextCursor = since
-      ? null
-      : visibleMoments.length === limit
-        ? visibleMoments[visibleMoments.length - 1].id
-        : null;
+      scope,
+      limit,
+      cursor ?? undefined,
+      since,
+      media
+    );
 
     logPerfEnd(perfLabel);
-    return NextResponse.json({ moments: result, nextCursor });
+    return NextResponse.json({ moments, nextCursor });
   } catch (error) {
     logPerfEnd(perfLabel);
     logError("[MOMENT_ERROR]", "GET /api/moments failed", { error: String(error) });

@@ -161,6 +161,15 @@ export function MomentFeed() {
       return new Set();
     }
   });
+  const [hiddenAccounts, setHiddenAccounts] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem("outside_hidden_accounts");
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set();
+    }
+  });
 
   const fetchMoments = useCallback(
     async (cursor?: string) => {
@@ -187,7 +196,9 @@ export function MomentFeed() {
         }
 
         const all: FeedMoment[] = data.moments || [];
-        const filtered = all.filter((m) => !hiddenSet.has(m.id));
+        const filtered = all.filter(
+          (m) => !hiddenSet.has(m.id) && !hiddenAccounts.has(m.author.id)
+        );
         setMoments((prev) => (cursor ? [...prev, ...filtered] : filtered));
         setNextCursor(data.nextCursor || null);
       } catch (err) {
@@ -201,7 +212,7 @@ export function MomentFeed() {
         isFetchingRef.current = false;
       }
     },
-    [scope, hiddenSet]
+    [scope, hiddenSet, hiddenAccounts, media]
   );
 
   useEffect(() => {
@@ -247,6 +258,11 @@ export function MomentFeed() {
   const handleHide = useCallback((id: string) => {
     setHiddenSet((prev) => new Set([...Array.from(prev), id]));
     setMoments((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
+  const handleHideAccount = useCallback((authorId: string) => {
+    setHiddenAccounts((prev) => new Set([...Array.from(prev), authorId]));
+    setMoments((prev) => prev.filter((m) => m.author.id !== authorId));
   }, []);
 
   return (
@@ -345,6 +361,7 @@ export function MomentFeed() {
                   onOpenComments={setCommentMoment}
                   onDelete={handleDelete}
                   onHide={handleHide}
+                  onHideAccount={handleHideAccount}
                 />
                 {index === 1 && scope === "for-you" && (
                   <AccountDiscovery />

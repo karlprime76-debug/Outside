@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck, EyeOff, UserX, User } from "lucide-react";
 import { ShareMomentSheet } from "./share-moment-sheet";
 import { MomentMedia } from "./moment-media";
 import { MomentAudioPlayer } from "@/components/audio/moment-audio-player";
@@ -57,9 +57,10 @@ interface MomentCardProps {
   onOpenComments: (moment: MomentItem) => void;
   onDelete?: (id: string) => void;
   onHide?: (id: string) => void;
+  onHideAccount?: (authorId: string) => void;
 }
 
-export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onHide }: MomentCardProps) {
+export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onHide, onHideAccount }: MomentCardProps) {
   const { addToast } = useToast();
   const [liked, setLiked] = useState(moment.viewerState.likedByMe);
   const [likesCount, setLikesCount] = useState(moment._count.likes);
@@ -76,6 +77,55 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const lastTapRef = useRef(0);
   const isVideo = moment.type === "VIDEO";
   const isMe = moment.viewerState.canDelete;
+  const viewTrackedRef = useRef(false);
+
+  // Track impression and view
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    // Impression
+    fetch(`/api/moments/${moment.id}/event`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "IMPRESSION" }),
+    }).catch(() => {});
+
+    let timer: ReturnType<typeof setTimeout>;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !viewTrackedRef.current) {
+          timer = setTimeout(() => {
+            viewTrackedRef.current = true;
+            fetch(`/api/moments/${moment.id}/event`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type: "VIEW" }),
+            }).catch(() => {});
+          }, 2000);
+        } else if (!entry.isIntersecting && timer) {
+          clearTimeout(timer);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (timer) clearTimeout(timer);
+    };
+  }, [moment.id]);
+
+  const trackEvent = useCallback(
+    (type: string, extra?: Record<string, unknown>) => {
+      fetch(`/api/moments/${moment.id}/event`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, ...extra }),
+      }).catch(() => {});
+    },
+    [moment.id]
+  );
 
   const handleLike = useCallback(async () => {
     if (likeLoading) return;
@@ -95,6 +145,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
       if (res.ok) {
         setLikesCount(data.likesCount ?? likesCount);
         onLikeToggle(moment.id, newLiked);
+        trackEvent(newLiked ? "LIKE" : "UNLIKE");
       } else {
         setLiked(liked);
         setLikesCount(likesCount);
@@ -105,7 +156,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     } finally {
       setLikeLoading(false);
     }
-  }, [liked, likeLoading, likesCount, moment.id, onLikeToggle]);
+  }, [liked, likeLoading, likesCount, moment.id, onLikeToggle, trackEvent]);
 
   const handlePhotoDoubleTap = useCallback(() => {
     const now = Date.now();
@@ -124,6 +175,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     try {
       await navigator.clipboard.writeText(url);
       addToast("Lien copié !", "success");
+      trackEvent("SHARE");
     } catch {
       addToast("Impossible de copier le lien", "error");
     }
@@ -142,6 +194,26 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
       addToast("Moment masqué.", "success");
     } catch {
       addToast("Impossible de masquer le moment.", "error");
+    }
+  };
+
+  const handleNotInterested = () => {
+    trackEvent("NOT_INTERESTED");
+    handleHideLocal();
+    addToast("Nous afficherons moins de contenus similaires.", "success");
+  };
+
+  const handleHideAccount = () => {
+    try {
+      const key = "outside_hidden_accounts";
+      const raw = localStorage.getItem(key);
+      const set = new Set<string>(raw ? JSON.parse(raw) : []);
+      set.add(moment.author.id);
+      localStorage.setItem(key, JSON.stringify(Array.from(set)));
+      onHideAccount?.(moment.author.id);
+      addToast("Compte masqué.", "success");
+    } catch {
+      addToast("Impossible de masquer ce compte.", "error");
     }
   };
 
@@ -252,6 +324,32 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             Partager
           </button>
           <div className="my-1 border-t border-[var(--os-card-border)]" />
+          <Link
+            href={authorLink}
+            onClick={() => { haptic.light(); setMenuOpen(false); }}
+            className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
+          >
+            <User className="h-4 w-4 text-[var(--os-muted)]" />
+            Voir plus de ce compte
+          </Link>
+          {!isMe && (
+            <button
+              onClick={() => { haptic.medium(); setMenuOpen(false); handleNotInterested(); }}
+              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
+            >
+              <EyeOff className="h-4 w-4 text-[var(--os-muted)]" />
+              Pas intéressé
+            </button>
+          )}
+          {!isMe && (
+            <button
+              onClick={() => { haptic.medium(); setMenuOpen(false); handleHideAccount(); }}
+              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
+            >
+              <UserX className="h-4 w-4 text-[var(--os-muted)]" />
+              Masquer ce compte
+            </button>
+          )}
           <button
             onClick={() => { haptic.medium(); setMenuOpen(false); handleHideLocal(); }}
             className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
@@ -428,7 +526,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               </button>
             </div>
             <button
-              onClick={() => setSaved((s) => !s)}
+              onClick={() => {
+                const newSaved = !saved;
+                setSaved(newSaved);
+                trackEvent(newSaved ? "SAVE" : "UNSAVE");
+              }}
               className={`transition-colors active:scale-90 ${saved ? "text-outside-500" : "text-[var(--os-fg)] hover:text-[var(--os-muted)]"}`}
               aria-label={saved ? "Retirer des favoris" : "Sauvegarder"}
             >

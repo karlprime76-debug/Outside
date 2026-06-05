@@ -157,6 +157,22 @@ enum AudioStatus {
   DELETED
 }
 
+enum MomentEventType {
+  IMPRESSION
+  VIEW
+  COMPLETE_VIEW
+  REPLAY
+  LIKE
+  UNLIKE
+  COMMENT
+  SHARE
+  SAVE
+  PROFILE_OPEN
+  FOLLOW_FROM_MOMENT
+  NOT_INTERESTED
+  REPORT
+}
+
 enum PlaceCategory {
   RESTAURANT
   CAFE
@@ -747,6 +763,55 @@ model AudioTrack {
   @@index([status])
   @@index([sourceType])
   @@index([usageCount])
+}
+
+model MomentEvent {
+  id          String          @id @default(cuid())
+  momentId    String
+  userId      String?
+  type        MomentEventType
+
+  watchMs     Int?
+  percent     Float?
+  source      String?
+  city        String?
+  countryCode String?
+
+  createdAt   DateTime        @default(now())
+
+  @@index([momentId])
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model MomentScore {
+  id        String   @id @default(cuid())
+  momentId  String   @unique
+
+  score         Float   @default(0)
+  viralScore    Float   @default(0)
+  qualityScore  Float   @default(0)
+  safetyScore   Float   @default(1)
+
+  impressions      Int @default(0)
+  views            Int @default(0)
+  completions      Int @default(0)
+  likes            Int @default(0)
+  comments         Int @default(0)
+  shares           Int @default(0)
+  saves            Int @default(0)
+  reports          Int @default(0)
+  profileOpens     Int @default(0)
+  followsGenerated Int @default(0)
+
+  lastCalculatedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([score])
+  @@index([viralScore])
+  @@index([updatedAt])
 }
 
 model MomentLike {
