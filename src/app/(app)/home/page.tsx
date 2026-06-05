@@ -97,6 +97,8 @@ export default function HomePage() {
   const [moments, setMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null } }[]>([]);
   const [loadingMoments, setLoadingMoments] = useState(true);
   const { hasNew } = useMomentPolling({ scope: "for-you", media: "all", enabled: !loadingMoments });
+  const [trendingMoments, setTrendingMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null }; badge: string | null }[]>([]);
+  const [loadingTrending, setLoadingTrending] = useState(true);
 
   const userName = session?.user?.name || "";
   const activeCity = userProfile?.activeCity;
@@ -157,7 +159,20 @@ export default function HomePage() {
         setLoadingMoments(false);
       })
       .catch(() => setLoadingMoments(false));
-  }, []);
+
+    // Fetch trending moments
+    if (activeCity?.name) {
+      fetch(`/api/moments/trending?city=${encodeURIComponent(activeCity.name)}&limit=5`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          setTrendingMoments(data?.moments || []);
+          setLoadingTrending(false);
+        })
+        .catch(() => setLoadingTrending(false));
+    } else {
+      setLoadingTrending(false);
+    }
+  }, [activeCity]);
 
   async function deactivateAvailability() {
     const res = await fetch("/api/availability", { method: "DELETE" });
@@ -395,6 +410,74 @@ export default function HomePage() {
           })}
         </div>
       </section>
+
+      {/* Trending moments */}
+      {activeCity?.name && (
+        <section className="animate-slide-up animate-stagger-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-black text-[var(--os-fg)] flex items-center gap-2">
+                <Flame className="h-5 w-5 text-orange-500" />
+                Tendance à {activeCity.name}
+              </h2>
+              <p className="text-xs text-[var(--os-muted)] mt-0.5">
+                Les contenus les plus populaires.
+              </p>
+            </div>
+            <Link href="/trending" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
+              Voir tout
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          {loadingTrending ? (
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="min-w-[140px] flex-shrink-0 aspect-[3/4] rounded-2xl bg-[var(--os-bg)] shimmer" />
+              ))}
+            </div>
+          ) : trendingMoments.length === 0 ? (
+            <div className="os-card p-6 text-center">
+              <p className="text-sm text-[var(--os-muted)]">
+                Aucun contenu tendance pour le moment.
+              </p>
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+              {trendingMoments.map((m) => (
+                <Link
+                  key={m.id}
+                  href="/moments"
+                  className="min-w-[140px] flex-shrink-0 rounded-2xl overflow-hidden bg-black relative aspect-[3/4] block"
+                >
+                  {m.type === "VIDEO" ? (
+                    <video src={m.mediaUrl} className="h-full w-full object-cover" muted loop playsInline preload="metadata" />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.mediaUrl} alt={m.caption || "Moment"} className="h-full w-full object-cover" loading="lazy" />
+                  )}
+                  <div className="absolute top-2 left-2">
+                    {m.badge && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        m.badge === "Tendance" 
+                          ? "bg-orange-500/90 text-white" 
+                          : m.badge === "Monte vite"
+                          ? "bg-green-500/90 text-white"
+                          : "bg-blue-500/90 text-white"
+                      }`}>
+                        {m.badge}
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                    <p className="text-xs font-bold text-white truncate">{m.author.name || "Anonyme"}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Moments */}
       <section>
