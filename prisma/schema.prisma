@@ -35,6 +35,7 @@ enum NotificationType {
   FRIEND_ACCEPTED
   FOLLOW
   PLAN_INVITE
+  PLAN_REMINDER
   LIVE_STARTED
   PRO_EVENT
   PRO_APPROVED
@@ -354,6 +355,7 @@ model User {
   conversationParticipants ConversationParticipant[]
   directMessagesSent       DirectMessage[]
   savedPlans        SavedPlan[]
+  planReminders     PlanReminder[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -379,6 +381,7 @@ model UserSettings {
 
   notificationFriendRequests Boolean @default(true)
   notificationPlanInvites    Boolean @default(true)
+  notificationPlanReminders  Boolean @default(true)
   notificationLiveStarted    Boolean @default(true)
   notificationCityLives      Boolean @default(true)
   notificationProEvents      Boolean @default(true)
@@ -387,6 +390,7 @@ model UserSettings {
   pushEnabled                Boolean @default(false)
   pushDm                     Boolean @default(true)
   pushPlans                  Boolean @default(true)
+  pushPlanReminders          Boolean @default(true)
   pushMoments                Boolean @default(true)
   pushLive                   Boolean @default(true)
   pushPro                    Boolean @default(true)
@@ -554,6 +558,7 @@ model Plan {
   invitations       PlanInvitation[]
   reports           Report[]
   savedPlans        SavedPlan[]
+  reminders         PlanReminder[]
 
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
@@ -611,6 +616,22 @@ model PlanParticipant {
   @@unique([planId, userId])
   @@index([planId])
   @@index([userId])
+}
+
+model PlanReminder {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  remindAt  DateTime
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([planId])
+  @@index([remindAt])
+  @@index([sentAt])
 }
 
 model PlanMessage {

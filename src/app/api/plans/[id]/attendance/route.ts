@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { createPlanReminders, removePlanReminders } from "@/lib/plan-reminders";
 
 const VALID_ATTENDANCE = ["GOING", "MAYBE", "LEFT"] as const;
 
@@ -21,7 +22,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const participant = await db.planParticipant.findUnique({
       where: { planId_userId: { planId: id, userId: user.id } },
-      include: { plan: { select: { maxParticipants: true, status: true } } },
+      include: { plan: { select: { maxParticipants: true, status: true, startDate: true } } },
     });
 
     if (!participant) {
@@ -32,6 +33,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       await db.planParticipant.delete({
         where: { planId_userId: { planId: id, userId: user.id } },
       });
+
+      removePlanReminders(user.id, id).catch(() => {});
 
       // Recalculate plan status
       const goingCount = await db.planParticipant.count({
@@ -57,6 +60,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       where: { planId_userId: { planId: id, userId: user.id } },
       data: { attendance },
     });
+
+    createPlanReminders(user.id, id, participant.plan.startDate).catch(() => {});
 
     // Recalculate FULL status
     if (attendance === "GOING") {

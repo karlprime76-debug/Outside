@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canJoinPlan } from "@/lib/plans/permissions";
 import { evaluateBadgesAfterPlanJoined } from "@/lib/badges";
+import { createPlanReminders } from "@/lib/plan-reminders";
 
 const VALID_ATTENDANCE = ["GOING", "MAYBE"] as const;
 
@@ -51,6 +52,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         where: { planId_userId: { planId: id, userId: user.id } },
         data: { attendance },
       });
+
+      // Recreate reminders if attending (GOING or MAYBE)
+      if (attendance !== "LEFT") {
+        createPlanReminders(user.id, id, plan.startDate).catch(() => {});
+      }
+
       return NextResponse.json({ success: true, updated: true });
     }
 
@@ -63,6 +70,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       await db.plan.update({ where: { id }, data: { status: "FULL" } });
     }
 
+    createPlanReminders(user.id, id, plan.startDate).catch(() => {});
     evaluateBadgesAfterPlanJoined(user.id).catch(() => {});
 
     return NextResponse.json({ success: true });

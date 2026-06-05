@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { ReportButton } from "@/components/report-button";
 import { SavePlanButton } from "@/components/save-plan-button";
-import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download } from "lucide-react";
+import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download, Bell } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
 import { formatBudget } from "@/lib/currency";
 import { useHaptic } from "@/hooks/use-haptic";
@@ -217,6 +217,13 @@ export default function PlanDetailPage() {
       {actionError && (
         <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
           {actionError}
+        </div>
+      )}
+
+      {isParticipant && (
+        <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+          <Bell className="h-3.5 w-3.5" />
+          <span>Rappel activé ({myAttendance === "GOING" ? "J&apos;y vais" : "Peut-être"})</span>
         </div>
       )}
 

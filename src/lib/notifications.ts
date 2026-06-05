@@ -18,6 +18,7 @@ const typeToPushCategory: Record<NotificationType, Parameters<typeof sendPushToU
   FRIEND_ACCEPTED: "friend",
   FOLLOW: "friend",
   PLAN_INVITE: "plan",
+  PLAN_REMINDER: "plan",
   LIVE_STARTED: "live",
   PRO_EVENT: "pro",
   PRO_APPROVED: "pro",

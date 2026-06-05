@@ -38,6 +38,7 @@ interface UserSettingsData {
   allowFriendSuggestions: boolean;
   notificationFriendRequests: boolean;
   notificationPlanInvites: boolean;
+  notificationPlanReminders: boolean;
   notificationLiveStarted: boolean;
   notificationCityLives: boolean;
   notificationProEvents: boolean;
@@ -46,6 +47,7 @@ interface UserSettingsData {
   pushEnabled: boolean;
   pushDm: boolean;
   pushPlans: boolean;
+  pushPlanReminders: boolean;
   pushMoments: boolean;
   pushLive: boolean;
   pushPro: boolean;
@@ -59,6 +61,7 @@ const DEFAULT_SETTINGS: UserSettingsData = {
   allowFriendSuggestions: true,
   notificationFriendRequests: true,
   notificationPlanInvites: true,
+  notificationPlanReminders: true,
   notificationLiveStarted: true,
   notificationCityLives: true,
   notificationProEvents: true,
@@ -67,6 +70,7 @@ const DEFAULT_SETTINGS: UserSettingsData = {
   pushEnabled: false,
   pushDm: true,
   pushPlans: true,
+  pushPlanReminders: true,
   pushMoments: true,
   pushLive: true,
   pushPro: true,
@@ -439,6 +443,12 @@ export default function SettingsPage() {
                   icon={Calendar}
                 />
                 <Toggle
+                  label="Rappels de plans"
+                  value={settings.pushPlanReminders}
+                  onChange={(v) => updateSetting("pushPlanReminders", v)}
+                  icon={Bell}
+                />
+                <Toggle
                   label="Moments"
                   value={settings.pushMoments}
                   onChange={(v) => updateSetting("pushMoments", v)}
@@ -475,6 +485,12 @@ export default function SettingsPage() {
           value={settings.notificationPlanInvites}
           onChange={(v) => updateSetting("notificationPlanInvites", v)}
           icon={Calendar}
+        />
+        <Toggle
+          label="Rappels de plans"
+          value={settings.notificationPlanReminders}
+          onChange={(v) => updateSetting("notificationPlanReminders", v)}
+          icon={Bell}
         />
         <Toggle
           label="Lives des personnes que je suis"

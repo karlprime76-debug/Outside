@@ -84,6 +84,7 @@ export async function sendPushToUser(
         pushEnabled: true,
         pushDm: true,
         pushPlans: true,
+        pushPlanReminders: true,
         pushMoments: true,
         pushLive: true,
         pushPro: true,
@@ -104,6 +105,9 @@ export async function sendPushToUser(
 
     const settingKey = categoryMap[type];
     if (settingKey && !settings[settingKey]) return;
+
+    // For plan reminders, also check the specific reminder toggle
+    if (type === "plan" && !settings.pushPlanReminders) return;
 
     await sendPushNotification(userId, payload);
   } catch (error) {
