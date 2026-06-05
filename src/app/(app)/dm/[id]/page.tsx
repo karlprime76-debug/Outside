@@ -196,7 +196,16 @@ export default function DmConversationPage() {
 
   async function onSend(
     text: string,
-    opts?: { type?: string; mediaUrl?: string; momentId?: string; metadata?: Record<string, unknown> }
+    opts?: {
+      type?: string;
+      mediaUrl?: string;
+      mediaPath?: string;
+      mediaName?: string;
+      mediaMimeType?: string;
+      mediaSize?: number;
+      momentId?: string;
+      metadata?: Record<string, unknown>;
+    }
   ) {
     if ((!text.trim() && !opts?.mediaUrl) || sending) return;
     setSending(true);
@@ -210,6 +219,10 @@ export default function DmConversationPage() {
       status: "SENDING",
       type: opts?.type || "TEXT",
       mediaUrl: opts?.mediaUrl || null,
+      mediaPath: opts?.mediaPath || null,
+      mediaName: opts?.mediaName || null,
+      mediaMimeType: opts?.mediaMimeType || null,
+      mediaSize: opts?.mediaSize || null,
       momentId: opts?.momentId || null,
       metadata: opts?.metadata ? JSON.stringify(opts.metadata) : null,
     };
@@ -221,6 +234,10 @@ export default function DmConversationPage() {
         type: opts?.type || "TEXT",
       };
       if (opts?.mediaUrl) body.mediaUrl = opts.mediaUrl;
+      if (opts?.mediaPath) body.mediaPath = opts.mediaPath;
+      if (opts?.mediaName) body.mediaName = opts.mediaName;
+      if (opts?.mediaMimeType) body.mediaMimeType = opts.mediaMimeType;
+      if (opts?.mediaSize) body.mediaSize = opts.mediaSize;
       if (opts?.momentId) body.momentId = opts.momentId;
       if (opts?.metadata) body.metadata = opts.metadata;
 

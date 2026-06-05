@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { X, ZoomIn, ZoomOut, RotateCcw, Download } from "lucide-react";
 
 interface MediaViewerProps {
   src: string;
   type: "image" | "video";
   alt?: string;
   onClose: () => void;
+  downloadUrl?: string;
 }
 
-export function MediaViewer({ src, type, alt, onClose }: MediaViewerProps) {
+export function MediaViewer({ src, type, alt, onClose, downloadUrl }: MediaViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLImageElement | HTMLVideoElement>(null);
   const [scale, setScale] = useState(1);
@@ -205,6 +206,16 @@ export function MediaViewer({ src, type, alt, onClose }: MediaViewerProps) {
         >
           <RotateCcw className="h-5 w-5" />
         </button>
+        {downloadUrl && (
+          <a
+            href={downloadUrl}
+            download
+            className="text-white/80 hover:text-white transition-colors"
+            aria-label="Télécharger"
+          >
+            <Download className="h-5 w-5" />
+          </a>
+        )}
       </div>
 
       {/* Media */}

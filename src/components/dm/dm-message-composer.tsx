@@ -5,7 +5,19 @@ import { Camera, ImageIcon, Mic, Plus, SendHorizontal, X, Paperclip } from "luci
 import { useToast } from "@/components/ui/toast";
 
 interface DmMessageComposerProps {
-  onSend: (text: string, opts?: { type?: string; mediaUrl?: string; momentId?: string; metadata?: Record<string, unknown> }) => void;
+  onSend: (
+    text: string,
+    opts?: {
+      type?: string;
+      mediaUrl?: string;
+      mediaPath?: string;
+      mediaName?: string;
+      mediaMimeType?: string;
+      mediaSize?: number;
+      momentId?: string;
+      metadata?: Record<string, unknown>;
+    }
+  ) => void;
   sending?: boolean;
   conversationId: string;
   onOpenPlanSelector?: () => void;
@@ -49,15 +61,29 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
     const res = await fetch("/api/dm/media", { method: "POST", body: formData });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || "Échec de l'upload");
-    return json as { mediaUrl: string; type: string };
+    return json as {
+      mediaUrl: string;
+      type: string;
+      path: string;
+      mediaName: string;
+      mediaMimeType: string;
+      mediaSize: number;
+    };
   }
 
   async function handleGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const { mediaUrl, type } = await uploadFile(file);
-      onSend("", { type, mediaUrl });
+      const data = await uploadFile(file);
+      onSend("", {
+        type: data.type,
+        mediaUrl: data.mediaUrl,
+        mediaPath: data.path,
+        mediaName: data.mediaName,
+        mediaMimeType: data.mediaMimeType,
+        mediaSize: data.mediaSize,
+      });
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Impossible d'envoyer le média.", "error");
     } finally {
@@ -69,8 +95,15 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const { mediaUrl, type } = await uploadFile(file);
-      onSend("", { type, mediaUrl });
+      const data = await uploadFile(file);
+      onSend("", {
+        type: data.type,
+        mediaUrl: data.mediaUrl,
+        mediaPath: data.path,
+        mediaName: data.mediaName,
+        mediaMimeType: data.mediaMimeType,
+        mediaSize: data.mediaSize,
+      });
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Impossible d'envoyer la capture.", "error");
     } finally {
@@ -82,8 +115,15 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const { mediaUrl } = await uploadFile(file);
-      onSend("", { type: "AUDIO", mediaUrl });
+      const data = await uploadFile(file);
+      onSend("", {
+        type: "AUDIO",
+        mediaUrl: data.mediaUrl,
+        mediaPath: data.path,
+        mediaName: data.mediaName,
+        mediaMimeType: data.mediaMimeType,
+        mediaSize: data.mediaSize,
+      });
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Impossible d'envoyer l'audio.", "error");
     } finally {

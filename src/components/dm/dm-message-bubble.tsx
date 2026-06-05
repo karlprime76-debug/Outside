@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus } from "lucide-react";
+import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download } from "lucide-react";
 import { MediaViewer } from "@/components/media/media-viewer";
 
 export interface DmMessage {
@@ -16,6 +16,10 @@ export interface DmMessage {
   momentId?: string | null;
   metadata?: string | null;
   mediaUrl?: string | null;
+  mediaPath?: string | null;
+  mediaName?: string | null;
+  mediaMimeType?: string | null;
+  mediaSize?: number | null;
 }
 
 interface DmMessageBubbleProps {
@@ -164,9 +168,11 @@ function PlanInviteCard({ metadata, isMine }: { metadata?: string | null; isMine
 function MediaMessage({
   url,
   type,
+  messageId,
 }: {
   url: string;
   type: "image" | "video";
+  messageId: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -188,7 +194,15 @@ function MediaMessage({
           </video>
         )}
       </button>
-      {open && <MediaViewer src={url} type={type} alt="DM media" onClose={() => setOpen(false)} />}
+      {open && (
+        <MediaViewer
+          src={url}
+          type={type}
+          alt="DM media"
+          onClose={() => setOpen(false)}
+          downloadUrl={`/api/dm/messages/${messageId}/download`}
+        />
+      )}
     </>
   );
 }
@@ -238,11 +252,21 @@ export function DmMessageBubble({
           ) : isPlanInvite ? (
             <PlanInviteCard metadata={message.metadata} isMine={isMine} />
           ) : isImage ? (
-            <MediaMessage url={message.mediaUrl || ""} type="image" />
+            <MediaMessage url={message.mediaUrl || ""} type="image" messageId={message.id} />
           ) : isVideo ? (
-            <MediaMessage url={message.mediaUrl || ""} type="video" />
+            <MediaMessage url={message.mediaUrl || ""} type="video" messageId={message.id} />
           ) : isAudio ? (
-            <audio controls className="w-48" src={message.mediaUrl || ""} />
+            <div className="space-y-1">
+              <audio controls className="w-48" src={message.mediaUrl || ""} />
+              <a
+                href={`/api/dm/messages/${message.id}/download`}
+                download
+                className={`inline-flex items-center gap-1 text-[10px] ${isMine ? "text-white/70 hover:text-white" : "text-[var(--os-muted)] hover:text-outside-500"}`}
+              >
+                <Download className="h-3 w-3" />
+                Télécharger
+              </a>
+            </div>
           ) : (
             <span className="whitespace-pre-wrap break-words">{message.content || ""}</span>
           )}

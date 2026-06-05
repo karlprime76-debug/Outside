@@ -465,6 +465,10 @@ model DirectMessage {
   sender         User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
   content        String?
   mediaUrl       String?
+  mediaPath      String?
+  mediaName      String?
+  mediaMimeType  String?
+  mediaSize      Int?
 
   type           DirectMessageType @default(TEXT)
   momentId       String?

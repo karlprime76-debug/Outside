@@ -85,6 +85,9 @@ export async function POST(req: Request) {
       mediaUrl,
       type,
       path,
+      mediaName: file.name,
+      mediaMimeType: file.type,
+      mediaSize: file.size,
       code: "SUCCESS",
     });
   } catch (err) {

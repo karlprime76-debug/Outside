@@ -42,6 +42,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         type: m.type,
         momentId: m.momentId,
         mediaUrl: m.mediaUrl,
+        mediaPath: m.mediaPath,
+        mediaName: m.mediaName,
+        mediaMimeType: m.mediaMimeType,
+        mediaSize: m.mediaSize,
         metadata: m.metadata,
       })),
       nextCursor,
@@ -76,6 +80,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const type = body.type || "TEXT";
     const momentId = body.momentId || null;
     const mediaUrl = body.mediaUrl || null;
+    const mediaPath = body.mediaPath || null;
+    const mediaName = body.mediaName || null;
+    const mediaMimeType = body.mediaMimeType || null;
+    const mediaSize = typeof body.mediaSize === "number" ? body.mediaSize : null;
     const metadata = body.metadata ? JSON.stringify(body.metadata) : null;
 
     if (type === "TEXT" && (!content || content.length > 2000)) {
@@ -90,6 +98,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         type,
         momentId,
         mediaUrl,
+        mediaPath,
+        mediaName,
+        mediaMimeType,
+        mediaSize,
         metadata,
       },
     });
@@ -122,6 +134,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         type: msg.type,
         momentId: msg.momentId,
         mediaUrl: msg.mediaUrl,
+        mediaPath: msg.mediaPath,
+        mediaName: msg.mediaName,
+        mediaMimeType: msg.mediaMimeType,
+        mediaSize: msg.mediaSize,
         metadata: msg.metadata,
       },
     });
