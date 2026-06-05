@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { ReportButton } from "@/components/report-button";
 import { SavePlanButton } from "@/components/save-plan-button";
-import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet } from "lucide-react";
+import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
 import { formatBudget } from "@/lib/currency";
 import { useHaptic } from "@/hooks/use-haptic";
@@ -103,6 +103,9 @@ export default function PlanDetailPage() {
   const [chatLoading, setChatLoading] = useState(true);
   const [chatInput, setChatInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrData, setQrData] = useState<{ qr: string; url: string; title: string; city: string } | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
 
   useEffect(() => {
     fetch(`/api/plans/${id}`)
@@ -323,6 +326,27 @@ export default function PlanDetailPage() {
         >
           <Share2 className="h-4 w-4" />
           Partager
+        </button>
+        <button
+          onClick={async () => {
+            setQrOpen(true);
+            setQrLoading(true);
+            try {
+              const res = await fetch(`/api/plans/${id}/qr`);
+              if (res.ok) {
+                const data = await res.json();
+                setQrData(data);
+              }
+            } catch {
+              // silently fail
+            } finally {
+              setQrLoading(false);
+            }
+          }}
+          className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        >
+          <QrCode className="h-4 w-4" />
+          QR code
         </button>
       </div>
 
@@ -584,6 +608,61 @@ export default function PlanDetailPage() {
             ))}
           </div>
         )}
+      </BottomSheet>
+
+      {/* QR Code bottom sheet */}
+      <BottomSheet
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        title="QR Code"
+      >
+        <div className="flex flex-col items-center gap-4 p-2">
+          {qrLoading ? (
+            <div className="h-48 w-48 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+          ) : qrData ? (
+            <>
+              <img src={qrData.qr} alt="QR Code" className="h-48 w-48 rounded-xl border border-zinc-200 dark:border-zinc-700" />
+              <div className="text-center">
+                <p className="text-sm font-bold text-[var(--os-fg)]">{qrData.title}</p>
+                <p className="text-xs text-[var(--os-muted)]">{qrData.city}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    if (navigator.share && qrData) {
+                      try {
+                        const res = await fetch(qrData.qr);
+                        const blob = await res.blob();
+                        const file = new File([blob], "qr-code.png", { type: "image/png" });
+                        await navigator.share({ title: qrData.title, files: [file] });
+                      } catch {
+                        await navigator.clipboard.writeText(qrData.url);
+                        alert("Lien copié !");
+                      }
+                    } else {
+                      await navigator.clipboard.writeText(qrData.url);
+                      alert("Lien copié !");
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow active:scale-95 transition-all"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Partager
+                </button>
+                <a
+                  href={qrData.qr}
+                  download={`outside-plan-${id}.png`}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  <Download className="h-4 w-4" />
+                  Télécharger
+                </a>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-[var(--os-muted)]">Impossible de générer le QR code.</p>
+          )}
+        </div>
       </BottomSheet>
     </div>
   );
