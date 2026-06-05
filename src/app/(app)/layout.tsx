@@ -66,8 +66,8 @@ export default async function AppLayout({
             {session?.user ? (
               <div className="flex items-center gap-3 ml-2 pl-3 border-l border-[var(--os-card-border)]">
                 <Link
-                  href="/notifications"
-                  aria-label="Notifications"
+                  href="/activity"
+                  aria-label="Activité"
                   className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
                 >
                   <Bell className="h-5 w-5 text-[var(--os-muted)]" />
@@ -109,8 +109,8 @@ export default async function AppLayout({
             {session?.user ? (
               <>
                 <Link
-                  href="/notifications"
-                  aria-label="Notifications"
+                  href="/activity"
+                  aria-label="Activité"
                   className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
                 >
                   <Bell className="h-5 w-5 text-[var(--os-muted)]" />
