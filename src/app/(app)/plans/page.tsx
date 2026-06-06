@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { PlanCard } from "@/components/plan-card";
-import { EmptyState } from "@/components/ui/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
@@ -338,12 +337,33 @@ export default function PlansPage() {
           ))}
         </div>
       ) : filteredPlans.length === 0 ? (
-        <EmptyState
-          icon={CalendarDays}
-          title={search ? "Aucun résultat" : t.emptyStates.noPlansTitle}
-          description={search ? "Essaye un autre mot-clé." : t.emptyStates.noPlansDesc}
-          cta={!search ? { label: t.emptyStates.noPlansCta, href: "/plans/new" } : undefined}
-        />
+        <div className="os-card p-8 text-center">
+          <CalendarDays className="h-12 w-12 text-[var(--os-muted)] mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">
+            {search ? "Aucun résultat" : "Aucun plan dans ta ville pour le moment"}
+          </h3>
+          <p className="text-sm text-[var(--os-muted)] mb-6">
+            {search ? "Essaye un autre mot-clé ou filtre." : "Lance le premier plan pour remplir ton OUTSIDE."}
+          </p>
+          {!search && (
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/plans/new"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+              >
+                <Plus className="h-4 w-4" />
+                Créer un plan express
+              </Link>
+              <Link
+                href="/plans?isFree=true"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all"
+              >
+                <Bookmark className="h-4 w-4" />
+                Voir les plans gratuits
+              </Link>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="space-y-8">
           {(() => {

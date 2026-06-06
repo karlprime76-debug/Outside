@@ -42,6 +42,9 @@ import { AvailabilitySheet } from "@/components/availability/availability-sheet"
 import { useMomentPolling } from "@/hooks/use-moment-polling";
 import { ExpressPlanSheet } from "@/components/plans/express-plan-sheet";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { DailyChallenges } from "@/components/challenges/daily-challenges";
+import { CityMissions } from "@/components/missions/city-missions";
+import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 
 interface Plan {
   id: string;
@@ -766,6 +769,21 @@ export default function HomePage() {
             });
         }}
       />
+
+      {/* Daily Challenges */}
+      <section className="animate-slide-up animate-stagger-2">
+        <DailyChallenges />
+      </section>
+
+      {/* City Missions */}
+      <section className="animate-slide-up animate-stagger-3">
+        <CityMissions />
+      </section>
+
+      {/* Onboarding Checklist */}
+      <section className="animate-slide-up animate-stagger-4">
+        <OnboardingChecklist />
+      </section>
 
       {/* Plans du jour */}
       <section id="plans-section">

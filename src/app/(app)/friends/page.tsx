@@ -326,7 +326,18 @@ export default function FriendsPage() {
           )}
 
           {!hasRequests && (
-            <EmptyState icon={Send} title="Aucune demande" description="Tes demandes d'amis apparaîtront ici." />
+            <div className="os-card p-8 text-center">
+              <Send className="h-12 w-12 text-[var(--os-muted)] mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Aucune demande</h3>
+              <p className="text-sm text-[var(--os-muted)] mb-6">Tes demandes d&apos;amis apparaîtront ici.</p>
+              <Link
+                href="/users/suggestions"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+              >
+                <UserPlus className="h-4 w-4" />
+                Trouver des amis
+              </Link>
+            </div>
           )}
         </div>
       )}

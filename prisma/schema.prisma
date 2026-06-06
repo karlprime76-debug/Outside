@@ -166,6 +166,14 @@ enum DirectMessageType {
   SYSTEM
 }
 
+enum AccountKind {
+  STANDARD
+  OFFICIAL_GUIDE
+  OFFICIAL_CITY
+  VERIFIED_CREATOR
+  PARTNER_VENUE
+}
+
 enum DirectMessagePermission {
   FRIENDS_ONLY
   FRIENDS_AND_FOLLOWING
@@ -389,6 +397,7 @@ model User {
   countryCode       String?
 
   isVerified        Boolean  @default(false)
+  accountKind       AccountKind @default(STANDARD)
   trustScore        Int      @default(0)
   identityVerificationStatus IdentityVerificationStatus @default(NOT_SUBMITTED)
   isAvailable       Boolean  @default(false)
@@ -442,6 +451,9 @@ model User {
   trustedByContacts SafetyContact[] @relation("TrustedByContacts")
   safetyShares      PlanSafetyShare[]
   outsideStatus     UserOutsideStatus?
+  challengeProgress UserChallengeProgress[]
+  missionProgress   UserCityMissionProgress[]
+  onboardingProgress OnboardingProgress?
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -1428,4 +1440,77 @@ model PlaceVibeSignal {
   @@index([placeId])
   @@index([city])
   @@index([createdAt])
+}
+
+model DailyChallenge {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  title        String
+  description  String
+  rewardLabel  String
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([key])
+  @@index([active])
+}
+
+model UserChallengeProgress {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeKey  String
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, challengeKey])
+  @@index([userId])
+  @@index([challengeKey])
+}
+
+model CityMission {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  title        String
+  description  String
+  city         String?
+  rewardLabel  String
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([key])
+  @@index([city])
+  @@index([active])
+}
+
+model UserCityMissionProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missionKey String
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, missionKey])
+  @@index([userId])
+  @@index([missionKey])
+}
+
+model OnboardingProgress {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hasProfilePhoto   Boolean  @default(false)
+  hasActiveCity     Boolean  @default(false)
+  hasFollowedUsers  Boolean  @default(false)
+  hasSavedPlan      Boolean  @default(false)
+  hasViewedMoment   Boolean  @default(false)
+  hasActivatedStatus Boolean  @default(false)
+  completedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
 }

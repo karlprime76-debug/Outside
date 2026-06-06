@@ -260,17 +260,26 @@ export default function DmInboxPage() {
                   <div className="mx-auto mb-3 h-12 w-12 rounded-2xl bg-[var(--os-card)] border border-[var(--os-card-border)] flex items-center justify-center">
                     <Mail className="h-5 w-5 text-[var(--os-muted)]" />
                   </div>
-                  <p className="text-sm font-bold text-[var(--os-fg)]">Tes messages apparaîtront ici.</p>
-                  <p className="text-xs text-[var(--os-muted)] mt-1 max-w-xs">
-                    Commence une discussion avec quelqu’un depuis un profil ou le bouton +.
+                  <p className="text-sm font-bold text-[var(--os-fg)]">Tes discussions apparaîtront ici.</p>
+                  <p className="text-xs text-[var(--os-muted)] mt-1 max-w-xs mb-4">
+                    Découvre des personnes pour commencer à discuter.
                   </p>
-                  <button
-                    onClick={() => setShowNewMessage(true)}
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Démarrer une discussion
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button
+                      onClick={() => setShowNewMessage(true)}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Démarrer une discussion
+                    </button>
+                    <Link
+                      href="/users/suggestions"
+                      className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all"
+                    >
+                      <Search className="h-4 w-4" />
+                      Découvrir des personnes
+                    </Link>
+                  </div>
                 </>
               )}
             </div>
