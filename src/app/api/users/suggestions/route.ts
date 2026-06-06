@@ -273,7 +273,6 @@ export async function GET(req: NextRequest) {
           city: u.activeCity?.name,
           isVerified: u.isVerified,
           isOfficial: false,
-          accountKind: u.isDemoAccount ? "DEMO" : "REAL",
           reason: displayReason,
           viewerState: {
             isFollowing: followedIds.has(u.id),

@@ -13,20 +13,17 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get suggested users (official accounts and active users in city)
+    // Get suggested users (active users in city)
     const suggestedUsers = await db.user.findMany({
       where: {
-        OR: [
-          { accountKind: { in: ["OFFICIAL_GUIDE", "OFFICIAL_CITY"] } },
-          { activeCity: { name: city }, isAvailable: true },
-        ],
+        activeCity: { name: city },
+        isAvailable: true,
       },
       select: {
         id: true,
         name: true,
         username: true,
         image: true,
-        accountKind: true,
         isVerified: true,
         isAmbassador: true,
         ambassadorCity: true,

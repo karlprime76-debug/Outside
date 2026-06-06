@@ -83,20 +83,17 @@ export async function GET() {
       take: 3,
     });
 
-    // Get suggested users (official accounts or active users)
+    // Get suggested users (active users in city)
     const suggestedUsers = cityId ? await db.user.findMany({
       where: {
-        OR: [
-          { accountKind: { in: ["OFFICIAL_GUIDE", "OFFICIAL_CITY"] } },
-          { activeCityId: cityId, isAvailable: true },
-        ],
+        activeCityId: cityId,
+        isAvailable: true,
       },
       select: {
         id: true,
         name: true,
         username: true,
         image: true,
-        accountKind: true,
         isVerified: true,
       },
       take: 3,
