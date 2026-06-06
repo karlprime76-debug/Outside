@@ -93,6 +93,162 @@ async function fetchUserQualityScores(authorIds: string[]): Promise<Map<string, 
   return map;
 }
 
+async function fetchNewCreators(
+  viewer: ViewerContext,
+  limit: number
+): Promise<FeedCandidate[]> {
+  const now = new Date();
+  const cutoff = getCutoffDate();
+
+  // Find users with few moments (new creators)
+  const authorMomentCounts = await db.moment.groupBy({
+    by: ["authorId"],
+    where: { createdAt: { gte: cutoff } },
+    _count: { id: true },
+  });
+
+  const newCreatorIds = authorMomentCounts
+    .filter((a) => a._count.id <= 5) // Few moments
+    .map((a) => a.authorId);
+
+  if (newCreatorIds.length === 0) return [];
+
+  // Fetch moments from new creators
+  const moments = await db.moment.findMany({
+    where: {
+      AND: [
+        {
+          OR: [
+            { visibility: "PUBLIC" },
+            { authorId: viewer.userId },
+            { visibility: "FRIENDS", authorId: { in: Array.from(viewer.friendIds) } },
+            { visibility: "PLAN_PARTICIPANTS", planId: { not: null } },
+          ],
+        },
+        { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+        { createdAt: { gte: cutoff } },
+        { authorId: { in: newCreatorIds } },
+        { authorId: { notIn: Array.from(viewer.blockedIds) } },
+        { authorId: { notIn: Array.from(viewer.blockedByIds) } },
+        { isDemo: false },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          role: true,
+          isVerified: true,
+          isDemoAccount: true,
+          trustScore: true,
+        },
+      },
+      _count: { select: { likes: true, comments: true } },
+      audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
+    },
+  });
+
+  return moments.map((m) => ({
+    id: m.id,
+    score: 0,
+    createdAt: m.createdAt,
+    authorId: m.authorId,
+    city: m.city,
+    countryCode: m.countryCode,
+    visibility: m.visibility,
+    isDemo: m.isDemo,
+    type: m.type,
+    planId: m.planId,
+    mediaUrl: m.mediaUrl,
+    caption: m.caption,
+    author: m.author,
+    _count: m._count,
+    audioTrackId: m.audioTrackId,
+    audioStartTime: m.audioStartTime,
+    audioVolume: m.audioVolume,
+    audioTrack: m.audioTrack,
+  }));
+}
+
+async function fetchExploration(
+  viewer: ViewerContext,
+  limit: number
+): Promise<FeedCandidate[]> {
+  const now = new Date();
+  const cutoff = getCutoffDate();
+
+  // Fetch random moments for exploration (excluding friends/following)
+  const moments = await db.moment.findMany({
+    where: {
+      AND: [
+        {
+          OR: [
+            { visibility: "PUBLIC" },
+            { authorId: viewer.userId },
+            { visibility: "FRIENDS", authorId: { in: Array.from(viewer.friendIds) } },
+            { visibility: "PLAN_PARTICIPANTS", planId: { not: null } },
+          ],
+        },
+        { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+        { createdAt: { gte: cutoff } },
+        { authorId: { notIn: Array.from(viewer.friendIds) } },
+        { authorId: { notIn: Array.from(viewer.followingIds) } },
+        { authorId: { notIn: Array.from(viewer.blockedIds) } },
+        { authorId: { notIn: Array.from(viewer.blockedByIds) } },
+        { isDemo: false },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit * 3, // Fetch more to allow random selection
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          role: true,
+          isVerified: true,
+          isDemoAccount: true,
+          trustScore: true,
+        },
+      },
+      _count: { select: { likes: true, comments: true } },
+      audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
+    },
+  });
+
+  // Randomly select from the fetched moments
+  const shuffled = moments.sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, limit);
+
+  return selected.map((m) => ({
+    id: m.id,
+    score: 0,
+    createdAt: m.createdAt,
+    authorId: m.authorId,
+    city: m.city,
+    countryCode: m.countryCode,
+    visibility: m.visibility,
+    isDemo: m.isDemo,
+    type: m.type,
+    planId: m.planId,
+    mediaUrl: m.mediaUrl,
+    caption: m.caption,
+    author: m.author,
+    _count: m._count,
+    audioTrackId: m.audioTrackId,
+    audioStartTime: m.audioStartTime,
+    audioVolume: m.audioVolume,
+    audioTrack: m.audioTrack,
+  }));
+}
+
 function scoreCandidate(
   candidate: FeedCandidate,
   viewer: ViewerContext,
@@ -373,9 +529,104 @@ export async function buildFeed(
     role: viewer.role,
   };
 
+  // For for-you scope, blend pools according to percentages
+  if (scope === "for-you" && !cursor) {
+    const algoCount = Math.ceil(limit * 0.45); // 45% algorithmic
+    const cityCount = Math.ceil(limit * 0.20); // 20% city
+    const socialCount = Math.ceil(limit * 0.15); // 15% friends/following
+    const newCreatorCount = Math.ceil(limit * 0.10); // 10% new creators
+    const explorationCount = Math.ceil(limit * 0.10); // 10% exploration
+
+    const [algoPool, cityPool, friendPool, followingPool, newCreatorPool, explorationPool] = await Promise.all([
+      fetchCandidates(context, algoCount, "for-you", undefined, since, media).then((r) => r.candidates),
+      viewer.activeCity
+        ? fetchCandidates(context, cityCount, "city", undefined, since, media).then((r) => r.candidates)
+        : Promise.resolve([]),
+      fetchCandidates(context, Math.ceil(socialCount / 2), "friends", undefined, since, media).then((r) => r.candidates),
+      fetchCandidates(context, Math.ceil(socialCount / 2), "following", undefined, since, media).then((r) => r.candidates),
+      fetchNewCreators(context, newCreatorCount),
+      fetchExploration(context, explorationCount),
+    ]);
+
+    // Combine and deduplicate
+    const allCandidates = [
+      ...algoPool,
+      ...cityPool,
+      ...friendPool,
+      ...followingPool,
+      ...newCreatorPool,
+      ...explorationPool,
+    ];
+    const seenIds = new Set<string>();
+    const blended: FeedCandidate[] = [];
+    for (const c of allCandidates) {
+      if (!seenIds.has(c.id)) {
+        seenIds.add(c.id);
+        blended.push(c);
+      }
+    }
+
+    // Score all blended candidates
+    const scoreMap = await fetchScoreMap(blended.map((c) => c.id));
+    const authorIds = Array.from(new Set(blended.map((c) => c.authorId)));
+    const userQualityMap = await fetchUserQualityScores(authorIds);
+
+    for (const c of blended) {
+      const scoreData = scoreMap.get(c.id);
+      const userQualityScore = userQualityMap.get(c.authorId);
+      c.score = scoreCandidate(c, context, scoreData, userQualityScore);
+    }
+
+    // Sort by score
+    blended.sort((a, b) => b.score - a.score);
+
+    // Apply anti-spam: max 3 per author
+    const authorCounts = new Map<string, number>();
+    const filtered: FeedCandidate[] = [];
+    for (const c of blended) {
+      const count = authorCounts.get(c.authorId) ?? 0;
+      if (count >= 3) continue;
+      authorCounts.set(c.authorId, count + 1);
+      filtered.push(c);
+    }
+
+    // Return top limit
+    const result = filtered.slice(0, limit);
+
+    // Filter plan participants visibility
+    const planMomentIds = result.filter((c) => c.visibility === "PLAN_PARTICIPANTS" && c.planId).map((c) => c.planId!);
+    let allowedPlanIds = new Set<string>();
+    if (planMomentIds.length > 0) {
+      const [participants, plans] = await Promise.all([
+        db.planParticipant.findMany({
+          where: { planId: { in: planMomentIds }, userId: viewer.userId },
+          select: { planId: true },
+        }),
+        db.plan.findMany({ where: { id: { in: planMomentIds }, creatorId: viewer.userId }, select: { id: true } }),
+      ]);
+      allowedPlanIds = new Set([...participants.map((p) => p.planId), ...plans.map((p) => p.id)]);
+    }
+
+    const visibleCandidates = result.filter((c) => {
+      if (c.visibility !== "PLAN_PARTICIPANTS" || !c.planId) return true;
+      return allowedPlanIds.has(c.planId);
+    });
+
+    // Build next cursor
+    let nextCursor: string | null = null;
+    if (visibleCandidates.length > 0) {
+      const last = visibleCandidates[visibleCandidates.length - 1];
+      const lastScore = scoreMap.get(last.id)?.score ?? 0;
+      nextCursor = Buffer.from(JSON.stringify({ score: lastScore, id: last.id })).toString("base64");
+    }
+
+    return { candidates: visibleCandidates, nextCursor };
+  }
+
+  // For other scopes, use existing logic
   const { candidates, nextCursor } = await fetchCandidates(context, limit, scope, cursor, since, media);
 
-  // For for-you scope, try to blend pools if we don't have enough candidates
+  // For for-you scope with cursor, try to blend pools if we don't have enough candidates
   let finalCandidates = candidates;
   if (scope === "for-you" && candidates.length < limit && !cursor) {
     // Try to fetch from other pools to fill
