@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { canSendDirectMessage, getOrCreateDirectConversation } from "@/lib/dm";
 import { createNotification } from "@/lib/notifications";
 import { NotificationType } from "@prisma/client";
+import { calculateMomentScore } from "@/lib/algorithm/moment-score";
 
 export async function POST(req: Request) {
   try {
@@ -90,6 +91,20 @@ export async function POST(req: Request) {
           data: { conversationId: convId, momentId: moment.id },
         });
       }
+    }
+
+    // Track SHARE_DM event and recalculate score (fire-and-forget)
+    if (createdMessages.length > 0) {
+      db.momentEvent.create({
+        data: {
+          momentId,
+          userId: user.id,
+          type: "SHARE_DM",
+          city: user.activeCity?.name || null,
+          countryCode: user.countryCode || null,
+        },
+      }).catch(() => {});
+      calculateMomentScore(momentId).catch(() => {});
     }
 
     return NextResponse.json({ success: true, sentCount: createdMessages.length });

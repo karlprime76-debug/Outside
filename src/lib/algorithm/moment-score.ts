@@ -102,10 +102,10 @@ export function calculateSafetyPenalty(
 export async function calculateMomentScore(momentId: string): Promise<number> {
   const now = new Date();
 
-  const [moment, eventCounts, eventDetails] = await Promise.all([
+  const [moment, eventCounts, eventDetails, existingScore] = await Promise.all([
     db.moment.findUnique({
       where: { id: momentId },
-      select: { id: true, createdAt: true, authorId: true },
+      select: { id: true, createdAt: true, authorId: true, city: true, countryCode: true },
     }),
     db.momentEvent.groupBy({
       by: ["type"],
@@ -114,7 +114,11 @@ export async function calculateMomentScore(momentId: string): Promise<number> {
     }),
     db.momentEvent.findMany({
       where: { momentId },
-      select: { type: true, watchMs: true, source: true },
+      select: { type: true, watchMs: true, source: true, city: true, countryCode: true },
+    }),
+    db.momentScore.findUnique({
+      where: { momentId },
+      select: { audienceLevel: true },
     }),
   ]);
 
@@ -131,11 +135,13 @@ export async function calculateMomentScore(momentId: string): Promise<number> {
   const likes = counts["LIKE"] ?? 0;
   const comments = counts["COMMENT"] ?? 0;
   const shares = counts["SHARE"] ?? 0;
+  const dmShares = counts["SHARE_DM"] ?? 0;
   const saves = counts["SAVE"] ?? 0;
   const reports = counts["REPORT"] ?? 0;
   const profileOpens = counts["PROFILE_OPEN"] ?? 0;
   const followsGenerated = counts["FOLLOW_FROM_MOMENT"] ?? 0;
   const notInterestedCount = counts["NOT_INTERESTED"] ?? 0;
+  const seeMoreLikeThisCount = counts["SEE_MORE_LIKE_THIS"] ?? 0;
   const replays = counts["REPLAY"] ?? 0;
 
   // Calculate avg watch time from VIEW events
@@ -150,12 +156,25 @@ export async function calculateMomentScore(momentId: string): Promise<number> {
   const quickSkipViews = viewEvents.filter((e) => e.source === "quick_skip").length;
   const quickSkipRate = views > 0 ? quickSkipViews / views : 0;
 
+  // Calculate local virality: engagement from same city/country
+  const localEvents = eventDetails.filter((e) => {
+    if (!e.city || !e.countryCode) return false;
+    return (
+      e.city.toLowerCase() === (moment.city?.toLowerCase() || "") ||
+      e.countryCode === moment.countryCode
+    );
+  });
+  const localViews = localEvents.filter((e) => e.type === "VIEW").length;
+  const localLikes = localEvents.filter((e) => e.type === "LIKE").length;
+  const localShares = localEvents.filter((e) => e.type === "SHARE" || e.type === "SHARE_DM").length;
+  const localScore = localViews > 0 ? (localLikes * 2 + localShares * 4) / localViews : 0;
+
   const freshnessBoost = calculateFreshnessBoost(moment.createdAt);
   const engagementVelocity = calculateEngagementVelocity(
-    impressions, views, completions, likes, comments, shares, saves, profileOpens, followsGenerated
+    impressions, views, completions, likes, comments, shares + dmShares, saves, profileOpens, followsGenerated
   );
   const qualityScore = calculateQualityScore(
-    completions, likes, comments, shares, saves, reports, notInterestedCount
+    completions, likes, comments, shares + dmShares, saves, reports, notInterestedCount
   );
   const safetyScore = calculateSafetyPenalty(reports, notInterestedCount, impressions);
 
@@ -165,47 +184,86 @@ export async function calculateMomentScore(momentId: string): Promise<number> {
   // Apply safety penalty
   const finalScore = score * safetyScore;
 
+  // Calculate viral score (DM shares are weighted heavily)
+  const viralScore = (likes * 1 + comments * 2 + shares * 3 + dmShares * 5 + saves * 2 + followsGenerated * 4) / Math.max(1, views);
+
+  // Progressive audience testing: increase audience level based on performance
+  const currentAudienceLevel = existingScore?.audienceLevel ?? 0;
+  let newAudienceLevel = currentAudienceLevel;
+
+  // Criteria to advance to next audience level
+  const completionRate = views > 0 ? completions / views : 0;
+  const likeRate = views > 0 ? likes / views : 0;
+  const dmShareRate = views > 0 ? dmShares / views : 0;
+
+  // Advance level if performing well
+  if (views >= 100 && completionRate > 0.5 && likeRate > 0.1 && safetyScore > 0.7) {
+    newAudienceLevel = Math.min(10, currentAudienceLevel + 1);
+  } else if (views >= 50 && completionRate > 0.4 && likeRate > 0.08 && safetyScore > 0.6) {
+    newAudienceLevel = Math.min(5, currentAudienceLevel + 1);
+  } else if (views >= 20 && completionRate > 0.3 && likeRate > 0.05 && safetyScore > 0.5) {
+    newAudienceLevel = Math.min(3, currentAudienceLevel + 1);
+  }
+
+  // DM shares are very strong signal for virality
+  if (dmShareRate > 0.05) {
+    newAudienceLevel = Math.min(10, newAudienceLevel + 2);
+  }
+
   // Upsert MomentScore
   await db.momentScore.upsert({
     where: { momentId },
     create: {
       momentId,
       score: finalScore,
-      viralScore: 0,
+      viralScore,
+      localScore,
       qualityScore,
       safetyScore,
       impressions,
       views,
       completions,
+      replays,
       likes,
       comments,
       shares,
+      dmShares,
       saves,
       reports,
       profileOpens,
       followsGenerated,
+      notInterested: notInterestedCount,
+      seeMoreLikeThis: seeMoreLikeThisCount,
       avgWatchMs,
       replayRate,
       quickSkipRate,
+      audienceLevel: newAudienceLevel,
       lastCalculatedAt: now,
     },
     update: {
       score: finalScore,
+      viralScore,
+      localScore,
       qualityScore,
       safetyScore,
       impressions,
       views,
       completions,
+      replays,
       likes,
       comments,
       shares,
+      dmShares,
       saves,
       reports,
       profileOpens,
       followsGenerated,
+      notInterested: notInterestedCount,
+      seeMoreLikeThis: seeMoreLikeThisCount,
       avgWatchMs,
       replayRate,
       quickSkipRate,
+      audienceLevel: newAudienceLevel,
       lastCalculatedAt: now,
     },
   });

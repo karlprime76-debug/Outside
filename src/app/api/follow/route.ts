@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { isBlocked } from "@/lib/social/friendship";
+import { calculateMomentScore } from "@/lib/algorithm/moment-score";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -11,15 +12,18 @@ export async function POST(req: Request) {
   }
 
   let targetId: string | null = null;
+  let momentId: string | null = null;
   try {
     const contentType = req.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
       const body = await req.json().catch(() => ({}));
       targetId = body.userId || null;
+      momentId = body.momentId || null;
     }
     if (!targetId) {
       const { searchParams } = new URL(req.url);
       targetId = searchParams.get("userId");
+      momentId = searchParams.get("momentId");
     }
   } catch {}
 
@@ -52,6 +56,20 @@ export async function POST(req: Request) {
     create: { followerId: currentUserId, followingId: target.id },
     update: {},
   });
+
+  // Track FOLLOW_FROM_MOMENT event if momentId is provided
+  if (momentId) {
+    db.momentEvent.create({
+      data: {
+        momentId,
+        userId: currentUserId,
+        type: "FOLLOW_FROM_MOMENT",
+        city: session.user.activeCity?.name || null,
+        countryCode: session.user.countryCode || null,
+      },
+    }).catch(() => {});
+    calculateMomentScore(momentId).catch(() => {});
+  }
 
   if (currentUserId !== target.id) {
     await createNotification({

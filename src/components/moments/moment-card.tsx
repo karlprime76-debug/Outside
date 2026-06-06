@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck, EyeOff, UserX, User } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck, EyeOff, UserX, User, Sparkles } from "lucide-react";
 import { ShareMomentSheet } from "./share-moment-sheet";
 import { MomentMedia } from "./moment-media";
 import { MomentAudioPlayer } from "@/components/audio/moment-audio-player";
@@ -205,6 +205,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     addToast("Nous afficherons moins de contenus similaires.", "success");
   };
 
+  const handleSeeMoreLikeThis = () => {
+    trackEvent("SEE_MORE_LIKE_THIS");
+    addToast("Nous afficherons plus de contenus similaires.", "success");
+  };
+
   const handleHideAccount = () => {
     try {
       const key = "outside_hidden_accounts";
@@ -258,7 +263,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
       haptic.light();
     }
     try {
-      const res = await fetch(`/api/follow?userId=${moment.author.id}`, {
+      const res = await fetch(`/api/follow?userId=${moment.author.id}&momentId=${moment.id}`, {
         method: newFollowing ? "POST" : "DELETE",
       });
       if (!res.ok) {
@@ -271,7 +276,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     } finally {
       setFollowLoading(false);
     }
-  }, [following, followLoading, isMe, moment.author.id, addToast, haptic]);
+  }, [following, followLoading, isMe, moment.author.id, moment.id, addToast, haptic]);
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -329,6 +334,13 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             Partager
           </button>
           <div className="my-1 border-t border-[var(--os-card-border)]" />
+          <button
+            onClick={() => { haptic.medium(); setMenuOpen(false); handleSeeMoreLikeThis(); }}
+            className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
+          >
+            <Sparkles className="h-4 w-4 text-outside-500" />
+            Voir plus comme ça
+          </button>
           <Link
             href={authorLink}
             onClick={() => { haptic.light(); setMenuOpen(false); }}

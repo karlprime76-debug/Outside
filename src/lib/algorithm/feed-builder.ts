@@ -69,12 +69,12 @@ async function fetchBlockedIds(userId: string): Promise<{ blocked: Set<string>; 
   };
 }
 
-async function fetchScoreMap(momentIds: string[]): Promise<Map<string, { score: number; viralScore: number; safetyScore: number }>> {
+async function fetchScoreMap(momentIds: string[]): Promise<Map<string, { score: number; viralScore: number; safetyScore: number; localScore: number }>> {
   const scores = await db.momentScore.findMany({
     where: { momentId: { in: momentIds } },
-    select: { momentId: true, score: true, viralScore: true, safetyScore: true },
+    select: { momentId: true, score: true, viralScore: true, safetyScore: true, localScore: true },
   });
-  const map = new Map<string, { score: number; viralScore: number; safetyScore: number }>();
+  const map = new Map<string, { score: number; viralScore: number; safetyScore: number; localScore: number }>();
   for (const s of scores) {
     map.set(s.momentId, s);
   }
@@ -84,7 +84,7 @@ async function fetchScoreMap(momentIds: string[]): Promise<Map<string, { score: 
 function scoreCandidate(
   candidate: FeedCandidate,
   viewer: ViewerContext,
-  scoreData: { score: number; viralScore: number; safetyScore: number } | undefined
+  scoreData: { score: number; viralScore: number; safetyScore: number; localScore: number } | undefined
 ): number {
   // Safety filter: very low safety = penalize heavily
   if (scoreData && scoreData.safetyScore < 0.3) return -9999;
@@ -116,9 +116,17 @@ function scoreCandidate(
   // Demo account penalty unless verified
   if (candidate.author.isDemoAccount && !candidate.author.isVerified) rank -= 10;
 
-  // Viral boost
+  // New creator boost: authors with fewer moments get a boost to help them grow
+  const momentAge = Date.now() - candidate.createdAt.getTime();
+  const isNewMoment = momentAge < 7 * 24 * 60 * 60 * 1000; // 7 days
+  if (isNewMoment && !candidate.author.isDemoAccount) {
+    rank += 8; // Boost new content from real users
+  }
+
+  // Viral boost with DM share emphasis
   if (scoreData) {
     rank += scoreData.viralScore * 0.5;
+    rank += scoreData.localScore * 0.8; // Strong local virality boost
   }
 
   return rank;
@@ -135,6 +143,10 @@ async function fetchCandidates(
   const now = new Date();
   const cutoff = getCutoffDate();
   const candidateLimit = limit * CANDIDATE_MULTIPLIER;
+
+  // Progressive audience testing: only show moments with audienceLevel <= current user's trust level
+  // For now, use a simple heuristic based on user role and trust
+  const maxAudienceLevel = viewer.role === "ADMIN" || viewer.role === "MODERATOR" ? 10 : 5;
 
   // Build base where
   let baseWhere: Prisma.MomentWhereInput = {
@@ -235,27 +247,41 @@ async function fetchCandidates(
   const hasMore = moments.length > candidateLimit;
   const sliced = hasMore ? moments.slice(0, candidateLimit) : moments;
 
-  // Convert to candidates
-  const candidates: FeedCandidate[] = sliced.map((m) => ({
-    id: m.id,
-    score: 0,
-    createdAt: m.createdAt,
-    authorId: m.authorId,
-    city: m.city,
-    countryCode: m.countryCode,
-    visibility: m.visibility,
-    isDemo: m.isDemo,
-    type: m.type,
-    planId: m.planId,
-    mediaUrl: m.mediaUrl,
-    caption: m.caption,
-    author: m.author,
-    _count: m._count,
-    audioTrackId: m.audioTrackId,
-    audioStartTime: m.audioStartTime,
-    audioVolume: m.audioVolume,
-    audioTrack: m.audioTrack,
-  }));
+  // Fetch MomentScore for progressive audience testing
+  const momentIds = sliced.map((m) => m.id);
+  const momentScores = await db.momentScore.findMany({
+    where: { momentId: { in: momentIds } },
+    select: { momentId: true, audienceLevel: true },
+  });
+  const audienceLevelMap = new Map(momentScores.map((s) => [s.momentId, s.audienceLevel]));
+
+  // Convert to candidates and apply progressive audience testing
+  const candidates: FeedCandidate[] = sliced
+    .filter((m) => {
+      // Progressive audience testing: only show moments with appropriate audience level
+      const audienceLevel = audienceLevelMap.get(m.id) ?? 0;
+      return audienceLevel <= maxAudienceLevel;
+    })
+    .map((m) => ({
+      id: m.id,
+      score: 0,
+      createdAt: m.createdAt,
+      authorId: m.authorId,
+      city: m.city,
+      countryCode: m.countryCode,
+      visibility: m.visibility,
+      isDemo: m.isDemo,
+      type: m.type,
+      planId: m.planId,
+      mediaUrl: m.mediaUrl,
+      caption: m.caption,
+      author: m.author,
+      _count: m._count,
+      audioTrackId: m.audioTrackId,
+      audioStartTime: m.audioStartTime,
+      audioVolume: m.audioVolume,
+      audioTrack: m.audioTrack,
+    }));
 
   // Fetch scores
   const scoreMap = await fetchScoreMap(candidates.map((c) => c.id));
