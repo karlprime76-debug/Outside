@@ -166,10 +166,12 @@ enum MomentEventType {
   UNLIKE
   COMMENT
   SHARE
+  SHARE_DM
   SAVE
   PROFILE_OPEN
   FOLLOW_FROM_MOMENT
   NOT_INTERESTED
+  SEE_MORE_LIKE_THIS
   REPORT
 }
 
@@ -791,31 +793,55 @@ model MomentScore {
 
   score         Float   @default(0)
   viralScore    Float   @default(0)
+  localScore    Float   @default(0)
   qualityScore  Float   @default(0)
   safetyScore   Float   @default(1)
 
   impressions      Int @default(0)
   views            Int @default(0)
   completions      Int @default(0)
+  replays          Int @default(0)
   likes            Int @default(0)
   comments         Int @default(0)
   shares           Int @default(0)
+  dmShares         Int @default(0)
   saves            Int @default(0)
   reports          Int @default(0)
   profileOpens     Int @default(0)
   followsGenerated Int @default(0)
+  notInterested    Int @default(0)
+  seeMoreLikeThis  Int @default(0)
 
   avgWatchMs       Int @default(0)
   replayRate       Float @default(0)
   quickSkipRate    Float @default(0)
 
+  audienceLevel    Int @default(0)
   lastCalculatedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([score])
   @@index([viralScore])
+  @@index([localScore])
+  @@index([audienceLevel])
   @@index([updatedAt])
+}
+
+model UserQualityScore {
+  id        String @id @default(cuid())
+  userId    String @unique
+
+  score         Float @default(50)
+  trust         Float @default(0)
+  activity      Float @default(0)
+  reportsPenalty Float @default(0)
+  creatorBoost   Float @default(0)
+
+  lastCalculatedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model MomentLike {
