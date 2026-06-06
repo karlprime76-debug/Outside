@@ -5,11 +5,10 @@ import { Award, ShieldCheck, MapPin, CheckCircle } from "lucide-react";
 interface UserRoleBadgesProps {
   isAmbassador?: boolean | null;
   ambassadorCity?: string | null;
-  accountKind?: string | null;
   isVerified?: boolean | null;
 }
 
-export function UserRoleBadges({ isAmbassador, ambassadorCity, accountKind, isVerified }: UserRoleBadgesProps) {
+export function UserRoleBadges({ isAmbassador, ambassadorCity, isVerified }: UserRoleBadgesProps) {
   const badges: Array<{ icon: React.ComponentType<{ className?: string }>; label: string; variant: "gold" | "blue" | "green" }> = [];
 
   // Ambassadeur badge
@@ -18,23 +17,6 @@ export function UserRoleBadges({ isAmbassador, ambassadorCity, accountKind, isVe
       icon: Award,
       label: ambassadorCity ? `Ambassadeur ${ambassadorCity}` : "Ambassadeur OUTSIDE",
       variant: "gold",
-    });
-  }
-
-  // Compte officiel badge
-  if (accountKind === "OFFICIAL_GUIDE") {
-    badges.push({
-      icon: ShieldCheck,
-      label: "Compte officiel",
-      variant: "blue",
-    });
-  }
-
-  if (accountKind === "OFFICIAL_CITY") {
-    badges.push({
-      icon: MapPin,
-      label: "Compte officiel",
-      variant: "blue",
     });
   }
 
