@@ -81,10 +81,23 @@ async function fetchScoreMap(momentIds: string[]): Promise<Map<string, { score: 
   return map;
 }
 
+async function fetchUserQualityScores(authorIds: string[]): Promise<Map<string, number>> {
+  const scores = await db.userQualityScore.findMany({
+    where: { userId: { in: authorIds } },
+    select: { userId: true, score: true },
+  });
+  const map = new Map<string, number>();
+  for (const s of scores) {
+    map.set(s.userId, s.score);
+  }
+  return map;
+}
+
 function scoreCandidate(
   candidate: FeedCandidate,
   viewer: ViewerContext,
-  scoreData: { score: number; viralScore: number; safetyScore: number; localScore: number } | undefined
+  scoreData: { score: number; viralScore: number; safetyScore: number; localScore: number } | undefined,
+  userQualityScore: number | undefined
 ): number {
   // Safety filter: very low safety = penalize heavily
   if (scoreData && scoreData.safetyScore < 0.3) return -9999;
@@ -113,13 +126,20 @@ function scoreCandidate(
   if (candidate.author.isVerified) rank += 5;
   if (candidate.author.trustScore > 80) rank += 3;
 
+  // User quality score boost
+  if (userQualityScore && userQualityScore > 70) rank += 5;
+  if (userQualityScore && userQualityScore > 85) rank += 8;
+
   // Demo account penalty unless verified
   if (candidate.author.isDemoAccount && !candidate.author.isVerified) rank -= 10;
 
-  // New creator boost: authors with fewer moments get a boost to help them grow
+  // Enhanced new creator boost: authors with fewer moments get a boost to help them grow
   const momentAge = Date.now() - candidate.createdAt.getTime();
   const isNewMoment = momentAge < 7 * 24 * 60 * 60 * 1000; // 7 days
-  if (isNewMoment && !candidate.author.isDemoAccount) {
+  const isRecentAccount = candidate.author.trustScore > 0 && candidate.author.trustScore < 60; // Newer accounts
+  if (isNewMoment && !candidate.author.isDemoAccount && isRecentAccount) {
+    rank += 12; // Stronger boost for new content from new real users
+  } else if (isNewMoment && !candidate.author.isDemoAccount) {
     rank += 8; // Boost new content from real users
   }
 
@@ -285,11 +305,14 @@ async function fetchCandidates(
 
   // Fetch scores
   const scoreMap = await fetchScoreMap(candidates.map((c) => c.id));
+  const authorIds = Array.from(new Set(candidates.map((c) => c.authorId)));
+  const userQualityMap = await fetchUserQualityScores(authorIds);
 
   // Score each candidate
   for (const c of candidates) {
     const scoreData = scoreMap.get(c.id);
-    c.score = scoreCandidate(c, viewer, scoreData);
+    const userQualityScore = userQualityMap.get(c.authorId);
+    c.score = scoreCandidate(c, viewer, scoreData, userQualityScore);
   }
 
   // Sort by score descending, then by createdAt descending

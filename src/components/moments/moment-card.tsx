@@ -78,6 +78,8 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const isVideo = moment.type === "VIDEO";
   const isMe = moment.viewerState.canDelete;
   const viewTrackedRef = useRef(false);
+  const trackedThresholdsRef = useRef<Set<number>>(new Set());
+  const watchStartTimeRef = useRef<number | null>(null);
 
   // Track impression and view
   useEffect(() => {
@@ -97,6 +99,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         if (entry.isIntersecting && !viewTrackedRef.current) {
           timer = setTimeout(() => {
             viewTrackedRef.current = true;
+            watchStartTimeRef.current = Date.now();
             fetch(`/api/moments/${moment.id}/event`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -105,6 +108,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
           }, 2000);
         } else if (!entry.isIntersecting && timer) {
           clearTimeout(timer);
+          watchStartTimeRef.current = null;
         }
       },
       { threshold: 0.5 }
@@ -126,6 +130,41 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     },
     [moment.id]
   );
+
+  // Track video progress at thresholds (can be called by video player)
+  const handleVideoProgress = useCallback((percent: number, watchMs: number) => {
+    const thresholds = [25, 50, 75, 90];
+    for (const threshold of thresholds) {
+      if (percent >= threshold && !trackedThresholdsRef.current.has(threshold)) {
+        trackedThresholdsRef.current.add(threshold);
+        trackEvent("VIEW", { percent, watchMs });
+        
+        // Track complete view at 80%
+        if (percent >= 80 && !trackedThresholdsRef.current.has(80)) {
+          trackedThresholdsRef.current.add(80);
+          trackEvent("COMPLETE_VIEW", { percent, watchMs });
+        }
+      }
+    }
+  }, [trackEvent]);
+
+  // Track quick skip (user skipped within 1 second)
+  const handleQuickSkip = useCallback(() => {
+    const watchMs = watchStartTimeRef.current ? Date.now() - watchStartTimeRef.current : 0;
+    if (watchMs < 1000) {
+      trackEvent("VIEW", { percent: 0, watchMs, source: "quick_skip" });
+    }
+  }, [trackEvent]);
+
+  // Expose handlers for video player integration
+  useEffect(() => {
+    const handlers = (window as typeof window & { __momentCardHandlers?: Record<string, { handleVideoProgress: (percent: number, watchMs: number) => void; handleQuickSkip: () => void }> }).__momentCardHandlers || {};
+    handlers[moment.id] = { handleVideoProgress, handleQuickSkip };
+    (window as typeof window & { __momentCardHandlers?: Record<string, { handleVideoProgress: (percent: number, watchMs: number) => void; handleQuickSkip: () => void }> }).__momentCardHandlers = handlers;
+    return () => {
+      delete (window as typeof window & { __momentCardHandlers?: Record<string, { handleVideoProgress: (percent: number, watchMs: number) => void; handleQuickSkip: () => void }> }).__momentCardHandlers?.[moment.id];
+    };
+  }, [moment.id, handleVideoProgress, handleQuickSkip]);
 
   const handleLike = useCallback(async () => {
     if (likeLoading) return;
