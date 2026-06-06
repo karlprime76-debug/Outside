@@ -78,6 +78,13 @@ enum Mood {
   TRAVEL
   GAMING
   FITNESS
+  DANCE
+  WALK
+  FREE
+  MEET_PEOPLE
+  CALM
+  TONIGHT
+  NOW
 }
 
 enum PlanVisibility {
@@ -93,6 +100,28 @@ enum PlanStatus {
   FULL
   CANCELLED
   COMPLETED
+}
+
+enum OutsideStatusType {
+  OUT_NOW
+  AVAILABLE
+  LOOKING_FOR_FOOD
+  LOOKING_FOR_CHILL
+  LOOKING_FOR_SPORT
+  LOOKING_FOR_MUSIC
+  DO_NOT_DISTURB
+}
+
+enum PlaceVibeSignalType {
+  CALM
+  CROWDED
+  GOOD_MOOD
+  EXPENSIVE
+  FREE_ENTRY
+  SAFE
+  LOUD_MUSIC
+  GOOD_FOOD
+  BAD_MOOD
 }
 
 enum PlanInvitationStatus {
@@ -412,6 +441,7 @@ model User {
   safetyContacts    SafetyContact[] @relation("UserSafetyContacts")
   trustedByContacts SafetyContact[] @relation("TrustedByContacts")
   safetyShares      PlanSafetyShare[]
+  outsideStatus     UserOutsideStatus?
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -629,6 +659,9 @@ model Plan {
 
   isCommunityConfirmed Boolean        @default(false)
   confirmationScore    Float          @default(0)
+
+  isExpress          Boolean         @default(false)
+  expiresAt          DateTime?
 
   creatorId         String
   creator           User            @relation(fields: [creatorId], references: [id])
@@ -1359,6 +1392,40 @@ model UserTripHistory {
   createdAt   DateTime @default(now())
 
   @@index([userId])
+  @@index([city])
+  @@index([createdAt])
+}
+
+model UserOutsideStatus {
+  id        String           @id @default(cuid())
+  userId    String           @unique
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      OutsideStatusType
+  text      String?
+  city      String?
+  countryCode String?
+  expiresAt DateTime
+
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([city])
+  @@index([expiresAt])
+}
+
+model PlaceVibeSignal {
+  id        String           @id @default(cuid())
+  placeId   String?
+  userId    String
+  city      String?
+  countryCode String?
+  type      PlaceVibeSignalType
+  note      String?
+  createdAt DateTime         @default(now())
+
+  @@index([placeId])
   @@index([city])
   @@index([createdAt])
 }
