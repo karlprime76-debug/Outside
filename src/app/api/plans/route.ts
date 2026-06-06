@@ -6,6 +6,20 @@ import { createPlanSchema } from "@/lib/validation/schemas";
 import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
 import { PlanVisibility } from "@prisma/client";
 
+// Haversine formula to calculate distance between two points in kilometers
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+    Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/plans";
   logPerfStart(perfLabel);
@@ -25,6 +39,7 @@ export async function GET(req: Request) {
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
     const travelerFriendly = searchParams.get("travelerFriendly");
+    const nearMe = searchParams.get("nearMe");
     const sortBy = searchParams.get("sortBy") || "dateAsc";
     let limit = parseInt(searchParams.get("limit") || "50", 10);
     if (isNaN(limit) || limit < 1) limit = 50;
@@ -63,6 +78,23 @@ export async function GET(req: Request) {
       select: { planId: true },
     });
     const invitedIds = invitedPlanIds.map((i) => i.planId);
+
+    // Get user's active city location for "near me" filter
+    const currentUser = await db.user.findUnique({
+      where: { id: user.id },
+      select: { activeCityId: true },
+    });
+
+    let userCityLocation: { latitude: number; longitude: number } | null = null;
+    if (currentUser?.activeCityId) {
+      const city = await db.city.findUnique({
+        where: { id: currentUser.activeCityId },
+        select: { latitude: true, longitude: true },
+      });
+      if (city?.latitude && city?.longitude) {
+        userCityLocation = { latitude: city.latitude, longitude: city.longitude };
+      }
+    }
 
     const baseWhere: Record<string, unknown> = { status: "ACTIVE" };
     if (cityId) baseWhere.cityId = cityId;
@@ -104,6 +136,45 @@ export async function GET(req: Request) {
         break;
       default:
         orderBy = { startDate: "asc" };
+    }
+
+    // Near me filter: filter plans within 50km of user's active city location
+    if (nearMe === "true" && userCityLocation) {
+      const userLat = userCityLocation.latitude;
+      const userLng = userCityLocation.longitude;
+      const radiusKm = 50;
+
+      // Get all plans first, then filter by distance
+      const allPlans = await db.plan.findMany({
+        where: baseWhere,
+        orderBy,
+        take: limit * 2, // Fetch more to account for distance filtering
+        include: {
+          creator: { select: { id: true, name: true, image: true } },
+          city: { select: { id: true, name: true } },
+          place: { select: { id: true, name: true } },
+          participants: { select: { attendance: true } },
+        },
+      });
+
+      // Filter by distance using Haversine formula
+      const nearbyPlans = allPlans.filter((plan) => {
+        if (!plan.latitude || !plan.longitude) return false;
+        const distance = calculateDistance(userLat, userLng, plan.latitude, plan.longitude);
+        return distance <= radiusKm;
+      }).slice(0, limit);
+
+      const plansWithCounts = nearbyPlans.map((plan) => {
+        const going = plan.participants.filter((p) => p.attendance === "GOING").length;
+        const maybe = plan.participants.filter((p) => p.attendance === "MAYBE").length;
+        return {
+          ...plan,
+          _count: { participants: going + maybe, going, maybe },
+        };
+      });
+
+      logPerfEnd(perfLabel);
+      return NextResponse.json({ plans: plansWithCounts });
     }
 
     const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";

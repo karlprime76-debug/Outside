@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark } from "lucide-react";
+import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, MapPin } from "lucide-react";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
 
@@ -73,6 +73,7 @@ export default function PlansPage() {
   const [budget, setBudget] = useState("");
   const [planCategory, setPlanCategory] = useState("");
   const [isFree, setIsFree] = useState("");
+  const [nearMe, setNearMe] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [search, setSearch] = useState("");
@@ -87,6 +88,7 @@ export default function PlansPage() {
     if (budget) params.set("budgetLevel", budget);
     if (planCategory) params.set("planCategory", planCategory);
     if (isFree) params.set("isFree", isFree);
+    if (nearMe) params.set("nearMe", nearMe);
     if (dateFrom) params.set("dateFrom", dateFrom);
     if (dateTo) params.set("dateTo", dateTo);
     if (sortBy) params.set("sortBy", sortBy);
@@ -99,7 +101,7 @@ export default function PlansPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [mood, budget, planCategory, isFree, dateFrom, dateTo, sortBy]);
+  }, [mood, budget, planCategory, isFree, nearMe, dateFrom, dateTo, sortBy]);
 
   useEffect(() => {
     fetch("/api/plans/invitations")
@@ -111,7 +113,7 @@ export default function PlansPage() {
       .catch(() => setLoadingInvitations(false));
   }, []);
 
-  const hasFilters = mood || budget || planCategory || isFree || dateFrom || dateTo || search;
+  const hasFilters = mood || budget || planCategory || isFree || nearMe || dateFrom || dateTo || search;
 
   const filteredPlans = debouncedSearch
     ? plans.filter((p) =>
@@ -196,6 +198,17 @@ export default function PlansPage() {
           <option value="true">Gratuit</option>
           <option value="false">Payant</option>
         </select>
+        <button
+          onClick={() => setNearMe(nearMe === "true" ? "" : "true")}
+          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold ${
+            nearMe === "true"
+              ? "border-outside-500 bg-outside-50 text-outside-700"
+              : "border-[var(--os-card-border)] bg-[var(--os-card)] text-[var(--os-fg)]"
+          } focus:outline-none focus:ring-2 focus:ring-outside-500`}
+        >
+          <MapPin className="h-3 w-3" />
+          Proche de moi
+        </button>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
@@ -223,7 +236,7 @@ export default function PlansPage() {
         />
         {hasFilters && (
           <button
-            onClick={() => { setMood(""); setBudget(""); setPlanCategory(""); setIsFree(""); setDateFrom(""); setDateTo(""); setSearch(""); setSortBy("dateAsc"); }}
+            onClick={() => { setMood(""); setBudget(""); setPlanCategory(""); setIsFree(""); setNearMe(""); setDateFrom(""); setDateTo(""); setSearch(""); setSortBy("dateAsc"); }}
             className="inline-flex items-center gap-1 text-xs font-bold text-[var(--os-muted)] hover:text-red-500 transition-colors"
           >
             <X className="h-3 w-3" />
@@ -245,6 +258,9 @@ export default function PlansPage() {
           )}
           {isFree && (
             <Badge variant="slate">{isFree === "true" ? "Gratuit" : "Payant"}</Badge>
+          )}
+          {nearMe === "true" && (
+            <Badge variant="slate">Proche de moi</Badge>
           )}
           {(dateFrom || dateTo) && (
             <Badge variant="slate">{dateFrom || "..."} → {dateTo || "..."}</Badge>
