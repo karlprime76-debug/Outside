@@ -6,6 +6,7 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { PlanCard } from "@/components/plan-card";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { InviteCircle } from "@/components/referrals/invite-circle";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -346,7 +347,7 @@ export default function PlansPage() {
             {search ? "Essaye un autre mot-clé ou filtre." : "Lance le premier plan pour remplir ton OUTSIDE."}
           </p>
           {!search && (
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col gap-3 justify-center">
               <Link
                 href="/plans/new"
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
@@ -361,6 +362,11 @@ export default function PlansPage() {
                 <Bookmark className="h-4 w-4" />
                 Voir les plans gratuits
               </Link>
+            </div>
+          )}
+          {!search && (
+            <div className="mt-4">
+              <InviteCircle compact />
             </div>
           )}
         </div>

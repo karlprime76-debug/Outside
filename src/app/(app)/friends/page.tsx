@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Avatar } from "@/components/ui/avatar";
 import { InputField } from "@/components/ui/input-field";
-import { EmptyState } from "@/components/ui/empty-state";
+import { InviteCircle } from "@/components/referrals/invite-circle";
 import { Search, UserPlus, UserCheck, UserX, Users, Loader2, UserCircle, UserSearch, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -243,7 +243,11 @@ export default function FriendsPage() {
           )}
 
           {searchQuery.length >= 2 && !searchLoading && searchResults.length === 0 && (
-            <EmptyState icon={UserSearch} title="Aucun résultat" description="Essaye un autre nom d'utilisateur." />
+            <div className="text-center py-8">
+              <UserSearch className="h-10 w-10 text-[var(--os-muted)] mx-auto mb-3" />
+              <p className="text-sm font-bold text-[var(--os-fg)]">Aucun résultat</p>
+              <p className="text-xs text-[var(--os-muted)]">Essaye un autre nom d&apos;utilisateur.</p>
+            </div>
           )}
 
           {searchResults.length > 0 && (
@@ -330,13 +334,18 @@ export default function FriendsPage() {
               <Send className="h-12 w-12 text-[var(--os-muted)] mx-auto mb-4" />
               <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">Aucune demande</h3>
               <p className="text-sm text-[var(--os-muted)] mb-6">Tes demandes d&apos;amis apparaîtront ici.</p>
-              <Link
-                href="/users/suggestions"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-              >
-                <UserPlus className="h-4 w-4" />
-                Trouver des amis
-              </Link>
+              <div className="flex flex-col gap-3 justify-center">
+                <Link
+                  href="/users/suggestions"
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Trouver des amis
+                </Link>
+              </div>
+              <div className="mt-4">
+                <InviteCircle compact />
+              </div>
             </div>
           )}
         </div>
@@ -367,7 +376,11 @@ export default function FriendsPage() {
               </div>
             ))
           ) : (
-            <EmptyState icon={Sparkles} title="Aucune suggestion" description="On te proposera des personnes proches de ta ville bientôt." />
+            <div className="text-center py-8">
+              <Sparkles className="h-10 w-10 text-[var(--os-muted)] mx-auto mb-3" />
+              <p className="text-sm font-bold text-[var(--os-fg)]">Aucune suggestion</p>
+              <p className="text-xs text-[var(--os-muted)]">On te proposera des personnes proches de ta ville bientôt.</p>
+            </div>
           )}
         </div>
       )}
@@ -382,7 +395,11 @@ export default function FriendsPage() {
             </h2>
           </div>
           {friends.length === 0 ? (
-            <EmptyState icon={Users} title="Pas encore d'amis" description="Cherche un utilisateur pour commencer !" />
+            <div className="text-center py-8">
+              <Users className="h-10 w-10 text-[var(--os-muted)] mx-auto mb-3" />
+              <p className="text-sm font-bold text-[var(--os-fg)]">Pas encore d&apos;amis</p>
+              <p className="text-xs text-[var(--os-muted)]">Cherche un utilisateur pour commencer !</p>
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
               {friends.map((f) => (
@@ -431,7 +448,11 @@ export default function FriendsPage() {
           )}
 
           {followers.length === 0 && following.length === 0 && (
-            <EmptyState icon={Users} title="Aucun abonné" description="Tes abonnés et abonnements apparaîtront ici." />
+            <div className="text-center py-8">
+              <Users className="h-10 w-10 text-[var(--os-muted)] mx-auto mb-3" />
+              <p className="text-sm font-bold text-[var(--os-fg)]">Aucun abonné</p>
+              <p className="text-xs text-[var(--os-muted)]">Tes abonnés et abonnements apparaîtront ici.</p>
+            </div>
           )}
         </div>
       )}

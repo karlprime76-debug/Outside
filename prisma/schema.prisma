@@ -398,6 +398,7 @@ model User {
 
   isVerified        Boolean  @default(false)
   accountKind       AccountKind @default(STANDARD)
+  referralCode      String?  @unique
   trustScore        Int      @default(0)
   identityVerificationStatus IdentityVerificationStatus @default(NOT_SUBMITTED)
   isAvailable       Boolean  @default(false)
@@ -454,6 +455,8 @@ model User {
   challengeProgress UserChallengeProgress[]
   missionProgress   UserCityMissionProgress[]
   onboardingProgress OnboardingProgress?
+  referralInvites   ReferralInvite[] @relation("ReferralInviter")
+  acceptedReferral  ReferralInvite?   @relation("ReferralAccepted")
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -1531,4 +1534,21 @@ model OutsideTip {
   @@index([city])
   @@index([countryCode])
   @@index([active])
+}
+
+model ReferralInvite {
+  id             String   @id @default(cuid())
+  inviterId      String
+  inviter        User     @relation("ReferralInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  code           String   @unique
+  invitedEmail   String?
+  invitedPhone   String?
+  acceptedUserId String?  @unique
+  acceptedUser   User?    @relation("ReferralAccepted", fields: [acceptedUserId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  acceptedAt     DateTime?
+
+  @@index([inviterId])
+  @@index([code])
+  @@index([acceptedUserId])
 }

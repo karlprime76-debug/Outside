@@ -18,6 +18,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { OutsideHeader } from "@/components/ui/outside-header";
 import { OutsidePage } from "@/components/ui/outside-page";
 import { AccountSuggestions } from "@/components/users/account-suggestions";
+import { InviteCircle } from "@/components/referrals/invite-circle";
 import { useSession } from "next-auth/react";
 
 type Tab = "primary" | "requests" | "general";
@@ -264,7 +265,7 @@ export default function DmInboxPage() {
                   <p className="text-xs text-[var(--os-muted)] mt-1 max-w-xs mb-4">
                     Découvre des personnes pour commencer à discuter.
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <div className="flex flex-col gap-3 justify-center">
                     <button
                       onClick={() => setShowNewMessage(true)}
                       className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
@@ -279,6 +280,9 @@ export default function DmInboxPage() {
                       <Search className="h-4 w-4" />
                       Découvrir des personnes
                     </Link>
+                  </div>
+                  <div className="mt-4">
+                    <InviteCircle compact />
                   </div>
                 </>
               )}
