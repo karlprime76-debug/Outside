@@ -40,6 +40,8 @@ import {
 import { AccountSuggestions } from "@/components/users/account-suggestions";
 import { AvailabilitySheet } from "@/components/availability/availability-sheet";
 import { useMomentPolling } from "@/hooks/use-moment-polling";
+import { ExpressPlanSheet } from "@/components/plans/express-plan-sheet";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 
 interface Plan {
   id: string;
@@ -95,6 +97,8 @@ export default function HomePage() {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [myAvailability, setMyAvailability] = useState<{ mood: string; expiresAt: string } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [outsideStatus, setOutsideStatus] = useState<{ type: string; text: string | null; expiresAt: string } | null>(null);
+  const [outsideStatusSheetOpen, setOutsideStatusSheetOpen] = useState(false);
   const [moments, setMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null } }[]>([]);
   const [loadingMoments, setLoadingMoments] = useState(true);
   const { hasNew } = useMomentPolling({ scope: "for-you", media: "all", enabled: !loadingMoments });
@@ -150,6 +154,13 @@ export default function HomePage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.availability) setMyAvailability(data.availability);
+      })
+      .catch(() => {});
+
+    fetch("/api/outside-status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.status) setOutsideStatus(data.status);
       })
       .catch(() => {});
 
@@ -286,34 +297,158 @@ export default function HomePage() {
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <Link
+              href="/tonight"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition-colors pressable"
+            >
+              <Flame className="h-4 w-4" />
+              Qui bouge ce soir ?
+            </Link>
+            <Link
               href="/plans/new"
               className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition-colors pressable"
             >
               <Plus className="h-4 w-4" />
               Créer un plan
             </Link>
-            <button
-              onClick={() => {
-                if (!navigator.geolocation) return;
-                setGeoDetecting(true);
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => {
-                    setGeoDetecting(false);
-                    alert(`Position trouvée : ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} — va dans ton profil pour définir ta ville.`);
-                  },
-                  () => setGeoDetecting(false),
-                  { timeout: 10000 }
-                );
-              }}
-              disabled={geoDetecting}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition-colors disabled:opacity-50 pressable"
-            >
-              <Navigation className="h-4 w-4" />
-              {geoDetecting ? "Détection..." : "Me localiser"}
-            </button>
           </div>
         </div>
       </ImmersiveBackground>
+
+      {/* Quick Actions - Express Plan & Outside Status */}
+      <section className="animate-slide-up animate-stagger-1">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ExpressPlanSheet
+            onSelectTemplate={(template) => {
+              // Navigate to plan creation with template data
+              const params = new URLSearchParams({
+                mood: template.mood,
+                title: template.defaultTitle,
+                description: template.defaultDescription,
+                isExpress: "true",
+              });
+              window.location.href = `/plans/new?${params.toString()}`;
+            }}
+          />
+          {outsideStatus ? (
+            <div className="flex items-center justify-between rounded-2xl border-2 border-outside-300 bg-outside-50/50 px-5 py-4">
+              <div>
+                <p className="text-sm font-bold text-outside-700">
+                  {outsideStatus.type === "OUT_NOW" ? "Je suis dehors maintenant" : 
+                   outsideStatus.type === "AVAILABLE" ? "Disponible" :
+                   outsideStatus.type === "LOOKING_FOR_FOOD" ? "Cherche à manger" :
+                   outsideStatus.type === "LOOKING_FOR_CHILL" ? "Cherche à chill" :
+                   outsideStatus.type === "LOOKING_FOR_SPORT" ? "Cherche du sport" :
+                   outsideStatus.type === "LOOKING_FOR_MUSIC" ? "Cherche de la musique" :
+                   "Disponible"}
+                </p>
+                {outsideStatus.text && (
+                  <p className="text-xs text-outside-600">{outsideStatus.text}</p>
+                )}
+                <p className="text-xs text-outside-600">
+                  Jusqu'à {new Date(outsideStatus.expiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  await fetch("/api/outside-status", { method: "DELETE" });
+                  setOutsideStatus(null);
+                }}
+                className="rounded-full bg-white p-2 text-outside-600 hover:bg-outside-100 transition-colors"
+                title="Désactiver"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setOutsideStatusSheetOpen(true)}
+              className="group flex items-center justify-center gap-3 rounded-2xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)] py-5 text-lg font-black text-[var(--os-fg)] hover:border-outside-300 hover:bg-outside-50/50 transition-all pressable"
+            >
+              <Navigation className="h-6 w-6 text-outside-500" />
+              Je suis dehors maintenant
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* Outside Status Sheet */}
+      <BottomSheet
+        open={outsideStatusSheetOpen}
+        onClose={() => setOutsideStatusSheetOpen(false)}
+        title="Statut dehors maintenant"
+        maxHeight="60vh"
+      >
+        <div className="space-y-3">
+          <button
+            onClick={async () => {
+              await fetch("/api/outside-status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "OUT_NOW", durationHours: 2 }),
+              });
+              setOutsideStatusSheetOpen(false);
+              fetch("/api/outside-status")
+                .then((r) => r.json())
+                .then((data) => setOutsideStatus(data.status));
+            }}
+            className="w-full p-4 rounded-lg border hover:bg-accent transition-colors text-left"
+          >
+            <div className="font-semibold">Je suis dehors maintenant</div>
+            <div className="text-sm text-muted-foreground">Montre que tu es actif</div>
+          </button>
+          <button
+            onClick={async () => {
+              await fetch("/api/outside-status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "AVAILABLE", durationHours: 2 }),
+              });
+              setOutsideStatusSheetOpen(false);
+              fetch("/api/outside-status")
+                .then((r) => r.json())
+                .then((data) => setOutsideStatus(data.status));
+            }}
+            className="w-full p-4 rounded-lg border hover:bg-accent transition-colors text-left"
+          >
+            <div className="font-semibold">Disponible</div>
+            <div className="text-sm text-muted-foreground">Ouvert aux propositions</div>
+          </button>
+          <button
+            onClick={async () => {
+              await fetch("/api/outside-status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "LOOKING_FOR_FOOD", durationHours: 2 }),
+              });
+              setOutsideStatusSheetOpen(false);
+              fetch("/api/outside-status")
+                .then((r) => r.json())
+                .then((data) => setOutsideStatus(data.status));
+            }}
+            className="w-full p-4 rounded-lg border hover:bg-accent transition-colors text-left"
+          >
+            <div className="font-semibold">Cherche à manger</div>
+            <div className="text-sm text-muted-foreground">Pour un repas improvisé</div>
+          </button>
+          <button
+            onClick={async () => {
+              await fetch("/api/outside-status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "LOOKING_FOR_CHILL", durationHours: 2 }),
+              });
+              setOutsideStatusSheetOpen(false);
+              fetch("/api/outside-status")
+                .then((r) => r.json())
+                .then((data) => setOutsideStatus(data.status));
+            }}
+            className="w-full p-4 rounded-lg border hover:bg-accent transition-colors text-left"
+          >
+            <div className="font-semibold">Cherche à chill</div>
+            <div className="text-sm text-muted-foreground">Pour se détendre</div>
+          </button>
+        </div>
+      </BottomSheet>
 
       {/* Lives */}
       <section className="animate-slide-up animate-stagger-1">
