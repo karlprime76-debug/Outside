@@ -232,7 +232,8 @@ export default function ClipsPage() {
 
   // Attach video event listeners
   useEffect(() => {
-    Object.entries(videoRefs.current).forEach(([idxStr, video]) => {
+    const currentRefs = videoRefs.current;
+    Object.entries(currentRefs).forEach(([idxStr, video]) => {
       if (!video) return;
       const idx = parseInt(idxStr, 10);
 
@@ -243,7 +244,7 @@ export default function ClipsPage() {
     });
 
     return () => {
-      Object.values(videoRefs.current).forEach((video) => {
+      Object.values(currentRefs).forEach((video) => {
         if (!video) return;
         video.removeEventListener("timeupdate", () => {});
         video.removeEventListener("play", () => {});

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { AnimatedPage } from "@/components/ui/animated-page";
@@ -45,11 +45,7 @@ export default function TonightPage() {
   const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
   const [activePlaces, setActivePlaces] = useState<{ id: string; name: string; neighborhood: string | null }[]>([]);
 
-  useEffect(() => {
-    loadTonightData();
-  }, [session]);
-
-  const loadTonightData = async () => {
+  const loadTonightData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -89,7 +85,11 @@ export default function TonightPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user?.activeCity?.name]);
+
+  useEffect(() => {
+    loadTonightData();
+  }, [loadTonightData]);
 
   return (
     <AnimatedPage>
