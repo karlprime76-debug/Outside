@@ -396,6 +396,7 @@ model User {
   momentComments    MomentComment[]
   conversationParticipants ConversationParticipant[]
   directMessagesSent       DirectMessage[]
+  directMessageReactions  DirectMessageReaction[]
   savedPlans        SavedPlan[]
   planReminders     PlanReminder[]
   proVenues         ProVenue[]
@@ -511,12 +512,28 @@ model DirectMessage {
   status         MessageStatus @default(SENT)
   isDeleted      Boolean       @default(false)
 
+  reactions      DirectMessageReaction[]
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
   @@index([conversationId, createdAt])
   @@index([senderId])
   @@index([momentId])
+}
+
+model DirectMessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  message   DirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
 }
 
 model City {

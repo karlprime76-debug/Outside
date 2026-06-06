@@ -278,6 +278,45 @@ export default function DmConversationPage() {
     } catch { /* noop */ }
   }
 
+  async function onReactMessage(messageId: string, emoji: string) {
+    try {
+      const res = await fetch(`/api/dm/messages/${messageId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      // Optimistic update: toggle reaction
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== messageId) return m;
+          if (data.reacted) {
+            // Add reaction
+            return {
+              ...m,
+              reactions: [
+                ...(m.reactions || []),
+                {
+                  id: `temp-${Date.now()}`,
+                  emoji,
+                  userId: myId,
+                  user: { id: myId, name: null, username: null },
+                },
+              ],
+            };
+          } else {
+            // Remove reaction
+            return {
+              ...m,
+              reactions: (m.reactions || []).filter((r) => !(r.userId === myId && r.emoji === emoji)),
+            };
+          }
+        })
+      );
+    } catch { /* noop */ }
+  }
+
   // Build render items with separators
   const renderItems = useMemo(() => {
     const items: Array<
@@ -303,7 +342,10 @@ export default function DmConversationPage() {
 
   return (
     <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh]">
-      <DmConversationHeader other={other} onBack={() => router.back()} />
+      <DmConversationHeader 
+        other={other} 
+        onBack={() => router.back()} 
+      />
 
       {/* Messages */}
       <div ref={listRef} className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2">
@@ -330,8 +372,10 @@ export default function DmConversationPage() {
                   showAvatar={item.showAvatar}
                   otherImage={other?.image}
                   otherName={other?.name}
+                  myId={myId}
                   onDelete={item.isMine ? onDeleteMessage : undefined}
                   onReport={onReportMessage}
+                  onReact={onReactMessage}
                 />
               );
             })}

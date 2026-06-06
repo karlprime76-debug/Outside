@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download } from "lucide-react";
+import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download, Heart } from "lucide-react";
 import { MediaViewer } from "@/components/media/media-viewer";
 
 export interface DmMessage {
@@ -20,6 +20,16 @@ export interface DmMessage {
   mediaName?: string | null;
   mediaMimeType?: string | null;
   mediaSize?: number | null;
+  reactions?: Array<{
+    id: string;
+    emoji: string;
+    userId: string;
+    user: {
+      id: string;
+      name: string | null;
+      username: string | null;
+    };
+  }>;
 }
 
 interface DmMessageBubbleProps {
@@ -28,12 +38,97 @@ interface DmMessageBubbleProps {
   showAvatar?: boolean;
   otherImage?: string | null;
   otherName?: string | null;
+  myId?: string;
   onDelete?: (id: string) => void;
   onReport?: (id: string) => void;
+  onReact?: (messageId: string, emoji: string) => void;
 }
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+const ALLOWED_EMOJIS = ["❤️", "😂", "🔥", "👀", "🙌"];
+
+function MessageReactions({
+  reactions = [],
+  myId,
+  onReact,
+  messageId,
+  isMine,
+}: {
+  reactions: DmMessage["reactions"];
+  myId?: string;
+  onReact?: (messageId: string, emoji: string) => void;
+  messageId: string;
+  isMine: boolean;
+}) {
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // Group reactions by emoji
+  const grouped = reactions.reduce((acc, r) => {
+    if (!acc[r.emoji]) acc[r.emoji] = [];
+    acc[r.emoji].push(r);
+    return acc;
+  }, {} as Record<string, typeof reactions>);
+
+  const handleReact = async (emoji: string) => {
+    if (onReact) {
+      await onReact(messageId, emoji);
+    }
+    setShowEmojiPicker(false);
+  };
+
+  return (
+    <div className="mt-2">
+      <div className="flex flex-wrap gap-1">
+        {Object.entries(grouped).map(([emoji, users]) => {
+          const hasReacted = myId && users.some((u) => u.userId === myId);
+          return (
+            <button
+              key={emoji}
+              onClick={() => handleReact(emoji)}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+                hasReacted
+                  ? isMine
+                    ? "bg-white/20 text-white"
+                    : "bg-outside-100 text-outside-700"
+                  : isMine
+                    ? "bg-white/10 text-white/70 hover:bg-white/20"
+                    : "bg-[var(--os-card-border)] text-[var(--os-muted)] hover:bg-outside-50"
+              } transition-colors`}
+            >
+              <span>{emoji}</span>
+              <span className="text-[10px]">{users.length}</span>
+            </button>
+          );
+        })}
+        <button
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
+            isMine
+              ? "bg-white/10 text-white/70 hover:bg-white/20"
+              : "bg-[var(--os-card-border)] text-[var(--os-muted)] hover:bg-outside-50"
+          } transition-colors`}
+        >
+          <Heart className="h-3 w-3" />
+        </button>
+      </div>
+      {showEmojiPicker && (
+        <div className="flex gap-1 mt-2">
+          {ALLOWED_EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => handleReact(emoji)}
+              className="w-8 h-8 rounded-full bg-[var(--os-card)] border border-[var(--os-card-border)] hover:bg-outside-50 transition-colors text-lg"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function MomentCardInBubble({ momentId, metadata, isMine }: { momentId: string; metadata?: string | null; isMine: boolean }) {
@@ -213,8 +308,10 @@ export function DmMessageBubble({
   showAvatar,
   otherImage,
   otherName,
+  myId,
   onDelete,
   onReport,
+  onReact,
 }: DmMessageBubbleProps) {
   const isMoment = message.type === "MOMENT" && !message.isDeleted;
   const isImage = message.type === "IMAGE" && message.mediaUrl && !message.isDeleted;
@@ -269,6 +366,17 @@ export function DmMessageBubble({
             </div>
           ) : (
             <span className="whitespace-pre-wrap break-words">{message.content || ""}</span>
+          )}
+
+          {/* Reactions */}
+          {!message.isDeleted && onReact && message.reactions && message.reactions.length > 0 && (
+            <MessageReactions
+              reactions={message.reactions}
+              myId={myId}
+              onReact={onReact}
+              messageId={message.id}
+              isMine={isMine}
+            />
           )}
 
           {/* Time + actions */}

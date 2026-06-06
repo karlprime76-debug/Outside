@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, MoreVertical, Phone, User, Trash2 } from "lucide-react";
+import { ArrowLeft, MoreVertical, Phone, User, Trash2, Search, Image, Bell, Ban } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useState } from "react";
@@ -16,9 +16,11 @@ interface DmConversationHeaderProps {
     image: string | null;
   } | null;
   onBack?: () => void;
+  onOpenSearch?: () => void;
+  onOpenMedia?: () => void;
 }
 
-export function DmConversationHeader({ other, onBack }: DmConversationHeaderProps) {
+export function DmConversationHeader({ other, onBack, onOpenSearch, onOpenMedia }: DmConversationHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const haptic = useHaptic();
 
@@ -96,12 +98,44 @@ export function DmConversationHeader({ other, onBack }: DmConversationHeaderProp
                   Voir le profil
                 </Link>
               )}
+              {onOpenMedia && (
+                <button
+                  onClick={() => { haptic.light(); setMenuOpen(false); onOpenMedia(); }}
+                  className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
+                >
+                  <Image className="h-4 w-4 text-[var(--os-muted)]" />
+                  Médias partagés
+                </button>
+              )}
+              {onOpenSearch && (
+                <button
+                  onClick={() => { haptic.light(); setMenuOpen(false); onOpenSearch(); }}
+                  className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
+                >
+                  <Search className="h-4 w-4 text-[var(--os-muted)]" />
+                  Rechercher
+                </button>
+              )}
+              <button
+                onClick={() => { haptic.light(); setMenuOpen(false); alert("Notifications bientôt disponibles."); }}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
+              >
+                <Bell className="h-4 w-4 text-[var(--os-muted)]" />
+                Couper les notifications
+              </button>
               {other && (
                 <div className="px-3 py-1">
                   <ReportButton targetType="USER" targetId={other.id} />
                 </div>
               )}
               <div className="my-1 border-t border-[var(--os-card-border)]" />
+              <button
+                onClick={() => { haptic.medium(); setMenuOpen(false); alert("Blocage bientôt disponible."); }}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors active:scale-[0.98]"
+              >
+                <Ban className="h-4 w-4" />
+                Bloquer
+              </button>
               <button
                 onClick={() => { haptic.medium(); setMenuOpen(false); alert("Suppression bientôt disponible."); }}
                 className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors active:scale-[0.98]"
