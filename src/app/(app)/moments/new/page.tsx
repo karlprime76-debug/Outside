@@ -11,6 +11,9 @@ import { AUDIO_RIGHTS_NOTICE } from "@/lib/audio";
 import { AudioPicker } from "@/components/audio/audio-picker";
 import { ImageCropEditor } from "@/components/media/image-crop-editor";
 import { VideoTrimEditor } from "@/components/media/video-trim-editor";
+import { compressImage, shouldCompressImage } from "@/lib/media/compress-image";
+import { retryAsync, UploadProgress } from "@/lib/upload/retry-upload";
+import { UploadProgressComponent } from "@/components/upload/upload-progress";
 
 export default function NewMomentPage() {
   const router = useRouter();
@@ -25,6 +28,7 @@ export default function NewMomentPage() {
   const [visibility, setVisibility] = useState("PUBLIC");
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [showDraftPrompt, setShowDraftPrompt] = useState(false);
   const [audioTrack, setAudioTrack] = useState<{ id: string; title: string; artistName: string | null } | null>(null);
   const [audioVolume, setAudioVolume] = useState(1);
@@ -157,39 +161,85 @@ export default function NewMomentPage() {
     }
 
     setLoading(true);
+    setUploadProgress({ status: "preparing", percentage: 0 });
+    
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      if (caption.trim()) formData.append("caption", caption.trim());
-      formData.append("visibility", visibility);
-      if (city.trim()) formData.append("city", city.trim());
-      if (audioTrack) {
-        formData.append("audioTrackId", audioTrack.id);
-        formData.append("audioStartTime", "0");
-        formData.append("audioVolume", String(audioVolume));
+      // Compress image if needed
+      let fileToUpload = file;
+      if (shouldCompressImage(file)) {
+        setUploadProgress({ status: "compressing", percentage: 10, message: "Compression de l'image..." });
+        try {
+          const result = await compressImage(file);
+          fileToUpload = result.compressedFile;
+          addToast(`Image compressée: ${(result.compressionRatio * 100).toFixed(0)}% de la taille originale`, "info");
+        } catch (compressError) {
+          console.error("Compression error:", compressError);
+          addToast("Compression échouée, envoi de l'original", "info");
+          fileToUpload = file;
+        }
       }
 
-      // Add media editing metadata
-      if (mediaMetadata.mediaWidth) formData.append("mediaWidth", String(mediaMetadata.mediaWidth));
-      if (mediaMetadata.mediaHeight) formData.append("mediaHeight", String(mediaMetadata.mediaHeight));
-      if (mediaMetadata.mediaDuration) formData.append("mediaDuration", String(mediaMetadata.mediaDuration));
-      if (mediaMetadata.mediaCrop) formData.append("mediaCrop", JSON.stringify(mediaMetadata.mediaCrop));
-      if (mediaMetadata.videoStartTime) formData.append("videoStartTime", String(mediaMetadata.videoStartTime));
-      if (mediaMetadata.videoEndTime) formData.append("videoEndTime", String(mediaMetadata.videoEndTime));
-      if (mediaMetadata.mediaAspectRatio) formData.append("mediaAspectRatio", mediaMetadata.mediaAspectRatio);
+      setUploadProgress({ status: "uploading", percentage: 30, message: "Envoi en cours..." });
 
-      const res = await fetch("/api/moments", { method: "POST", body: formData });
-      if (res.ok) {
-        draft.clearDraft();
-        addToast("Moment publié !", "success");
+      const uploadWithProgress = async () => {
+        const formData = new FormData();
+        formData.append("file", fileToUpload);
+        if (caption.trim()) formData.append("caption", caption.trim());
+        formData.append("visibility", visibility);
+        if (city.trim()) formData.append("city", city.trim());
+        if (audioTrack) {
+          formData.append("audioTrackId", audioTrack.id);
+          formData.append("audioStartTime", "0");
+          formData.append("audioVolume", String(audioVolume));
+        }
+
+        // Add media editing metadata
+        if (mediaMetadata.mediaWidth) formData.append("mediaWidth", String(mediaMetadata.mediaWidth));
+        if (mediaMetadata.mediaHeight) formData.append("mediaHeight", String(mediaMetadata.mediaHeight));
+        if (mediaMetadata.mediaDuration) formData.append("mediaDuration", String(mediaMetadata.mediaDuration));
+        if (mediaMetadata.mediaCrop) formData.append("mediaCrop", JSON.stringify(mediaMetadata.mediaCrop));
+        if (mediaMetadata.videoStartTime) formData.append("videoStartTime", String(mediaMetadata.videoStartTime));
+        if (mediaMetadata.videoEndTime) formData.append("videoEndTime", String(mediaMetadata.videoEndTime));
+        if (mediaMetadata.mediaAspectRatio) formData.append("mediaAspectRatio", mediaMetadata.mediaAspectRatio);
+
+        const res = await fetch("/api/moments", { method: "POST", body: formData });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Erreur lors de la publication");
+        }
+        return res;
+      };
+
+      // Retry upload with exponential backoff
+      await retryAsync(uploadWithProgress, {
+        maxAttempts: 3,
+        baseDelay: 1000,
+        onRetry: (attempt) => {
+          addToast(`Échec de l'envoi. Nouvelle tentative (${attempt}/3)...`, "info");
+          setUploadProgress({ 
+            status: "uploading", 
+            percentage: 30 + (attempt * 10), 
+            message: `Nouvelle tentative ${attempt}/3...` 
+          });
+        },
+      });
+
+      setUploadProgress({ status: "processing", percentage: 90, message: "Traitement..." });
+      
+      draft.clearDraft();
+      setUploadProgress({ status: "completed", percentage: 100 });
+      addToast("Moment publié !", "success");
+      
+      setTimeout(() => {
         router.push("/moments");
         router.refresh();
-      } else {
-        const data = await res.json().catch(() => ({}));
-        addToast(data.error || "Erreur lors de la publication", "error");
-      }
-    } catch {
-      addToast("Erreur réseau", "error");
+      }, 500);
+    } catch (error) {
+      console.error("Submit error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Erreur réseau";
+      addToast(errorMessage, "error");
+      setUploadProgress({ status: "error", percentage: 0, message: errorMessage });
+      // Keep draft on error
     } finally {
       setLoading(false);
     }
@@ -467,6 +517,17 @@ export default function NewMomentPage() {
           Ta position exacte ne sera jamais affichée.
         </p>
       </div>
+
+      {/* Upload Progress */}
+      {uploadProgress && (
+        <UploadProgressComponent 
+          progress={uploadProgress}
+          onCancel={() => {
+            setLoading(false);
+            setUploadProgress(null);
+          }}
+        />
+      )}
 
       <button
         onClick={submit}

@@ -3,6 +3,9 @@
 import { useRef, useState } from "react";
 import { Camera, ImageIcon, Mic, Plus, SendHorizontal, X, Paperclip } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { compressImage, shouldCompressImage } from "@/lib/media/compress-image";
+import { retryAsync, UploadProgress } from "@/lib/upload/retry-upload";
+import { UploadProgressComponent } from "@/components/upload/upload-progress";
 
 interface DmMessageComposerProps {
   onSend: (
@@ -26,6 +29,7 @@ interface DmMessageComposerProps {
 export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanSelector }: DmMessageComposerProps) {
   const [text, setText] = useState("");
   const [showPlus, setShowPlus] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -55,27 +59,57 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
   }
 
   async function uploadFile(file: File) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("conversationId", conversationId);
-    const res = await fetch("/api/dm/media", { method: "POST", body: formData });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || "Échec de l'upload");
-    return json as {
-      mediaUrl: string;
-      type: string;
-      path: string;
-      mediaName: string;
-      mediaMimeType: string;
-      mediaSize: number;
+    // Compress image if needed
+    let fileToUpload = file;
+    if (shouldCompressImage(file)) {
+      try {
+        const result = await compressImage(file);
+        fileToUpload = result.compressedFile;
+        addToast(`Image compressée: ${(result.compressionRatio * 100).toFixed(0)}% de la taille originale`, "info");
+      } catch (compressError) {
+        console.error("Compression error:", compressError);
+        addToast("Compression échouée, envoi de l'original", "info");
+        fileToUpload = file;
+      }
+    }
+
+    const uploadWithRetry = async () => {
+      const formData = new FormData();
+      formData.append("file", fileToUpload);
+      formData.append("conversationId", conversationId);
+      const res = await fetch("/api/dm/media", { method: "POST", body: formData });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Échec de l'upload");
+      return json as {
+        mediaUrl: string;
+        type: string;
+        path: string;
+        mediaName: string;
+        mediaMimeType: string;
+        mediaSize: number;
+      };
     };
+
+    return retryAsync(uploadWithRetry, {
+      maxAttempts: 3,
+      baseDelay: 1000,
+      onRetry: (attempt) => {
+        addToast(`Échec de l'envoi. Nouvelle tentative (${attempt}/3)...`, "info");
+      },
+    });
   }
 
   async function handleGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadProgress({ status: "preparing", percentage: 0 });
     try {
+      if (shouldCompressImage(file)) {
+        setUploadProgress({ status: "compressing", percentage: 10, message: "Compression..." });
+      }
+      setUploadProgress({ status: "uploading", percentage: 30, message: "Envoi..." });
       const data = await uploadFile(file);
+      setUploadProgress({ status: "completed", percentage: 100 });
       onSend("", {
         type: data.type,
         mediaUrl: data.mediaUrl,
@@ -84,8 +118,11 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
         mediaMimeType: data.mediaMimeType,
         mediaSize: data.mediaSize,
       });
+      setTimeout(() => setUploadProgress(null), 500);
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Impossible d'envoyer le média.", "error");
+      setUploadProgress({ status: "error", percentage: 0, message: err instanceof Error ? err.message : "Erreur" });
+      setTimeout(() => setUploadProgress(null), 2000);
     } finally {
       if (galleryRef.current) galleryRef.current.value = "";
     }
@@ -94,8 +131,14 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
   async function handleCameraChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadProgress({ status: "preparing", percentage: 0 });
     try {
+      if (shouldCompressImage(file)) {
+        setUploadProgress({ status: "compressing", percentage: 10, message: "Compression..." });
+      }
+      setUploadProgress({ status: "uploading", percentage: 30, message: "Envoi..." });
       const data = await uploadFile(file);
+      setUploadProgress({ status: "completed", percentage: 100 });
       onSend("", {
         type: data.type,
         mediaUrl: data.mediaUrl,
@@ -104,8 +147,11 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
         mediaMimeType: data.mediaMimeType,
         mediaSize: data.mediaSize,
       });
+      setTimeout(() => setUploadProgress(null), 500);
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Impossible d'envoyer la capture.", "error");
+      setUploadProgress({ status: "error", percentage: 0, message: err instanceof Error ? err.message : "Erreur" });
+      setTimeout(() => setUploadProgress(null), 2000);
     } finally {
       if (cameraRef.current) cameraRef.current.value = "";
     }
@@ -114,8 +160,11 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
   async function handleAudioChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadProgress({ status: "preparing", percentage: 0 });
     try {
+      setUploadProgress({ status: "uploading", percentage: 30, message: "Envoi..." });
       const data = await uploadFile(file);
+      setUploadProgress({ status: "completed", percentage: 100 });
       onSend("", {
         type: "AUDIO",
         mediaUrl: data.mediaUrl,
@@ -124,8 +173,11 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
         mediaMimeType: data.mediaMimeType,
         mediaSize: data.mediaSize,
       });
+      setTimeout(() => setUploadProgress(null), 500);
     } catch (err) {
       addToast(err instanceof Error ? err.message : "Impossible d'envoyer l'audio.", "error");
+      setUploadProgress({ status: "error", percentage: 0, message: err instanceof Error ? err.message : "Erreur" });
+      setTimeout(() => setUploadProgress(null), 2000);
     } finally {
       if (audioRef.current) audioRef.current.value = "";
     }
@@ -233,6 +285,13 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
         className="hidden"
         onChange={handleAudioChange}
       />
+
+      {/* Upload Progress */}
+      {uploadProgress && (
+        <div className="max-w-2xl mx-auto">
+          <UploadProgressComponent progress={uploadProgress} compact />
+        </div>
+      )}
 
       {/* Plus menu */}
       {showPlus && (

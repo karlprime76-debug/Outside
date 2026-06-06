@@ -9,6 +9,13 @@ interface MomentDraft {
   visibility: string;
   city: string;
   publishAsClip: boolean;
+  audioTrackId?: string | null;
+  audioVolume?: number;
+  mediaType?: string | null;
+  videoStartTime?: number;
+  videoEndTime?: number;
+  mediaCrop?: Record<string, unknown> | null;
+  createdAt: string;
   updatedAt: string;
 }
 
@@ -51,6 +58,13 @@ export function useMomentDraft() {
             visibility: data.visibility ?? existing?.visibility ?? "PUBLIC",
             city: data.city ?? existing?.city ?? "",
             publishAsClip: data.publishAsClip ?? existing?.publishAsClip ?? false,
+            audioTrackId: data.audioTrackId ?? existing?.audioTrackId ?? null,
+            audioVolume: data.audioVolume ?? existing?.audioVolume ?? 1,
+            mediaType: data.mediaType ?? existing?.mediaType ?? null,
+            videoStartTime: data.videoStartTime ?? existing?.videoStartTime ?? undefined,
+            videoEndTime: data.videoEndTime ?? existing?.videoEndTime ?? undefined,
+            mediaCrop: data.mediaCrop ?? existing?.mediaCrop ?? null,
+            createdAt: existing?.createdAt ?? new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
 
