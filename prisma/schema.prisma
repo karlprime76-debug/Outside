@@ -404,7 +404,6 @@ model User {
   countryCode       String?
 
   isVerified        Boolean  @default(false)
-  accountKind       AccountKind @default(STANDARD)
   referralCode      String?  @unique
   isAmbassador      Boolean  @default(false)
   ambassadorCity    String?

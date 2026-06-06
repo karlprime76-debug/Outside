@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, ShieldCheck, MapPin, CheckCircle } from "lucide-react";
+import { Award, CheckCircle } from "lucide-react";
 
 interface UserRoleBadgesProps {
   isAmbassador?: boolean | null;

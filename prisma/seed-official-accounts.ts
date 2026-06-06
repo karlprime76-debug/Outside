@@ -10,7 +10,6 @@ async function main() {
       email: "guide@outside.com",
       username: "outside_guide",
       name: "OUTSIDE Guide",
-      accountKind: "OFFICIAL_GUIDE" as const,
       bio: "Compte officiel OUTSIDE - Guide et conseils pour profiter de l'app",
       isVerified: true,
     },
@@ -18,7 +17,6 @@ async function main() {
       email: "cotonou@outside.com",
       username: "outside_cotonou",
       name: "OUTSIDE Cotonou",
-      accountKind: "OFFICIAL_CITY" as const,
       bio: "Compte officiel OUTSIDE Cotonou - Découvre les meilleurs plans à Cotonou",
       isVerified: true,
     },
@@ -26,7 +24,6 @@ async function main() {
       email: "abidjan@outside.com",
       username: "outside_abidjan",
       name: "OUTSIDE Abidjan",
-      accountKind: "OFFICIAL_CITY" as const,
       bio: "Compte officiel OUTSIDE Abidjan - Découvre les meilleurs plans à Abidjan",
       isVerified: true,
     },
@@ -34,7 +31,6 @@ async function main() {
       email: "paris@outside.com",
       username: "outside_paris",
       name: "OUTSIDE Paris",
-      accountKind: "OFFICIAL_CITY" as const,
       bio: "Compte officiel OUTSIDE Paris - Découvre les meilleurs plans à Paris",
       isVerified: true,
     },
@@ -42,7 +38,6 @@ async function main() {
       email: "food@outside.com",
       username: "outside_food",
       name: "OUTSIDE Food",
-      accountKind: "OFFICIAL_GUIDE" as const,
       bio: "Compte officiel OUTSIDE Food - Les meilleurs plans food et restaurants",
       isVerified: true,
     },
@@ -50,7 +45,6 @@ async function main() {
       email: "night@outside.com",
       username: "outside_night",
       name: "OUTSIDE Night",
-      accountKind: "OFFICIAL_GUIDE" as const,
       bio: "Compte officiel OUTSIDE Night - Les meilleurs plans nocturnes et sorties",
       isVerified: true,
     },
@@ -58,7 +52,6 @@ async function main() {
       email: "sport@outside.com",
       username: "outside_sport",
       name: "OUTSIDE Sport",
-      accountKind: "OFFICIAL_GUIDE" as const,
       bio: "Compte officiel OUTSIDE Sport - Les meilleurs plans sportifs et activités",
       isVerified: true,
     },
@@ -82,7 +75,6 @@ async function main() {
         email: account.email,
         username: account.username,
         name: account.name,
-        accountKind: account.accountKind,
         bio: account.bio,
         isVerified: account.isVerified,
         password: password,
@@ -95,7 +87,7 @@ async function main() {
       },
     });
 
-    console.log(`Created official account: ${account.username} (${account.accountKind})`);
+    console.log(`Created official account: ${account.username}`);
   }
 
   console.log("Official OUTSIDE accounts created successfully!");
