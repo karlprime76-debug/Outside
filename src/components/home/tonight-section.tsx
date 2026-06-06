@@ -27,7 +27,6 @@ interface User {
   name: string | null;
   username: string | null;
   image: string | null;
-  accountKind: string | null;
   isVerified: boolean;
 }
 
@@ -183,9 +182,7 @@ export function TonightSection() {
                   <Avatar src={user.image} name={user.name} size="sm" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[var(--os-fg)] truncate">{user.name || "Anonyme"}</p>
-                    {user.accountKind === "OFFICIAL_GUIDE" || user.accountKind === "OFFICIAL_CITY" ? (
-                      <Badge variant="outline" className="text-[10px]">Officiel</Badge>
-                    ) : null}
+                    {user.isVerified && (<Badge variant="outline" className="text-[10px]">Vérifié</Badge>)}
                   </div>
                 </div>
                 <p className="text-xs text-outside-600 font-bold">Suivre</p>
@@ -249,3 +246,4 @@ export function TonightSection() {
     </div>
   );
 }
+

@@ -10,7 +10,6 @@ interface User {
   name: string | null;
   username: string | null;
   image: string | null;
-  accountKind: string | null;
   isVerified: boolean;
   isAmbassador: boolean;
   ambassadorCity: string | null;

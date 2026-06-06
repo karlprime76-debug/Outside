@@ -13,7 +13,6 @@ interface SuggestedUser {
   city: string | null;
   isVerified: boolean;
   isOfficial: boolean;
-  accountKind: string;
   reason: string;
   viewerState: {
     isFollowing: boolean;
