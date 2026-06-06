@@ -8,7 +8,7 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
-import { ThemeAwareLogo } from "@/components/ui/theme-aware-logo";
+import { AppIcon } from "@/components/ui/app-icon";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -48,6 +48,7 @@ import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklis
 import { TonightSection } from "@/components/home/tonight-section";
 import { OutsideDrops } from "@/components/home/outside-drops";
 import { MysteryPlanButton } from "@/components/home/mystery-plan-button";
+import { formatUserLocation, formatCityName } from "@/lib/location/display-location";
 
 interface Plan {
   id: string;
@@ -112,7 +113,6 @@ export default function HomePage() {
 
   const userName = session?.user?.name || "";
   const activeCity = userProfile?.activeCity;
-  const activeCountry = (session?.user?.country as string) || "";
   const preferredMoods = userProfile?.preferredMoods || [];
 
   useEffect(() => {
@@ -259,14 +259,19 @@ export default function HomePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ThemeAwareLogo showIcon iconSize={36} />
+          <Link href="/home" className="flex items-center justify-center">
+            <AppIcon size={36} />
+          </Link>
           <div>
             <p className="text-sm font-medium text-[var(--os-muted)]">{greeting}</p>
             <div className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5 text-outside-500" />
               <span className="text-xs font-bold text-[var(--os-fg)]">
-                {activeCity?.name || "Aucune ville active"}
-                {activeCountry ? ` · ${activeCountry}` : ""}
+                {formatUserLocation({
+                  activeCity,
+                  userCountry: session?.user?.country,
+                  userCountryCode: session?.user?.countryCode,
+                }) || "Aucune ville active"}
               </span>
             </div>
           </div>
@@ -293,20 +298,16 @@ export default function HomePage() {
         className="rounded-3xl shadow-glow"
       >
         <div className="flex flex-1 flex-col justify-center p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-4 w-4 text-white/70" />
-            <p className="text-sm font-medium text-white/80">{greeting}</p>
-          </div>
           <div className="flex items-center gap-2">
             <MapPin className="h-6 w-6 text-white/90" />
             {activeCity ? (
-              <span className="text-3xl font-black tracking-tight text-white drop-shadow-lg">{activeCity.name}</span>
+              <span className="text-3xl font-black tracking-tight text-white drop-shadow-lg">{formatCityName(activeCity)}</span>
             ) : (
               <span className="text-3xl font-black tracking-tight text-white/80 drop-shadow-lg">Choisis ta ville</span>
             )}
           </div>
           <p className="mt-2 text-sm text-white/70 max-w-md">
-            {activeCity ? `${activeCity.name} est actif ce soir.` : "Définis ta ville pour voir les plans autour de toi."}
+            {activeCity ? `${formatCityName(activeCity)} est actif ce soir.` : "Définis ta ville pour voir les plans autour de toi."}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <Link
