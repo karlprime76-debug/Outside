@@ -112,3 +112,56 @@ export async function evaluateBadgesAfterPlanJoined(userId: string) {
     await awardBadge(userId, "traveler");
   }
 }
+
+// Founder badges logic
+export async function evaluateFounderBadges(userId: string) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    include: {
+      acceptedReferral: true,
+    },
+  });
+
+  if (!user) return;
+
+  // FOUNDER_MEMBER: First X users or invited by founder
+  const totalUsers = await db.user.count();
+  const FOUNDER_THRESHOLD = 1000; // First 1000 users are founders
+
+  if (totalUsers <= FOUNDER_THRESHOLD || user.acceptedReferral) {
+    await awardBadge(userId, "FOUNDER_MEMBER");
+  }
+
+  // FOUNDER_CREATOR: First to publish a moment in their city
+  const momentsCount = await db.moment.count({
+    where: { authorId: userId },
+  });
+
+  if (momentsCount >= 1) {
+    await awardBadge(userId, "FOUNDER_CREATOR");
+  }
+
+  // FOUNDER_ORGANIZER: First to create a plan in their city
+  const plansCount = await db.plan.count({
+    where: { creatorId: userId },
+  });
+
+  if (plansCount >= 1) {
+    await awardBadge(userId, "FOUNDER_ORGANIZER");
+  }
+
+  // AMBASSADOR_CITY: If user is marked as ambassador
+  if (user.isAmbassador) {
+    await awardBadge(userId, "AMBASSADOR_CITY");
+  }
+
+  // CIRCLE_LAUNCHED: If user has invited someone
+  if (user.acceptedReferral) {
+    await awardBadge(userId, "CIRCLE_LAUNCHED");
+  }
+}
+
+export async function evaluateBadgesAfterMomentCreated(userId: string) {
+  await evaluateFounderBadges(userId);
+  await evaluateBadgesAfterPlanCreated(userId);
+}
