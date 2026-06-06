@@ -56,7 +56,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
       // Recreate reminders if attending (GOING or MAYBE)
       if (attendance !== "LEFT") {
-        createPlanReminders(user.id, id, plan.startDate).catch(() => {});
+        createPlanReminders(user.id, id, plan.startDate).catch((err) => {
+          console.error("[POST /api/plans/:id/join] Background task error:", err);
+        });
       }
 
       return NextResponse.json({ success: true, updated: true });
@@ -71,8 +73,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       await db.plan.update({ where: { id }, data: { status: "FULL" } });
     }
 
-    createPlanReminders(user.id, id, plan.startDate).catch(() => {});
-    evaluateBadgesAfterPlanJoined(user.id).catch(() => {});
+    createPlanReminders(user.id, id, plan.startDate).catch((err) => {
+      console.error("[POST /api/plans/:id/join] Background task error:", err);
+    });
+    evaluateBadgesAfterPlanJoined(user.id).catch((err) => {
+      console.error("[POST /api/plans/:id/join] Background task error:", err);
+    });
 
     if (plan.city) {
       recordTripHistory({
@@ -81,7 +87,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         countryCode: plan.city.countryCode,
         source: "PLAN_JOINED",
         planId: id,
-      }).catch(() => {});
+      }).catch((err) => {
+        console.error("[POST /api/plans/:id/join] Background task error:", err);
+      });
     }
 
     return NextResponse.json({ success: true });

@@ -109,7 +109,9 @@ export async function POST(req: Request, { params }: Params) {
       });
 
       // Notifier abonnés, amis et utilisateurs concernés
-      notifyLiveStarted(live.id).catch(() => {});
+      notifyLiveStarted(live.id).catch((err) => {
+        console.error("[POST /api/lives/:id/token] Background task error:", err);
+      });
     }
 
     const token = await createLiveKitToken({

@@ -285,7 +285,9 @@ export async function POST(req: Request) {
       },
     });
 
-    evaluateBadgesAfterPlanCreated(user.id).catch(() => {});
+    evaluateBadgesAfterPlanCreated(user.id).catch((err) => {
+      console.error("[POST /api/plans] Background task error:", err);
+    });
 
     return NextResponse.json({ plan }, { status: 201 });
   } catch (error) {
