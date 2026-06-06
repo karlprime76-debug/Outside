@@ -76,6 +76,7 @@ export default function PlansPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("dateAsc");
   const debouncedSearch = useDebounce(search, 300);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loadingInvitations, setLoadingInvitations] = useState(true);
@@ -88,6 +89,7 @@ export default function PlansPage() {
     if (isFree) params.set("isFree", isFree);
     if (dateFrom) params.set("dateFrom", dateFrom);
     if (dateTo) params.set("dateTo", dateTo);
+    if (sortBy) params.set("sortBy", sortBy);
 
     setLoading(true);
     fetch(`/api/plans?${params.toString()}`)
@@ -97,7 +99,9 @@ export default function PlansPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  }, [mood, budget, planCategory, isFree, dateFrom, dateTo, sortBy]);
 
+  useEffect(() => {
     fetch("/api/plans/invitations")
       .then((r) => r.json())
       .then((data) => {
@@ -105,7 +109,7 @@ export default function PlansPage() {
         setLoadingInvitations(false);
       })
       .catch(() => setLoadingInvitations(false));
-  }, [mood, budget, planCategory, isFree, dateFrom, dateTo]);
+  }, []);
 
   const hasFilters = mood || budget || planCategory || isFree || dateFrom || dateTo || search;
 
@@ -192,6 +196,17 @@ export default function PlansPage() {
           <option value="true">Gratuit</option>
           <option value="false">Payant</option>
         </select>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
+        >
+          <option value="dateAsc">Bientôt</option>
+          <option value="priceAsc">Moins cher</option>
+          <option value="priceDesc">Plus cher</option>
+          <option value="popular">Populaire</option>
+          <option value="recent">Récent</option>
+        </select>
         <input
           type="date"
           value={dateFrom}
@@ -208,7 +223,7 @@ export default function PlansPage() {
         />
         {hasFilters && (
           <button
-            onClick={() => { setMood(""); setBudget(""); setPlanCategory(""); setIsFree(""); setDateFrom(""); setDateTo(""); setSearch(""); }}
+            onClick={() => { setMood(""); setBudget(""); setPlanCategory(""); setIsFree(""); setDateFrom(""); setDateTo(""); setSearch(""); setSortBy("dateAsc"); }}
             className="inline-flex items-center gap-1 text-xs font-bold text-[var(--os-muted)] hover:text-red-500 transition-colors"
           >
             <X className="h-3 w-3" />

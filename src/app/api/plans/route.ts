@@ -25,6 +25,7 @@ export async function GET(req: Request) {
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
     const travelerFriendly = searchParams.get("travelerFriendly");
+    const sortBy = searchParams.get("sortBy") || "dateAsc";
     let limit = parseInt(searchParams.get("limit") || "50", 10);
     if (isNaN(limit) || limit < 1) limit = 50;
     if (limit > 50) limit = 50;
@@ -83,6 +84,28 @@ export async function GET(req: Request) {
     }
     if (travelerFriendly === "true") baseWhere.isTravelerFriendly = true;
 
+    // Determine orderBy based on sortBy parameter
+    let orderBy: Record<string, "asc" | "desc"> = { startDate: "asc" };
+    switch (sortBy) {
+      case "dateAsc":
+        orderBy = { startDate: "asc" };
+        break;
+      case "priceAsc":
+        orderBy = { budgetAmount: "asc" };
+        break;
+      case "priceDesc":
+        orderBy = { budgetAmount: "desc" };
+        break;
+      case "popular":
+        orderBy = { createdAt: "desc" }; // Simplified: use createdAt as proxy for popularity
+        break;
+      case "recent":
+        orderBy = { createdAt: "desc" };
+        break;
+      default:
+        orderBy = { startDate: "asc" };
+    }
+
     const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
     const plans = await db.plan.findMany({
       where: DEMO_GLOBAL
@@ -112,7 +135,7 @@ export async function GET(req: Request) {
               ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
             ],
           },
-      orderBy: { startDate: "asc" },
+      orderBy,
       take: limit,
       include: {
         creator: { select: { id: true, name: true, image: true } },

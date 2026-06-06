@@ -8,7 +8,7 @@ import { InputField } from "@/components/ui/input-field";
 import { Badge } from "@/components/ui/badge";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { ArrowLeft } from "lucide-react";
-import { getCurrencyForCountry } from "@/lib/currency";
+import { getCurrencyForCountry, formatBudget } from "@/lib/currency";
 
 const MOODS = [
   "CHILL", "FOOD", "SPORT", "PARTY", "MUSIC", "DATING",
@@ -52,6 +52,7 @@ export default function NewPlanPage() {
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
   const [budgetMode, setBudgetMode] = useState<"free" | "exact">("exact");
   const [budgetIsFrom, setBudgetIsFrom] = useState(false);
+  const [budgetAmount, setBudgetAmount] = useState<number | undefined>(undefined);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -175,6 +176,8 @@ export default function NewPlanPage() {
                   step={100}
                   placeholder="Montant"
                   className={inputBase}
+                  value={budgetAmount || ""}
+                  onChange={(e) => setBudgetAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
                 />
                 <label className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                   <input
@@ -185,6 +188,11 @@ export default function NewPlanPage() {
                   />
                   À partir de ce montant
                 </label>
+                {budgetAmount && (
+                  <div className="text-xs font-semibold text-outside-600 dark:text-outside-400">
+                    Preview: {formatBudget(budgetAmount, getCurrencyForCountry(selectedCountryCode), budgetIsFrom)}
+                  </div>
+                )}
               </div>
             )}
           </div>

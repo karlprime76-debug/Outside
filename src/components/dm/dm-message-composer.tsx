@@ -141,8 +141,6 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
       audioRef.current?.click();
     } else if (action === "plan") {
       onOpenPlanSelector?.();
-    } else if (action === "profile" || action === "moment") {
-      addToast("Bientôt disponible.", "info");
     }
   }
 
@@ -244,8 +242,6 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
             { key: "camera", label: "Caméra", icon: Camera },
             { key: "audio", label: "Audio", icon: Mic },
             { key: "plan", label: "Inviter", icon: Paperclip },
-            { key: "profile", label: "Profil", icon: Paperclip },
-            { key: "moment", label: "Moment", icon: Paperclip },
           ].map((opt) => (
             <button
               key={opt.key}
