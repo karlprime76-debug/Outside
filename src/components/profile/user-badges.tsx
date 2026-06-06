@@ -49,14 +49,21 @@ export function UserBadges({ userId }: { userId: string }) {
       </h3>
       <div className="flex flex-wrap gap-2">
         {badges.map((badge) => {
+          // Check if icon is an emoji (contains unicode emoji characters)
+          const isEmoji = badge.icon && /[\p{Emoji}]/u.test(badge.icon);
           const Icon = ICON_MAP[badge.icon || ""] || Award;
+
           return (
             <div
               key={badge.id}
               className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-100 to-accent-100 px-3 py-1.5 text-xs font-bold text-outside-800 border border-outside-200"
               title={badge.description}
             >
-              <Icon className="h-3.5 w-3.5" />
+              {isEmoji ? (
+                <span className="text-sm">{badge.icon}</span>
+              ) : (
+                <Icon className="h-3.5 w-3.5" />
+              )}
               {badge.name}
             </div>
           );

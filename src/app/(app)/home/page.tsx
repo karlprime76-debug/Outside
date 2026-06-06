@@ -47,6 +47,7 @@ import { CityMissions } from "@/components/missions/city-missions";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 import { TonightSection } from "@/components/home/tonight-section";
 import { OutsideDrops } from "@/components/home/outside-drops";
+import { MysteryPlanButton } from "@/components/home/mystery-plan-button";
 
 interface Plan {
   id: string;
@@ -270,13 +271,16 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <Link
-          href="/profile"
-          className="flex items-center gap-2 rounded-full glass px-3 py-1.5 text-sm font-semibold text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors pressable"
-        >
-          <span className="hidden sm:inline">Profil</span>
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <MysteryPlanButton />
+          <Link
+            href="/profile"
+            className="flex items-center gap-2 rounded-full glass px-3 py-1.5 text-sm font-semibold text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors pressable"
+          >
+            <span className="hidden sm:inline">Profil</span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       {/* Hero card immersive */}
