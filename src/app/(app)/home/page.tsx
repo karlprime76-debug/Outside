@@ -90,7 +90,6 @@ export default function HomePage() {
     activeCity?: { name: string };
     preferredMoods?: string[];
   } | null>(null);
-  const [geoDetecting, setGeoDetecting] = useState(false);
   const [lives, setLives] = useState<{ id: string; title: string; status: string; city?: string; viewerCount: number; host: { name: string | null } }[]>([]);
   const [events, setEvents] = useState<{ id: string; title: string; startsAt: string; city?: string; priceLabel?: string }[]>([]);
   const [loadingLives, setLoadingLives] = useState(true);
@@ -345,7 +344,7 @@ export default function HomePage() {
                   <p className="text-xs text-outside-600">{outsideStatus.text}</p>
                 )}
                 <p className="text-xs text-outside-600">
-                  Jusqu'à {new Date(outsideStatus.expiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                  Jusqu&apos;à {new Date(outsideStatus.expiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
               <button

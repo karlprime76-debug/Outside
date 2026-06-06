@@ -82,10 +82,9 @@ const EXPRESS_TEMPLATES = [
 
 interface ExpressPlanSheetProps {
   onSelectTemplate: (template: typeof EXPRESS_TEMPLATES[0]) => void;
-  trigger?: React.ReactNode;
 }
 
-export function ExpressPlanSheet({ onSelectTemplate, trigger }: ExpressPlanSheetProps) {
+export function ExpressPlanSheet({ onSelectTemplate }: ExpressPlanSheetProps) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (template: typeof EXPRESS_TEMPLATES[0]) => {
