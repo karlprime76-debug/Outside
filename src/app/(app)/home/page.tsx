@@ -46,6 +46,7 @@ import { DailyChallenges } from "@/components/challenges/daily-challenges";
 import { CityMissions } from "@/components/missions/city-missions";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 import { TonightSection } from "@/components/home/tonight-section";
+import { OutsideDrops } from "@/components/home/outside-drops";
 
 interface Plan {
   id: string;
@@ -247,6 +248,11 @@ export default function HomePage() {
       {/* Account suggestions */}
       <section className="animate-slide-up animate-stagger-1">
         <AccountSuggestions title="Personnes à suivre" limit={5} />
+      </section>
+
+      {/* OUTSIDE Drops */}
+      <section className="animate-slide-up animate-stagger-2">
+        <OutsideDrops />
       </section>
 
       {/* Header */}
@@ -815,7 +821,7 @@ export default function HomePage() {
             icon={Sparkles}
             title="Aucun plan pour le moment"
             description="Dans ta ville. Lance le premier."
-            action={(
+            actions={(
               <Link href="/plans/new" className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all">
                 Créer un plan
               </Link>

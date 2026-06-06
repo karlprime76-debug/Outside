@@ -10,7 +10,7 @@ import { InviteCircle } from "@/components/referrals/invite-circle";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, MapPin } from "lucide-react";
+import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, MapPin, Sparkles } from "lucide-react";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
 
@@ -361,6 +361,13 @@ export default function PlansPage() {
               >
                 <Bookmark className="h-4 w-4" />
                 Voir les plans gratuits
+              </Link>
+              <Link
+                href="/tonight-assistant"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all"
+              >
+                <Sparkles className="h-4 w-4" />
+                Plan mystère
               </Link>
             </div>
           )}

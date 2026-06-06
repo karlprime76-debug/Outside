@@ -4,10 +4,10 @@ interface OutsideEmptyStateProps {
   icon?: React.ComponentType<{ className?: string }>;
   title: string;
   description?: string;
-  action?: React.ReactNode;
+  actions?: React.ReactNode;
 }
 
-export function OutsideEmptyState({ icon: Icon, title, description, action }: OutsideEmptyStateProps) {
+export function OutsideEmptyState({ icon: Icon, title, description, actions }: OutsideEmptyStateProps) {
   return (
     <div className="os-card p-8 text-center animate-fade-in">
       {Icon && (
@@ -19,7 +19,7 @@ export function OutsideEmptyState({ icon: Icon, title, description, action }: Ou
       {description && (
         <p className="mt-1 text-xs text-[var(--os-muted)]">{description}</p>
       )}
-      {action && <div className="mt-4">{action}</div>}
+      {actions && <div className="mt-4">{actions}</div>}
     </div>
   );
 }

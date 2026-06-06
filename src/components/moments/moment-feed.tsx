@@ -61,54 +61,81 @@ const SCOPE_LABELS: Record<Scope, string> = {
   following: "Abonnements",
 };
 
-const EMPTY_STATES: Record<Scope, { title: string; description: string; icon: typeof Camera; action?: React.ReactNode }> = {
+const EMPTY_STATES: Record<Scope, { title: string; description: string; icon: typeof Camera; actions?: React.ReactNode }> = {
   "for-you": {
     title: "Découvre ce qui se passe",
     description: "Publie, suis des comptes et explore ce qui bouge dehors.",
     icon: Sparkles,
-    action: (
-      <Link
-        href="/moments/new"
-        className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
-      >
-        <Camera className="h-4 w-4" />
-        Ajouter un moment
-      </Link>
+    actions: (
+      <div className="flex flex-col gap-3">
+        <Link
+          href="/moments/new"
+          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
+        >
+          <Camera className="h-4 w-4" />
+          Ajouter un moment
+        </Link>
+        <Link
+          href="/users/discover"
+          className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all active:scale-95"
+        >
+          <Search className="h-4 w-4" />
+          Découvrir des comptes
+        </Link>
+      </div>
     ),
   },
   city: {
     title: "Ta ville est calme",
     description: "Aucun Moment dans ta ville pour le moment. Sois le premier à publier.",
     icon: MapPin,
-    action: (
-      <Link
-        href="/moments/new"
-        className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
-      >
-        <Camera className="h-4 w-4" />
-        Publier ici
-      </Link>
+    actions: (
+      <div className="flex flex-col gap-3">
+        <Link
+          href="/moments/new"
+          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
+        >
+          <Camera className="h-4 w-4" />
+          Publier ici
+        </Link>
+        <Link
+          href="/users/discover"
+          className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all active:scale-95"
+        >
+          <UserPlus className="h-4 w-4" />
+          Découvrir des comptes locaux
+        </Link>
+      </div>
     ),
   },
   friends: {
     title: "Ajoute des amis",
     description: "Ajoute des amis pour voir leurs Moments ici.",
     icon: Users,
-    action: (
-      <Link
-        href="/friends"
-        className="inline-flex items-center gap-1.5 rounded-full bg-outside-100 px-5 py-2.5 text-sm font-bold text-outside-700 hover:bg-outside-200 transition-colors active:scale-95"
-      >
-        <UserPlus className="h-4 w-4" />
-        Trouver des amis
-      </Link>
+    actions: (
+      <div className="flex flex-col gap-3">
+        <Link
+          href="/friends"
+          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-outside-100 px-5 py-2.5 text-sm font-bold text-outside-700 hover:bg-outside-200 transition-colors active:scale-95"
+        >
+          <UserPlus className="h-4 w-4" />
+          Trouver des amis
+        </Link>
+        <Link
+          href="/invite"
+          className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all active:scale-95"
+        >
+          <Users className="h-4 w-4" />
+          Inviter ton cercle
+        </Link>
+      </div>
     ),
   },
   following: {
     title: "Suis des comptes",
     description: "Suis des comptes pour remplir cet espace avec leurs Moments.",
     icon: Search,
-    action: (
+    actions: (
       <Link
         href="/u"
         className="inline-flex items-center gap-1.5 rounded-full bg-outside-100 px-5 py-2.5 text-sm font-bold text-outside-700 hover:bg-outside-200 transition-colors active:scale-95"
@@ -376,7 +403,7 @@ export function MomentFeed() {
               icon={EMPTY_STATES[scope].icon}
               title={EMPTY_STATES[scope].title}
               description={EMPTY_STATES[scope].description}
-              action={EMPTY_STATES[scope].action}
+              actions={EMPTY_STATES[scope].actions}
             />
           </div>
         ) : (

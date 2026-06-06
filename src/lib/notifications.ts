@@ -27,6 +27,11 @@ const typeToPushCategory: Record<NotificationType, Parameters<typeof sendPushToU
   DM_MESSAGE: "dm",
   MOMENT_LIKE: "moment",
   MOMENT_COMMENT: "moment",
+  DROP_AVAILABLE: "system",
+  MISSION_AVAILABLE: "system",
+  PLAN_GROUP_MESSAGE: "dm",
+  WEEKLY_RECAP_READY: "system",
+  AMBASSADOR_TO_DISCOVER: "friend",
 };
 
 export async function createNotification(input: CreateNotificationInput) {
