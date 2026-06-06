@@ -103,6 +103,7 @@ export function DmConversationHeader({ other, onBack, onOpenSearch, onOpenMedia 
                   onClick={() => { haptic.light(); setMenuOpen(false); onOpenMedia(); }}
                   className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
                 >
+                  {/* eslint-disable-next-line jsx-a11y/alt-text */}
                   <Image className="h-4 w-4 text-[var(--os-muted)]" />
                   Médias partagés
                 </button>

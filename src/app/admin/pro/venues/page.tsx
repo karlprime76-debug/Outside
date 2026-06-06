@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -65,19 +65,7 @@ export default function AdminProVenuesPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-      return;
-    }
-    if (status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
-      router.push("/home");
-      return;
-    }
-    loadVenues();
-  }, [status, session, router]);
-
-  async function loadVenues() {
+  const loadVenues = useCallback(async () => {
     const qs = filter !== "ALL" ? `?status=${filter}` : "";
     try {
       const res = await fetch(`/api/admin/pro/venues${qs}`);
@@ -88,11 +76,22 @@ export default function AdminProVenuesPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter]);
 
   useEffect(() => {
-    if (!loading) loadVenues();
-  }, [filter]);
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+    if (status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
+      router.push("/home");
+      return;
+    }
+  }, [status, session, router]);
+
+  useEffect(() => {
+    loadVenues();
+  }, [loadVenues]);
 
   async function updateStatus(id: string, newStatus: VenueStatus, reason?: string) {
     setActionId(id);

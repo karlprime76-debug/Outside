@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -61,19 +61,7 @@ export default function AdminProRequestsPage() {
   const [suspendReason, setSuspendReason] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-      return;
-    }
-    if (status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
-      router.push("/home");
-      return;
-    }
-    loadRequests();
-  }, [status, session, router]);
-
-  async function loadRequests() {
+  const loadRequests = useCallback(async () => {
     const qs = filter !== "ALL" ? `?status=${filter}` : "";
     try {
       const res = await fetch(`/api/admin/pro-requests${qs}`);
@@ -84,11 +72,22 @@ export default function AdminProRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+    if (status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
+      router.push("/home");
+      return;
+    }
+  }, [status, session, router]);
 
   useEffect(() => {
     if (status === "authenticated") loadRequests();
-  }, [filter, status]);
+  }, [status, loadRequests]);
 
   async function handleDecision(id: string, nextStatus: ProStatus, reason?: string) {
     setActionId(id);
