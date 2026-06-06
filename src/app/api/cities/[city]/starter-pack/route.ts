@@ -101,23 +101,36 @@ export async function GET(
       take: 3,
     });
 
-    // Get official tips for city
+    // Get official tips for city (with global fallback)
     const officialTips = await db.outsideTip.findMany({
       where: {
-        city: city,
-        active: true,
+        OR: [
+          { city: city, active: true },
+          { city: null, active: true }, // Global fallback
+        ],
       },
       take: 3,
     });
 
+    // If no city-specific tips, ensure we have global ones
+    let finalTips = officialTips;
+    if (officialTips.every((t) => t.city === city) === false && officialTips.length < 3) {
+      const globalTips = await db.outsideTip.findMany({
+        where: { city: null, active: true },
+        take: 3 - officialTips.filter((t) => t.city === city).length,
+      });
+      finalTips = [...officialTips.filter((t) => t.city === city), ...globalTips];
+    }
+
     return NextResponse.json({
       city,
-      suggestedUsers,
-      ambassadors,
-      missions,
-      moments,
-      freePlans,
-      officialTips,
+      suggestedUsers: suggestedUsers.length > 0 ? suggestedUsers : [],
+      ambassadors: ambassadors.length > 0 ? ambassadors : [],
+      missions: missions.length > 0 ? missions : [],
+      moments: moments.length > 0 ? moments : [],
+      freePlans: freePlans.length > 0 ? freePlans : [],
+      officialTips: finalTips,
+      hasContent: suggestedUsers.length > 0 || ambassadors.length > 0 || missions.length > 0 || moments.length > 0 || freePlans.length > 0 || finalTips.length > 0,
     });
   } catch (error) {
     console.error("[STARTER_PACK_ERROR]", error);

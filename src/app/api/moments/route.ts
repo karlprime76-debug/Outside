@@ -185,6 +185,15 @@ export async function POST(req: Request) {
     const { data: publicUrlData } = supabase.storage.from(MOMENTS_BUCKET).getPublicUrl(filePath);
     const mediaUrl = publicUrlData.publicUrl;
 
+    const parsedMediaCrop = mediaCrop ? (() => {
+      try {
+        return JSON.parse(mediaCrop);
+      } catch (e) {
+        console.error("[POST /api/moments] Invalid mediaCrop JSON:", { mediaCrop, error: e });
+        return null;
+      }
+    })() : null;
+
     const moment = await db.moment.create({
       data: {
         authorId: user.id,
@@ -205,7 +214,7 @@ export async function POST(req: Request) {
         mediaWidth,
         mediaHeight,
         mediaDuration,
-        mediaCrop: mediaCrop ? JSON.parse(mediaCrop) : null,
+        mediaCrop: parsedMediaCrop,
         videoStartTime,
         videoEndTime,
         mediaAspectRatio,
@@ -219,7 +228,9 @@ export async function POST(req: Request) {
       await db.audioTrack.update({
         where: { id: audioTrackId },
         data: { usageCount: { increment: 1 } },
-      }).catch(() => {});
+      }).catch((err) => {
+        console.error("[POST /api/moments] Background task error:", err);
+      });
     }
 
     if (city) {
@@ -229,7 +240,9 @@ export async function POST(req: Request) {
         countryCode,
         source: "MOMENT_PUBLISHED",
         momentId: moment.id,
-      }).catch(() => {});
+      }).catch((err) => {
+        console.error("[POST /api/moments] Background task error:", err);
+      });
     }
 
     return NextResponse.json({ moment }, { status: 201 });

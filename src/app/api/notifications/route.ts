@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { auth } from "@/lib/auth";
 import { markNotificationsAsRead } from "@/lib/notifications";
+import { safeJsonParse } from "@/lib/json-parse";
 
 export async function GET() {
   const perfLabel = "[PERF] GET /api/notifications";
@@ -63,7 +64,7 @@ export async function GET() {
       isRead: n.isRead,
       actorName: n.actorName,
       actorImage: n.actorImage,
-      data: n.data ? JSON.parse(n.data) : undefined,
+      data: safeJsonParse(n.data),
     }));
 
     const virtualItems = [

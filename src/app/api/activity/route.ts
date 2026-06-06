@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { auth } from "@/lib/auth";
+import { safeJsonParse } from "@/lib/json-parse";
 
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/activity";
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
       actorName: n.actorName,
       actorImage: n.actorImage,
       actorId: n.actorId,
-      data: n.data ? JSON.parse(n.data) : undefined,
+      data: safeJsonParse(n.data),
     }));
 
     logPerfEnd(perfLabel);

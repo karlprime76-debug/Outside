@@ -128,36 +128,37 @@ export async function evaluateFounderBadges(userId: string) {
   const totalUsers = await db.user.count();
   const FOUNDER_THRESHOLD = 1000; // First 1000 users are founders
 
-  if (totalUsers <= FOUNDER_THRESHOLD || user.acceptedReferral) {
-    await awardBadge(userId, "FOUNDER_MEMBER");
+  // FOUNDER_MEMBER: First X users or invited by founder
+  if (totalUsers <= FOUNDER_THRESHOLD && !user.acceptedReferral) {
+    await awardBadge(userId, "founder_member");
   }
 
-  // FOUNDER_CREATOR: First to publish a moment in their city
+  // Invited by founder gets CIRCLE_LAUNCHED (checked later)
+  if (user.acceptedReferral) {
+    await awardBadge(userId, "circle_launched");
+  }
+
+  // FOUNDER_CREATOR: First to publish a moment (no city-specific check)
   const momentsCount = await db.moment.count({
     where: { authorId: userId },
   });
 
-  if (momentsCount >= 1) {
-    await awardBadge(userId, "FOUNDER_CREATOR");
+  if (momentsCount === 1) {
+    await awardBadge(userId, "founder_creator");
   }
 
-  // FOUNDER_ORGANIZER: First to create a plan in their city
+  // FOUNDER_ORGANIZER: First to create a plan (no city-specific check)
   const plansCount = await db.plan.count({
     where: { creatorId: userId },
   });
 
-  if (plansCount >= 1) {
-    await awardBadge(userId, "FOUNDER_ORGANIZER");
+  if (plansCount === 1) {
+    await awardBadge(userId, "founder_organizer");
   }
 
   // AMBASSADOR_CITY: If user is marked as ambassador
   if (user.isAmbassador) {
-    await awardBadge(userId, "AMBASSADOR_CITY");
-  }
-
-  // CIRCLE_LAUNCHED: If user has invited someone
-  if (user.acceptedReferral) {
-    await awardBadge(userId, "CIRCLE_LAUNCHED");
+    await awardBadge(userId, "ambassador_city");
   }
 }
 

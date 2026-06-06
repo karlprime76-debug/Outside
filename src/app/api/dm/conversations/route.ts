@@ -21,13 +21,13 @@ export async function GET(req: Request) {
         participants: { some: { userId: user.id } },
       },
       orderBy: { updatedAt: "desc" },
-      take: limit,
+      take: limit + 1, // Take one extra to determine if there's a next page
       skip: cursor ? 1 : 0,
       cursor: cursor ? { id: cursor } : undefined,
       include: {
         participants: {
           include: {
-            user: { select: { id: true, name: true, username: true, image: true } },
+            user: { select: { id: true, name: true, username: true, image: true, isVerified: true } },
           },
         },
         messages: {
@@ -38,28 +38,47 @@ export async function GET(req: Request) {
       },
     });
 
-    const items = await Promise.all(conversations.map(async (c) => {
+    // Determine if there's a next page
+    let hasNextPage = false;
+    let paginatedConversations = conversations;
+    if (conversations.length > limit) {
+      hasNextPage = true;
+      paginatedConversations = conversations.slice(0, limit);
+    }
+
+    const items = await Promise.all(paginatedConversations.map(async (c) => {
       const other = c.participants.find((p) => p.userId !== user.id)?.user;
       const lastMessage = c.messages[0] || null;
       const selfPart = c.participants.find((p) => p.userId === user.id);
+      
+      // Guard against invalid lastReadAt
+      const lastReadAt = selfPart?.lastReadAt;
+      
       const unread = await db.directMessage.count({
         where: {
           conversationId: c.id,
           senderId: { not: user.id },
           isDeleted: false,
-          createdAt: selfPart?.lastReadAt ? { gt: selfPart.lastReadAt } : undefined,
+          ...(lastReadAt && { createdAt: { gt: lastReadAt } }),
         },
       });
+      
       return {
         id: c.id,
         other,
-        lastMessage: lastMessage ? { id: lastMessage.id, content: lastMessage.content, createdAt: lastMessage.createdAt.toISOString(), senderId: lastMessage.senderId, type: lastMessage.type } : null,
+        lastMessage: lastMessage ? {
+          id: lastMessage.id,
+          content: lastMessage.content,
+          createdAt: lastMessage.createdAt.toISOString(),
+          senderId: lastMessage.senderId,
+          type: lastMessage.type
+        } : null,
         unread,
         updatedAt: c.updatedAt.toISOString(),
       };
     }));
 
-    const nextCursor = conversations.length === limit ? conversations[conversations.length - 1].id : null;
+    const nextCursor = hasNextPage ? paginatedConversations[paginatedConversations.length - 1].id : null;
 
     logPerfEnd(perfLabel);
     return NextResponse.json({ conversations: items, nextCursor });
