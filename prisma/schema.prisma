@@ -720,6 +720,15 @@ model Moment {
   audioVolume Float?             @default(1)
   audioTrack   AudioTrack?       @relation(fields: [audioTrackId], references: [id], onDelete: SetNull)
 
+  // Media editing metadata
+  mediaWidth      Int?
+  mediaHeight     Int?
+  mediaDuration   Int?
+  mediaCrop       Json?
+  videoStartTime  Int?
+  videoEndTime    Int?
+  mediaAspectRatio String?
+
   expiresAt   DateTime?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt

@@ -125,6 +125,15 @@ export async function POST(req: Request) {
     const audioStartTime = parseInt((formData.get("audioStartTime") as string) || "0", 10);
     const audioVolume = parseFloat((formData.get("audioVolume") as string) || "1");
 
+    // Media editing metadata
+    const mediaWidth = parseInt((formData.get("mediaWidth") as string) || "0", 10) || null;
+    const mediaHeight = parseInt((formData.get("mediaHeight") as string) || "0", 10) || null;
+    const mediaDuration = parseInt((formData.get("mediaDuration") as string) || "0", 10) || null;
+    const mediaCrop = formData.get("mediaCrop") as string | null;
+    const videoStartTime = parseInt((formData.get("videoStartTime") as string) || "0", 10) || null;
+    const videoEndTime = parseInt((formData.get("videoEndTime") as string) || "0", 10) || null;
+    const mediaAspectRatio = (formData.get("mediaAspectRatio") as string) || null;
+
     if (!file) {
       return NextResponse.json({ error: "Aucun fichier reçu." }, { status: 400 });
     }
@@ -192,6 +201,14 @@ export async function POST(req: Request) {
         audioTrackId,
         audioStartTime: isNaN(audioStartTime) ? 0 : audioStartTime,
         audioVolume: isNaN(audioVolume) ? 1 : Math.min(1, Math.max(0, audioVolume)),
+        // Media editing metadata
+        mediaWidth,
+        mediaHeight,
+        mediaDuration,
+        mediaCrop: mediaCrop ? JSON.parse(mediaCrop) : null,
+        videoStartTime,
+        videoEndTime,
+        mediaAspectRatio,
       },
       include: {
         author: { select: { id: true, name: true, username: true, image: true } },

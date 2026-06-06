@@ -9,6 +9,8 @@ import { useMomentDraft } from "@/hooks/use-moment-draft";
 import { X, Image as ImageIcon, Video, Upload, MapPin, ArrowLeft, Save, Volume2, Music, Trash2 } from "lucide-react";
 import { AUDIO_RIGHTS_NOTICE } from "@/lib/audio";
 import { AudioPicker } from "@/components/audio/audio-picker";
+import { ImageCropEditor } from "@/components/media/image-crop-editor";
+import { VideoTrimEditor } from "@/components/media/video-trim-editor";
 
 export default function NewMomentPage() {
   const router = useRouter();
@@ -28,6 +30,19 @@ export default function NewMomentPage() {
   const [audioVolume, setAudioVolume] = useState(1);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [isOriginalAudio, setIsOriginalAudio] = useState(false);
+
+  // Media editing states
+  const [showImageEditor, setShowImageEditor] = useState(false);
+  const [showVideoEditor, setShowVideoEditor] = useState(false);
+  const [mediaMetadata, setMediaMetadata] = useState<{
+    mediaWidth?: number;
+    mediaHeight?: number;
+    mediaDuration?: number;
+    mediaCrop?: Record<string, unknown>;
+    videoStartTime?: number;
+    videoEndTime?: number;
+    mediaAspectRatio?: string;
+  }>({});
 
   const draft = useMomentDraft();
 
@@ -116,14 +131,19 @@ export default function NewMomentPage() {
           setIsVerticalVideo(vertical);
           setPublishAsClip(vertical);
           URL.revokeObjectURL(v.src);
+          // Open video editor for trimming
+          setShowVideoEditor(true);
         };
       } catch {
         setIsVerticalVideo(false);
         setPublishAsClip(false);
+        setShowVideoEditor(true);
       }
     } else {
       setIsVerticalVideo(false);
       setPublishAsClip(false);
+      // Open image editor for cropping
+      setShowImageEditor(true);
     }
   }
 
@@ -149,6 +169,15 @@ export default function NewMomentPage() {
         formData.append("audioVolume", String(audioVolume));
       }
 
+      // Add media editing metadata
+      if (mediaMetadata.mediaWidth) formData.append("mediaWidth", String(mediaMetadata.mediaWidth));
+      if (mediaMetadata.mediaHeight) formData.append("mediaHeight", String(mediaMetadata.mediaHeight));
+      if (mediaMetadata.mediaDuration) formData.append("mediaDuration", String(mediaMetadata.mediaDuration));
+      if (mediaMetadata.mediaCrop) formData.append("mediaCrop", JSON.stringify(mediaMetadata.mediaCrop));
+      if (mediaMetadata.videoStartTime) formData.append("videoStartTime", String(mediaMetadata.videoStartTime));
+      if (mediaMetadata.videoEndTime) formData.append("videoEndTime", String(mediaMetadata.videoEndTime));
+      if (mediaMetadata.mediaAspectRatio) formData.append("mediaAspectRatio", mediaMetadata.mediaAspectRatio);
+
       const res = await fetch("/api/moments", { method: "POST", body: formData });
       if (res.ok) {
         draft.clearDraft();
@@ -165,6 +194,34 @@ export default function NewMomentPage() {
       setLoading(false);
     }
   }
+
+  const handleImageCropConfirm = (croppedFile: File) => {
+    setFile(croppedFile);
+    const url = URL.createObjectURL(croppedFile);
+    setPreview(url);
+    setShowImageEditor(false);
+    // Get image dimensions
+    const img = new Image();
+    img.onload = () => {
+      setMediaMetadata({
+        ...mediaMetadata,
+        mediaWidth: img.width,
+        mediaHeight: img.height,
+        mediaAspectRatio: `${img.width}:${img.height}`,
+      });
+    };
+    img.src = url;
+  };
+
+  const handleVideoTrimConfirm = (metadata: { startTime: number; endTime: number; duration: number }) => {
+    setMediaMetadata({
+      ...mediaMetadata,
+      videoStartTime: metadata.startTime,
+      videoEndTime: metadata.endTime,
+      mediaDuration: metadata.duration,
+    });
+    setShowVideoEditor(false);
+  };
 
   return (
     <AnimatedPage className="p-4 max-w-xl mx-auto space-y-6 pb-24 md:pb-4">
@@ -437,6 +494,33 @@ export default function NewMomentPage() {
         }}
         selectedTrackId={audioTrack?.id ?? (isOriginalAudio ? null : undefined)}
       />
+
+      {/* Image Crop Editor */}
+      {showImageEditor && file && (
+        <ImageCropEditor
+          imageFile={file}
+          onConfirm={handleImageCropConfirm}
+          onCancel={() => {
+            setShowImageEditor(false);
+            setFile(null);
+            setPreview(null);
+          }}
+        />
+      )}
+
+      {/* Video Trim Editor */}
+      {showVideoEditor && file && (
+        <VideoTrimEditor
+          videoFile={file}
+          onConfirm={handleVideoTrimConfirm}
+          onCancel={() => {
+            setShowVideoEditor(false);
+            setFile(null);
+            setPreview(null);
+          }}
+          maxDuration={60}
+        />
+      )}
     </AnimatedPage>
   );
 }
