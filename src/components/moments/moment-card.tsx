@@ -10,6 +10,7 @@ import { MomentMedia } from "./moment-media";
 import { MomentAudioPlayer } from "@/components/audio/moment-audio-player";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import { ReportButton } from "@/components/report-button";
 
 interface Author {
@@ -80,6 +81,9 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const viewTrackedRef = useRef(false);
   const trackedThresholdsRef = useRef<Set<number>>(new Set());
   const watchStartTimeRef = useRef<number | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
 
   // Track impression and view
   useEffect(() => {
@@ -337,10 +341,10 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
 
   const OverflowMenu = () => (
     <>
-      <button
-        onClick={() => { haptic.light(); setMenuOpen(true); }}
-        className="rounded-full p-2 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors active:scale-95"
-      >
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(true); }}
+              className="rounded-full p-2 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors active:scale-95"
+            >
         <MoreHorizontal className="h-4 w-4" />
       </button>
       <BottomSheet
@@ -456,7 +460,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
           <div className="flex items-center gap-1.5 shrink-0">
             {!isMe && (
               <button
-                onClick={handleFollow}
+                onClick={(e) => { e.stopPropagation(); handleFollow(); }}
                 disabled={followLoading}
                 className={`rounded-full px-3 py-[5px] text-[10px] font-bold transition-colors active:scale-95 ${
                   following
@@ -548,7 +552,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={handleLike}
+                onClick={(e) => { e.stopPropagation(); handleLike(); }}
                 disabled={likeLoading}
                 className={`transition-colors active:scale-90 ${liked ? "text-red-500" : "text-[var(--os-fg)] hover:text-red-500"}`}
                 aria-label={liked ? "Retirer le J'aime" : "J'aime"}
@@ -560,21 +564,21 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
                 />
               </button>
               <button
-                onClick={() => onOpenComments(moment)}
+                onClick={(e) => { e.stopPropagation(); onOpenComments(moment); }}
                 className="text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
                 aria-label="Commenter"
               >
                 <MessageCircle className="h-6 w-6" />
               </button>
               <button
-                onClick={() => setShowShareSheet(true)}
+                onClick={(e) => { e.stopPropagation(); setShowShareSheet(true); }}
                 className="text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
                 aria-label="Envoyer en DM"
               >
                 <SendHorizonal className="h-6 w-6" />
               </button>
               <button
-                onClick={handleShare}
+                onClick={(e) => { e.stopPropagation(); handleShare(); }}
                 className="text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
                 aria-label="Partager"
               >

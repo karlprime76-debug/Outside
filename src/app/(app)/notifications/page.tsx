@@ -194,7 +194,14 @@ export default function NotificationsPage() {
               <Link
                 key={n.id}
                 href={href}
-                onClick={() => { if (!n.isRead) markOneRead(n.id); }}
+                onClick={(e) => {
+                  if (!n.isRead) {
+                    e.preventDefault();
+                    markOneRead(n.id).then(() => {
+                      window.location.href = href;
+                    });
+                  }
+                }}
                 className={`flex items-start gap-3 rounded-2xl border p-4 transition-all card-hover animate-slide-up animate-stagger-${Math.min(i+1, 6)} ${
                   n.isRead
                     ? "border-[var(--os-card-border)] bg-[var(--os-card)]"
