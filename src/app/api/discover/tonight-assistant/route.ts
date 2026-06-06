@@ -10,13 +10,40 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { mood, budget, timing } = body;
+    let { mood, budget, timing } = body;
+
+    // Validate mood parameter
+    const VALID_MOODS = ["CHILL", "ACTIVE", "PARTY", "CULTURE", "SPORT", "FOOD"];
+    if (mood && !VALID_MOODS.includes(mood)) {
+      mood = undefined;
+    }
+
+    // Validate budget parameter
+    const VALID_BUDGETS = ["free", "low", "medium", "high"];
+    if (budget && !VALID_BUDGETS.includes(budget)) {
+      budget = undefined;
+    }
+
+    // Validate timing parameter
+    const VALID_TIMINGS = ["tonight", "weekend", "nextdays"];
+    if (timing && !VALID_TIMINGS.includes(timing)) {
+      timing = "tonight";
+    }
 
     const city = user.activeCity?.name;
     const cityId = user.activeCityId;
 
     if (!city || !cityId) {
-      return NextResponse.json({ error: "City not set" }, { status: 400 });
+      // Fallback: suggest going to starter pack instead of error
+      return NextResponse.json({
+        error: "Veuillez définir une ville active",
+        suggestion: {
+          type: "set_city",
+          title: "Définir ta ville",
+          description: "Complète ton profil pour des suggestions personalisées",
+          actionUrl: "/onboarding",
+        },
+      }, { status: 400 });
     }
 
     const now = new Date();
@@ -38,6 +65,10 @@ export async function POST(req: Request) {
     if (timing === "weekend") {
       startDate = weekendStart;
       endDate = weekendEnd;
+    } else if (timing === "nextdays") {
+      endDate = new Date(now);
+      endDate.setDate(endDate.getDate() + 3);
+      endDate.setHours(23, 59, 59, 999);
     }
 
     // Get recommended plans based on mood and budget
@@ -50,12 +81,16 @@ export async function POST(req: Request) {
       },
     };
 
-    if (budget === "free") {
+    if (budget === "free" || budget === "low") {
       whereClause.budgetLevel = "FREE";
+    } else if (budget === "high") {
+      whereClause.budgetLevel = { in: ["EXPENSIVE", "MODERATE"] };
+    } else if (budget === "medium") {
+      whereClause.budgetLevel = "MODERATE";
     }
 
     if (mood) {
-      whereClause.mood = { has: mood };
+      whereClause.mood = mood;
     }
 
     const recommendedPlans = await db.plan.findMany({
@@ -112,12 +147,13 @@ export async function POST(req: Request) {
       take: 5,
     });
 
-    // Get official tips for mood
+    // Get official tips for mood (with fallback to global tips)
     const officialTips = await db.outsideTip.findMany({
       where: {
-        city: city,
-        mood: mood || undefined,
-        active: true,
+        OR: [
+          { city: city, mood: mood || undefined, active: true },
+          { city: null, mood: mood || undefined, active: true }, // Global fallback
+        ],
       },
       take: 3,
     });

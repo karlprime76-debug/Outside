@@ -69,6 +69,17 @@ async function fetchBlockedIds(userId: string): Promise<{ blocked: Set<string>; 
   };
 }
 
+async function fetchReportedContentIds(): Promise<Set<string>> {
+  const reports = await db.report.findMany({
+    where: {
+      targetType: "MOMENT",
+      status: { in: ["PENDING", "RESOLVED"] },
+    },
+    select: { targetId: true },
+  });
+  return new Set(reports.map((r) => r.targetId).filter((id) => id !== null) as string[]);
+}
+
 async function fetchScoreMap(momentIds: string[]): Promise<Map<string, { score: number; viralScore: number; safetyScore: number; localScore: number }>> {
   const scores = await db.momentScore.findMany({
     where: { momentId: { in: momentIds } },
@@ -516,7 +527,10 @@ export async function buildFeed(
   since?: Date | null,
   media?: "all" | "posts" | "clips"
 ) {
-  const blocks = await fetchBlockedIds(viewer.userId);
+  const [blocks, reportedContentIds] = await Promise.all([
+    fetchBlockedIds(viewer.userId),
+    fetchReportedContentIds(),
+  ]);
 
   const context: ViewerContext = {
     userId: viewer.userId,
@@ -590,8 +604,8 @@ export async function buildFeed(
       filtered.push(c);
     }
 
-    // Return top limit
-    const result = filtered.slice(0, limit);
+    // Return top limit (filter out reported content)
+    const result = filtered.slice(0, limit).filter((c) => !reportedContentIds.has(c.id));
 
     // Filter plan participants visibility
     const planMomentIds = result.filter((c) => c.visibility === "PLAN_PARTICIPANTS" && c.planId).map((c) => c.planId!);
@@ -665,8 +679,12 @@ export async function buildFeed(
   }
 
   const visibleCandidates = finalCandidates.filter((c) => {
-    if (c.visibility !== "PLAN_PARTICIPANTS" || !c.planId) return true;
-    return allowedPlanIds.has(c.planId);
+    // Check plan visibility
+    if (c.visibility === "PLAN_PARTICIPANTS" && c.planId) {
+      if (!allowedPlanIds.has(c.planId)) return false;
+    }
+    // Check if reported
+    return !reportedContentIds.has(c.id);
   });
 
   // Get liked state

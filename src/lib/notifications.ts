@@ -11,6 +11,50 @@ interface CreateNotificationInput {
   actorName?: string | null;
   actorImage?: string | null;
   data?: Record<string, unknown>;
+  skipSettingsCheck?: boolean; // For system notifications
+}
+
+const notificationTypeToPref: Record<string, string | null> = {
+  FRIEND_REQUEST: "notificationFriendRequests",
+  FRIEND_ACCEPTED: "notificationFriendRequests",
+  FOLLOW: "notificationFriendRequests",
+  PLAN_INVITE: "notificationPlanInvites",
+  PLAN_REMINDER: "notificationPlanReminders",
+  MOMENT_LIKE: "notificationMoments",
+  MOMENT_COMMENT: "notificationMoments",
+  DM_MESSAGE: "pushDm",
+  PLAN_GROUP_MESSAGE: "pushDm",
+  DROP_AVAILABLE: null, // System notification
+  MISSION_AVAILABLE: null, // System notification
+  // System/admin notifications
+  LIVE_STARTED: "notificationLiveStarted",
+  PRO_EVENT: "notificationProEvents",
+  PRO_APPROVED: "notificationProEvents",
+  BADGE_EARNED: null,
+  SYSTEM: null,
+  WEEKLY_RECAP_READY: null,
+  AMBASSADOR_TO_DISCOVER: "notificationFriendRequests",
+};
+
+async function shouldSendNotification(userId: string, notificationType: NotificationType, skipSettingsCheck?: boolean): Promise<boolean> {
+  if (skipSettingsCheck) return true;
+  
+  const prefKey = notificationTypeToPref[notificationType];
+  if (!prefKey) return true; // System notifications always send
+  
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      userSettings: true,
+    },
+  });
+  
+  if (!user) return false;
+  
+  const settings = user.userSettings as Record<string, boolean> | null;
+  if (!settings) return true; // Default to send if settings don't exist
+  
+  return settings[prefKey] !== false;
 }
 
 const typeToPushCategory: Record<NotificationType, Parameters<typeof sendPushToUser>[1]> = {
@@ -35,6 +79,14 @@ const typeToPushCategory: Record<NotificationType, Parameters<typeof sendPushToU
 };
 
 export async function createNotification(input: CreateNotificationInput) {
+  // Check user settings before creating notification
+  const canSendNotification = await shouldSendNotification(input.recipientId, input.type, input.skipSettingsCheck);
+  
+  if (!canSendNotification) {
+    // Don't create a database entry for suppressed notifications
+    return;
+  }
+
   const notification = await db.notification.create({
     data: {
       type: input.type,

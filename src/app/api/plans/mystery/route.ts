@@ -10,13 +10,33 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { mood, budget } = body;
+    let { mood, budget } = body;
+
+    // Validate mood parameter
+    const VALID_MOODS = ["CHILL", "ACTIVE", "PARTY", "CULTURE", "SPORT", "FOOD"];
+    if (mood && !VALID_MOODS.includes(mood)) {
+      mood = undefined;
+    }
+
+    // Validate budget parameter
+    const VALID_BUDGETS = ["free", "low", "medium", "high"];
+    if (budget && !VALID_BUDGETS.includes(budget)) {
+      budget = undefined;
+    }
 
     const cityId = user.activeCityId;
     const city = user.activeCity?.name;
 
     if (!cityId || !city) {
-      return NextResponse.json({ error: "City not set" }, { status: 400 });
+      return NextResponse.json({
+        error: "Veuillez définir une ville active",
+        suggestion: {
+          type: "set_city",
+          title: "Définir ta ville",
+          description: "Complète ton profil pour des plans personalisés",
+          actionUrl: "/onboarding",
+        },
+      }, { status: 400 });
     }
 
     const now = new Date();
@@ -34,11 +54,15 @@ export async function POST(req: Request) {
     };
 
     if (mood) {
-      whereClause.mood = { has: mood };
+      whereClause.mood = mood;
     }
 
-    if (budget === "free") {
+    if (budget === "free" || budget === "low") {
       whereClause.budgetLevel = "FREE";
+    } else if (budget === "high") {
+      whereClause.budgetLevel = { in: ["EXPENSIVE", "MODERATE"] };
+    } else if (budget === "medium") {
+      whereClause.budgetLevel = "MODERATE";
     }
 
     const existingPlans = await db.plan.findMany({
@@ -54,7 +78,7 @@ export async function POST(req: Request) {
         },
       },
       orderBy: { startDate: "asc" },
-      take: 3,
+      take: 5,
     });
 
     // If we found existing plans, return one randomly
@@ -69,12 +93,49 @@ export async function POST(req: Request) {
       });
     }
 
-    // If no existing plan, return an official idea or pre-filled plan suggestion
+    // If no exact match, try broader search (same mood, any budget)
+    if (mood) {
+      const broadPlans = await db.plan.findMany({
+        where: {
+          cityId: cityId,
+          status: "ACTIVE",
+          mood: mood,
+          startDate: {
+            gte: now,
+            lte: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // Next 7 days
+          },
+        },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: { startDate: "asc" },
+        take: 3,
+      });
+
+      if (broadPlans.length > 0) {
+        const randomIndex = Math.floor(Math.random() * broadPlans.length);
+        return NextResponse.json({
+          type: "existing_plan",
+          plan: broadPlans[randomIndex],
+          message: "Voici un plan correspondant à ton humeur !",
+        });
+      }
+    }
+
+    // If no existing plan, return an official idea (with city and global fallback)
     const officialTips = await db.outsideTip.findMany({
       where: {
-        city: city,
-        mood: mood || undefined,
-        active: true,
+        OR: [
+          { city: city, mood: mood || undefined, active: true },
+          { city: null, mood: mood || undefined, active: true }, // Global fallback
+        ],
       },
       take: 1,
     });
