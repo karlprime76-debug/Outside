@@ -41,12 +41,12 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user?.email) redirect("/login");
 
-  type UserWithCities = User & { homeCity: { name: string } | null; activeCity: { name: string } | null };
+  type UserWithCities = User & { homeCity: { name: string } | null; activeCity: { name: string } | null; trustProfile: { level: string; outsideScore: number } | null };
   let user: UserWithCities | null = null;
   try {
     user = await db.user.findUnique({
       where: { email: session.user.email },
-      include: { homeCity: true, activeCity: true },
+      include: { homeCity: true, activeCity: true, trustProfile: true },
     });
   } catch {
     if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
@@ -117,7 +117,12 @@ export default async function ProfilePage() {
               <span>{user.activeCity?.name || user.homeCity?.name || "Ville non définie"}</span>
             </div>
             <div className="mt-3">
-              <TrustBadge badge={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
+              <TrustBadge
+                level={user.trustProfile?.level || "Nouveau"}
+                showScore
+                score={user.trustProfile?.outsideScore || 0}
+                size="sm"
+              />
             </div>
           </div>
         </div>

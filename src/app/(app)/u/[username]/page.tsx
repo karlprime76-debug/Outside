@@ -232,7 +232,7 @@ export default async function PublicProfilePage({ params }: Props) {
                   Pro vérifié
                 </span>
               )}
-              <TrustBadge badge={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
+              <TrustBadge level={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
               {!isSelf && currentUserId && (
                 <MessageButton username={user.username || ""} />
               )}

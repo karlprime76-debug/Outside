@@ -310,6 +310,12 @@ enum VenueVerificationStatus {
   SUSPENDED
 }
 
+enum PlanReviewStatus {
+  PENDING
+  SUBMITTED
+  EXPIRED
+}
+
 enum TrustSignalType {
   PROFILE_PHOTO
   EMAIL_VERIFIED
@@ -384,6 +390,8 @@ model User {
   notifications     Notification[] @relation("NotificationRecipient")
   trustReviewsGiven    TrustReview[] @relation("TrustReviewReviewer")
   trustReviewsReceived TrustReview[] @relation("TrustReviewReviewed")
+  planReviewsGiven     PlanParticipantReview[] @relation("PlanReviewReviewer")
+  planReviewsReceived  PlanParticipantReview[] @relation("PlanReviewReviewed")
   availabilities       Availability[]
 
   liveSessions      LiveSession[]
@@ -391,6 +399,7 @@ model User {
   identityVerification IdentityVerification?
   trustSignals      TrustSignal[]
   userSettings      UserSettings?
+  trustProfile      UserTrustProfile?
   pushSubscriptions PushSubscription[]
   momentLikes       MomentLike[]
   momentComments    MomentComment[]
@@ -618,6 +627,9 @@ model Plan {
   rules             String?
   isDemo            Boolean         @default(false)
 
+  isCommunityConfirmed Boolean        @default(false)
+  confirmationScore    Float          @default(0)
+
   creatorId         String
   creator           User            @relation(fields: [creatorId], references: [id])
   participants      PlanParticipant[]
@@ -626,6 +638,7 @@ model Plan {
   reports           Report[]
   savedPlans        SavedPlan[]
   reminders         PlanReminder[]
+  reviews           PlanParticipantReview[]
 
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
@@ -683,6 +696,33 @@ model PlanParticipant {
   @@unique([planId, userId])
   @@index([planId])
   @@index([userId])
+}
+
+model PlanParticipantReview {
+  id             String           @id @default(cuid())
+
+  planId         String
+  plan           Plan             @relation(fields: [planId], references: [id], onDelete: Cascade)
+  reviewerId     String
+  reviewer       User             @relation("PlanReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewedUserId String?
+  reviewedUser   User?            @relation("PlanReviewReviewed", fields: [reviewedUserId], references: [id], onDelete: Cascade)
+
+  wasPresent     Boolean?
+  wasRespectful  Boolean?
+  profileSeemedReal Boolean?
+  planWasReal    Boolean?
+  comment        String?
+
+  status         PlanReviewStatus @default(SUBMITTED)
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([planId])
+  @@index([reviewerId])
+  @@index([reviewedUserId])
+  @@unique([planId, reviewerId, reviewedUserId])
 }
 
 model PlanReminder {
@@ -864,6 +904,31 @@ model UserQualityScore {
   activity      Float @default(0)
   reportsPenalty Float @default(0)
   creatorBoost   Float @default(0)
+
+  lastCalculatedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserTrustProfile {
+  id        String @id @default(cuid())
+  userId    String @unique
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  outsideScore      Float @default(0)
+  presenceScore     Float @default(0)
+  respectScore      Float @default(0)
+  realProfileScore  Float @default(0)
+  organizerScore    Float @default(0)
+
+  plansJoined        Int @default(0)
+  plansCreated       Int @default(0)
+  validatedAttendances Int @default(0)
+  positiveReviews    Int @default(0)
+  reportsCount       Int @default(0)
+
+  level String @default("Nouveau")
 
   lastCalculatedAt DateTime?
   createdAt DateTime @default(now())
