@@ -45,6 +45,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { DailyChallenges } from "@/components/challenges/daily-challenges";
 import { CityMissions } from "@/components/missions/city-missions";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
+import { TonightSection } from "@/components/home/tonight-section";
 
 interface Plan {
   id: string;
@@ -769,6 +770,11 @@ export default function HomePage() {
             });
         }}
       />
+
+      {/* Tonight Section */}
+      <section className="animate-slide-up animate-stagger-1">
+        <TonightSection />
+      </section>
 
       {/* Daily Challenges */}
       <section className="animate-slide-up animate-stagger-2">
