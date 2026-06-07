@@ -466,6 +466,7 @@ model UserSettings {
   directMessagePermission  DirectMessagePermission @default(FRIENDS_ONLY)
   allowFollowers           Boolean @default(true)
   allowFriendSuggestions   Boolean @default(true)
+  privateDiscoveryMode     Boolean @default(false)
 
   notificationFriendRequests Boolean @default(true)
   notificationPlanInvites    Boolean @default(true)
@@ -1391,6 +1392,7 @@ model UserTripHistory {
   planId      String?
   eventId     String?
   momentId    String?
+  isPrivate   Boolean  @default(true)
   createdAt   DateTime @default(now())
 
   @@index([userId])
@@ -1430,4 +1432,30 @@ model PlaceVibeSignal {
   @@index([placeId])
   @@index([city])
   @@index([createdAt])
+}
+
+model OutingCircle {
+  id          String   @id @default(cuid())
+  ownerId     String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     OutingCircleMember[]
+
+  @@index([ownerId])
+}
+
+model OutingCircleMember {
+  id       String @id @default(cuid())
+  circleId String
+  userId   String
+  createdAt DateTime @default(now())
+
+  circle   OutingCircle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+
+  @@unique([circleId, userId])
+  @@index([circleId])
+  @@index([userId])
 }
