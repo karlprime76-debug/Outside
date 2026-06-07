@@ -8,10 +8,7 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
-import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { backgrounds } from "@/lib/backgrounds";
 import {
   MapPin,
   Plus,
@@ -19,7 +16,6 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
-  Navigation,
   Flame,
   Coffee,
   Dumbbell,
@@ -30,24 +26,24 @@ import {
   Plane,
   Zap,
   Heart,
-  Radio,
   CalendarDays,
   X,
-  Image as ImageIcon,
   Compass,
 } from "lucide-react";
-import { AccountSuggestions } from "@/components/users/account-suggestions";
 import { AvailabilitySheet } from "@/components/availability/availability-sheet";
 import { useMomentPolling } from "@/hooks/use-moment-polling";
-import { ExpressPlanSheet } from "@/components/plans/express-plan-sheet";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { AccountSuggestions } from "@/components/users/account-suggestions";
 import { DailyChallenges } from "@/components/challenges/daily-challenges";
 import { CityMissions } from "@/components/missions/city-missions";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 import { TonightSection } from "@/components/home/tonight-section";
 import { OutsideDrops } from "@/components/home/outside-drops";
 import { HomeHeader } from "@/components/home/home-header";
-import { formatCityName } from "@/lib/location/display-location";
+import { HeroActionCard } from "@/components/home/hero-action-card";
+import { QuickActions } from "@/components/home/quick-actions";
+import { MoodRadar } from "@/components/home/mood-radar";
+import { LiveSection } from "@/components/home/live-section";
+import { MomentsSection } from "@/components/home/moments-section";
 import type { Plan } from "@/types/plan";
 
 interface Place {
@@ -87,10 +83,9 @@ export default function HomePage() {
   const [myAvailability, setMyAvailability] = useState<{ mood: string; expiresAt: string } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [outsideStatus, setOutsideStatus] = useState<{ type: string; text: string | null; expiresAt: string } | null>(null);
-  const [outsideStatusSheetOpen, setOutsideStatusSheetOpen] = useState(false);
   const [moments, setMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null } }[]>([]);
   const [loadingMoments, setLoadingMoments] = useState(true);
-  const { hasNew } = useMomentPolling({ scope: "for-you", media: "all", enabled: !loadingMoments });
+  useMomentPolling({ scope: "for-you", media: "all", enabled: !loadingMoments });
   const [trendingMoments, setTrendingMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null }; badge: string | null }[]>([]);
   const [loadingTrending, setLoadingTrending] = useState(true);
 
@@ -238,220 +233,14 @@ export default function HomePage() {
         <OutsideDrops />
       </section>
 
-      {/* Hero card immersive */}
-      <ImmersiveBackground
-        daySrc={backgrounds.home.day}
-        nightSrc={backgrounds.home.night}
-        alt="Home background"
-        overlay="brand"
-        height="section"
-        className="rounded-3xl shadow-glow"
-      >
-        <div className="flex flex-1 flex-col justify-center p-6">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-6 w-6 text-white/90" />
-            {activeCity ? (
-              <span className="text-3xl font-black tracking-tight text-white drop-shadow-lg">{formatCityName(activeCity)}</span>
-            ) : (
-              <span className="text-3xl font-black tracking-tight text-white/80 drop-shadow-lg">Choisis ta ville</span>
-            )}
-          </div>
-          <p className="mt-2 text-sm text-white/70 max-w-md">
-            {activeCity ? `${formatCityName(activeCity)} est actif ce soir.` : "Définis ta ville pour voir les plans autour de toi."}
-          </p>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <Link
-              href="/tonight"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition-colors pressable"
-            >
-              <Flame className="h-4 w-4" />
-              Qui bouge ce soir ?
-            </Link>
-            <Link
-              href="/plans/new"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition-colors pressable"
-            >
-              <Plus className="h-4 w-4" />
-              Créer un plan
-            </Link>
-          </div>
-        </div>
-      </ImmersiveBackground>
+      {/* Hero card — Main action card */}
+      <HeroActionCard activeCity={activeCity} />
 
-      {/* Quick Actions - Express Plan & Outside Status */}
-      <section className="animate-slide-up animate-stagger-1">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <ExpressPlanSheet
-            onSelectTemplate={(template) => {
-              // Navigate to plan creation with template data
-              const params = new URLSearchParams({
-                mood: template.mood,
-                title: template.defaultTitle,
-                description: template.defaultDescription,
-                isExpress: "true",
-              });
-              window.location.href = `/plans/new?${params.toString()}`;
-            }}
-          />
-          {outsideStatus ? (
-            <div className="flex items-center justify-between rounded-2xl border-2 border-outside-300 bg-outside-50/50 px-5 py-4">
-              <div>
-                <p className="text-sm font-bold text-outside-700">
-                  {outsideStatus.type === "OUT_NOW" ? "Je suis dehors maintenant" : 
-                   outsideStatus.type === "AVAILABLE" ? "Disponible" :
-                   outsideStatus.type === "LOOKING_FOR_FOOD" ? "Cherche à manger" :
-                   outsideStatus.type === "LOOKING_FOR_CHILL" ? "Cherche à chill" :
-                   outsideStatus.type === "LOOKING_FOR_SPORT" ? "Cherche du sport" :
-                   outsideStatus.type === "LOOKING_FOR_MUSIC" ? "Cherche de la musique" :
-                   "Disponible"}
-                </p>
-                {outsideStatus.text && (
-                  <p className="text-xs text-outside-600">{outsideStatus.text}</p>
-                )}
-                <p className="text-xs text-outside-600">
-                  Jusqu&apos;à {new Date(outsideStatus.expiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
-              <button
-                onClick={async () => {
-                  await fetch("/api/outside-status", { method: "DELETE" });
-                  setOutsideStatus(null);
-                }}
-                className="rounded-full bg-white p-2 text-outside-600 hover:bg-outside-100 transition-colors"
-                title="Désactiver"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setOutsideStatusSheetOpen(true)}
-              className="group flex items-center justify-center gap-3 rounded-2xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)] py-5 text-lg font-black text-[var(--os-fg)] hover:border-outside-300 hover:bg-outside-50/50 transition-all pressable"
-            >
-              <Navigation className="h-6 w-6 text-outside-500" />
-              Je suis dehors maintenant
-            </button>
-          )}
-        </div>
-      </section>
+      {/* Quick Actions & Status */}
+      <QuickActions outsideStatus={outsideStatus} onStatusUpdate={setOutsideStatus} />
 
-      {/* Outside Status Sheet */}
-      <BottomSheet
-        open={outsideStatusSheetOpen}
-        onClose={() => setOutsideStatusSheetOpen(false)}
-        title="Statut dehors maintenant"
-        maxHeight="60vh"
-      >
-        <div className="space-y-3">
-          <button
-            onClick={async () => {
-              await fetch("/api/outside-status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: "OUT_NOW", durationHours: 2 }),
-              });
-              setOutsideStatusSheetOpen(false);
-              fetch("/api/outside-status")
-                .then((r) => r.json())
-                .then((data) => setOutsideStatus(data.status));
-            }}
-            className="w-full p-4 rounded-lg border hover:bg-accent transition-colors text-left"
-          >
-            <div className="font-semibold">Je suis dehors maintenant</div>
-            <div className="text-sm text-muted-foreground">Montre que tu es actif</div>
-          </button>
-          <button
-            onClick={async () => {
-              await fetch("/api/outside-status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: "AVAILABLE", durationHours: 2 }),
-              });
-              setOutsideStatusSheetOpen(false);
-              fetch("/api/outside-status")
-                .then((r) => r.json())
-                .then((data) => setOutsideStatus(data.status));
-            }}
-            className="w-full p-4 rounded-lg border hover:bg-accent transition-colors text-left"
-          >
-            <div className="font-semibold">Disponible</div>
-            <div className="text-sm text-muted-foreground">Ouvert aux propositions</div>
-          </button>
-          <button
-            onClick={async () => {
-              await fetch("/api/outside-status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: "LOOKING_FOR_FOOD", durationHours: 2 }),
-              });
-              setOutsideStatusSheetOpen(false);
-              fetch("/api/outside-status")
-                .then((r) => r.json())
-                .then((data) => setOutsideStatus(data.status));
-            }}
-            className="w-full p-4 rounded-lg border hover:bg-accent transition-colors text-left"
-          >
-            <div className="font-semibold">Cherche à manger</div>
-            <div className="text-sm text-muted-foreground">Pour un repas improvisé</div>
-          </button>
-          <button
-            onClick={async () => {
-              await fetch("/api/outside-status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ type: "LOOKING_FOR_CHILL", durationHours: 2 }),
-              });
-              setOutsideStatusSheetOpen(false);
-              fetch("/api/outside-status")
-                .then((r) => r.json())
-                .then((data) => setOutsideStatus(data.status));
-            }}
-            className="w-full p-4 rounded-lg border hover:bg-accent transition-colors text-left"
-          >
-            <div className="font-semibold">Cherche à chill</div>
-            <div className="text-sm text-muted-foreground">Pour se détendre</div>
-          </button>
-        </div>
-      </BottomSheet>
-
-      {/* Lives */}
-      <section className="animate-slide-up animate-stagger-1">
-        <SectionTitle
-          title="En direct maintenant"
-          icon={<Radio className="h-5 w-5 text-red-500" />}
-          action={
-            <Link href="/live" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
-              Voir tout
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          }
-        />
-        {loadingLives ? (
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="min-w-[200px] flex-shrink-0 os-card p-4 h-28 shimmer" />
-            ))}
-          </div>
-        ) : lives.length === 0 ? (
-          <OutsideEmptyState
-            icon={Radio}
-            title="Aucun live en cours"
-            description="L'ambiance commence peut-être avec toi."
-          />
-        ) : (
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-            {lives.map((live, i) => (
-              <Link key={live.id} href={`/live/${live.id}`} className={`min-w-[220px] flex-shrink-0 os-card p-4 card-hover block animate-slide-up animate-stagger-${Math.min(i+1, 6)}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <StatusBadge status={live.status === "LIVE" ? "live" : "soon"} text={live.status === "LIVE" ? "En direct" : "Prévu"} />
-                </div>
-                <h3 className="font-bold text-sm text-[var(--os-fg)] truncate">{live.title}</h3>
-                <p className="text-xs text-[var(--os-muted)] mt-1">{live.host.name || "Anonyme"} · {live.city}</p>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* Live Sessions */}
+      <LiveSection lives={lives} loading={loadingLives} />
 
       {/* Pro Events */}
       <section className="animate-slide-up animate-stagger-2">
@@ -495,27 +284,8 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Quick moods */}
-      <section className="animate-slide-up animate-stagger-3">
-        <h2 className="text-lg font-black text-[var(--os-fg)] mb-4">
-          Tu veux faire quoi maintenant ?
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {QUICK_MOODS.map((m, i) => {
-            const Icon = m.icon;
-            return (
-              <Link
-                key={m.mood}
-                href={`/plans?mood=${m.mood}`}
-                className={`inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 hover:text-outside-600 transition-colors card-hover animate-fade-in animate-stagger-${Math.min(i+1, 6)}`}
-              >
-                <Icon className="h-4 w-4" />
-                {m.label}
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+      {/* Mood Radar */}
+      <MoodRadar />
 
       {/* Trending moments */}
       {activeCity?.name && (
@@ -585,85 +355,8 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Moments */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-black text-[var(--os-fg)] flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-outside-500" />
-              Moments dehors maintenant
-              {hasNew && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-glow animate-pulse">
-                  <Sparkles className="h-3 w-3" />
-                  Nouveau
-                </span>
-              )}
-            </h2>
-            <p className="text-xs text-[var(--os-muted)] mt-0.5">
-              Regarde ce qui se passe dans ta ville.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/moments/new"
-              className="inline-flex items-center gap-1 rounded-full bg-outside-100 px-3 py-1.5 text-xs font-bold text-outside-700 hover:bg-outside-200 transition-colors"
-            >
-              <Plus className="h-3 w-3" />
-              Ajouter
-            </Link>
-            <Link href="/moments" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
-              Voir les moments
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </div>
-
-        {loadingMoments ? (
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="min-w-[140px] flex-shrink-0 aspect-[3/4] rounded-2xl bg-[var(--os-bg)] shimmer" />
-            ))}
-          </div>
-        ) : moments.length === 0 ? (
-          <div className="os-card p-6 text-center">
-            <p className="text-sm text-[var(--os-muted)]">
-              Aucun moment dehors pour l&apos;instant.
-            </p>
-            <Link
-              href="/moments/new"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter un moment
-            </Link>
-          </div>
-        ) : (
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
-            {moments.slice(0, 3).map((m) => (
-              <Link
-                key={m.id}
-                href="/moments"
-                className="min-w-[140px] flex-shrink-0 rounded-2xl overflow-hidden bg-black relative aspect-[3/4] block"
-              >
-                {m.type === "VIDEO" ? (
-                  <video src={m.mediaUrl} className="h-full w-full object-cover" muted loop playsInline preload="metadata" />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={m.mediaUrl} alt={m.caption || "Moment"} className="h-full w-full object-cover" loading="lazy" />
-                )}
-                <div className="absolute top-2 left-2">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${m.type === "VIDEO" ? "bg-outside-500/90 text-white" : "bg-white/90 text-[var(--os-fg)]"}`}>
-                    {m.type === "VIDEO" ? "Clip" : "Publication"}
-                  </span>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                  <p className="text-xs font-bold text-white truncate">{m.author.name || "Anonyme"}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* Moments qui Montent */}
+      <MomentsSection moments={moments} loading={loadingMoments} />
 
       {/* City map CTA */}
       <Link
