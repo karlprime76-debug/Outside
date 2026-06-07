@@ -8,25 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import type { BadgeProps } from "@/components/ui/badge";
 import { formatBudget } from "@/lib/currency";
 import { SavePlanButton } from "@/components/save-plan-button";
-
-interface Plan {
-  id: string;
-  title: string;
-  mood: string;
-  planCategory: string;
-  budgetLevel: string;
-  budgetAmount: unknown;
-  budgetCurrency: string | null;
-  budgetIsFrom: boolean;
-  startDate: string;
-  maxParticipants: number;
-  status: string;
-  city: { name: string };
-  creator: { name: string | null; image?: string | null };
-  creatorUsername?: string | null;
-  creatorId?: string | null;
-  _count: { participants: number; going?: number; maybe?: number };
-}
+import type { Plan } from "@/types/plan";
 
 const MOOD_ACCENT: Record<string, string> = {
   CHILL: "border-l-sky-500",
@@ -116,10 +98,10 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
           {CATEGORY_LABELS[plan.planCategory] || plan.planCategory}
         </Badge>
         <MapPin className="h-3.5 w-3.5" />
-        <span>{plan.city.name}</span>
+        <span>{plan.city?.name}</span>
         <span className="text-[var(--os-card-border)]">·</span>
-        {plan.creatorUsername || plan.creatorId ? (
-          <Link href={`/u/${plan.creatorUsername || plan.creatorId}`} className="flex items-center gap-2 hover:underline">
+        {plan.creator?.username || plan.creator?.id ? (
+          <Link href={`/u/${plan.creator.username || plan.creator.id}`} className="flex items-center gap-2 hover:underline">
             <Avatar src={plan.creator.image} name={plan.creator.name} size="sm" />
             <span className="text-[var(--os-fg)]">{plan.creator.name || t.plans.anonymous}</span>
           </Link>

@@ -49,23 +49,7 @@ import { TonightSection } from "@/components/home/tonight-section";
 import { OutsideDrops } from "@/components/home/outside-drops";
 import { MysteryPlanButton } from "@/components/home/mystery-plan-button";
 import { formatUserLocation, formatCityName } from "@/lib/location/display-location";
-
-interface Plan {
-  id: string;
-  title: string;
-  mood: string;
-  planCategory: string;
-  budgetLevel: string;
-  budgetAmount: unknown;
-  budgetCurrency: string | null;
-  budgetIsFrom: boolean;
-  startDate: string;
-  maxParticipants: number;
-  status: string;
-  city: { name: string };
-  creator: { name: string | null; image?: string | null };
-  _count: { participants: number };
-}
+import type { Plan } from "@/types/plan";
 
 interface Place {
   id: string;

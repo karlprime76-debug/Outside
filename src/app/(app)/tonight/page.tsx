@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Flame, Users, MapPin, Clock, Sparkles, Navigation, Calendar } from "lucide-react";
+import type { Plan } from "@/types/plan";
 
 interface UserStatus {
   id: string;
@@ -19,14 +20,8 @@ interface UserStatus {
   activeCity: { name: string } | null;
 }
 
-interface Plan {
-  id: string;
-  title: string;
-  mood: string;
-  startDate: string;
-  city: { name: string };
-  place: { name: string } | null;
-  _count: { participants: number };
+interface PlanWithPlace extends Plan {
+  place?: { name: string } | null;
 }
 
 interface Moment {
@@ -41,7 +36,7 @@ export default function TonightPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [availableUsers, setAvailableUsers] = useState<UserStatus[]>([]);
-  const [openPlans, setOpenPlans] = useState<Plan[]>([]);
+  const [openPlans, setOpenPlans] = useState<PlanWithPlace[]>([]);
   const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
   const [activePlaces, setActivePlaces] = useState<{ id: string; name: string; neighborhood: string | null }[]>([]);
 

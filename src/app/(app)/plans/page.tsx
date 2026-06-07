@@ -13,23 +13,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, MapPin, Sparkles } from "lucide-react";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
-
-interface Plan {
-  id: string;
-  title: string;
-  mood: string;
-  planCategory: string;
-  budgetLevel: string;
-  budgetAmount: unknown;
-  budgetCurrency: string | null;
-  budgetIsFrom: boolean;
-  startDate: string;
-  maxParticipants: number;
-  status: string;
-  city: { name: string };
-  creator: { name: string | null; image?: string | null };
-  _count: { participants: number };
-}
+import type { Plan } from "@/types/plan";
 
 const MOODS = ["CHILL", "FOOD", "SPORT", "PARTY", "MUSIC", "DATING", "FRIENDS", "STUDY", "BUSINESS", "CULTURE", "TRAVEL", "GAMING", "FITNESS"];
 const PLAN_CATEGORIES = [

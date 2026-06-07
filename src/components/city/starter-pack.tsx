@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MapPin, Users, Award, Flame, Calendar, Sparkles, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import type { Plan } from "@/types/plan";
 
 interface User {
   id: string;
@@ -28,17 +29,6 @@ interface Moment {
   mediaUrl: string;
   caption: string | null;
   author: {
-    name: string | null;
-    username: string | null;
-    image: string | null;
-  };
-}
-
-interface Plan {
-  id: string;
-  title: string;
-  startDate: string;
-  creator: {
     name: string | null;
     username: string | null;
     image: string | null;

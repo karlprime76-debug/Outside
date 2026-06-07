@@ -5,15 +5,7 @@ import Link from "next/link";
 import { Sparkles, Calendar, Video, Zap, ArrowRight, Flame, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-
-interface Plan {
-  id: string;
-  title: string;
-  mood: string;
-  startDate: string;
-  city: { name: string };
-  creator: { name: string | null; username: string | null; image: string | null };
-}
+import type { Plan } from "@/types/plan";
 
 interface Moment {
   id: string;
@@ -156,7 +148,7 @@ export function TonightSection() {
                   <span className="text-xs font-bold text-green-600">Gratuit</span>
                 </div>
                 <h4 className="text-sm font-semibold text-[var(--os-fg)] line-clamp-2">{plan.title}</h4>
-                <p className="text-xs text-[var(--os-muted)] mt-1">{plan.city.name}</p>
+                <p className="text-xs text-[var(--os-muted)] mt-1">{plan.city?.name}</p>
               </div>
             </Link>
           ))}

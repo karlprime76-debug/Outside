@@ -7,30 +7,12 @@ import { useRouter } from "next/navigation";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { PlanCard } from "@/components/plan-card";
 import { ArrowLeft, Bookmark, Loader2 } from "lucide-react";
-
-interface SavedPlan {
-  id: string;
-  title: string;
-  mood: string;
-  planCategory: string;
-  budgetLevel: string;
-  budgetAmount: unknown;
-  budgetCurrency: string | null;
-  budgetIsFrom: boolean;
-  startDate: string;
-  maxParticipants: number;
-  status: string;
-  city: { name: string };
-  creator: { name: string | null; image?: string | null };
-  creatorUsername?: string | null;
-  creatorId?: string | null;
-  _count: { participants: number };
-}
+import type { Plan } from "@/types/plan";
 
 export default function SavedPlansPage() {
   const { status } = useSession();
   const router = useRouter();
-  const [plans, setPlans] = useState<SavedPlan[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

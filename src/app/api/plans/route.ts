@@ -150,7 +150,7 @@ export async function GET(req: Request) {
         orderBy,
         take: limit * 2, // Fetch more to account for distance filtering
         include: {
-          creator: { select: { id: true, name: true, image: true } },
+          creator: { select: { id: true, name: true, username: true, image: true } },
           city: { select: { id: true, name: true } },
           place: { select: { id: true, name: true } },
           participants: { select: { attendance: true } },
@@ -209,7 +209,7 @@ export async function GET(req: Request) {
       orderBy,
       take: limit,
       include: {
-        creator: { select: { id: true, name: true, image: true } },
+        creator: { select: { id: true, name: true, username: true, image: true } },
         city: { select: { id: true, name: true } },
         place: { select: { id: true, name: true } },
         participants: { select: { attendance: true } },

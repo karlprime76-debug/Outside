@@ -23,24 +23,12 @@ import {
   AlertTriangle,
   TrendingUp,
 } from "lucide-react";
+import type { Plan } from "@/types/plan";
 
 interface City {
   id: string;
   name: string;
   country: string;
-}
-
-interface Plan {
-  id: string;
-  title: string;
-  mood: string;
-  budgetLevel: string;
-  startDate: string;
-  maxParticipants: number;
-  status: string;
-  city: { name: string };
-  creator: { name: string | null };
-  _count: { participants: number };
 }
 
 interface UserProfile {
