@@ -15,6 +15,14 @@ enum UserRole {
   MODERATOR
 }
 
+enum AccountKind {
+  STANDARD
+  OFFICIAL_GUIDE
+  OFFICIAL_CITY
+  OFFICIAL_PARTNER
+  VERIFIED_CREATOR
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -371,6 +379,7 @@ model User {
   bio               String?
   gender            Gender?
   role              UserRole @default(USER)
+  accountKind       AccountKind @default(STANDARD)
   isDemoAccount     Boolean  @default(false)
 
   birthDate         DateTime?
@@ -1458,4 +1467,28 @@ model OutingCircleMember {
   @@unique([circleId, userId])
   @@index([circleId])
   @@index([userId])
+}
+
+model DailyChallenge {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  title       String
+  description String?
+  rewardLabel String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([active])
+}
+
+model UserChallengeProgress {
+  id           String   @id @default(cuid())
+  userId       String
+  challengeKey String
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, challengeKey])
+  @@index([userId])
+  @@index([challengeKey])
 }
