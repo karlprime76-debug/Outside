@@ -27,6 +27,8 @@ const typeToPushCategory: Record<NotificationType, Parameters<typeof sendPushToU
   DM_MESSAGE: "dm",
   MOMENT_LIKE: "moment",
   MOMENT_COMMENT: "moment",
+  PLAN_REVIEW_PENDING: "plan",
+  PLAN_CONFIRMED: "plan",
 };
 
 export async function createNotification(input: CreateNotificationInput) {

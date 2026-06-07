@@ -44,6 +44,8 @@ enum NotificationType {
   DM_MESSAGE
   MOMENT_LIKE
   MOMENT_COMMENT
+  PLAN_REVIEW_PENDING
+  PLAN_CONFIRMED
 }
 
 enum AvailabilityMood {

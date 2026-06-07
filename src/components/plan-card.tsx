@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useDictionary } from "@/hooks/use-dictionary";
-import { Calendar, MapPin, Users, Tag, Wallet } from "lucide-react";
+import { Calendar, MapPin, Users, Tag, Wallet, ShieldCheck } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeProps } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ interface Plan {
   creatorUsername?: string | null;
   creatorId?: string | null;
   _count: { participants: number; going?: number; maybe?: number };
+  isCommunityConfirmed?: boolean;
 }
 
 const MOOD_ACCENT: Record<string, string> = {
@@ -93,6 +94,12 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
           {timeStr}
         </div>
         <div className="flex items-center gap-1.5">
+          {plan.isCommunityConfirmed && (
+            <Badge variant="green" className="text-[10px]">
+              <ShieldCheck className="h-3 w-3 mr-1 inline" />
+              Confirmé
+            </Badge>
+          )}
           <Badge variant={MOOD_BADGE[plan.mood] || "default"}>{plan.mood}</Badge>
           <Badge variant="slate">
             <Wallet className="h-3 w-3 mr-1 inline" />
