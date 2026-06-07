@@ -489,6 +489,7 @@ model UserSettings {
   directMessagePermission  DirectMessagePermission @default(FRIENDS_ONLY)
   allowFollowers           Boolean @default(true)
   allowFriendSuggestions   Boolean @default(true)
+  privateDiscoveryMode     Boolean @default(false)
 
   notificationFriendRequests Boolean @default(true)
   notificationPlanInvites    Boolean @default(true)
@@ -1416,6 +1417,7 @@ model UserTripHistory {
   planId      String?
   eventId     String?
   momentId    String?
+  isPrivate   Boolean  @default(true)
   createdAt   DateTime @default(now())
 
   @@index([userId])
