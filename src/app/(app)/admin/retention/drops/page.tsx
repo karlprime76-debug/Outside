@@ -1,21 +1,76 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { AnimatedPage } from "@/components/ui/animated-page";
-import { Sparkles, Plus, Trash2, Edit } from "lucide-react";
+import { Sparkles, Plus, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
 
-export default async function AdminDropsPage() {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
-    redirect("/");
-  }
+interface Drop {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  city: string | null;
+  active: boolean;
+}
 
-  const drops = await db.outsideDrop.findMany({
-    where: { active: true },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+export default function AdminDropsPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const [drops, setDrops] = useState<Drop[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+    if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
+      router.push("/");
+      return;
+    }
+    loadDrops();
+  }, [status, session, router]);
+
+  const loadDrops = async () => {
+    try {
+      const res = await fetch("/api/admin/drops");
+      if (res.ok) {
+        const data = await res.json();
+        setDrops(data.drops || []);
+      }
+    } catch (err) {
+      console.error("Load drops failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Supprimer ce drop ?")) return;
+    try {
+      setDeleting(id);
+      const res = await fetch(`/api/admin/drops?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setDrops(drops.filter((d) => d.id !== id));
+      }
+    } catch (err) {
+      console.error("Delete failed:", err);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  if (status === "loading" || loading) {
+    return (
+      <AnimatedPage className="p-4 flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </AnimatedPage>
+    );
+  }
 
   return (
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6">
@@ -59,14 +114,16 @@ export default async function AdminDropsPage() {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <Link
-                  href={`/admin/retention/drops/${drop.id}/edit`}
-                  className="p-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                <button
+                  onClick={() => handleDelete(drop.id)}
+                  disabled={deleting === drop.id}
+                  className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
                 >
-                  <Edit className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                </Link>
-                <button className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-                  <Trash2 className="h-4 w-4 text-red-600" />
+                  {deleting === drop.id ? (
+                    <Loader2 className="h-4 w-4 text-red-600 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  )}
                 </button>
               </div>
             </div>
@@ -77,7 +134,14 @@ export default async function AdminDropsPage() {
       {drops.length === 0 && (
         <div className="text-center py-12">
           <Sparkles className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
-          <p className="text-[var(--os-muted)]">Aucun drop actif</p>
+          <p className="text-[var(--os-muted)]">Aucun drop</p>
+          <Link
+            href="/admin/retention/drops/new"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 text-white font-bold text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            Créer le premier
+          </Link>
         </div>
       )}
     </AnimatedPage>
