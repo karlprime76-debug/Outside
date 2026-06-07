@@ -82,8 +82,8 @@ export async function GET(req: Request) {
     const { moments, nextCursor } = await buildFeed(
       {
         userId: user.id,
-        activeCity: user.activeCity?.name || null,
-        countryCode: user.countryCode || null,
+        activeCity: user.activeCity?.name ?? null,
+        countryCode: user.countryCode ?? null,
         role: user.role,
         friendIds,
         followingIds,

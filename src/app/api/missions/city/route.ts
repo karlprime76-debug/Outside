@@ -9,7 +9,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const city = user.activeCity?.name;
+    const city = user.activeCity?.name ?? null;
 
     // Get active city missions (filtered by city if available)
     const missions = await db.cityMission.findMany({

@@ -63,8 +63,8 @@ export async function POST(req: Request) {
       select: { activeCity: true },
     });
 
-    const city = userData?.activeCity?.name || user.activeCity?.name;
-    const countryCode = userData?.activeCity?.countryCode || user.activeCity?.countryCode;
+    const city = (userData?.activeCity?.name ?? user.activeCity?.name) ?? null;
+    const countryCode = (userData?.activeCity?.countryCode ?? user.activeCity?.countryCode) ?? null;
 
     // Upsert the status
     const status = await db.userOutsideStatus.upsert({

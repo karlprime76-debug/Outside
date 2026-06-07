@@ -61,8 +61,8 @@ export async function POST(
       select: { activeCity: true },
     });
 
-    const city = userData?.activeCity?.name || user.activeCity?.name;
-    const countryCode = userData?.activeCity?.countryCode || user.activeCity?.countryCode;
+    const city = (userData?.activeCity?.name ?? user.activeCity?.name) ?? null;
+    const countryCode = (userData?.activeCity?.countryCode ?? user.activeCity?.countryCode) ?? null;
 
     const signal = await db.placeVibeSignal.create({
       data: {

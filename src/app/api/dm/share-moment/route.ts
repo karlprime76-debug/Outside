@@ -100,8 +100,8 @@ export async function POST(req: Request) {
           momentId,
           userId: user.id,
           type: "SHARE_DM",
-          city: user.activeCity?.name || null,
-          countryCode: user.countryCode || null,
+          city: user.activeCity?.name ?? null,
+          countryCode: user.countryCode ?? null,
         },
       }).catch(() => {});
       calculateMomentScore(momentId).catch(() => {});

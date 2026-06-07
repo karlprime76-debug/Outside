@@ -23,7 +23,7 @@ export async function GET(req: Request) {
       select: { activeCity: { select: { name: true } } },
     });
 
-    const city = user?.activeCity?.name;
+    const city = user?.activeCity?.name ?? null;
 
     const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
     const lives = await db.liveSession.findMany({

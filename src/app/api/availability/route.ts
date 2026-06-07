@@ -87,9 +87,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Mood et durée requis." }, { status: 400 });
     }
 
-    const city = user.activeCity?.name || user.homeCity?.name || null;
-    const country = user.country || null;
-    const countryCode = user.countryCode || null;
+    const city = (user.activeCity?.name ?? user.homeCity?.name) ?? null;
+    const country = user.country ?? null;
+    const countryCode = user.countryCode ?? null;
 
     const expiresAt = new Date(parseDuration(duration));
 

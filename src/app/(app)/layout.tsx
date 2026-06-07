@@ -14,7 +14,12 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error("[AppLayout] Auth error:", error);
+  }
 
   let unreadCount = 0;
   let dmUnread = 0;
@@ -23,10 +28,14 @@ export default async function AppLayout({
       unreadCount = await db.notification.count({
         where: { recipientId: session.user.id, isRead: false },
       });
-    } catch {}
+    } catch (error) {
+      console.error("[AppLayout] Notification count error:", error);
+    }
     try {
       dmUnread = await getUnreadDmCount(session.user.id);
-    } catch {}
+    } catch (error) {
+      console.error("[AppLayout] DM count error:", error);
+    }
   }
 
   const NAV_LINKS = [

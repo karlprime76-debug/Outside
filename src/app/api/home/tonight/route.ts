@@ -9,8 +9,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const city = user.activeCity?.name;
-    const countryCode = user.countryCode;
+    const city = user.activeCity?.name ?? null;
+    const countryCode = user.countryCode ?? null;
     const cityId = user.activeCityId;
 
     // Get recommended plans (plans today in city)
@@ -64,7 +64,7 @@ export async function GET() {
     }) : [];
 
     // Get trending moments (recent moments in city)
-    const trendingMoments = await db.moment.findMany({
+    const trendingMoments = city ? await db.moment.findMany({
       where: {
         city: city,
         visibility: "PUBLIC",
@@ -81,7 +81,7 @@ export async function GET() {
       },
       orderBy: { createdAt: "desc" },
       take: 3,
-    });
+    }) : [];
 
     // Get suggested users (active users in city)
     const suggestedUsers = cityId ? await db.user.findMany({
@@ -109,8 +109,8 @@ export async function GET() {
       where: {
         active: true,
         OR: [
-          { city: city },
-          { countryCode: countryCode },
+          ...(city ? [{ city: city }] : []),
+          ...(countryCode ? [{ countryCode: countryCode }] : []),
           { city: null, countryCode: null },
         ],
       },

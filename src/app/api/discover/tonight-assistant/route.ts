@@ -30,8 +30,8 @@ export async function POST(req: Request) {
       timing = "tonight";
     }
 
-    const city = user.activeCity?.name;
-    const cityId = user.activeCityId;
+    const city = user.activeCity?.name ?? null;
+    const cityId = user.activeCityId ?? null;
 
     if (!city || !cityId) {
       // Fallback: suggest going to starter pack instead of error
@@ -151,7 +151,7 @@ export async function POST(req: Request) {
     const officialTips = await db.outsideTip.findMany({
       where: {
         OR: [
-          { city: city, mood: mood || undefined, active: true },
+          ...(city ? [{ city: city, mood: mood || undefined, active: true }] : []),
           { city: null, mood: mood || undefined, active: true }, // Global fallback
         ],
       },

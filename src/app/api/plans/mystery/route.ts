@@ -24,8 +24,8 @@ export async function POST(req: Request) {
       budget = undefined;
     }
 
-    const cityId = user.activeCityId;
-    const city = user.activeCity?.name;
+    const cityId = user.activeCityId ?? null;
+    const city = user.activeCity?.name ?? null;
 
     if (!cityId || !city) {
       return NextResponse.json({
@@ -133,7 +133,7 @@ export async function POST(req: Request) {
     const officialTips = await db.outsideTip.findMany({
       where: {
         OR: [
-          { city: city, mood: mood || undefined, active: true },
+          ...(city ? [{ city: city, mood: mood || undefined, active: true }] : []),
           { city: null, mood: mood || undefined, active: true }, // Global fallback
         ],
       },

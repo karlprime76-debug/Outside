@@ -125,7 +125,11 @@ export async function GET() {
         newFollowers,
         badgesEarned: badgesEarned.length,
       },
-      badgesEarned,
+      badgesEarned: badgesEarned.map(ub => ({
+        key: ub.badge.key,
+        name: ub.badge.name,
+        icon: ub.badge.icon,
+      })),
       mostActiveCity,
       suggestions,
     });

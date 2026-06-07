@@ -9,16 +9,16 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const city = user.activeCity?.name;
-    const countryCode = user.countryCode;
+    const city = user.activeCity?.name ?? null;
+    const countryCode = user.countryCode ?? null;
 
     // Get drops for user's city, country, or global
     const drops = await db.outsideDrop.findMany({
       where: {
         active: true,
         OR: [
-          { city: city },
-          { countryCode: countryCode },
+          ...(city ? [{ city: city }] : []),
+          ...(countryCode ? [{ countryCode: countryCode }] : []),
           { city: null, countryCode: null },
         ],
         AND: [

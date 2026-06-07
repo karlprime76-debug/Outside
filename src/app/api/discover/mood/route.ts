@@ -79,7 +79,7 @@ export async function GET(req: Request) {
             type: statusType,
             expiresAt: { gt: new Date() },
             ...(city ? { city } : {}),
-            ...(user?.activeCityId && !city ? { city: user.activeCity?.name } : {}),
+            ...(user?.activeCityId && !city ? { city: user.activeCity?.name ?? null } : {}),
           },
           include: {
             user: {
@@ -101,7 +101,7 @@ export async function GET(req: Request) {
       where: {
         ...(mood ? { vibe: mood } : {}),
         ...(city ? { city } : {}),
-        ...(user?.activeCityId && !city ? { city: user.activeCity?.name } : {}),
+        ...(user?.activeCityId && !city ? { city: user.activeCity?.name ?? null } : {}),
       },
       include: {
         author: {

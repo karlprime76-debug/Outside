@@ -64,8 +64,8 @@ export async function POST(req: Request) {
         momentId,
         userId: currentUserId,
         type: "FOLLOW_FROM_MOMENT",
-        city: session.user.activeCity?.name || null,
-        countryCode: session.user.countryCode || null,
+        city: session.user.activeCity?.name ?? null,
+        countryCode: session.user.countryCode ?? null,
       },
     }).catch(() => {});
     calculateMomentScore(momentId).catch(() => {});

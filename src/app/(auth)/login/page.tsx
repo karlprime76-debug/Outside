@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Sparkles } from "lucide-react";
@@ -13,8 +13,13 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const callbackUrl = searchParams.get("callbackUrl") || "/home";
   const justRegistered = searchParams.get("registered") === "1";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,6 +53,18 @@ function LoginForm() {
 
     router.push(callbackUrl);
     router.refresh();
+  }
+
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-zinc-900 to-black">
+        <div className="w-full max-w-sm space-y-6 text-center">
+          <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 animate-pulse" />
+          <h1 className="text-2xl font-bold text-white">Connexion</h1>
+          <p className="text-sm text-zinc-400">Chargement...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -180,7 +197,7 @@ export default function LoginPage() {
         </div>
       </div>
     }>
-      <LoginForm />
+      <LoginForm key="login-form" />
     </Suspense>
   );
 }
