@@ -8,7 +8,6 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
-import { AppIcon } from "@/components/ui/app-icon";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -47,8 +46,8 @@ import { CityMissions } from "@/components/missions/city-missions";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 import { TonightSection } from "@/components/home/tonight-section";
 import { OutsideDrops } from "@/components/home/outside-drops";
-import { MysteryPlanButton } from "@/components/home/mystery-plan-button";
-import { formatUserLocation, formatCityName } from "@/lib/location/display-location";
+import { HomeHeader } from "@/components/home/home-header";
+import { formatCityName } from "@/lib/location/display-location";
 import type { Plan } from "@/types/plan";
 
 interface Place {
@@ -95,9 +94,18 @@ export default function HomePage() {
   const [trendingMoments, setTrendingMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null }; badge: string | null }[]>([]);
   const [loadingTrending, setLoadingTrending] = useState(true);
 
-  const userName = session?.user?.name || "";
   const activeCity = userProfile?.activeCity;
   const preferredMoods = userProfile?.preferredMoods || [];
+
+  const todayPlans = plans.filter((p) => {
+    const start = new Date(p.startDate);
+    const now = new Date();
+    return (
+      start.getDate() === now.getDate() &&
+      start.getMonth() === now.getMonth() &&
+      start.getFullYear() === now.getFullYear()
+    );
+  });
 
   useEffect(() => {
     fetch("/api/plans?limit=6")
@@ -180,24 +188,14 @@ export default function HomePage() {
     if (res.ok) setMyAvailability(null);
   }
 
-  const greeting = userName ? `Bonjour ${userName.split(" ")[0]}` : "Bonjour";
-
-  const todayPlans = plans.filter((p) => {
-    const start = new Date(p.startDate);
-    const now = new Date();
-    return (
-      start.getDate() === now.getDate() &&
-      start.getMonth() === now.getMonth() &&
-      start.getFullYear() === now.getFullYear()
-    );
-  });
-
   const suggestedPlans = preferredMoods.length > 0
     ? plans.filter((p) => preferredMoods.includes(p.mood)).slice(0, 3)
     : plans.slice(0, 3);
 
   return (
-    <AnimatedPage className="space-y-8 p-4 max-w-5xl mx-auto pb-24 md:pb-4 pt-safe md:pt-0">
+    <>
+      <HomeHeader activeCity={activeCity} />
+      <AnimatedPage className="space-y-8 p-4 max-w-5xl mx-auto pb-24 md:pb-4">
       {/* Onboarding social banner (UI-only, safe) */}
       {session?.user && (
         (() => {
@@ -239,38 +237,6 @@ export default function HomePage() {
       <section className="animate-slide-up animate-stagger-2">
         <OutsideDrops />
       </section>
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/home" className="flex items-center justify-center">
-            <AppIcon size={36} />
-          </Link>
-          <div>
-            <p className="text-sm font-medium text-[var(--os-muted)]">{greeting}</p>
-            <div className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-outside-500" />
-              <span className="text-xs font-bold text-[var(--os-fg)]">
-                {formatUserLocation({
-                  activeCity,
-                  userCountry: session?.user?.country,
-                  userCountryCode: session?.user?.countryCode,
-                }) || "Aucune ville active"}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <MysteryPlanButton />
-          <Link
-            href="/profile"
-            className="flex items-center gap-2 rounded-full glass px-3 py-1.5 text-sm font-semibold text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors pressable"
-          >
-            <span className="hidden sm:inline">Profil</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
 
       {/* Hero card immersive */}
       <ImmersiveBackground
@@ -943,6 +909,7 @@ export default function HomePage() {
           <ArrowRight className="h-5 w-5 text-outside-500 transition-transform group-hover:translate-x-1" />
         </Link>
       </section>
-    </AnimatedPage>
+      </AnimatedPage>
+    </>
   );
 }

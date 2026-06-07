@@ -87,3 +87,68 @@ export function getDisplayCountry(
 
   return "";
 }
+
+/**
+ * City-country mapping for validation
+ * Maps major cities to their correct country codes
+ */
+const CITY_COUNTRY_MAP: Record<string, string[]> = {
+  "New York": ["US"],
+  "Los Angeles": ["US"],
+  "San Francisco": ["US"],
+  "Chicago": ["US"],
+  "Boston": ["US"],
+  "Miami": ["US"],
+  "Seattle": ["US"],
+  "Denver": ["US"],
+  "Austin": ["US"],
+  "Toronto": ["CA"],
+  "Vancouver": ["CA"],
+  "Montreal": ["CA"],
+  "Mexico City": ["MX"],
+  "Paris": ["FR"],
+  "London": ["GB"],
+  "Berlin": ["DE"],
+  "Barcelona": ["ES"],
+  "Madrid": ["ES"],
+  "Amsterdam": ["NL"],
+  "Milan": ["IT"],
+  "Rome": ["IT"],
+  "Sydney": ["AU"],
+  "Melbourne": ["AU"],
+  "Tokyo": ["JP"],
+  "Seoul": ["KR"],
+  "Bangkok": ["TH"],
+  "Singapore": ["SG"],
+  "Dubai": ["AE"],
+  "Mumbai": ["IN"],
+  "Delhi": ["IN"],
+  "Ho Chi Minh City": ["VN"],
+  "Hong Kong": ["HK"],
+  "Cotonou": ["BJ"],
+  "Abidjan": ["CI"],
+  "Lagos": ["NG"],
+  "Cairo": ["EG"],
+  "Casablanca": ["MA"],
+  "Dakar": ["SN"],
+  "Nairobi": ["KE"],
+  "São Paulo": ["BR"],
+  "Rio de Janeiro": ["BR"],
+  "Buenos Aires": ["AR"],
+  "Santiago": ["CL"],
+  "Lima": ["PE"],
+  "Bogotá": ["CO"],
+};
+
+/**
+ * Validates if a city-country combination is realistic
+ * Returns true if the combination seems valid
+ */
+export function isCityCountryValid(city: string, countryCode: string): boolean {
+  if (!city || !countryCode) return true; // Don't invalidate if data is missing
+
+  const validCodes = CITY_COUNTRY_MAP[city];
+  if (!validCodes) return true; // Unknown city - assume valid (could be small town)
+
+  return validCodes.includes(countryCode.toUpperCase());
+}
