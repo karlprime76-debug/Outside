@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { generateReferralCode } from "@/lib/referral";
 
 export async function GET(
   req: Request,
@@ -59,10 +60,4 @@ export async function GET(
     console.error("Share link error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
-}
-
-function generateReferralCode(userId: string): string {
-  const hash = userId.split("-")[0];
-  const random = Math.random().toString(36).substring(2, 6);
-  return `${hash}${random}`.toUpperCase();
 }

@@ -47,20 +47,20 @@ export default function InviteCircleClient({
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-2">Invite ton cercle sur OUTSIDE</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-black mb-2 text-[var(--os-fg)]">Invite ton cercle sur OUTSIDE</h1>
+        <p className="text-[var(--os-muted)]">
           Plus ton cercle est dehors, plus OUTSIDE devient vivant.
         </p>
       </div>
 
       <Card className="mb-6">
         <div className="mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5" />
+          <h2 className="text-xl font-semibold flex items-center gap-2 text-[var(--os-fg)]">
+            <Users className="h-5 w-5 text-outside-500" />
             Ton lien d&apos;invitation
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Partage ce lien avec tes amis pour les inviter sur OUTSIDE
+          <p className="text-sm text-[var(--os-muted)] mt-1">
+            Partage ce lien avec tes amis pour les inviter sur OUTSIDE.
           </p>
         </div>
         <div className="space-y-4">
@@ -69,9 +69,9 @@ export default function InviteCircleClient({
               type="text"
               value={inviteUrl}
               readOnly
-              className="flex-1 px-3 py-2 border rounded-md bg-muted"
+              className="flex-1 px-3 py-2 border border-[var(--os-card-border)] rounded-xl bg-[var(--os-card)] text-[var(--os-fg)]"
             />
-            <Button onClick={copyToClipboard} variant={copied ? "primary" : "secondary"}>
+            <Button onClick={copyToClipboard} variant="primary">
               {copied ? "Copié !" : <Copy className="h-4 w-4" />}
             </Button>
           </div>
@@ -91,27 +91,27 @@ export default function InviteCircleClient({
 
       <Card>
         <div className="mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Award className="h-5 w-5" />
+          <h2 className="text-xl font-semibold flex items-center gap-2 text-[var(--os-fg)]">
+            <Award className="h-5 w-5 text-outside-500" />
             Tes statistiques
           </h2>
         </div>
         <div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-4 bg-muted rounded-lg">
-              <div className="text-2xl font-bold">{invitesSent}</div>
-              <div className="text-sm text-muted-foreground">Invitations envoyées</div>
+            <div className="text-center p-4 bg-[var(--os-card)] border border-[var(--os-card-border)] rounded-xl">
+              <div className="text-2xl font-bold text-[var(--os-fg)]">{invitesSent}</div>
+              <div className="text-sm text-[var(--os-muted)]">Invitations envoyées</div>
             </div>
-            <div className="text-center p-4 bg-muted rounded-lg">
-              <div className="text-2xl font-bold">{invitesAccepted}</div>
-              <div className="text-sm text-muted-foreground">Amis inscrits</div>
+            <div className="text-center p-4 bg-[var(--os-card)] border border-[var(--os-card-border)] rounded-xl">
+              <div className="text-2xl font-bold text-[var(--os-fg)]">{invitesAccepted}</div>
+              <div className="text-sm text-[var(--os-muted)]">Amis inscrits</div>
             </div>
           </div>
         </div>
       </Card>
 
       <div className="mt-6 text-center">
-        <Link href="/plans" className="text-outside-600 hover:text-outside-700 dark:text-outside-400 dark:hover:text-outside-300 font-medium">
+        <Link href="/plans" className="text-outside-500 hover:text-outside-600 font-semibold">
           Inviter à un plan
         </Link>
       </div>
