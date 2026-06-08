@@ -40,7 +40,15 @@ export default function TonightPage() {
   const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
   const [activePlaces, setActivePlaces] = useState<{ id: string; name: string; neighborhood: string | null }[]>([]);
 
+<<<<<<< HEAD
   const loadTonightData = useCallback(async () => {
+=======
+  useEffect(() => {
+    loadTonightData();
+  }, [session]);
+
+  async function loadTonightData() {
+>>>>>>> 8c85852 (fix: clean console.log, fix eslint warnings, improve user-quality-score, integrate trip history)
     try {
       setLoading(true);
 

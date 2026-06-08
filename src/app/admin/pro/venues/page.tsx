@@ -65,8 +65,13 @@ export default function AdminProVenuesPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
 
+<<<<<<< HEAD
   const loadVenues = useCallback(async () => {
     const qs = filter !== "ALL" ? `?status=${filter}` : "";
+=======
+  const loadVenues = async (statusFilter?: VenueStatus | "ALL") => {
+    const qs = (statusFilter || filter) !== "ALL" ? `?status=${statusFilter || filter}` : "";
+>>>>>>> 8c85852 (fix: clean console.log, fix eslint warnings, improve user-quality-score, integrate trip history)
     try {
       const res = await fetch(`/api/admin/pro/venues${qs}`);
       const data = await res.json();
@@ -76,6 +81,7 @@ export default function AdminProVenuesPage() {
     } finally {
       setLoading(false);
     }
+<<<<<<< HEAD
   }, [filter]);
 
   useEffect(() => {
@@ -92,6 +98,25 @@ export default function AdminProVenuesPage() {
   useEffect(() => {
     loadVenues();
   }, [loadVenues]);
+=======
+  };
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+    if (status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
+      router.push("/home");
+      return;
+    }
+    loadVenues();
+  }, [status, session, router]);
+
+  useEffect(() => {
+    if (!loading) loadVenues(filter);
+  }, [filter, loading]);
+>>>>>>> 8c85852 (fix: clean console.log, fix eslint warnings, improve user-quality-score, integrate trip history)
 
   async function updateStatus(id: string, newStatus: VenueStatus, reason?: string) {
     setActionId(id);

@@ -39,15 +39,6 @@ export default async function ProfilePage() {
   if (process.env.NODE_ENV !== "production") console.time(perfLabel);
 
   const session = await auth();
-  console.log("[PROFILE] Session data:", {
-    hasUser: !!session?.user,
-    hasId: !!session?.user?.id,
-    hasEmail: !!session?.user?.email,
-    hasName: !!session?.user?.name,
-    userId: session?.user?.id,
-    userEmail: session?.user?.email,
-  });
-  
   if (!session?.user) redirect("/login");
 
   let user: User | null = null;
@@ -55,23 +46,16 @@ export default async function ProfilePage() {
   let activeCity: { name: string } | null = null;
   let trustProfile: { level: string; outsideScore: number } | null = null;
   
-  // Try to fetch user by email first, then by ID as fallback
   try {
     if (session.user.email) {
-      console.log("[PROFILE] Attempting to fetch user by email:", session.user.email);
-      // Use case-insensitive matching like auth config does
       user = await db.user.findFirst({
         where: { email: { equals: session.user.email, mode: "insensitive" } },
       });
-      console.log("[PROFILE] User found by email:", !!user);
     }
-    // Fallback to ID lookup if email lookup failed or no email
     if (!user && session.user.id) {
-      console.log("[PROFILE] Attempting to fetch user by ID:", session.user.id);
       user = await db.user.findUnique({
         where: { id: session.user.id },
       });
-      console.log("[PROFILE] User found by ID:", !!user);
     }
   } catch (error) {
     console.error("[PROFILE_ERROR] Failed to fetch user:", error);
@@ -92,19 +76,13 @@ export default async function ProfilePage() {
   }
 
   if (!user) {
-    console.log("[PROFILE] User not found in database, redirecting to login");
     redirect("/login");
   }
 
-  console.log("[PROFILE] User loaded successfully:", user.id);
-
-  // Fetch relations separately with error handling
   try {
     if (user.homeCityId) {
-      console.log("[PROFILE] Fetching homeCity:", user.homeCityId);
       const city = await db.city.findUnique({ where: { id: user.homeCityId }, select: { name: true } });
       homeCity = city;
-      console.log("[PROFILE] homeCity loaded:", !!homeCity);
     }
   } catch (error) {
     console.error("[PROFILE_ERROR] Failed to fetch homeCity:", error);
@@ -112,31 +90,24 @@ export default async function ProfilePage() {
   
   try {
     if (user.activeCityId) {
-      console.log("[PROFILE] Fetching activeCity:", user.activeCityId);
       const city = await db.city.findUnique({ where: { id: user.activeCityId }, select: { name: true } });
       activeCity = city;
-      console.log("[PROFILE] activeCity loaded:", !!activeCity);
     }
   } catch (error) {
     console.error("[PROFILE_ERROR] Failed to fetch activeCity:", error);
   }
   
   try {
-    console.log("[PROFILE] Fetching trustProfile for user:", user.id);
     const profile = await db.userTrustProfile.findUnique({ where: { userId: user.id }, select: { level: true, outsideScore: true } });
     trustProfile = profile;
-    console.log("[PROFILE] trustProfile loaded:", !!trustProfile);
   } catch (error) {
     console.error("[PROFILE_ERROR] Failed to fetch trustProfile:", error);
   }
 
-  // Parallelize resilient secondary lookups
   let joinedPlansCount = 0;
   let createdPlansCount = 0;
   let friends: { id: string; name: string | null; username: string | null; image: string | null }[] = [];
   let trust = defaultTrust;
-
-  console.log("[PROFILE] Fetching stats for user:", user.id);
   const [plansRes, friendsRes, trustRes] = await Promise.allSettled([
     Promise.all([
       db.planParticipant.count({ where: { userId: user.id } }),
@@ -152,12 +123,6 @@ export default async function ProfilePage() {
     }),
     getTrustData(user.id),
   ]);
-
-  console.log("[PROFILE] Stats results:", {
-    plansStatus: plansRes.status,
-    friendsStatus: friendsRes.status,
-    trustStatus: trustRes.status,
-  });
 
   if (plansRes.status === "fulfilled") {
     joinedPlansCount = plansRes.value[0];

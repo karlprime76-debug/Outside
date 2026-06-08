@@ -4,6 +4,7 @@ import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createPlanSchema } from "@/lib/validation/schemas";
 import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
+import { recordTripHistory } from "@/lib/passport";
 import { PlanVisibility } from "@prisma/client";
 
 // Haversine formula to calculate distance between two points in kilometers
@@ -288,6 +289,16 @@ export async function POST(req: Request) {
     evaluateBadgesAfterPlanCreated(user.id).catch((err) => {
       console.error("[POST /api/plans] Background task error:", err);
     });
+
+    if (plan.city?.name) {
+      recordTripHistory({
+        userId: user.id,
+        city: plan.city.name,
+        countryCode: data.countryCode,
+        source: "PLAN_CREATED",
+        planId: plan.id,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ plan }, { status: 201 });
   } catch (error) {
