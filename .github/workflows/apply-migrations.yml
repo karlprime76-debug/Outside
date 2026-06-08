@@ -10,6 +10,12 @@ on:
         type: choice
         options: ['true', 'false']
 
+<<<<<<< HEAD
+=======
+env:
+  MIGRATION_NAME: "20240607_add_referral_code"
+
+>>>>>>> c3e0dde (fix: correct migration name and make referral_code SQL idempotent)
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -58,6 +64,34 @@ jobs:
           echo "=== Final migration status ==="
           npx prisma migrate status
 
+<<<<<<< HEAD
+=======
+          echo ""
+          echo "=== Step 2: Attempt normal migration deploy ==="
+          npx prisma migrate deploy
+          EXIT_CODE=$?
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "Migration deployed successfully."
+            exit 0
+          fi
+
+          echo ""
+          echo "=== Step 3: Direct deploy failed — applying migration SQL manually ==="
+          echo "Reason: likely P3005 (database not empty, no _prisma_migrations table)."
+          echo "SQL is idempotent (CREATE TYPE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS)."
+
+          npx prisma db execute --file="prisma/migrations/$MIGRATION_NAME/migration.sql" --schema prisma/schema.prisma
+
+          echo ""
+          echo "=== Step 4: Mark migration as applied in Prisma history ==="
+          npx prisma migrate resolve --applied "$MIGRATION_NAME"
+
+          echo ""
+          echo "=== Step 5: Re-run migrate deploy to confirm sync ==="
+          npx prisma migrate deploy
+
+>>>>>>> c3e0dde (fix: correct migration name and make referral_code SQL idempotent)
       - name: Seed demo data (conditional)
         if: ${{ github.event.inputs.run_seed == 'true' }}
         env:
