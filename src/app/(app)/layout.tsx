@@ -2,6 +2,8 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { LogoutButton } from "@/components/auth/logout-button";
+
+export const dynamic = "force-dynamic";
 import { BottomNav } from "@/components/bottom-nav";
 import { Avatar } from "@/components/ui/avatar";
 import { UiProviders } from "@/components/ui/providers-client";
@@ -14,12 +16,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let session = null;
-  try {
-    session = await auth();
-  } catch (error) {
-    console.error("[AppLayout] Auth error:", error);
-  }
+  const session = await auth();
 
   let unreadCount = 0;
   let dmUnread = 0;
@@ -28,14 +25,10 @@ export default async function AppLayout({
       unreadCount = await db.notification.count({
         where: { recipientId: session.user.id, isRead: false },
       });
-    } catch (error) {
-      console.error("[AppLayout] Notification count error:", error);
-    }
+    } catch {}
     try {
       dmUnread = await getUnreadDmCount(session.user.id);
-    } catch (error) {
-      console.error("[AppLayout] DM count error:", error);
-    }
+    } catch {}
   }
 
   const NAV_LINKS = [
