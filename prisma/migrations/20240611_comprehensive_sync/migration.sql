@@ -113,3 +113,37 @@ END $$;
 
 -- Add isCommunityConfirmed column to Plan
 ALTER TABLE "Plan" ADD COLUMN IF NOT EXISTS "isCommunityConfirmed" BOOLEAN NOT NULL DEFAULT false;
+
+-- Add confirmationScore column to Plan
+ALTER TABLE "Plan" ADD COLUMN IF NOT EXISTS "confirmationScore" DOUBLE PRECISION NOT NULL DEFAULT 0;
+
+-- Add media editing columns to Moment
+ALTER TABLE "Moment" ADD COLUMN IF NOT EXISTS "mediaWidth" INTEGER;
+ALTER TABLE "Moment" ADD COLUMN IF NOT EXISTS "mediaHeight" INTEGER;
+ALTER TABLE "Moment" ADD COLUMN IF NOT EXISTS "mediaDuration" INTEGER;
+ALTER TABLE "Moment" ADD COLUMN IF NOT EXISTS "mediaCrop" JSONB;
+ALTER TABLE "Moment" ADD COLUMN IF NOT EXISTS "videoStartTime" INTEGER;
+ALTER TABLE "Moment" ADD COLUMN IF NOT EXISTS "videoEndTime" INTEGER;
+ALTER TABLE "Moment" ADD COLUMN IF NOT EXISTS "mediaAspectRatio" TEXT;
+
+-- Add missing MomentEventType enum values idempotently
+ALTER TYPE "MomentEventType" ADD VALUE IF NOT EXISTS 'PROFILE_OPEN';
+ALTER TYPE "MomentEventType" ADD VALUE IF NOT EXISTS 'FOLLOW_FROM_MOMENT';
+ALTER TYPE "MomentEventType" ADD VALUE IF NOT EXISTS 'NOT_INTERESTED';
+ALTER TYPE "MomentEventType" ADD VALUE IF NOT EXISTS 'SEE_MORE_LIKE_THIS';
+ALTER TYPE "MomentEventType" ADD VALUE IF NOT EXISTS 'REPORT';
+
+-- Create DailyChallenge table
+CREATE TABLE IF NOT EXISTS "DailyChallenge" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "rewardLabel" TEXT,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "DailyChallenge_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "DailyChallenge_key_key" UNIQUE ("key")
+);
+
+CREATE INDEX IF NOT EXISTS "DailyChallenge_active_idx" ON "DailyChallenge"("active");
