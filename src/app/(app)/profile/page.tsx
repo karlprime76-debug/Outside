@@ -39,6 +39,15 @@ export default async function ProfilePage() {
   if (process.env.NODE_ENV !== "production") console.time(perfLabel);
 
   const session = await auth();
+  console.log("[PROFILE] Session data:", {
+    hasUser: !!session?.user,
+    hasId: !!session?.user?.id,
+    hasEmail: !!session?.user?.email,
+    hasName: !!session?.user?.name,
+    userId: session?.user?.id,
+    userEmail: session?.user?.email,
+  });
+  
   if (!session?.user) redirect("/login");
 
   let user: User | null = null;
@@ -49,18 +58,23 @@ export default async function ProfilePage() {
   // Try to fetch user by email first, then by ID as fallback
   try {
     if (session.user.email) {
+      console.log("[PROFILE] Attempting to fetch user by email:", session.user.email);
       user = await db.user.findUnique({
         where: { email: session.user.email },
       });
+      console.log("[PROFILE] User found by email:", !!user);
     }
     // Fallback to ID lookup if email lookup failed or no email
     if (!user && session.user.id) {
+      console.log("[PROFILE] Attempting to fetch user by ID:", session.user.id);
       user = await db.user.findUnique({
         where: { id: session.user.id },
       });
+      console.log("[PROFILE] User found by ID:", !!user);
     }
   } catch (error) {
     console.error("[PROFILE_ERROR] Failed to fetch user:", error);
+    console.error("[PROFILE_ERROR] Error details:", JSON.stringify(error, null, 2));
     if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return (
       <AnimatedPage className="p-6 max-w-2xl mx-auto">
@@ -76,27 +90,44 @@ export default async function ProfilePage() {
     );
   }
 
-  if (!user) redirect("/login");
+  if (!user) {
+    console.log("[PROFILE] User not found in database, redirecting to login");
+    redirect("/login");
+  }
+
+  console.log("[PROFILE] User loaded successfully:", user.id);
 
   // Fetch relations separately with error handling
   try {
     if (user.homeCityId) {
+      console.log("[PROFILE] Fetching homeCity:", user.homeCityId);
       const city = await db.city.findUnique({ where: { id: user.homeCityId }, select: { name: true } });
       homeCity = city;
+      console.log("[PROFILE] homeCity loaded:", !!homeCity);
     }
-  } catch {}
+  } catch (error) {
+    console.error("[PROFILE_ERROR] Failed to fetch homeCity:", error);
+  }
   
   try {
     if (user.activeCityId) {
+      console.log("[PROFILE] Fetching activeCity:", user.activeCityId);
       const city = await db.city.findUnique({ where: { id: user.activeCityId }, select: { name: true } });
       activeCity = city;
+      console.log("[PROFILE] activeCity loaded:", !!activeCity);
     }
-  } catch {}
+  } catch (error) {
+    console.error("[PROFILE_ERROR] Failed to fetch activeCity:", error);
+  }
   
   try {
+    console.log("[PROFILE] Fetching trustProfile for user:", user.id);
     const profile = await db.userTrustProfile.findUnique({ where: { userId: user.id }, select: { level: true, outsideScore: true } });
     trustProfile = profile;
-  } catch {}
+    console.log("[PROFILE] trustProfile loaded:", !!trustProfile);
+  } catch (error) {
+    console.error("[PROFILE_ERROR] Failed to fetch trustProfile:", error);
+  }
 
   // Parallelize resilient secondary lookups
   let joinedPlansCount = 0;
@@ -104,6 +135,7 @@ export default async function ProfilePage() {
   let friends: { id: string; name: string | null; username: string | null; image: string | null }[] = [];
   let trust = defaultTrust;
 
+  console.log("[PROFILE] Fetching stats for user:", user.id);
   const [plansRes, friendsRes, trustRes] = await Promise.allSettled([
     Promise.all([
       db.planParticipant.count({ where: { userId: user.id } }),
@@ -120,17 +152,29 @@ export default async function ProfilePage() {
     getTrustData(user.id),
   ]);
 
+  console.log("[PROFILE] Stats results:", {
+    plansStatus: plansRes.status,
+    friendsStatus: friendsRes.status,
+    trustStatus: trustRes.status,
+  });
+
   if (plansRes.status === "fulfilled") {
     joinedPlansCount = plansRes.value[0];
     createdPlansCount = plansRes.value[1];
+  } else {
+    console.error("[PROFILE_ERROR] Plans query failed:", plansRes.reason);
   }
 
   if (friendsRes.status === "fulfilled") {
     friends = friendsRes.value.map((f) => (f.initiatorId === user.id ? f.receiver : f.initiator));
+  } else {
+    console.error("[PROFILE_ERROR] Friends query failed:", friendsRes.reason);
   }
 
   if (trustRes.status === "fulfilled") {
     trust = trustRes.value;
+  } else {
+    console.error("[PROFILE_ERROR] Trust query failed:", trustRes.reason);
   }
 
   if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
