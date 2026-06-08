@@ -5,7 +5,7 @@ import { X, Check, RefreshCw, Scissors } from "lucide-react";
 
 interface VideoTrimEditorProps {
   videoFile: File;
-  onConfirm: (metadata: { startTime: number; endTime: number; duration: number }) => void;
+  onConfirm: (_metadata: { startTime: number; endTime: number; duration: number }) => void;
   onCancel: () => void;
   maxDuration?: number; // en secondes, défaut 60
 }

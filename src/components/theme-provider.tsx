@@ -5,7 +5,7 @@ import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 
 interface ThemeContextValue {
   theme: string;
-  setTheme: (t: string) => void;
+  setTheme: (_t: string) => void;
   isNight: boolean;
   mounted: boolean;
 }

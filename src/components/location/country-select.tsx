@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react";
 
 interface CountrySelectProps {
   value?: string;
-  onChange: (code: string) => void;
+  onChange: (_code: string) => void;
   error?: string;
 }
 

@@ -7,8 +7,8 @@ import { Search, X } from "lucide-react";
 interface SearchBarProps {
   placeholder?: string;
   value?: string;
-  onChange?: (value: string) => void;
-  onSubmit?: (value: string) => void;
+  onChange?: (_value: string) => void;
+  onSubmit?: (_value: string) => void;
   className?: string;
   autoFocus?: boolean;
 }

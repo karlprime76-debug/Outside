@@ -58,7 +58,7 @@ export async function ensureMomentsBucket(supabase: unknown) {
   const client = supabase as {
     storage: {
       listBuckets: () => Promise<{ data: Array<{ name: string }> | null; error: { message: string } | null }>;
-      createBucket: (name: string, opts: { public: boolean }) => Promise<{ error: { message: string } | null }>;
+      createBucket: (_name: string, _opts: { public: boolean }) => Promise<{ error: { message: string } | null }>;
     };
   };
 

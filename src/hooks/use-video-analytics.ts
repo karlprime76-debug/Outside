@@ -9,7 +9,7 @@ const QUICK_SKIP_MS = 3000;
 interface VideoAnalyticsOptions {
   momentId: string;
   enabled?: boolean;
-  onEvent?: (type: string, data?: Record<string, unknown>) => void;
+  onEvent?: (_type: string, _data?: Record<string, unknown>) => void;
 }
 
 export function useVideoAnalytics({ momentId, enabled = true, onEvent }: VideoAnalyticsOptions) {

@@ -9,8 +9,8 @@ import { UploadProgressComponent } from "@/components/upload/upload-progress";
 
 interface DmMessageComposerProps {
   onSend: (
-    text: string,
-    opts?: {
+    _text: string,
+    _opts?: {
       type?: string;
       mediaUrl?: string;
       mediaPath?: string;

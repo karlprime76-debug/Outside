@@ -19,13 +19,13 @@ export function useDictionary(): Dictionary {
   return dict;
 }
 
-export function useLocale(): { locale: Locale; setLocale: (l: Locale) => void } {
+export function useLocale(): { locale: Locale; setLocale: (_l: Locale) => void } {
   const [locale, setLocaleState] = useState<Locale>(getStoredLocale);
 
-  const setLocale = (l: Locale) => {
-    setLocaleState(l);
+  const setLocale = (_l: Locale) => {
+    setLocaleState(_l);
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, l);
+      localStorage.setItem(STORAGE_KEY, _l);
     }
   };
 

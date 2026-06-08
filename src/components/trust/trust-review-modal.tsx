@@ -53,7 +53,7 @@ export function TrustReviewModal({ reviewedId, planId, reviewedName, onClose, on
     }
   }
 
-  function Toggle({ value, onChange, yesLabel, noLabel }: { value: boolean | null; onChange: (v: boolean) => void; yesLabel: string; noLabel: string }) {
+  function Toggle({ value, onChange, yesLabel, noLabel }: { value: boolean | null; onChange: (_v: boolean) => void; yesLabel: string; noLabel: string }) {
     return (
       <div className="flex gap-2">
         <button

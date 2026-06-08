@@ -81,7 +81,7 @@ const EXPRESS_TEMPLATES = [
 ];
 
 interface ExpressPlanSheetProps {
-  onSelectTemplate: (template: typeof EXPRESS_TEMPLATES[0]) => void;
+  onSelectTemplate: (_template: typeof EXPRESS_TEMPLATES[0]) => void;
 }
 
 export function ExpressPlanSheet({ onSelectTemplate }: ExpressPlanSheetProps) {

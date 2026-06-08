@@ -1,10 +1,15 @@
 import { MomentScore } from "@prisma/client";
 
 export enum AudienceLevel {
+  // eslint-disable-next-line no-unused-vars
   TEST_INITIAL = 0,
+  // eslint-disable-next-line no-unused-vars
   PROMISING_LOCAL = 1,
+  // eslint-disable-next-line no-unused-vars
   VIRAL_CITY = 2,
+  // eslint-disable-next-line no-unused-vars
   COUNTRY = 3,
+  // eslint-disable-next-line no-unused-vars
   GLOBAL = 4,
 }
 

@@ -11,7 +11,7 @@ interface TabItem {
 interface OutsideTabsProps {
   items: TabItem[];
   value: string;
-  onChange: (key: string) => void;
+  onChange: (_key: string) => void;
 }
 
 export function OutsideTabs({ items, value, onChange }: OutsideTabsProps) {

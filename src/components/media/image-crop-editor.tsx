@@ -6,7 +6,7 @@ import { X, RotateCw, Check, RefreshCw } from "lucide-react";
 
 interface ImageCropEditorProps {
   imageFile: File;
-  onConfirm: (croppedFile: File) => void;
+  onConfirm: (_croppedFile: File) => void;
   onCancel: () => void;
 }
 
