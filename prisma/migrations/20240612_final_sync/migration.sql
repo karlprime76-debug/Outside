@@ -480,9 +480,9 @@ EXCEPTION
     WHEN undefined_column THEN null;
 END $$;
 
--- Supprimer l'ancien index unique lowercase et en créer un nouveau
-DROP INDEX IF EXISTS "MomentScore_momentid_key";
-CREATE UNIQUE INDEX IF NOT EXISTS "MomentScore_momentId_key" ON "MomentScore"("momentId");
+-- Supprimer l'ancienne contrainte unique lowercase et en créer une nouvelle
+ALTER TABLE "MomentScore" DROP CONSTRAINT IF EXISTS "MomentScore_momentid_key";
+ALTER TABLE "MomentScore" ADD CONSTRAINT "MomentScore_momentId_key" UNIQUE ("momentId");
 
 -- Ajouter l'index manquant audienceLevel
 CREATE INDEX IF NOT EXISTS "MomentScore_audienceLevel_idx" ON "MomentScore"("audienceLevel");
@@ -510,9 +510,9 @@ EXCEPTION
     WHEN undefined_column THEN null;
 END $$;
 
--- Supprimer l'ancien index unique lowercase et en créer un nouveau
-DROP INDEX IF EXISTS "UserQualityScore_userid_key";
-CREATE UNIQUE INDEX IF NOT EXISTS "UserQualityScore_userId_key" ON "UserQualityScore"("userId");
+-- Supprimer l'ancienne contrainte unique lowercase et en créer une nouvelle
+ALTER TABLE "UserQualityScore" DROP CONSTRAINT IF EXISTS "UserQualityScore_userid_key";
+ALTER TABLE "UserQualityScore" ADD CONSTRAINT "UserQualityScore_userId_key" UNIQUE ("userId");
 
 -- =================================================================
 -- SECTION 6 : Contraintes de clés étrangères manquantes
