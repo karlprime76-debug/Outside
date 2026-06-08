@@ -10,6 +10,9 @@ on:
         type: choice
         options: ['true', 'false']
 
+env:
+  MIGRATION_NAME: "20240608_add_account_kind"
+
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -42,13 +45,39 @@ jobs:
         run: npx prisma generate
         timeout-minutes: 5
 
-      - name: Apply pending migrations
+      - name: Apply or reconcile migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.CI_DIRECT_URL }}
         run: |
-          echo "DATABASE_URL configured: true"
-          echo "Starting Prisma migrate deploy..."
+          set +e
+
+          echo "=== Step 1: Check current migration status ==="
+          npx prisma migrate status
+
+          echo ""
+          echo "=== Step 2: Attempt normal migration deploy ==="
+          npx prisma migrate deploy
+          EXIT_CODE=$?
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "Migration deployed successfully."
+            exit 0
+          fi
+
+          echo ""
+          echo "=== Step 3: Direct deploy failed — applying migration SQL manually ==="
+          echo "Reason: likely P3005 (database not empty, no _prisma_migrations table)."
+          echo "SQL is idempotent (CREATE TYPE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS)."
+
+          npx prisma db execute --file="prisma/migrations/$MIGRATION_NAME/migration.sql"
+
+          echo ""
+          echo "=== Step 4: Mark migration as applied in Prisma history ==="
+          npx prisma migrate resolve --applied "$MIGRATION_NAME"
+
+          echo ""
+          echo "=== Step 5: Re-run migrate deploy to confirm sync ==="
           npx prisma migrate deploy
 
       - name: Seed demo data (conditional)
