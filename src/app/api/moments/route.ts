@@ -100,7 +100,8 @@ export async function GET(req: Request) {
   } catch (error) {
     logPerfEnd(perfLabel);
     logError("[MOMENT_ERROR]", "GET /api/moments failed", { error: String(error) });
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    // Return empty array instead of error when no data exists
+    return NextResponse.json({ moments: [], nextCursor: null });
   }
 }
 

@@ -41,12 +41,14 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user?.email) redirect("/login");
 
-  type UserWithCities = User & { homeCity: { name: string } | null; activeCity: { name: string } | null; trustProfile: { level: string; outsideScore: number } | null };
-  let user: UserWithCities | null = null;
+  let user: User | null = null;
+  let homeCity: { name: string } | null = null;
+  let activeCity: { name: string } | null = null;
+  let trustProfile: { level: string; outsideScore: number } | null = null;
+  
   try {
     user = await db.user.findUnique({
       where: { email: session.user.email },
-      include: { homeCity: true, activeCity: true, trustProfile: true },
     });
   } catch {
     if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
@@ -65,6 +67,26 @@ export default async function ProfilePage() {
   }
 
   if (!user) redirect("/login");
+
+  // Fetch relations separately with error handling
+  try {
+    if (user.homeCityId) {
+      const city = await db.city.findUnique({ where: { id: user.homeCityId }, select: { name: true } });
+      homeCity = city;
+    }
+  } catch {}
+  
+  try {
+    if (user.activeCityId) {
+      const city = await db.city.findUnique({ where: { id: user.activeCityId }, select: { name: true } });
+      activeCity = city;
+    }
+  } catch {}
+  
+  try {
+    const profile = await db.userTrustProfile.findUnique({ where: { userId: user.id }, select: { level: true, outsideScore: true } });
+    trustProfile = profile;
+  } catch {}
 
   // Parallelize resilient secondary lookups
   let joinedPlansCount = 0;
@@ -114,13 +136,13 @@ export default async function ProfilePage() {
             <p className="text-sm text-white/80 truncate">@{user.username || "username non défini"}</p>
             <div className="mt-2 flex items-center gap-1.5 text-xs text-white/70">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span>{user.activeCity?.name || user.homeCity?.name || "Ville non définie"}</span>
+              <span>{activeCity?.name || homeCity?.name || "Ville non définie"}</span>
             </div>
             <div className="mt-3">
               <TrustBadge
-                level={user.trustProfile?.level || "Nouveau"}
+                level={trustProfile?.level || "Nouveau"}
                 showScore
-                score={user.trustProfile?.outsideScore || 0}
+                score={trustProfile?.outsideScore || 0}
                 size="sm"
               />
             </div>
@@ -156,8 +178,8 @@ export default async function ProfilePage() {
         <h2 className="text-lg font-bold text-[var(--os-fg)]">Informations</h2>
         <InfoRow icon={Mail} label="Email" value={user.email || "—"} />
         <InfoRow icon={UserIcon} label="Bio" value={user.bio || "Aucune bio pour le moment."} />
-        <InfoRow icon={Building} label="Ville d'origine" value={user.homeCity?.name || "—"} />
-        <InfoRow icon={MapPin} label="Ville active" value={user.activeCity?.name || "—"} />
+        <InfoRow icon={Building} label="Ville d'origine" value={homeCity?.name || "—"} />
+        <InfoRow icon={MapPin} label="Ville active" value={activeCity?.name || "—"} />
         <InfoRow icon={MapPin} label="Quartier" value={user.neighborhood || "—"} />
         <InfoRow icon={Globe} label="Pays" value={user.country || "Pays non défini"} />
         <InfoRow icon={Globe} label="Langue" value={user.language === "fr" ? "Français" : "English"} />
