@@ -454,8 +454,6 @@ UPDATE "MomentScore" SET "replayRate" = replayrate WHERE "replayRate" = 0 AND re
 UPDATE "MomentScore" SET "quickSkipRate" = quickskiprate WHERE "quickSkipRate" = 0 AND quickskiprate != 0;
 UPDATE "MomentScore" SET "audienceLevel" = audiencelevel WHERE "audienceLevel" = 0 AND audiencelevel != 0;
 UPDATE "MomentScore" SET "lastCalculatedAt" = lastcalculatedat WHERE "lastCalculatedAt" IS NULL AND lastcalculatedat IS NOT NULL;
-UPDATE "MomentScore" SET "createdAt" = createdat WHERE "createdAt" = createdat::timestamptz IS DISTINCT FROM createdat;
-UPDATE "MomentScore" SET "updatedAt" = updatedat WHERE "updatedAt" = updatedat::timestamptz IS DISTINCT FROM updatedat;
 
 -- Supprimer les colonnes lowercase en double
 ALTER TABLE "MomentScore" DROP COLUMN IF EXISTS viralscore;
