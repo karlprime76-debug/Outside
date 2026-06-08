@@ -44,9 +44,15 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
+<<<<<<< HEAD
           echo "=== Apply any pending migrations ==="
           npx prisma migrate deploy
           echo "✓ migrate deploy done."
+=======
+          set +e
+          MIGRATION_FILE="prisma/migrations/$MIGRATION_NAME/migration.sql"
+          DB_URL="${DIRECT_URL:-$DATABASE_URL}"
+>>>>>>> 8358700 (fix: restore comprehensive migration SQL and use --url for db execute)
 
       - name: Step 2 — Sync ALL remaining schema differences (safe, additive only)
         env:
@@ -72,19 +78,25 @@ jobs:
           EXIT_CODE=$?
 
           if [ $EXIT_CODE -eq 0 ]; then
-            echo "Migration deployed successfully."
+            echo "✓ Migration deployed successfully."
             exit 0
           fi
 
           echo ""
           echo "=== Step 3: Direct deploy failed — applying migration SQL manually ==="
-          echo "Reason: likely P3005 (database not empty, no _prisma_migrations table)."
-          echo "SQL is idempotent (CREATE TYPE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS)."
+          echo "Reason: likely P3005 (database has tables but no _prisma_migrations history)."
+          echo "SQL is fully idempotent (CREATE TABLE IF NOT EXISTS, ADD COLUMN IF NOT EXISTS, IF NOT EXISTS)."
 
-          npx prisma db execute --file="prisma/migrations/$MIGRATION_NAME/migration.sql" --schema prisma/schema.prisma
+          npx prisma db execute --file="$MIGRATION_FILE" --url "$DB_URL"
+          DB_EXEC_CODE=$?
+
+          if [ $DB_EXEC_CODE -ne 0 ]; then
+            echo "✗ prisma db execute failed (exit code $DB_EXEC_CODE)."
+            exit $DB_EXEC_CODE
+          fi
 
           echo ""
-          echo "=== Step 4: Mark migration as applied in Prisma history ==="
+          echo "=== Step 4: Mark migration as applied in history ==="
           npx prisma migrate resolve --applied "$MIGRATION_NAME"
 
           echo ""
