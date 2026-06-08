@@ -39,18 +39,28 @@ export default async function ProfilePage() {
   if (process.env.NODE_ENV !== "production") console.time(perfLabel);
 
   const session = await auth();
-  if (!session?.user?.email) redirect("/login");
+  if (!session?.user) redirect("/login");
 
   let user: User | null = null;
   let homeCity: { name: string } | null = null;
   let activeCity: { name: string } | null = null;
   let trustProfile: { level: string; outsideScore: number } | null = null;
   
+  // Try to fetch user by email first, then by ID as fallback
   try {
-    user = await db.user.findUnique({
-      where: { email: session.user.email },
-    });
-  } catch {
+    if (session.user.email) {
+      user = await db.user.findUnique({
+        where: { email: session.user.email },
+      });
+    }
+    // Fallback to ID lookup if email lookup failed or no email
+    if (!user && session.user.id) {
+      user = await db.user.findUnique({
+        where: { id: session.user.id },
+      });
+    }
+  } catch (error) {
+    console.error("[PROFILE_ERROR] Failed to fetch user:", error);
     if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return (
       <AnimatedPage className="p-6 max-w-2xl mx-auto">
