@@ -395,11 +395,12 @@ export default function FriendsPage() {
             </h2>
           </div>
           {friends.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="h-10 w-10 text-[var(--os-muted)] mx-auto mb-3" />
-              <p className="text-sm font-bold text-[var(--os-fg)]">Pas encore d&apos;amis</p>
-              <p className="text-xs text-[var(--os-muted)]">Cherche un utilisateur pour commencer !</p>
-            </div>
+            <EmptyState 
+              icon={Users} 
+              title="Pas encore d'amis" 
+              description="Cherche un utilisateur pour commencer !" 
+              cta={{ label: "Invite ton cercle", href: "/invite" }}
+            />
           ) : (
             <div className="grid grid-cols-1 gap-3">
               {friends.map((f) => (

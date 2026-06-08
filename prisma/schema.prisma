@@ -1619,3 +1619,19 @@ model UserChallengeProgress {
   @@index([userId])
   @@index([challengeKey])
 }
+
+model ReferralInvite {
+  id            String    @id @default(cuid())
+  inviterId     String
+  inviter       User      @relation("ReferralInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  code          String    @unique
+  invitedEmail  String?
+  invitedPhone  String?
+  acceptedUserId String?  @unique
+  acceptedUser  User?     @relation("ReferralAccepted", fields: [acceptedUserId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  acceptedAt    DateTime?
+
+  @@index([inviterId])
+  @@index([code])
+}
