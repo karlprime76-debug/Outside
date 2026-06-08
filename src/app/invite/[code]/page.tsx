@@ -3,11 +3,11 @@ import { auth } from "@/lib/auth";
 import ReferralLandingClient from "./referral-landing-client";
 
 interface PageProps {
-  params: { code: string };
+  params: Promise<{ code: string }>;
 }
 
 export default async function ReferralLandingPage({ params }: PageProps) {
-  const { code } = params;
+  const { code } = await params;
   const session = await auth();
 
   // Fetch referral info
