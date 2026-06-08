@@ -147,3 +147,99 @@ CREATE TABLE IF NOT EXISTS "DailyChallenge" (
 );
 
 CREATE INDEX IF NOT EXISTS "DailyChallenge_active_idx" ON "DailyChallenge"("active");
+
+-- Create CityMission table
+CREATE TABLE IF NOT EXISTS "CityMission" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "city" TEXT,
+    "rewardLabel" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "CityMission_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "CityMission_key_key" UNIQUE ("key")
+);
+
+CREATE INDEX IF NOT EXISTS "CityMission_key_idx" ON "CityMission"("key");
+CREATE INDEX IF NOT EXISTS "CityMission_city_idx" ON "CityMission"("city");
+CREATE INDEX IF NOT EXISTS "CityMission_active_idx" ON "CityMission"("active");
+
+-- Create UserCityMissionProgress table
+CREATE TABLE IF NOT EXISTS "UserCityMissionProgress" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "missionKey" TEXT NOT NULL,
+    "completedAt" TIMESTAMPTZ,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UserCityMissionProgress_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "UserCityMissionProgress_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "UserCityMissionProgress_userId_missionKey_key" ON "UserCityMissionProgress"("userId", "missionKey");
+CREATE INDEX IF NOT EXISTS "UserCityMissionProgress_userId_idx" ON "UserCityMissionProgress"("userId");
+CREATE INDEX IF NOT EXISTS "UserCityMissionProgress_missionKey_idx" ON "UserCityMissionProgress"("missionKey");
+
+-- Create OnboardingProgress table
+CREATE TABLE IF NOT EXISTS "OnboardingProgress" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "hasProfilePhoto" BOOLEAN NOT NULL DEFAULT false,
+    "hasActiveCity" BOOLEAN NOT NULL DEFAULT false,
+    "hasFollowedUsers" BOOLEAN NOT NULL DEFAULT false,
+    "hasSavedPlan" BOOLEAN NOT NULL DEFAULT false,
+    "hasViewedMoment" BOOLEAN NOT NULL DEFAULT false,
+    "hasActivatedStatus" BOOLEAN NOT NULL DEFAULT false,
+    "completedAt" TIMESTAMPTZ,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "OnboardingProgress_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "OnboardingProgress_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE,
+    CONSTRAINT "OnboardingProgress_userId_key" UNIQUE ("userId")
+);
+
+CREATE INDEX IF NOT EXISTS "OnboardingProgress_userId_idx" ON "OnboardingProgress"("userId");
+
+-- Create OutsideTip table
+CREATE TABLE IF NOT EXISTS "OutsideTip" (
+    "id" TEXT NOT NULL,
+    "city" TEXT,
+    "countryCode" TEXT,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "mood" TEXT,
+    "actionLabel" TEXT NOT NULL,
+    "actionUrl" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "OutsideTip_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "OutsideTip_city_idx" ON "OutsideTip"("city");
+CREATE INDEX IF NOT EXISTS "OutsideTip_countryCode_idx" ON "OutsideTip"("countryCode");
+CREATE INDEX IF NOT EXISTS "OutsideTip_active_idx" ON "OutsideTip"("active");
+
+-- Create OutsideDrop table
+CREATE TABLE IF NOT EXISTS "OutsideDrop" (
+    "id" TEXT NOT NULL,
+    "city" TEXT,
+    "countryCode" TEXT,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "type" TEXT NOT NULL,
+    "targetUrl" TEXT,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "startsAt" TIMESTAMPTZ,
+    "endsAt" TIMESTAMPTZ,
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "OutsideDrop_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "OutsideDrop_city_idx" ON "OutsideDrop"("city");
+CREATE INDEX IF NOT EXISTS "OutsideDrop_countryCode_idx" ON "OutsideDrop"("countryCode");
+CREATE INDEX IF NOT EXISTS "OutsideDrop_active_idx" ON "OutsideDrop"("active");
+CREATE INDEX IF NOT EXISTS "OutsideDrop_type_idx" ON "OutsideDrop"("type");
