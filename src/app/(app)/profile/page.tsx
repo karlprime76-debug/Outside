@@ -59,8 +59,9 @@ export default async function ProfilePage() {
   try {
     if (session.user.email) {
       console.log("[PROFILE] Attempting to fetch user by email:", session.user.email);
-      user = await db.user.findUnique({
-        where: { email: session.user.email },
+      // Use case-insensitive matching like auth config does
+      user = await db.user.findFirst({
+        where: { email: { equals: session.user.email, mode: "insensitive" } },
       });
       console.log("[PROFILE] User found by email:", !!user);
     }
