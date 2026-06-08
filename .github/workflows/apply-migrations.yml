@@ -11,7 +11,7 @@ on:
         options: ['true', 'false']
 
 env:
-  MIGRATION_NAME: "20240608_add_account_kind"
+  MIGRATION_NAME: "20240607_add_referral_code"
 
 jobs:
   migrate:
@@ -32,15 +32,6 @@ jobs:
         run: npm ci
         timeout-minutes: 10
 
-      - name: Prepare Prisma environment
-        run: |
-          echo "Preparing Prisma env"
-          if [ -n "${{ secrets.CI_DIRECT_URL }}" ]; then
-            echo "DIRECT_URL=${{ secrets.CI_DIRECT_URL }}" >> $GITHUB_ENV
-          else
-            echo "DIRECT_URL=${DATABASE_URL}" >> $GITHUB_ENV
-          fi
-
       - name: Generate Prisma client
         run: npx prisma generate
         timeout-minutes: 5
@@ -51,6 +42,8 @@ jobs:
           DIRECT_URL: ${{ secrets.CI_DIRECT_URL }}
         run: |
           set +e
+          MIGRATION_FILE="prisma/migrations/$MIGRATION_NAME/migration.sql"
+          DB_URL="${DIRECT_URL:-$DATABASE_URL}"
 
           echo "=== Step 1: Check current migration status ==="
           npx prisma migrate status
@@ -61,19 +54,24 @@ jobs:
           EXIT_CODE=$?
 
           if [ $EXIT_CODE -eq 0 ]; then
-            echo "Migration deployed successfully."
+            echo "✓ Migration deployed successfully."
             exit 0
           fi
 
           echo ""
           echo "=== Step 3: Direct deploy failed — applying migration SQL manually ==="
-          echo "Reason: likely P3005 (database not empty, no _prisma_migrations table)."
-          echo "SQL is idempotent (CREATE TYPE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS)."
+          echo "Reason: likely P3005 (database has tables but no _prisma_migrations history)."
 
-          npx prisma db execute --file="prisma/migrations/$MIGRATION_NAME/migration.sql"
+          npx prisma db execute --file="$MIGRATION_FILE" --url "$DB_URL"
+          DB_EXEC_CODE=$?
+
+          if [ $DB_EXEC_CODE -ne 0 ]; then
+            echo "✗ prisma db execute failed (exit code $DB_EXEC_CODE)."
+            exit $DB_EXEC_CODE
+          fi
 
           echo ""
-          echo "=== Step 4: Mark migration as applied in Prisma history ==="
+          echo "=== Step 4: Mark migration as applied in history ==="
           npx prisma migrate resolve --applied "$MIGRATION_NAME"
 
           echo ""
