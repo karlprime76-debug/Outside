@@ -350,9 +350,9 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     <>
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen(true); }}
-              className="rounded-full p-2 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors active:scale-95"
+              className="rounded-full p-2.5 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors active:scale-95"
             >
-        <MoreHorizontal className="h-4 w-4" />
+        <MoreHorizontal className="h-5 w-5" />
       </button>
       <BottomSheet
         open={menuOpen}
@@ -469,7 +469,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               <button
                 onClick={(e) => { e.stopPropagation(); handleFollow(); }}
                 disabled={followLoading}
-                className={`rounded-full px-3 py-[5px] text-[10px] font-bold transition-colors active:scale-95 ${
+                className={`rounded-full px-3 py-2 text-xs font-bold transition-colors active:scale-95 ${
                   following
                     ? "bg-[var(--os-bg)] text-[var(--os-muted)] border border-[var(--os-card-border)]"
                     : "bg-[var(--os-fg)] text-[var(--os-bg)] hover:bg-[var(--os-fg)]/90"
@@ -557,11 +557,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         {/* Actions & info */}
         <div className="px-3 pt-2.5 pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               <button
                 onClick={(e) => { e.stopPropagation(); handleLike(); }}
                 disabled={likeLoading}
-                className={`transition-colors active:scale-90 ${liked ? "text-red-500" : "text-[var(--os-fg)] hover:text-red-500"}`}
+                className={`p-2.5 transition-colors active:scale-90 ${liked ? "text-red-500" : "text-[var(--os-fg)] hover:text-red-500"}`}
                 aria-label={liked ? "Retirer le J'aime" : "J'aime"}
               >
                 <Heart
@@ -572,21 +572,21 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onOpenComments(moment); }}
-                className="text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
+                className="p-2.5 text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
                 aria-label="Commenter"
               >
                 <MessageCircle className="h-6 w-6" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowShareSheet(true); }}
-                className="text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
+                className="p-2.5 text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
                 aria-label="Envoyer en DM"
               >
                 <SendHorizonal className="h-6 w-6" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); handleShare(); }}
-                className="text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
+                className="p-2.5 text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
                 aria-label="Partager"
               >
                 <Share2 className="h-6 w-6" />
@@ -598,7 +598,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
                 setSaved(newSaved);
                 trackEvent(newSaved ? "SAVE" : "UNSAVE");
               }}
-              className={`transition-colors active:scale-90 ${saved ? "text-outside-500" : "text-[var(--os-fg)] hover:text-[var(--os-muted)]"}`}
+              className={`p-2.5 transition-colors active:scale-90 ${saved ? "text-outside-500" : "text-[var(--os-fg)] hover:text-[var(--os-muted)]"}`}
               aria-label={saved ? "Retirer des favoris" : "Sauvegarder"}
             >
               {saved ? <BookmarkCheck className="h-6 w-6" /> : <Bookmark className="h-6 w-6" />}

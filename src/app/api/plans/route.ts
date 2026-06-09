@@ -204,8 +204,9 @@ export async function GET(req: Request) {
       const plansWithCounts = nearbyPlans.map((plan) => {
         const going = plan.participants.filter((p) => p.attendance === "GOING").length;
         const maybe = plan.participants.filter((p) => p.attendance === "MAYBE").length;
+        const safePlan = { ...plan, latitude: undefined, longitude: undefined };
         return {
-          ...plan,
+          ...safePlan,
           _count: { participants: going + maybe, going, maybe },
         };
       });
@@ -250,8 +251,9 @@ export async function GET(req: Request) {
     const plansWithCounts = plans.map((plan) => {
       const going = plan.participants.filter((p) => p.attendance === "GOING").length;
       const maybe = plan.participants.filter((p) => p.attendance === "MAYBE").length;
+      const safePlan = { ...plan, latitude: undefined, longitude: undefined };
       return {
-        ...plan,
+        ...safePlan,
         _count: { participants: going + maybe, going, maybe },
       };
     });

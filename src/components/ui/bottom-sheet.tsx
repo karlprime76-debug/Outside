@@ -31,15 +31,22 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
       requestAnimationFrame(() => setAnimating(true));
       const original = document.body.style.overflow;
       document.body.style.overflow = "hidden";
+
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onClose();
+      };
+      document.addEventListener("keydown", handleEscape);
+
       return () => {
         document.body.style.overflow = original;
+        document.removeEventListener("keydown", handleEscape);
       };
     } else {
       setAnimating(false);
       const t = setTimeout(() => setShow(false), 300);
       return () => clearTimeout(t);
     }
-  }, [open]);
+  }, [open, onClose]);
 
   const handleBackdrop = useCallback(() => {
     onClose();

@@ -7,6 +7,11 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id: placeId } = await context.params;
 
     // Get recent vibe signals for this place (last 24 hours)
@@ -14,7 +19,7 @@ export async function GET(
       where: {
         placeId,
         createdAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
         },
       },
       orderBy: { createdAt: "desc" },
@@ -28,7 +33,6 @@ export async function GET(
     }, {} as Record<string, number>);
 
     return NextResponse.json({
-      signals,
       signalCounts,
     });
   } catch (error) {

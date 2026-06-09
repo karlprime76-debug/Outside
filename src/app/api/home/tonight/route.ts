@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET() {
   try {
@@ -8,6 +9,8 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const blockedIds = await getUserBlockedIds(user.id);
 
     const city = user.activeCity?.name ?? null;
     const countryCode = user.countryCode ?? null;
@@ -88,6 +91,7 @@ export async function GET() {
       where: {
         activeCityId: cityId,
         isAvailable: true,
+        id: { notIn: blockedIds },
         userSettings: {
           privateDiscoveryMode: false,
         },

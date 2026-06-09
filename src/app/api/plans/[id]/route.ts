@@ -52,8 +52,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       where: { userId: user.id, planId: id, sentAt: null },
     });
 
+    const safePlan = { ...plan, latitude: undefined, longitude: undefined };
     const planWithCounts = {
-      ...plan,
+      ...safePlan,
       _count: {
         participants: going + maybe, going, maybe,
         expenses: plan._count.expenses,

@@ -59,13 +59,19 @@ export function TonightSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/home/tonight")
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    fetch("/api/home/tonight", { signal: controller.signal })
       .then((r) => r.json())
       .then((res) => {
         setData(res);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => setLoading(false))
+      .finally(() => clearTimeout(timeout));
+
+    return () => controller.abort();
   }, []);
 
   if (loading) {

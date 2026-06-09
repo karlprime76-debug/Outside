@@ -2,18 +2,15 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const url = new URL(req.url);
-    const userId = url.searchParams.get("userId") || user.id;
-
     const badges = await db.userBadge.findMany({
-      where: { userId },
+      where: { userId: user.id },
       include: { badge: true },
       orderBy: { earnedAt: "desc" },
     });

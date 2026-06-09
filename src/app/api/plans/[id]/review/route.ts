@@ -25,6 +25,26 @@ export async function POST(
       comment,
     } = body;
 
+    // Input validation
+    if (reviewedUserId != null && (typeof reviewedUserId !== "string" || reviewedUserId.length === 0)) {
+      return NextResponse.json({ error: "reviewedUserId invalide." }, { status: 400 });
+    }
+    if (wasPresent != null && typeof wasPresent !== "boolean") {
+      return NextResponse.json({ error: "wasPresent doit être un booléen." }, { status: 400 });
+    }
+    if (wasRespectful != null && typeof wasRespectful !== "boolean") {
+      return NextResponse.json({ error: "wasRespectful doit être un booléen." }, { status: 400 });
+    }
+    if (profileSeemedReal != null && typeof profileSeemedReal !== "boolean") {
+      return NextResponse.json({ error: "profileSeemedReal doit être un booléen." }, { status: 400 });
+    }
+    if (planWasReal != null && typeof planWasReal !== "boolean") {
+      return NextResponse.json({ error: "planWasReal doit être un booléen." }, { status: 400 });
+    }
+    if (comment != null && (typeof comment !== "string" || comment.length > 500)) {
+      return NextResponse.json({ error: "Commentaire trop long (max 500)." }, { status: 400 });
+    }
+
     // Check if plan exists
     const plan = await db.plan.findUnique({
       where: { id: planId },
@@ -55,7 +75,7 @@ export async function POST(
     }
 
     // Cannot review yourself
-    if (reviewedUserId === user.id) {
+    if (typeof reviewedUserId === "string" && reviewedUserId === user.id) {
       return NextResponse.json(
         { error: "Tu ne peux pas te noter toi-même." },
         { status: 400 }
@@ -63,7 +83,7 @@ export async function POST(
     }
 
     // If reviewing another participant, check they also participated
-    if (reviewedUserId) {
+    if (typeof reviewedUserId === "string" && reviewedUserId.length > 0) {
       const reviewedParticipant = plan.participants.find((p) => p.userId === reviewedUserId);
       if (!reviewedParticipant) {
         return NextResponse.json(
@@ -73,22 +93,30 @@ export async function POST(
       }
     }
 
-    // Check if review already exists
-    const existingReview = await db.planParticipantReview.findUnique({
-      where: {
-        planId_reviewerId_reviewedUserId: {
+    // Use transaction to prevent race condition
+    const review = await db.$transaction(async (tx) => {
+      const existingReview = await tx.planParticipantReview.findUnique({
+        where: {
+          planId_reviewerId_reviewedUserId: {
+            planId,
+            reviewerId: user.id,
+            reviewedUserId: reviewedUserId || null,
+          },
+        },
+      });
+
+      if (existingReview) {
+        return tx.planParticipantReview.update({
+          where: { id: existingReview.id },
+          data: { wasPresent, wasRespectful, profileSeemedReal, planWasReal, comment },
+        });
+      }
+
+      return tx.planParticipantReview.create({
+        data: {
           planId,
           reviewerId: user.id,
-          reviewedUserId: reviewedUserId || null,
-        },
-      },
-    });
-
-    if (existingReview) {
-      // Update existing review
-      const updatedReview = await db.planParticipantReview.update({
-        where: { id: existingReview.id },
-        data: {
+          reviewedUserId,
           wasPresent,
           wasRespectful,
           profileSeemedReal,
@@ -96,21 +124,6 @@ export async function POST(
           comment,
         },
       });
-      return NextResponse.json({ review: updatedReview });
-    }
-
-    // Create new review
-    const review = await db.planParticipantReview.create({
-      data: {
-        planId,
-        reviewerId: user.id,
-        reviewedUserId,
-        wasPresent,
-        wasRespectful,
-        profileSeemedReal,
-        planWasReal,
-        comment,
-      },
     });
 
     // Recalculate trust score for reviewed user
