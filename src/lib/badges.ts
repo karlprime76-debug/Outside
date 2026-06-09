@@ -139,7 +139,7 @@ export async function evaluateFounderBadges(userId: string) {
     where: { authorId: userId },
   });
 
-  if (momentsCount === 1) {
+  if (momentsCount >= 1) {
     await awardBadge(userId, "founder_creator");
   }
 
@@ -147,7 +147,7 @@ export async function evaluateFounderBadges(userId: string) {
     where: { creatorId: userId },
   });
 
-  if (plansCount === 1) {
+  if (plansCount >= 1) {
     await awardBadge(userId, "founder_organizer");
   }
 
@@ -158,7 +158,8 @@ export async function evaluateFounderBadges(userId: string) {
 
 export async function evaluateBadgesAfterMomentCreated(userId: string) {
   await evaluateFounderBadges(userId);
-  await evaluateBadgesAfterPlanCreated(userId);
+  const momentsCount = await db.moment.count({ where: { authorId: userId } });
+  if (momentsCount >= 1) await awardBadge(userId, "first_moment");
 }
 
 export async function evaluateCheckinBadge(userId: string) {

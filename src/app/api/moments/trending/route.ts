@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+
     const { searchParams } = new URL(req.url);
     const city = searchParams.get("city");
     const countryCode = searchParams.get("countryCode");
     const window = searchParams.get("window") || "24h";
     const limit = Math.min(parseInt(searchParams.get("limit") || "10"), 50);
+
+    const blockedIds = await getUserBlockedIds(user.id);
 
     const now = new Date();
     const windowStart = window === "7d"
@@ -17,6 +24,7 @@ export async function GET(req: NextRequest) {
     const moments = await db.moment.findMany({
       where: {
         visibility: "PUBLIC",
+        authorId: { notIn: blockedIds },
         ...(city && { city }),
         ...(countryCode && { countryCode }),
         createdAt: { gte: windowStart },

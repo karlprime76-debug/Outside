@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export async function GET(
   req: Request,
@@ -42,13 +43,10 @@ export async function POST(
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const { code } = await params;
-    const body = await req.json();
-    const { userId } = body;
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
 
-    if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
-    }
+    const { code } = await params;
 
     // Find the referral invite by code
     const invite = await db.referralInvite.findUnique({
@@ -65,7 +63,7 @@ export async function POST(
     }
 
     // Don't allow self-referral
-    if (invite.inviterId === userId) {
+    if (invite.inviterId === user.id) {
       return NextResponse.json({ error: "Cannot refer yourself" }, { status: 400 });
     }
 
@@ -73,7 +71,7 @@ export async function POST(
     const updatedInvite = await db.referralInvite.update({
       where: { id: invite.id },
       data: {
-        acceptedUserId: userId,
+        acceptedUserId: user.id,
         acceptedAt: new Date(),
       },
     });
@@ -87,7 +85,6 @@ export async function POST(
     });
 
     if (inviterInviteCount === 1) {
-      // Award "Premier invité" badge
       const badge = await db.badge.findUnique({ where: { key: "FIRST_INVITE" } });
       if (badge) {
         await db.userBadge.create({
@@ -104,7 +101,7 @@ export async function POST(
     if (badge) {
       await db.userBadge.create({
         data: {
-          userId,
+          userId: user.id,
           badgeId: badge.id,
         },
       });
@@ -112,7 +109,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      invite: updatedInvite,
+      invite: { id: updatedInvite.id, code: updatedInvite.code, acceptedAt: updatedInvite.acceptedAt },
     });
   } catch (error) {
     console.error("[REFERRAL_ACCEPT_ERROR]", error);

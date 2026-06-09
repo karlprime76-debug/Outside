@@ -25,6 +25,7 @@ export async function GET() {
           lte: new Date(new Date().setHours(23, 59, 59, 999)),
         },
         status: "ACTIVE",
+        creatorId: { notIn: blockedIds },
       },
       include: {
         creator: {
@@ -50,6 +51,7 @@ export async function GET() {
           gte: new Date(),
         },
         status: "ACTIVE",
+        creatorId: { notIn: blockedIds },
       },
       include: {
         creator: {
@@ -71,6 +73,7 @@ export async function GET() {
       where: {
         city: city,
         visibility: "PUBLIC",
+        authorId: { notIn: blockedIds },
       },
       include: {
         author: {
@@ -130,6 +133,7 @@ export async function GET() {
       where: {
         status: "LIVE",
         city: city,
+        hostId: { notIn: blockedIds },
       },
       include: {
         host: {

@@ -68,8 +68,6 @@ export async function GET() {
       invites: invites.map((i) => ({
         id: i.id,
         code: i.code,
-        invitedEmail: i.invitedEmail,
-        invitedPhone: i.invitedPhone,
         acceptedAt: i.acceptedAt,
         acceptedUser: i.acceptedUser,
         createdAt: i.createdAt,
