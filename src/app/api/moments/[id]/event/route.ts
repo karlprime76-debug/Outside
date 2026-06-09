@@ -14,10 +14,12 @@ const VALID_EVENT_TYPES: MomentEventType[] = [
   "UNLIKE",
   "COMMENT",
   "SHARE",
+  "SHARE_DM",
   "SAVE",
   "PROFILE_OPEN",
   "FOLLOW_FROM_MOMENT",
   "NOT_INTERESTED",
+  "SEE_MORE_LIKE_THIS",
   "REPORT",
 ];
 
@@ -44,9 +46,14 @@ const SCORE_TRIGGER_EVENTS: MomentEventType[] = [
   "UNLIKE",
   "COMMENT",
   "SHARE",
+  "SHARE_DM",
   "SAVE",
   "COMPLETE_VIEW",
+  "REPLAY",
+  "PROFILE_OPEN",
+  "FOLLOW_FROM_MOMENT",
   "NOT_INTERESTED",
+  "SEE_MORE_LIKE_THIS",
   "REPORT",
 ];
 
