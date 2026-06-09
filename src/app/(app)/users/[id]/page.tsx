@@ -96,7 +96,7 @@ export default function UserPage() {
   if (!user) {
     return (
       <AnimatedPage className="p-4 max-w-2xl mx-auto text-center">
-        <p className="text-zinc-500 dark:text-zinc-400">Utilisateur introuvable.</p>
+        <p className="text-[var(--os-muted)]">Utilisateur introuvable.</p>
       </AnimatedPage>
     );
   }
@@ -105,7 +105,7 @@ export default function UserPage() {
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6">
       <Link
         href="/home"
-        className="inline-flex items-center gap-1 text-sm font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+        className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour
@@ -116,15 +116,15 @@ export default function UserPage() {
         <Avatar src={user.image} name={user.name} size="xl" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black text-zinc-900 dark:text-zinc-100 truncate">
+            <h1 className="text-xl font-black text-[var(--os-fg)] truncate">
               {user.name || "Anonyme"}
             </h1>
             {user.isVerified && <CheckCircle className="h-4 w-4 text-outside-500 shrink-0" />}
           </div>
           {user.username && (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">@{user.username}</p>
+            <p className="text-sm text-[var(--os-muted)]">@{user.username}</p>
           )}
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1 flex items-center gap-1">
+          <p className="text-xs text-[var(--os-muted)] mt-1 flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             Inscrit en {new Date(user.createdAt).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
           </p>
@@ -133,50 +133,50 @@ export default function UserPage() {
 
       {/* Reliability */}
       {reliability && (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-surface-border dark:bg-surface-card">
+        <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 ">
           <button
             onClick={() => setShowReliability(!showReliability)}
             className="flex w-full items-center justify-between"
           >
             <div className="flex items-center gap-2">
               <span className={`text-xs font-black uppercase tracking-wider ${
-                reliability.level === "Nouveau" ? "text-zinc-400" :
+                reliability.level === "Nouveau" ? "text-[var(--os-muted)]" :
                 reliability.level === "Confirmé" ? "text-blue-500" :
                 reliability.level === "Fiable" ? "text-emerald-500" :
                 "text-purple-500"
               }`}>
                 ●
               </span>
-              <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+              <span className="text-sm font-bold text-[var(--os-fg)]">
                 {reliability.level}
               </span>
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-[var(--os-muted)]">
                 Score: {Math.round(reliability.outsideScore)}
               </span>
             </div>
-            {showReliability ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
+            {showReliability ? <ChevronUp className="h-4 w-4 text-[var(--os-muted)]" /> : <ChevronDown className="h-4 w-4 text-[var(--os-muted)]" />}
           </button>
           {showReliability && (
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
               <div>
-                <p className="text-xs text-zinc-400">Présence</p>
-                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{Math.round(reliability.presenceScore)}</p>
+                <p className="text-xs text-[var(--os-muted)]">Présence</p>
+                <p className="font-semibold text-[var(--os-fg)]">{Math.round(reliability.presenceScore)}</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400">Respect</p>
-                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{Math.round(reliability.respectScore)}</p>
+                <p className="text-xs text-[var(--os-muted)]">Respect</p>
+                <p className="font-semibold text-[var(--os-fg)]">{Math.round(reliability.respectScore)}</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400">Plans créés</p>
-                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{reliability.plansCreated}</p>
+                <p className="text-xs text-[var(--os-muted)]">Plans créés</p>
+                <p className="font-semibold text-[var(--os-fg)]">{reliability.plansCreated}</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400">Plans rejoints</p>
-                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{reliability.plansJoined}</p>
+                <p className="text-xs text-[var(--os-muted)]">Plans rejoints</p>
+                <p className="font-semibold text-[var(--os-fg)]">{reliability.plansJoined}</p>
               </div>
               <div>
-                <p className="text-xs text-zinc-400">Avis positifs</p>
-                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{reliability.positiveReviews}</p>
+                <p className="text-xs text-[var(--os-muted)]">Avis positifs</p>
+                <p className="font-semibold text-[var(--os-fg)]">{reliability.positiveReviews}</p>
               </div>
             </div>
           )}
@@ -185,7 +185,7 @@ export default function UserPage() {
 
       {/* Bio */}
       {user.bio && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{user.bio}</p>
+        <p className="text-sm text-[var(--os-fg)] leading-relaxed">{user.bio}</p>
       )}
 
       {/* Actions */}
@@ -195,7 +195,7 @@ export default function UserPage() {
           disabled={actionLoading}
           className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all ${
             user.isFriend
-              ? "border-2 border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              ? "border-2 border-[var(--os-card-border)] text-[var(--os-fg)] hover:bg-[var(--os-bg)]"
               : "bg-gradient-to-r from-outside-500 to-accent-500 text-white shadow-glow hover:shadow-glow-lg"
           } disabled:opacity-50`}
         >
@@ -205,7 +205,7 @@ export default function UserPage() {
       )}
 
       {/* Info */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 space-y-3 dark:border-surface-border dark:bg-surface-card">
+      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 sm:p-5 space-y-3 ">
         {user.activeCity && (
           <InfoRow icon={MapPin} label="Ville active" value={user.activeCity.name} />
         )}
@@ -223,7 +223,7 @@ export default function UserPage() {
       {/* Moods */}
       {user.preferredMoods.length > 0 && (
         <div>
-          <h3 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-2">
+          <h3 className="text-xs font-black uppercase tracking-wider text-[var(--os-muted)] mb-2">
             Moods préférés
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -244,8 +244,8 @@ function InfoRow({ icon: Icon, label, value }: { icon: typeof MapPin; label: str
         <Icon className="h-4 w-4 text-outside-600 dark:text-outside-400" />
       </div>
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{label}</p>
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">{label}</p>
+        <p className="text-sm font-semibold text-[var(--os-fg)]">{value}</p>
       </div>
     </div>
   );

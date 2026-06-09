@@ -108,18 +108,18 @@ export default function NewPlanPage() {
     }
   }
 
-  const inputBase = "w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-white dark:bg-surface-card dark:border-surface-border dark:text-zinc-100 transition-all";
+  const inputBase = "w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-[var(--os-card)] transition-all";
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
-      <Link href="/plans" className="inline-flex items-center gap-1 text-sm font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors">
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
+      <Link href="/plans" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors">
         <ArrowLeft className="h-4 w-4" />
         {t.newPlan.back}
       </Link>
 
       <div>
-        <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">{t.newPlan.createTitle}</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Crée un plan et fais-le découvrir à ta ville.</p>
+        <h1 className="text-2xl font-black text-[var(--os-fg)]">{t.newPlan.createTitle}</h1>
+        <p className="mt-1 text-sm text-[var(--os-muted)]">Crée un plan et fais-le découvrir à ta ville.</p>
       </div>
 
       {error && (
@@ -129,20 +129,20 @@ export default function NewPlanPage() {
       <form onSubmit={onSubmit} className="space-y-5">
         <InputField name="title" label="Titre" placeholder={t.newPlan.titlePlaceholder} required />
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Description</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Description</label>
           <textarea name="description" placeholder={t.newPlan.descPlaceholder} rows={3} className={inputBase + " resize-none"} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Catégorie</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Catégorie</label>
             <select name="planCategory" required className={inputBase}>
               <option value="">Choisir une catégorie</option>
               {PLAN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Budget</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Budget</label>
             <div className="flex items-center gap-2 mb-2">
               <button
                 type="button"
@@ -150,7 +150,7 @@ export default function NewPlanPage() {
                 className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
                   budgetMode === "free"
                     ? "bg-outside-500 text-white border-outside-500"
-                    : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
+                    : "border-[var(--os-card-border)] text-[var(--os-muted)]"
                 }`}
               >
                 Gratuit
@@ -161,7 +161,7 @@ export default function NewPlanPage() {
                 className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
                   budgetMode === "exact"
                     ? "bg-outside-500 text-white border-outside-500"
-                    : "border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
+                    : "border-[var(--os-card-border)] text-[var(--os-muted)]"
                 }`}
               >
                 Montant
@@ -179,7 +179,7 @@ export default function NewPlanPage() {
                   value={budgetAmount || ""}
                   onChange={(e) => setBudgetAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
                 />
-                <label className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <label className="flex items-center gap-2 text-xs text-[var(--os-muted)]">
                   <input
                     type="checkbox"
                     checked={budgetIsFrom}
@@ -199,7 +199,7 @@ export default function NewPlanPage() {
         </div>
 
         <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{t.newPlan.mood}</label>
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">{t.newPlan.mood}</label>
           <div className="flex flex-wrap gap-2">
             {MOODS.map((m) => (
               <button
@@ -217,9 +217,9 @@ export default function NewPlanPage() {
           <input type="hidden" name="mood" value={selectedMood} required />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Ville</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Ville</label>
             <CitySelect name="cityId" required onChange={(_value, countryCode) => {
               setSelectedCountryCode(countryCode);
             }} />
@@ -228,45 +228,45 @@ export default function NewPlanPage() {
           <InputField name="neighborhood" label={t.auth.neighborhood} placeholder="Ton quartier" />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Début</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Début</label>
             <input name="startDate" type="datetime-local" required className={inputBase} />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Fin (optionnel)</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Fin (optionnel)</label>
             <input name="endDate" type="datetime-local" className={inputBase} />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Participants max</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Participants max</label>
             <input name="maxParticipants" type="number" min={2} max={100} defaultValue={10} required className={inputBase} />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Visibilité</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Visibilité</label>
             <select name="visibility" required className={inputBase}>
               {VISIBILITY.map((v) => <option key={v} value={v}>{VISIBILITY_LABELS[v]}</option>)}
             </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Sécurité</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Sécurité</label>
             <select name="safetyLevel" required className={inputBase}>
               {SAFETY.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <label className="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300 mt-6">
+          <label className="flex items-center gap-3 text-sm text-[var(--os-fg)] mt-6">
             <input name="isTravelerFriendly" type="checkbox" className="rounded h-5 w-5 accent-outside-500" />
             <span className="font-medium">{t.newPlan.travelerFriendly}</span>
           </label>
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Règles</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Règles</label>
           <textarea name="rules" placeholder={t.newPlan.rulesPlaceholder} rows={2} className={inputBase + " resize-none"} />
         </div>
 

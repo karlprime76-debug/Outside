@@ -211,7 +211,7 @@ export default function PlanDetailPage() {
 
   return (
     <div className="p-4 max-w-3xl mx-auto space-y-6">
-      <Link href="/plans" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+      <Link href="/plans" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors">
         <ArrowLeft className="h-4 w-4" />
         {t.planDetail.back}
       </Link>
@@ -243,7 +243,7 @@ export default function PlanDetailPage() {
       </div>
 
       {/* Info card */}
-      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-6 space-y-4">
+      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 sm:p-6 space-y-4">
         <InfoRow icon={MapPin} label={t.planDetail.city} value={plan.city.name} />
         {plan.place && <InfoRow icon={MapPin} label={t.planDetail.place} value={plan.place.name} />}
         <InfoRow icon={Calendar} label={t.planDetail.when} value={new Date(plan.startDate).toLocaleString("fr-FR")} />
@@ -305,7 +305,7 @@ export default function PlanDetailPage() {
             <button
               onClick={() => setAttendance("MAYBE")}
               disabled={actionLoading}
-              className="rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
             >
               Peut-être
             </button>
@@ -318,7 +318,7 @@ export default function PlanDetailPage() {
               className={`rounded-xl px-6 py-3 text-sm font-bold transition-all disabled:opacity-50 ${
                 myAttendance === "GOING"
                   ? "bg-gradient-to-r from-outside-500 to-accent-500 text-white shadow-glow"
-                  : "border border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  : "border border-[var(--os-card-border)] text-[var(--os-fg)] hover:bg-[var(--os-bg)]"
               }`}
             >
               J&apos;y vais
@@ -329,7 +329,7 @@ export default function PlanDetailPage() {
               className={`rounded-xl px-6 py-3 text-sm font-bold transition-all disabled:opacity-50 ${
                 myAttendance === "MAYBE"
                   ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"
-                  : "border border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  : "border border-[var(--os-card-border)] text-[var(--os-fg)] hover:bg-[var(--os-bg)]"
               }`}
             >
               Peut-être
@@ -337,7 +337,7 @@ export default function PlanDetailPage() {
             <button
               onClick={leavePlan}
               disabled={actionLoading}
-              className="rounded-xl border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-semibold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors disabled:opacity-50"
             >
               Je ne viens plus
             </button>
@@ -347,7 +347,7 @@ export default function PlanDetailPage() {
           {isParticipant && (
           <Link
             href={`/plans/${plan.id}/chat`}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
           >
             <MessageSquare className="h-4 w-4" />
             Chat
@@ -364,7 +364,7 @@ export default function PlanDetailPage() {
                 .then((r) => r.json())
                 .then((data) => setFriends(data.friends || []));
             }}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
           >
             <UserPlus className="h-4 w-4" />
             Inviter
@@ -378,7 +378,7 @@ export default function PlanDetailPage() {
                 .then((r) => r.json())
                 .then((data) => setConversations(data.conversations || []));
             }}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
           >
             <MessageSquare className="h-4 w-4" />
             Inviter par message
@@ -396,7 +396,7 @@ export default function PlanDetailPage() {
               alert("Lien copié !");
             }
           }}
-          className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
         >
           <Share2 className="h-4 w-4" />
           Partager
@@ -417,7 +417,7 @@ export default function PlanDetailPage() {
               setQrLoading(false);
             }
           }}
-          className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
         >
           <QrCode className="h-4 w-4" />
           QR code
@@ -425,7 +425,7 @@ export default function PlanDetailPage() {
         <a
           href={`/api/plans/${plan.id}/calendar`}
           download
-          className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
         >
           <Calendar className="h-4 w-4" />
           Export
@@ -441,7 +441,7 @@ export default function PlanDetailPage() {
                   }
                   setShowSafetySheet(true);
                 }}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
               >
                 <ShieldCheck className="h-4 w-4" />
                 Mode sécurité
@@ -499,7 +499,7 @@ export default function PlanDetailPage() {
                   </button>
                 )}
                 {safetyShare.status === "RETURNED" && (
-                  <span className="inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2 text-sm font-bold text-[var(--os-fg)]/70 dark:bg-zinc-800">
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-[var(--os-card)] px-4 py-2 text-sm font-bold text-[var(--os-fg)]/70">
                     <Home className="h-4 w-4" />
                     Rentré
                   </span>
@@ -593,7 +593,7 @@ export default function PlanDetailPage() {
               <span className="text-sm font-semibold text-[var(--os-fg)]">{p.user.name || t.plans.anonymous}</span>
               {reliabilities[p.user.id] && (
                 <span className={`text-[10px] font-bold ml-1 ${
-                  reliabilities[p.user.id].level === "Nouveau" ? "text-zinc-400" :
+                  reliabilities[p.user.id].level === "Nouveau" ? "text-[var(--os-muted)]" :
                   reliabilities[p.user.id].level === "Confirmé" ? "text-blue-500" :
                   reliabilities[p.user.id].level === "Fiable" ? "text-emerald-500" :
                   "text-purple-500"
@@ -621,7 +621,7 @@ export default function PlanDetailPage() {
 
       {/* Chat */}
       <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-zinc-100 px-5 py-3 dark:border-zinc-800">
+        <div className="flex items-center gap-2 border-b border-[var(--os-card-border)] px-4 sm:px-5 py-3">
           <MessageSquare className="h-4 w-4 text-outside-500" />
           <h3 className="text-sm font-bold text-[var(--os-fg)]">Discussion du plan</h3>
           {(plan.status === "COMPLETED" || plan.status === "CANCELLED") && (
@@ -652,7 +652,7 @@ export default function PlanDetailPage() {
                 <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
                   <Avatar src={msg.author.image} name={msg.author.name} size="sm" />
                   <div className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
-                    <div className={`rounded-2xl px-3 py-2 text-sm ${isMe ? "bg-outside-100 text-outside-900" : "bg-zinc-100 text-[var(--os-fg)] dark:bg-zinc-800"}`}>
+                    <div className={`rounded-2xl px-3 py-2 text-sm ${isMe ? "bg-outside-100 text-outside-900" : "bg-[var(--os-card)] text-[var(--os-fg)]"}`}>
                       <p>{msg.content}</p>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
@@ -682,7 +682,7 @@ export default function PlanDetailPage() {
         )}
 
         {(isParticipant || isCreator) && plan.status !== "COMPLETED" && plan.status !== "CANCELLED" && (
-          <div className="border-t border-zinc-100 p-3 dark:border-zinc-800">
+          <div className="border-t border-[var(--os-card-border)] p-3">
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -710,7 +710,7 @@ export default function PlanDetailPage() {
                 onChange={(e) => setChatInput(e.target.value)}
                 maxLength={500}
                 placeholder="Écris un message..."
-                className="flex-1 rounded-xl border border-zinc-200 bg-[var(--os-bg)] px-3 py-2 text-sm text-[var(--os-fg)] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-outside-500 dark:border-zinc-700"
+                className="flex-1 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] px-3 py-2 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500"
               />
               <button
                 type="submit"
@@ -848,10 +848,10 @@ export default function PlanDetailPage() {
       >
         <div className="flex flex-col items-center gap-4 p-2">
           {qrLoading ? (
-            <div className="h-48 w-48 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-48 w-48 animate-pulse rounded-xl bg-[var(--os-card)]" />
           ) : qrData ? (
             <>
-              <img src={qrData.qr} alt="QR Code" className="h-48 w-48 rounded-xl border border-zinc-200 dark:border-zinc-700" />
+              <img src={qrData.qr} alt="QR Code" className="h-48 w-48 rounded-xl border border-[var(--os-card-border)]" />
               <div className="text-center">
                 <p className="text-sm font-bold text-[var(--os-fg)]">{qrData.title}</p>
                 <p className="text-xs text-[var(--os-muted)]">{qrData.city}</p>
@@ -882,7 +882,7 @@ export default function PlanDetailPage() {
                 <a
                   href={qrData.qr}
                   download={`outside-plan-${id}.png`}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--os-card-border)] px-4 py-2 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
                 >
                   <Download className="h-4 w-4" />
                   Télécharger
@@ -936,7 +936,7 @@ export default function PlanDetailPage() {
                   }
                 }}
                 disabled={safetyLoading}
-                className="flex w-full items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                className="flex w-full items-center gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-3 text-left hover:bg-[var(--os-bg)] transition-colors"
               >
                 <Avatar src={c.trustedUser.image} name={c.trustedUser.name} size="md" />
                 <div className="flex-1">
@@ -964,8 +964,8 @@ function InfoRow({ icon: Icon, label, value }: { icon: typeof MapPin; label: str
         <Icon className="h-4 w-4 text-outside-600 dark:text-outside-400" />
       </div>
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{label}</p>
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">{label}</p>
+        <p className="text-sm font-semibold text-[var(--os-fg)]">{value}</p>
       </div>
     </div>
   );

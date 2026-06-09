@@ -130,7 +130,7 @@ export default function AvailablePage() {
                   @{item.user.username || "user"}
                 </p>
                 <div className="mt-1.5 flex items-center gap-2">
-                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${MOOD_COLORS[item.mood] || "bg-zinc-100 text-zinc-600"}`}>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${MOOD_COLORS[item.mood] || "bg-[var(--os-card)] text-[var(--os-muted)]"}`}>
                     {MOOD_LABELS[item.mood] || item.mood}
                   </span>
                   <span className="text-[10px] text-[var(--os-muted)]">

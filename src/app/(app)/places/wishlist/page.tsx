@@ -81,16 +81,16 @@ export default function WishlistPage() {
                 {item.place.isPartner && <Badge variant="pink">Partenaire</Badge>}
               </div>
               <Link href={`/places/${item.place.id}`} className="block">
-                <h3 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1 hover:text-outside-600 dark:hover:text-outside-400 transition-colors">
-                  {item.place.name}
-                </h3>
+                  <h3 className="font-bold text-[var(--os-fg)] mb-1 hover:text-outside-600 dark:hover:text-outside-400 transition-colors">
+                    {item.place.name}
+                  </h3>
               </Link>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
+              <p className="text-sm text-[var(--os-muted)] mb-3">
                 <MapPin className="h-3 w-3 inline mr-1" />
                 {item.place.city.name}{item.place.neighborhood ? ` · ${item.place.neighborhood}` : ""}
               </p>
               {item.note && (
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 italic mb-3">&ldquo;{item.note}&rdquo;</p>
+                <p className="text-xs text-[var(--os-muted)] italic mb-3">&ldquo;{item.note}&rdquo;</p>
               )}
               <div className="absolute top-3 right-3">
                 <WishlistButton placeId={item.place.id} />
@@ -104,18 +104,18 @@ export default function WishlistPage() {
         <section>
           <div className="flex items-center gap-2 mb-4">
             <Users className="h-5 w-5 text-outside-500" />
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Wishlist de mes amis</h2>
+            <h2 className="text-lg font-bold text-[var(--os-fg)]">Wishlist de mes amis</h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {friendWishlist.map((item) => (
               <div key={item.id} className="os-card p-5 shadow-card">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="h-6 w-6 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+                  <div className="h-6 w-6 rounded-full bg-[var(--os-card)] overflow-hidden">
                     {item.user.image && (
                       <img src={item.user.image} alt="" className="h-full w-full object-cover" />
                     )}
                   </div>
-                  <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                  <span className="text-xs font-semibold text-[var(--os-muted)]">
                     {item.user.name || item.user.username || "Anonyme"}
                   </span>
                 </div>
@@ -123,11 +123,11 @@ export default function WishlistPage() {
                   <Badge variant="orange">{item.place.category}</Badge>
                 </div>
                 <Link href={`/places/${item.place.id}`} className="block">
-                  <h3 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1 hover:text-outside-600 dark:hover:text-outside-400 transition-colors">
+                <h3 className="font-bold text-[var(--os-fg)] mb-1 hover:text-outside-600 dark:hover:text-outside-400 transition-colors">
                     {item.place.name}
                   </h3>
                 </Link>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-[var(--os-muted)]">
                   <MapPin className="h-3 w-3 inline mr-1" />
                   {item.place.city.name}
                 </p>
@@ -138,7 +138,7 @@ export default function WishlistPage() {
       )}
 
       {!friendWishlistLoading && friendWishlist.length === 0 && wishlist.length > 0 && (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">
+        <p className="text-sm text-[var(--os-muted)] text-center">
           Tes amis n&apos;ont pas encore de wishlist.
         </p>
       )}

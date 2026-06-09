@@ -115,7 +115,7 @@ export default function NotificationsPage() {
       case "badge_earned":
         return "bg-yellow-100 text-yellow-600";
       default:
-        return "bg-zinc-100 text-zinc-600";
+        return "bg-[var(--os-card)] text-[var(--os-muted)]";
     }
   }
 

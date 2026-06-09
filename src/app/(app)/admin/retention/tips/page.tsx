@@ -94,7 +94,7 @@ export default function AdminTipsPage() {
         {tips.map((tip) => (
           <div
             key={tip.id}
-            className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50"
+            className="p-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)]/50"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
@@ -105,7 +105,7 @@ export default function AdminTipsPage() {
                     </span>
                   )}
                   {tip.city && (
-                    <span className="px-2 py-1 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-medium">
+                    <span className="px-2 py-1 rounded-full bg-[var(--os-card)] text-[var(--os-muted)] text-xs font-medium">
                       {tip.city}
                     </span>
                   )}
@@ -135,7 +135,7 @@ export default function AdminTipsPage() {
 
       {tips.length === 0 && (
         <div className="text-center py-12">
-          <Lightbulb className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
+          <Lightbulb className="h-12 w-12 text-[var(--os-muted)] mx-auto mb-4" />
           <p className="text-[var(--os-muted)]">Aucune idée de sortie</p>
           <Link
             href="/admin/retention/tips/new"

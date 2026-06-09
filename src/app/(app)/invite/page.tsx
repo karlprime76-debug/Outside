@@ -123,7 +123,7 @@ export default function InvitePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="text-center p-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)]">
             <div className="text-2xl font-black text-outside-500">{data.stats.total}</div>
             <div className="text-xs text-[var(--os-muted)]">Invités</div>

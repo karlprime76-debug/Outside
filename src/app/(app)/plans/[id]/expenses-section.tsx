@@ -175,7 +175,7 @@ export function ExpensesSection({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
       >
         <Wallet className="h-4 w-4" />
         Dépenses
@@ -192,13 +192,13 @@ export function ExpensesSection({
         title="Dépenses"
       >
         {loading ? (
-          <p className="text-sm text-zinc-500">Chargement...</p>
+          <p className="text-sm text-[var(--os-muted)]">Chargement...</p>
         ) : (
           <div className="space-y-4">
             {/* Balances */}
             {balances.length > 0 && (
-              <div className="rounded-xl bg-zinc-50 p-3 space-y-2 dark:bg-zinc-900">
-                <p className="text-xs font-bold uppercase text-zinc-500">Résumé</p>
+              <div className="rounded-xl bg-[var(--os-bg)] p-3 space-y-2">
+                <p className="text-xs font-bold uppercase text-[var(--os-muted)]">Résumé</p>
                 {balances
                   .filter((b) => b.net !== 0)
                   .sort((a, b) => b.net - a.net)
@@ -207,7 +207,7 @@ export function ExpensesSection({
                     return (
                       <div key={b.userId} className="flex items-center gap-2 text-sm">
                         <Avatar src={b.image} name={b.name} size="sm" />
-                        <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                        <span className="font-semibold text-[var(--os-fg)]">
                           {isMe ? "Tu" : b.name || "Anonyme"}
                         </span>
                         {b.net > 0 ? (
@@ -223,29 +223,29 @@ export function ExpensesSection({
                     );
                   })}
                 {balances.filter((b) => b.net !== 0).length === 0 && (
-                  <p className="text-xs text-zinc-500">Tout est équilibré</p>
+                  <p className="text-xs text-[var(--os-muted)]">Tout est équilibré</p>
                 )}
               </div>
             )}
 
             {/* Expenses list */}
             {expenses.length === 0 && !showAddForm ? (
-              <p className="text-sm text-zinc-500 text-center py-4">Aucune dépense pour le moment</p>
+              <p className="text-sm text-[var(--os-muted)] text-center py-4">Aucune dépense pour le moment</p>
             ) : (
               <div className="space-y-2">
                 {expenses.map((exp) => (
                   <div
                     key={exp.id}
-                    className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900"
+                    className="rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-3"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{exp.title}</p>
+                          <p className="text-sm font-bold text-[var(--os-fg)]">{exp.title}</p>
                           {(exp.paidById === currentUserId || expenses.some((e) => e.shares.some((s) => s.id))) && (
                             <button
                               onClick={() => handleDelete(exp.id)}
-                              className="text-zinc-400 hover:text-red-500 transition-colors"
+                              className="text-[var(--os-muted)] hover:text-red-500 transition-colors"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
@@ -256,19 +256,19 @@ export function ExpensesSection({
                         </p>
                         <div className="flex items-center gap-1.5 mt-1">
                           <Avatar src={exp.paidBy.image} name={exp.paidBy.name} size="sm" />
-                          <span className="text-xs text-zinc-500">
+                          <span className="text-xs text-[var(--os-muted)]">
                             Payé par {exp.paidById === currentUserId ? "toi" : exp.paidBy.name || "Anonyme"}
                           </span>
                         </div>
                       </div>
                     </div>
-                    <div className="mt-2 space-y-1 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                    <div className="mt-2 space-y-1 border-t border-[var(--os-card-border)] pt-2">
                       {exp.shares.map((share) => {
                         const isMe = share.userId === currentUserId;
                         return (
                           <div key={share.id} className="flex items-center gap-2 text-xs">
                             <Avatar src={share.user.image} name={share.user.name} size="sm" />
-                            <span className="text-zinc-600 dark:text-zinc-400">
+                            <span className="text-[var(--os-fg)]">
                               {isMe ? "Toi" : share.user.name || "Anonyme"} : {Number(share.amount).toFixed(2)} {exp.currency}
                             </span>
                             <span className={`ml-auto flex items-center gap-1 font-semibold ${share.settled ? "text-emerald-600" : "text-amber-600"}`}>
@@ -282,7 +282,7 @@ export function ExpensesSection({
                               {isParticipant && (isMe || exp.paidById === currentUserId) && (
                                 <button
                                   onClick={() => handleSettle(share.id)}
-                                  className="ml-1 rounded-full p-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                  className="ml-1 rounded-full p-0.5 hover:bg-[var(--os-card)] transition-colors"
                                 >
                                   <ChevronRight className="h-3 w-3" />
                                 </button>
@@ -313,13 +313,13 @@ export function ExpensesSection({
             )}
 
             {isParticipant && showAddForm && (
-              <form onSubmit={handleSubmit} className="rounded-xl border border-zinc-200 bg-white p-4 space-y-3 dark:border-zinc-700 dark:bg-zinc-900">
+              <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 space-y-3">
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Titre (ex: Taxi, Restaurant)"
                   maxLength={100}
-                  className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-outside-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="w-full rounded-lg border border-[var(--os-card-border)] bg-[var(--os-bg)] px-3 py-2 text-sm text-[var(--os-fg)] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-outside-500"
                 />
                 <div className="flex gap-2">
                   <input
@@ -329,31 +329,31 @@ export function ExpensesSection({
                     step="0.01"
                     min="0.01"
                     placeholder="Montant"
-                    className="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-outside-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className="flex-1 rounded-lg border border-[var(--os-card-border)] bg-[var(--os-bg)] px-3 py-2 text-sm text-[var(--os-fg)] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-outside-500"
                   />
                   <button
                     type="button"
                     onClick={distributeEqually}
-                    className="rounded-lg border border-zinc-300 px-3 py-2 text-xs font-bold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    className="rounded-lg border border-[var(--os-card-border)] px-3 py-2 text-xs font-bold text-[var(--os-muted)] hover:bg-[var(--os-bg)]"
                   >
                     Égal
                   </button>
                 </div>
                 <div className="space-y-1 max-h-40 overflow-y-auto">
-                  <p className="text-xs font-semibold text-zinc-500">Distribution</p>
+                  <p className="text-xs font-semibold text-[var(--os-muted)]">Distribution</p>
                   {participants.map((p) => {
                     const isMe = p.id === currentUserId;
                     return (
                       <div key={p.id} className="flex items-center gap-2 text-sm">
                         <Avatar src={p.image} name={p.name} size="sm" />
-                        <span className="flex-1 text-zinc-700 dark:text-zinc-300">{isMe ? "Toi" : p.name || "Anonyme"}</span>
+                        <span className="flex-1 text-[var(--os-fg)]">{isMe ? "Toi" : p.name || "Anonyme"}</span>
                         <input
                           type="number"
                           step="0.01"
                           min="0"
                           value={shares[p.id] || ""}
                           onChange={(e) => setShares((prev) => ({ ...prev, [p.id]: parseFloat(e.target.value) || 0 }))}
-                          className="w-20 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-right text-zinc-900 focus:outline-none focus:ring-2 focus:ring-outside-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                          className="w-20 rounded-lg border border-[var(--os-card-border)] bg-[var(--os-bg)] px-2 py-1 text-xs text-right text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
                         />
                       </div>
                     );
@@ -370,7 +370,7 @@ export function ExpensesSection({
                   <button
                     type="button"
                     onClick={() => setShowAddForm(false)}
-                    className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-bold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    className="rounded-lg border border-[var(--os-card-border)] px-4 py-2 text-sm font-bold text-[var(--os-muted)] hover:bg-[var(--os-bg)]"
                   >
                     <X className="h-4 w-4" />
                   </button>

@@ -83,9 +83,9 @@ function colorFor(type: string) {
     case "PLAN_REMINDER": return "bg-orange-100 text-orange-600";
     case "LIVE_STARTED": return "bg-red-100 text-red-600";
     case "BADGE_EARNED": return "bg-yellow-100 text-yellow-600";
-    case "SYSTEM": return "bg-zinc-100 text-zinc-600";
+    case "SYSTEM": return "bg-[var(--os-card)] text-[var(--os-muted)]";
     case "DM_MESSAGE": return "bg-teal-100 text-teal-600";
-    default: return "bg-zinc-100 text-zinc-600";
+    default: return "bg-[var(--os-card)] text-[var(--os-muted)]";
   }
 }
 

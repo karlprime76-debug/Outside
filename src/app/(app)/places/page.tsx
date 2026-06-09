@@ -117,8 +117,8 @@ export default function PlacesPage() {
                 <Badge variant="orange">{place.category}</Badge>
                 {place.isPartner && <Badge variant="pink">{t.places.partner}</Badge>}
               </div>
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1 group-hover:text-outside-600 dark:group-hover:text-outside-400 transition-colors">{place.name}</h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">{place.city.name}{place.neighborhood ? ` · ${place.neighborhood}` : ""}</p>
+              <h3 className="font-bold text-[var(--os-fg)] mb-1 group-hover:text-outside-600 dark:group-hover:text-outside-400 transition-colors">{place.name}</h3>
+              <p className="text-sm text-[var(--os-muted)]">{place.city.name}{place.neighborhood ? ` · ${place.neighborhood}` : ""}</p>
             </Link>
           ))}
         </div>

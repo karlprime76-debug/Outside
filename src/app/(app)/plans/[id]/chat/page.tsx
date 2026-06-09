@@ -107,12 +107,12 @@ export default function ChatPage() {
   return (
     <AnimatedPage className="flex flex-col h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-3.5rem)]">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-zinc-200 bg-white/80 px-4 py-3 backdrop-blur dark:border-surface-border dark:bg-surface-card/80">
+      <div className="flex items-center gap-3 border-b border-[var(--os-card-border)] bg-[var(--os-card)]/80 px-4 py-3 backdrop-blur">
         <Link
           href={`/plans/${id}`}
-          className="rounded-lg p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="rounded-lg p-1.5 hover:bg-[var(--os-bg)] transition-colors"
         >
-          <ArrowLeft className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
+          <ArrowLeft className="h-5 w-5 text-[var(--os-fg)]" />
         </Link>
         <div className="flex items-center gap-2">
           <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-1.5 shadow-glow">
@@ -120,13 +120,13 @@ export default function ChatPage() {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Discussion</h1>
+              <h1 className="text-sm font-bold text-[var(--os-fg)]">Discussion</h1>
               <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${online ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400"}`}>
                 <Radio className="h-2.5 w-2.5" />
                 {online ? "En ligne" : "Hors ligne"}
               </span>
             </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{messages.length} messages</p>
+            <p className="text-xs text-[var(--os-muted)]">{messages.length} messages</p>
           </div>
         </div>
       </div>
@@ -142,10 +142,10 @@ export default function ChatPage() {
             <div className="rounded-full bg-outside-100 p-4 dark:bg-outside-950/20">
               <MessageSquare className="h-8 w-8 text-outside-500" />
             </div>
-            <p className="mt-3 text-sm font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="mt-3 text-sm font-bold text-[var(--os-fg)]">
               Pas encore de messages
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-[var(--os-muted)]">
               Sois le premier à écrire dans ce plan !
             </p>
           </div>
@@ -166,7 +166,7 @@ export default function ChatPage() {
                   className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm ${
                     isMe
                       ? "bg-gradient-to-br from-outside-500 to-accent-500 text-white"
-                      : "bg-white border border-zinc-200 text-zinc-900 dark:bg-surface-card dark:border-surface-border dark:text-zinc-100"
+                      : "bg-[var(--os-card)] border border-[var(--os-card-border)] text-[var(--os-fg)]"
                   }`}
                 >
                   {!isMe && (
@@ -175,7 +175,7 @@ export default function ChatPage() {
                     </p>
                   )}
                   <p className="leading-relaxed">{msg.content}</p>
-                  <p className={`text-[10px] mt-1 ${isMe ? "text-white/70" : "text-zinc-400"}`}>
+                  <p className={`text-[10px] mt-1 ${isMe ? "text-white/70" : "text-[var(--os-muted)]"}`}>
                     {formatTime(msg.createdAt)}
                   </p>
                 </div>
@@ -189,7 +189,7 @@ export default function ChatPage() {
       {/* Input */}
       <form
         onSubmit={sendMessage}
-        className="flex items-center gap-2 border-t border-zinc-200 bg-white px-4 py-3 dark:border-surface-border dark:bg-surface-card"
+        className="flex items-center gap-2 border-t border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-3"
       >
         <input
           ref={inputRef}
@@ -198,7 +198,7 @@ export default function ChatPage() {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Écrire un message..."
           maxLength={2000}
-          className="flex-1 rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-100"
+          className="flex-1 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] px-4 py-2.5 text-sm text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
         />
         <button
           type="submit"

@@ -402,14 +402,14 @@ export default function DmConversationPage() {
       {planSelectorOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setPlanSelectorOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-surface-card dark:border dark:border-surface-border">
+            <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">Inviter à un plan</h3>
+              <h3 className="text-lg font-black text-[var(--os-fg)]">Inviter à un plan</h3>
               <button
                 onClick={() => setPlanSelectorOpen(false)}
-                className="rounded-lg p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="rounded-lg p-1 hover:bg-[var(--os-bg)] transition-colors"
               >
-                <X className="h-4 w-4 text-zinc-500" />
+                <X className="h-4 w-4 text-[var(--os-muted)]" />
               </button>
             </div>
             {plansLoading ? (
@@ -417,7 +417,7 @@ export default function DmConversationPage() {
                 <Loader2 className="h-5 w-5 animate-spin" />
               </div>
             ) : plansList.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Aucun plan disponible.</p>
+              <p className="text-sm text-[var(--os-muted)]">Aucun plan disponible.</p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {plansList.map((p) => (
@@ -438,11 +438,11 @@ export default function DmConversationPage() {
                       });
                       setPlanSelectorOpen(false);
                     }}
-                    className="w-full text-left flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    className="w-full text-left flex items-center gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] px-3 py-2 hover:bg-[var(--os-card)] transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{p.title}</p>
-                      <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      <p className="text-sm font-semibold text-[var(--os-fg)] truncate">{p.title}</p>
+                      <div className="flex items-center gap-2 text-xs text-[var(--os-muted)] mt-0.5">
                         {p.city && (
                           <span className="flex items-center gap-0.5">
                             <MapPin className="h-3 w-3" />

@@ -37,11 +37,11 @@ export default function PlaceDetailPage() {
       .then((data) => setPlace(data.place || null));
   }, [id]);
 
-  if (!place) return <div className="p-6 text-zinc-500 dark:text-zinc-400">{t.common.loading}</div>;
+  if (!place) return <div className="p-6 text-[var(--os-muted)]">{t.common.loading}</div>;
 
   return (
     <div className="p-4 max-w-3xl mx-auto space-y-6">
-      <Link href="/places" className="inline-flex items-center gap-1 text-sm font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors">
+      <Link href="/places" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors">
         <ArrowLeft className="h-4 w-4" />
         {t.places.back}
       </Link>
@@ -52,13 +52,13 @@ export default function PlaceDetailPage() {
           {place.isPartner && <Badge variant="pink">{t.places.partner}</Badge>}
         </div>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100">{place.name}</h1>
+          <h1 className="text-3xl font-black text-[var(--os-fg)]">{place.name}</h1>
           <WishlistButton placeId={place.id} />
         </div>
-        {place.description && <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{place.description}</p>}
+        {place.description && <p className="text-[var(--os-fg)] leading-relaxed">{place.description}</p>}
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 dark:border-surface-border dark:bg-surface-card">
+      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 sm:p-6 space-y-4 ">
         <InfoRow icon={MapPin} label={t.places.city} value={`${place.city.name}, ${place.city.country}`} />
         {place.neighborhood && <InfoRow icon={MapPin} label={t.places.neighborhood} value={place.neighborhood} />}
         {place.address && <InfoRow icon={MapPin} label={t.places.address} value={place.address} />}
@@ -76,12 +76,12 @@ export default function PlaceDetailPage() {
 
       {place.plans.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold mb-4 text-zinc-900 dark:text-zinc-100">{t.places.upcomingPlans}</h3>
+          <h3 className="text-lg font-bold mb-4 text-[var(--os-fg)]">{t.places.upcomingPlans}</h3>
           <div className="space-y-3">
             {place.plans.map((plan) => (
-              <Link key={plan.id} href={`/plans/${plan.id}`} className="group block rounded-xl border border-zinc-200 bg-white p-4 hover:border-outside-400 transition-colors dark:border-surface-border dark:bg-surface-card">
-                <p className="font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-outside-600 dark:group-hover:text-outside-400 transition-colors">{plan.title}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{plan.mood} · {new Date(plan.startDate).toLocaleDateString("fr-FR")}</p>
+              <Link key={plan.id} href={`/plans/${plan.id}`} className="group block rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 hover:border-outside-400 transition-colors ">
+                <p className="font-bold text-[var(--os-fg)] group-hover:text-outside-600 dark:group-hover:text-outside-400 transition-colors">{plan.title}</p>
+                <p className="text-xs text-[var(--os-muted)] mt-1">{plan.mood} · {new Date(plan.startDate).toLocaleDateString("fr-FR")}</p>
               </Link>
             ))}
           </div>
@@ -102,8 +102,8 @@ function InfoRow({ icon: Icon, label, value }: { icon: typeof MapPin; label: str
         <Icon className="h-4 w-4 text-outside-600 dark:text-outside-400" />
       </div>
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{label}</p>
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">{label}</p>
+        <p className="text-sm font-semibold text-[var(--os-fg)]">{value}</p>
       </div>
     </div>
   );
