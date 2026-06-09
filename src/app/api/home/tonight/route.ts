@@ -68,6 +68,36 @@ export async function GET() {
       take: 3,
     }) : [];
 
+    // Get express plans (TONIGHT/NOW mood or created within last 6h for tonight)
+    const expressPlans = cityId ? await db.plan.findMany({
+      where: {
+        cityId: cityId,
+        status: "ACTIVE",
+        creatorId: { notIn: blockedIds },
+        OR: [
+          { mood: "TONIGHT" },
+          { mood: "NOW" },
+          {
+            createdAt: { gte: new Date(Date.now() - 6 * 60 * 60 * 1000) },
+            startDate: { gte: new Date() },
+          },
+        ],
+      },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+          },
+        },
+        city: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+    }) : [];
+
     // Get trending moments (recent moments in city)
     const trendingMoments = city ? await db.moment.findMany({
       where: {
@@ -114,6 +144,14 @@ export async function GET() {
       where: { active: true },
     });
 
+    // Get city mission for today
+    const cityMission = await db.cityMission.findFirst({
+      where: {
+        active: true,
+        ...(city ? { OR: [{ city: city }, { city: null }] } : {}),
+      },
+    });
+
     // Get official tips for city/country
     const officialTips = await db.outsideTip.findMany({
       where: {
@@ -152,9 +190,11 @@ export async function GET() {
       city,
       recommendedPlans,
       freePlans,
+      expressPlans,
       trendingMoments,
       suggestedUsers,
       dailyChallenge,
+      cityMission,
       officialTips,
       liveSessions,
     });

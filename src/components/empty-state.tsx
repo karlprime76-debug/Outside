@@ -11,9 +11,10 @@ interface EmptyStateProps {
     label: string;
     href: string;
   };
+  actions?: React.ReactNode;
 }
 
-export function EmptyState({ icon: Icon, title, description, cta }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, cta, actions }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center fade-in-up">
       <div className="relative">
@@ -24,14 +25,16 @@ export function EmptyState({ icon: Icon, title, description, cta }: EmptyStatePr
       </div>
       <h3 className="mt-5 text-xl font-bold text-[var(--os-fg)]">{title}</h3>
       <p className="mt-2 max-w-xs text-sm text-[var(--os-muted)] leading-relaxed">{description}</p>
-      {cta && (
+      {actions ? (
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">{actions}</div>
+      ) : cta ? (
         <Link
           href={cta.href}
           className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-7 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
         >
           {cta.label}
         </Link>
-      )}
+      ) : null}
     </div>
   );
 }

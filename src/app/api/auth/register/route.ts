@@ -6,6 +6,7 @@ import { isAtLeast18 } from "@/lib/age";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { isValidCountryCode, getCountryName } from "@/lib/countries";
 import { normalizeUsername, validateUsername } from "@/lib/username";
+import { evaluateFounderBadges } from "@/lib/badges";
 
 export async function POST(req: Request) {
   try {
@@ -216,6 +217,9 @@ export async function POST(req: Request) {
           }
         }
       }
+
+      // Award founder badge if applicable
+      evaluateFounderBadges(newUser.id).catch(() => {});
     } catch (dbError: unknown) {
       const err = dbError as { code?: string; meta?: { target?: string[] } };
       if (err.code === "P2002") {
