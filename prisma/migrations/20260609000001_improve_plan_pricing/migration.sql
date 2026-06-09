@@ -1,8 +1,12 @@
 -- CreateEnum
-CREATE TYPE "PlanPriceType" AS ENUM ('FREE', 'PAID', 'FROM');
+DO $$ BEGIN
+    CREATE TYPE "PlanPriceType" AS ENUM ('FREE', 'PAID', 'FROM');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- AlterTable
-ALTER TABLE "Plan" ADD COLUMN "priceType" "PlanPriceType" NOT NULL DEFAULT 'FREE';
+ALTER TABLE "Plan" ADD COLUMN IF NOT EXISTS "priceType" "PlanPriceType" NOT NULL DEFAULT 'FREE';
 
 -- Backfill existing rows with computed priceType
 UPDATE "Plan"
