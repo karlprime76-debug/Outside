@@ -44,6 +44,8 @@ export const COUNTRY_CURRENCY_MAP: Record<string, string> = {
   GN: "GNF",
 };
 
+export const SUPPORTED_CURRENCIES = Array.from(new Set(Object.values(COUNTRY_CURRENCY_MAP))).sort();
+
 export function getCurrencyForCountry(countryCode?: string | null): string {
   if (!countryCode) return "XOF";
   return COUNTRY_CURRENCY_MAP[countryCode.toUpperCase()] || "XOF";

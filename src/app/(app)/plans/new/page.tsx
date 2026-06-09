@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CitySelect } from "@/components/auth/city-select";
@@ -8,7 +8,7 @@ import { InputField } from "@/components/ui/input-field";
 import { Badge } from "@/components/ui/badge";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { ArrowLeft } from "lucide-react";
-import { getCurrencyForCountry, formatBudget } from "@/lib/currency";
+import { getCurrencyForCountry, formatBudget, SUPPORTED_CURRENCIES } from "@/lib/currency";
 
 const MOODS = [
   "CHILL", "FOOD", "SPORT", "PARTY", "MUSIC", "DATING",
@@ -53,6 +53,14 @@ export default function NewPlanPage() {
   const [budgetMode, setBudgetMode] = useState<"free" | "exact">("exact");
   const [budgetIsFrom, setBudgetIsFrom] = useState(false);
   const [budgetAmount, setBudgetAmount] = useState<number | undefined>(undefined);
+  const [selectedCurrency, setSelectedCurrency] = useState("XOF");
+  // Update currency when country changes, unless user manually changed it
+  const [currencyManuallySet, setCurrencyManuallySet] = useState(false);
+  useEffect(() => {
+    if (!currencyManuallySet && selectedCountryCode) {
+      setSelectedCurrency(getCurrencyForCountry(selectedCountryCode));
+    }
+  }, [selectedCountryCode, currencyManuallySet]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -71,7 +79,7 @@ export default function NewPlanPage() {
       mood: selectedMood || (form.get("mood") as string),
       budgetLevel: budgetMode === "free" ? "FREE" : "MEDIUM",
       budgetAmount,
-      budgetCurrency: getCurrencyForCountry(selectedCountryCode),
+      budgetCurrency: selectedCurrency,
       budgetIsFrom: budgetMode !== "free" && budgetIsFrom,
       cityId,
       countryCode: (form.get("countryCode") as string) || undefined,
@@ -169,16 +177,25 @@ export default function NewPlanPage() {
             </div>
             {budgetMode === "exact" && (
               <div className="space-y-1.5">
-                <input
-                  name="budgetAmount"
-                  type="number"
-                  min={0}
-                  step={100}
-                  placeholder="Montant"
-                  className={inputBase}
-                  value={budgetAmount || ""}
-                  onChange={(e) => setBudgetAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
-                />
+                <div className="flex gap-2">
+                  <input
+                    name="budgetAmount"
+                    type="number"
+                    min={0}
+                    step={100}
+                    placeholder="Montant"
+                    className={inputBase + " flex-1 min-w-0"}
+                    value={budgetAmount || ""}
+                    onChange={(e) => setBudgetAmount(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  />
+                  <select
+                    value={selectedCurrency}
+                    onChange={(e) => { setSelectedCurrency(e.target.value); setCurrencyManuallySet(true); }}
+                    className={inputBase + " w-24 shrink-0"}
+                  >
+                    {SUPPORTED_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
                 <label className="flex items-center gap-2 text-xs text-[var(--os-muted)]">
                   <input
                     type="checkbox"
@@ -190,7 +207,7 @@ export default function NewPlanPage() {
                 </label>
                 {budgetAmount && (
                   <div className="text-xs font-semibold text-outside-600 dark:text-outside-400">
-                    Preview: {formatBudget(budgetAmount, getCurrencyForCountry(selectedCountryCode), budgetIsFrom)}
+                    {formatBudget(budgetAmount, selectedCurrency, budgetIsFrom)}
                   </div>
                 )}
               </div>
