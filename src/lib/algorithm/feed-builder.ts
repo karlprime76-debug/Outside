@@ -73,11 +73,26 @@ async function fetchReportedContentIds(): Promise<Set<string>> {
   const reports = await db.report.findMany({
     where: {
       targetType: "MOMENT",
-      status: { in: ["PENDING", "RESOLVED"] },
+      status: { in: ["PENDING", "OPEN", "REVIEWING"] },
     },
-    select: { targetId: true },
+    select: { targetId: true, reason: true },
   });
-  return new Set(reports.map((r) => r.targetId).filter((id) => id !== null) as string[]);
+
+  const counts = new Map<string, { count: number; serious: boolean }>();
+  const seriousReasons = new Set<import("@prisma/client").ReportReason>(["VIOLENCE", "HATE", "SEXUAL_CONTENT", "UNDERAGE", "SCAM"]);
+  for (const r of reports) {
+    if (!r.targetId) continue;
+    const entry = counts.get(r.targetId) ?? { count: 0, serious: false };
+    entry.count++;
+    if (r.reason && seriousReasons.has(r.reason)) entry.serious = true;
+    counts.set(r.targetId, entry);
+  }
+
+  const excluded = new Set<string>();
+  for (const [id, data] of counts) {
+    if (data.count >= 2 || data.serious) excluded.add(id);
+  }
+  return excluded;
 }
 
 async function fetchScoreMap(momentIds: string[]): Promise<Map<string, { score: number; viralScore: number; safetyScore: number; localScore: number }>> {
@@ -642,7 +657,7 @@ export async function buildFeed(
 
   // For for-you scope with cursor, try to blend pools if we don't have enough candidates
   let finalCandidates = candidates;
-  if (scope === "for-you" && candidates.length < limit && !cursor) {
+  if (scope === "for-you" && candidates.length < limit && cursor) {
     // Try to fetch from other pools to fill
     const needed = limit - candidates.length;
     const [cityPool, friendPool, followingPool] = await Promise.all([

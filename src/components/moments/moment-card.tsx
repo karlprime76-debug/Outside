@@ -244,7 +244,14 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
 
   const handleNotInterested = () => {
     trackEvent("NOT_INTERESTED");
-    handleHideLocal();
+    try {
+      const key = "outside_hidden_moments";
+      const raw = localStorage.getItem(key);
+      const set = new Set<string>(raw ? JSON.parse(raw) : []);
+      set.add(moment.id);
+      localStorage.setItem(key, JSON.stringify(Array.from(set)));
+      onHide?.(moment.id);
+    } catch {}
     addToast("Nous afficherons moins de contenus similaires.", "success");
   };
 
