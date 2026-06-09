@@ -36,6 +36,7 @@ async function main() {
     { key: "FIVE_INVITES", name: "5 amis ramenés", description: "Tu as ramené 5 amis sur OUTSIDE", icon: "🌟" },
     { key: "CIRCLE_LAUNCHER", name: "Cercle lancé", description: "Tu as lancé ton cercle sur OUTSIDE", icon: "🚀" },
     { key: "LOCAL_AMBASSADOR", name: "Ambassadeur local", description: "Tu es un ambassadeur OUTSIDE dans ta ville", icon: "🏆" },
+    { key: "REFERRED_BY_FRIEND", name: "Invité par un ami", description: "Tu as rejoint OUTSIDE via l'invitation d'un ami", icon: "🤝" },
     // Trust/community badges
     { key: "trust_active", name: "Confiance active", description: "Membre actif et de confiance", icon: "🛡️" },
     { key: "trust_reliable", name: "Fiable", description: "Membre fiable de la communauté", icon: "🤝" },

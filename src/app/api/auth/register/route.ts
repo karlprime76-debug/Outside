@@ -7,6 +7,7 @@ import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { isValidCountryCode, getCountryName } from "@/lib/countries";
 import { normalizeUsername, validateUsername } from "@/lib/username";
 import { evaluateFounderBadges } from "@/lib/badges";
+import { linkNewUserToReferral } from "@/lib/referral";
 
 export async function POST(req: Request) {
   try {
@@ -19,10 +20,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const url = new URL(req.url);
-    const referralCode = url.searchParams.get("referralCode");
-
     const body = await req.json();
+    const url = new URL(req.url);
+    const referralCode =
+      (typeof body.referralCode === "string" ? body.referralCode : null) ||
+      url.searchParams.get("referralCode") ||
+      url.searchParams.get("referral");
 
     const parsed = registerSchema.safeParse(body);
 
@@ -134,92 +137,15 @@ export async function POST(req: Request) {
         select: { id: true, name: true, email: true },
       });
 
-      // Handle referral code if provided
       if (referralCode) {
-        try {
-          const invite = await db.referralInvite.findUnique({
-            where: { code: referralCode },
-          });
-
-          if (invite && !invite.acceptedAt && invite.inviterId !== newUser.id) {
-            // Link user to referral
-            await db.referralInvite.update({
-              where: { id: invite.id },
-              data: {
-                acceptedUserId: newUser.id,
-                acceptedAt: new Date(),
-              },
-            });
-
-            // Award badges
-            const inviterInviteCount = await db.referralInvite.count({
-              where: {
-                inviterId: invite.inviterId,
-                acceptedAt: { not: null },
-              },
-            });
-
-            if (inviterInviteCount === 1) {
-              const badge = await db.badge.findUnique({
-                where: { key: "FIRST_INVITE" },
-              });
-              if (badge) {
-                await db.userBadge.create({
-                  data: {
-                    userId: invite.inviterId,
-                    badgeId: badge.id,
-                  },
-                }).catch(() => {});
-              }
-            } else if (inviterInviteCount === 5) {
-              const badge = await db.badge.findUnique({
-                where: { key: "CIRCLE_LAUNCHED" },
-              });
-              if (badge) {
-                await db.userBadge.create({
-                  data: {
-                    userId: invite.inviterId,
-                    badgeId: badge.id,
-                  },
-                }).catch(() => {});
-              }
-            } else if (inviterInviteCount === 20) {
-              const badge = await db.badge.findUnique({
-                where: { key: "AMBASSADOR" },
-              });
-              if (badge) {
-                await db.userBadge.create({
-                  data: {
-                    userId: invite.inviterId,
-                    badgeId: badge.id,
-                  },
-                }).catch(() => {});
-              }
-            }
-
-            // Award badge to referred user
-            const refBadge = await db.badge.findUnique({
-              where: { key: "REFERRED_BY_FRIEND" },
-            });
-            if (refBadge) {
-              await db.userBadge.create({
-                data: {
-                  userId: newUser.id,
-                  badgeId: refBadge.id,
-                },
-              }).catch(() => {});
-            }
-          }
-        } catch (err) {
+        linkNewUserToReferral(referralCode, newUser.id).catch((err) => {
           if (process.env.NODE_ENV === "development") {
-            // eslint-disable-next-line no-console
             console.log("[REGISTER] Referral linking error (non-blocking):", err);
           }
-        }
+        });
+      } else {
+        evaluateFounderBadges(newUser.id).catch(() => {});
       }
-
-      // Award founder badge if applicable
-      evaluateFounderBadges(newUser.id).catch(() => {});
     } catch (dbError: unknown) {
       const err = dbError as { code?: string; meta?: { target?: string[] } };
       if (err.code === "P2002") {

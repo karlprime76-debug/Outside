@@ -22,13 +22,16 @@ export default function ReferralLandingClient({
 }: ReferralLandingClientProps) {
   const inviterName = inviter.name || inviter.username || "Un ami";
   const inviterImage = inviter.image;
+  const registerHref = `/register?referral=${encodeURIComponent(code)}`;
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(`/invite/${code}`)}`;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[var(--os-bg)]">
       <Card className="max-w-md w-full border border-[var(--os-card-border)]">
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 p-6 pb-0">
           {inviterImage && (
             <div className="mx-auto mb-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={inviterImage}
                 alt={`Photo de profil de ${inviterName}`}
@@ -43,9 +46,9 @@ export default function ReferralLandingClient({
             Rejoins le cercle et découvre ce qui se passe autour de toi, maintenant.
           </p>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-4 px-6 pb-6">
           <div className="bg-[var(--os-card)] border border-[var(--os-card-border)] p-4 rounded-xl text-center">
-            <p className="text-sm text-[var(--os-muted)] mb-2">
+            <p className="text-sm text-[var(--os-muted)]">
               Plus ton cercle est dehors, plus OUTSIDE devient vivant.
             </p>
           </div>
@@ -61,23 +64,23 @@ export default function ReferralLandingClient({
           ) : (
             <div className="space-y-2">
               <Link
-                href={`/auth/login?callbackUrl=/api/referrals/${code}`}
+                href={registerHref}
                 className="block w-full px-5 py-2.5 text-sm bg-gradient-to-r from-outside-500 to-accent-500 text-white hover:shadow-glow-lg rounded-xl font-bold transition-all text-center"
               >
-                Se connecter
+                Créer un compte
               </Link>
               <Link
-                href={`/auth/signup?callbackUrl=/api/referrals/${code}`}
+                href={loginHref}
                 className="block w-full px-5 py-2.5 text-sm bg-[var(--os-card)] border border-[var(--os-card-border)] text-[var(--os-fg)] hover:bg-[var(--os-card-border)] rounded-xl font-bold transition-all text-center"
               >
-                Créer un compte
+                Se connecter
               </Link>
             </div>
           )}
 
-          <div className="text-center text-sm text-[var(--os-muted)]">
-            <p>En rejoignant OUTSIDE via ce lien, tu acceptes que {inviterName} soit ton parrain.</p>
-          </div>
+          <p className="text-center text-xs text-[var(--os-muted)]">
+            En rejoignant via ce lien, tu acceptes que {inviterName} soit ton parrain. Aucun message n&apos;est envoyé automatiquement.
+          </p>
         </div>
       </Card>
     </div>

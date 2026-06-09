@@ -1,122 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { acceptReferralForUser, findInviterByCode } from "@/lib/referral";
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
     const { code } = await params;
+    const inviter = await findInviterByCode(code);
 
-    // Find the referral invite
-    const referral = await db.referralInvite.findUnique({
-      where: { code },
-      include: {
-        inviter: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-          },
-        },
-      },
-    });
-
-    if (!referral) {
+    if (!inviter) {
       return NextResponse.json({ error: "Invalid referral code" }, { status: 404 });
     }
 
     const session = await auth();
 
-    // If user is logged in, check if they can accept this referral
     if (session?.user?.id) {
-      // User cannot refer themselves
-      if (referral.inviterId === session.user.id) {
-        return NextResponse.json(
-          { error: "You cannot accept your own referral" },
-          { status: 400 }
-        );
+      if (inviter.id === session.user.id) {
+        return NextResponse.json({ error: "You cannot accept your own referral" }, { status: 400 });
       }
 
-      // Check if already accepted
-      if (referral.acceptedUserId) {
-        return NextResponse.json(
-          { error: "This referral has already been accepted" },
-          { status: 400 }
-        );
-      }
-
-      // Check if user already has an accepted referral
-      const existingReferral = await db.referralInvite.findFirst({
-        where: { acceptedUserId: session.user.id },
-      });
-
-      if (existingReferral) {
-        return NextResponse.json(
-          { error: "You have already accepted a referral" },
-          { status: 400 }
-        );
-      }
-
-      // Accept the referral
-      await db.referralInvite.update({
-        where: { id: referral.id },
-        data: {
-          acceptedUserId: session.user.id,
-          acceptedAt: new Date(),
-        },
-      });
-
-      // Award badge to inviter (if first referral)
-      const inviterReferralCount = await db.referralInvite.count({
-        where: {
-          inviterId: referral.inviterId,
-          acceptedUserId: { not: null },
-        },
-      });
-
-      if (inviterReferralCount === 1) {
-        // Award "Premier invité" badge
-        const badge = await db.badge.findUnique({
-          where: { key: "FIRST_INVITE" },
-        });
-
-        if (badge) {
-          await db.userBadge.upsert({
-            where: {
-              userId_badgeId: {
-                userId: referral.inviterId,
-                badgeId: badge.id,
-              },
-            },
-            create: {
-              userId: referral.inviterId,
-              badgeId: badge.id,
-            },
-            update: {},
-          });
-        }
+      const result = await acceptReferralForUser(code, session.user.id);
+      if (!result.ok && !result.alreadyLinked) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
       }
 
       return NextResponse.json({
         success: true,
-        inviter: referral.inviter,
+        inviter,
+        requiresAuth: false,
+        alreadyLinked: result.alreadyLinked ?? false,
       });
     }
 
-    // User not logged in - return referral info for display
-    return NextResponse.json({
-      success: true,
-      inviter: referral.inviter,
-      requiresAuth: true,
-    });
+    return NextResponse.json({ success: true, inviter, requiresAuth: true });
   } catch (error) {
     console.error("Referral acceptance error:", error);
-    return NextResponse.json(
-      { error: "Failed to process referral" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to process referral" }, { status: 500 });
   }
 }

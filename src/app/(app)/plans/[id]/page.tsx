@@ -18,6 +18,7 @@ import { formatBudget } from "@/lib/currency";
 import { useHaptic } from "@/hooks/use-haptic";
 import { ExpensesSection } from "./expenses-section";
 import PollsSection from "./polls-section";
+import { PlanInviteShare } from "@/components/referrals/plan-invite-share";
 
 interface PlanDetail {
   id: string;
@@ -737,6 +738,23 @@ export default function PlanDetailPage() {
         )}
       </div>
 
+      {(isParticipant || isCreator) && (
+        <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 space-y-3">
+          <h3 className="text-sm font-black text-[var(--os-fg)]">Inviter ton cercle</h3>
+          <p className="text-xs text-[var(--os-muted)]">Partage ce plan — tu choisis quand et comment envoyer.</p>
+          <PlanInviteShare
+            planId={plan.id}
+            planTitle={plan.title}
+            onInviteByDm={() => {
+              setInviteByMessageOpen(true);
+              fetch("/api/dm/conversations")
+                .then((r) => r.json())
+                .then((data) => setConversations(data.conversations || []));
+            }}
+          />
+        </div>
+      )}
+
       {/* Polls */}
       {(isParticipant || isCreator) && (
         <PollsSection planId={plan.id} isParticipant={isParticipant} isCreator={isCreator} />
@@ -754,7 +772,12 @@ export default function PlanDetailPage() {
         title="Inviter un ami"
       >
         {friends.length === 0 ? (
-          <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis à inviter.</p>
+          <div className="space-y-3 text-center">
+            <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis sur OUTSIDE.</p>
+            <Link href="/invite" className="inline-flex rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white">
+              Invite ton cercle
+            </Link>
+          </div>
         ) : (
           <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {friends.map((f) => (

@@ -23,10 +23,10 @@ export function PlansEmptyState() {
             Plans gratuits
           </Link>
           <Link
-            href="/settings"
+            href="/invite"
             className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--os-card-border)] bg-[var(--os-card)] px-7 py-3 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all pressable"
           >
-            Changer de ville
+            Invite ton cercle
           </Link>
         </>
       }

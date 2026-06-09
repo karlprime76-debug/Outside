@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { acceptReferralForUser, findInviterByCode } from "@/lib/referral";
 import ReferralLandingClient from "./referral-landing-client";
 
 interface PageProps {
@@ -9,26 +10,22 @@ interface PageProps {
 export default async function ReferralLandingPage({ params }: PageProps) {
   const { code } = await params;
   const session = await auth();
+  const inviter = await findInviterByCode(code);
 
-  // Fetch referral info
-  const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/referrals/${code}`, {
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
+  if (!inviter) {
     notFound();
   }
 
-  const data = await response.json();
-
-  // If user is logged in and referral was accepted, redirect to home
-  if (session?.user?.id && data.success && !data.requiresAuth) {
-    redirect("/home");
+  if (session?.user?.id) {
+    const result = await acceptReferralForUser(code, session.user.id);
+    if (result.ok) {
+      redirect("/home");
+    }
   }
 
   return (
     <ReferralLandingClient
-      inviter={data.inviter}
+      inviter={inviter}
       code={code}
       isAuthenticated={!!session?.user?.id}
     />
