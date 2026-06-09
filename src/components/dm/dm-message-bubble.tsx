@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download, Heart } from "lucide-react";
+import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download, Heart, User } from "lucide-react";
 import { MediaViewer } from "@/components/media/media-viewer";
 import { useClickOutside } from "@/hooks/use-click-outside";
 
@@ -267,6 +267,48 @@ function PlanInviteCard({ metadata, isMine }: { metadata?: string | null; isMine
   );
 }
 
+function ProfileCard({ metadata, isMine }: { metadata?: string | null; isMine: boolean }) {
+  let parsed: { userId?: string; name?: string | null; username?: string | null; image?: string | null } | null = null;
+  try {
+    if (metadata) parsed = JSON.parse(metadata);
+  } catch {
+    // ignore
+  }
+
+  const name = parsed?.name || "Utilisateur";
+  const username = parsed?.username || "";
+  const image = parsed?.image || null;
+  const userId = parsed?.userId || "";
+
+  return (
+    <Link
+      href={`/u/${username || userId}`}
+      className={`block rounded-xl overflow-hidden border transition-colors ${
+        isMine
+          ? "border-white/20 bg-white/10 hover:bg-white/20"
+          : "border-[var(--os-card-border)] bg-[var(--os-bg)] hover:bg-[var(--os-card)]"
+      }`}
+    >
+      <div className="flex items-center gap-3 p-3">
+        {image ? (
+          <img src={image} alt={name} className="h-12 w-12 rounded-full object-cover" loading="lazy" />
+        ) : (
+          <div className={`h-12 w-12 rounded-full flex items-center justify-center ${isMine ? "bg-white/20" : "bg-[var(--os-card-border)]"}`}>
+            <User className={`h-6 w-6 ${isMine ? "text-white/60" : "text-[var(--os-muted)]"}`} />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className={`text-sm font-bold truncate ${isMine ? "text-white" : "text-[var(--os-fg)]"}`}>{name}</span>
+            {username && <span className={`text-[10px] ${isMine ? "text-outside-300" : "text-outside-500"}`}>@{username}</span>}
+          </div>
+          <span className={`text-xs ${isMine ? "text-white/60" : "text-outside-500"}`}>Voir le profil →</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function MediaMessage({
   url,
   type,
@@ -325,6 +367,7 @@ export function DmMessageBubble({
   const isVideo = message.type === "VIDEO" && message.mediaUrl && !message.isDeleted;
   const isAudio = message.type === "AUDIO" && message.mediaUrl && !message.isDeleted;
   const isPlanInvite = message.type === "PLAN_INVITE" && !message.isDeleted;
+  const isProfile = message.type === "PROFILE" && !message.isDeleted;
 
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1`}>
@@ -355,6 +398,8 @@ export function DmMessageBubble({
             <MomentCardInBubble momentId={message.momentId || ""} metadata={message.metadata} isMine={isMine} />
           ) : isPlanInvite ? (
             <PlanInviteCard metadata={message.metadata} isMine={isMine} />
+          ) : isProfile ? (
+            <ProfileCard metadata={message.metadata} isMine={isMine} />
           ) : isImage ? (
             <MediaMessage url={message.mediaUrl || ""} type="image" messageId={message.id} />
           ) : isVideo ? (

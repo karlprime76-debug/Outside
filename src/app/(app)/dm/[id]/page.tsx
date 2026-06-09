@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Loader2, MapPin, Calendar, X, RefreshCw } from "lucide-react";
+import { Loader2, MapPin, Calendar, X, RefreshCw, ImageOff } from "lucide-react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useHaptic } from "@/hooks/use-haptic";
 import { DmConversationHeader } from "@/components/dm/dm-conversation-header";
@@ -51,6 +51,15 @@ export default function DmConversationPage() {
     _count: { participants: number };
   }>>([]);
   const [plansLoading, setPlansLoading] = useState(false);
+  const [momentSelectorOpen, setMomentSelectorOpen] = useState(false);
+  const [momentsList, setMomentsList] = useState<Array<{
+    id: string;
+    mediaUrl: string;
+    caption: string | null;
+    type: string;
+    createdAt: string;
+  }>>([]);
+  const [momentsLoading, setMomentsLoading] = useState(false);
 
   const haptic = useHaptic();
   const listRef = useRef<HTMLDivElement>(null);
@@ -426,14 +435,38 @@ export default function DmConversationPage() {
         </div>
       )}
 
-      <DmMessageComposer onSend={onSend} sending={sending} conversationId={id} onOpenPlanSelector={() => {
-        setPlanSelectorOpen(true);
-        setPlansLoading(true);
-        fetch("/api/plans/my")
-          .then((r) => (r.ok ? r.json() : null))
-          .then((data) => setPlansList(data?.plans || []))
-          .finally(() => setPlansLoading(false));
-      }} />
+      <DmMessageComposer
+        onSend={onSend}
+        sending={sending}
+        conversationId={id}
+        onOpenPlanSelector={() => {
+          setPlanSelectorOpen(true);
+          setPlansLoading(true);
+          fetch("/api/plans/my")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => setPlansList(data?.plans || []))
+            .finally(() => setPlansLoading(false));
+        }}
+        onOpenMomentSelector={() => {
+          setMomentSelectorOpen(true);
+          setMomentsLoading(true);
+          fetch("/api/moments/mine")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => setMomentsList(data?.moments || []))
+            .finally(() => setMomentsLoading(false));
+        }}
+        onShareProfile={() => {
+          onSend("", {
+            type: "PROFILE",
+            metadata: {
+              userId: session?.user?.id,
+              name: session?.user?.name,
+              username: session?.user?.username,
+              image: session?.user?.image,
+            },
+          });
+        }}
+      />
 
       {/* Plan selector modal */}
       {planSelectorOpen && (
@@ -495,6 +528,67 @@ export default function DmConversationPage() {
                     <span className="text-[10px] font-bold uppercase bg-outside-100 text-outside-700 px-1.5 py-0.5 rounded-full dark:bg-outside-900/30 dark:text-outside-300">
                       {p.mood}
                     </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Moment selector modal */}
+      {momentSelectorOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMomentSelectorOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-[var(--os-fg)]">Partager un moment</h3>
+              <button
+                onClick={() => setMomentSelectorOpen(false)}
+                className="rounded-lg p-1 hover:bg-[var(--os-bg)] transition-colors"
+              >
+                <X className="h-4 w-4 text-[var(--os-muted)]" />
+              </button>
+            </div>
+            {momentsLoading ? (
+              <div className="flex items-center justify-center py-8 text-[var(--os-muted)]">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : momentsList.length === 0 ? (
+              <p className="text-sm text-[var(--os-muted)]">Aucun moment à partager.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto">
+                {momentsList.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      onSend("", {
+                        type: "MOMENT",
+                        momentId: m.id,
+                        metadata: { mediaUrl: m.mediaUrl, caption: m.caption },
+                      });
+                      setMomentSelectorOpen(false);
+                    }}
+                    className="group relative aspect-square rounded-xl overflow-hidden border border-[var(--os-card-border)] bg-[var(--os-card)] hover:border-outside-400 transition-all"
+                  >
+                    {m.mediaUrl ? (
+                      <img
+                        src={m.mediaUrl}
+                        alt={m.caption || "Moment"}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <ImageOff className="h-6 w-6 text-[var(--os-muted)]" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    {m.caption && (
+                      <p className="absolute bottom-0 left-0 right-0 p-1.5 text-[10px] text-white bg-gradient-to-t from-black/60 to-transparent line-clamp-1">
+                        {m.caption}
+                      </p>
+                    )}
                   </button>
                 ))}
               </div>

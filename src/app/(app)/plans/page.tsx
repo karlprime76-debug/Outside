@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { PlanCard } from "@/components/plan-card";
@@ -11,7 +11,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, MapPin, Sparkles, List, Calendar } from "lucide-react";
+import { useClickOutside } from "@/hooks/use-click-outside";
+import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, MapPin, Sparkles, List, Calendar, ChevronDown } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
@@ -62,6 +63,9 @@ export default function PlansPage() {
   const [budget, setBudget] = useState("");
   const [planCategory, setPlanCategory] = useState("");
   const [isFree, setIsFree] = useState("");
+  const [priceOpen, setPriceOpen] = useState(false);
+  const priceRef = useRef<HTMLDivElement>(null);
+  useClickOutside(priceRef, () => setPriceOpen(false), priceOpen);
   const [nearMe, setNearMe] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -218,15 +222,36 @@ export default function PlansPage() {
           <option value="">Catégorie</option>
           {PLAN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
-        <select
-          value={isFree}
-          onChange={(e) => setIsFree(e.target.value)}
-          className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
-        >
-          <option value="">Prix</option>
-          <option value="true">Gratuit</option>
-          <option value="false">Payant</option>
-        </select>
+        <div ref={priceRef} className="relative">
+          <button
+            onClick={() => setPriceOpen((o) => !o)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors"
+          >
+            {isFree === "true" ? "Gratuit" : isFree === "false" ? "Payant" : "Prix"}
+            <ChevronDown className={`h-3 w-3 transition-transform ${priceOpen ? "rotate-180" : ""}`} />
+          </button>
+          {priceOpen && (
+            <div className="absolute top-full left-0 mt-1 z-50 min-w-[140px] rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-1 shadow-xl">
+              {[
+                { value: "", label: "Tous" },
+                { value: "true", label: "Gratuit" },
+                { value: "false", label: "Payant" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => { setIsFree(opt.value); setPriceOpen(false); }}
+                  className={`w-full text-left rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                    isFree === opt.value
+                      ? "bg-outside-50 text-outside-700"
+                      : "text-[var(--os-fg)] hover:bg-[var(--os-card-border)]"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button
           onClick={() => setNearMe(nearMe === "true" ? "" : "true")}
           className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold ${
