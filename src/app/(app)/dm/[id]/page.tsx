@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Loader2, MapPin, Calendar, X } from "lucide-react";
+import { Loader2, MapPin, Calendar, X, RefreshCw } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useHaptic } from "@/hooks/use-haptic";
 import { DmConversationHeader } from "@/components/dm/dm-conversation-header";
 import { DmMessageBubble, type DmMessage } from "@/components/dm/dm-message-bubble";
 import { DmDateSeparator } from "@/components/dm/dm-date-separator";
@@ -50,6 +52,7 @@ export default function DmConversationPage() {
   }>>([]);
   const [plansLoading, setPlansLoading] = useState(false);
 
+  const haptic = useHaptic();
   const listRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
   const prevMessagesLen = useRef(0);
@@ -317,6 +320,21 @@ export default function DmConversationPage() {
     } catch (e) { console.error("[REACT_MSG]", e); }
   }
 
+  const handleRefresh = useCallback(async () => {
+    haptic.medium();
+    const data = await fetchMessages().catch(() => null);
+    if (data) {
+      setMessages(data.messages);
+      setNextCursor(data.nextCursor);
+      fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch(() => {});
+    }
+  }, [fetchMessages, id]);
+
+  const { containerRef: pullRefreshRef, isPulling, pullDistance, isRefreshing, progress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    enabled: !loading,
+  });
+
   // Build render items with separators
   const renderItems = useMemo(() => {
     const items: Array<
@@ -348,7 +366,26 @@ export default function DmConversationPage() {
       />
 
       {/* Messages */}
-      <div ref={listRef} className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2">
+      <div
+        ref={(el) => {
+          (listRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+          (pullRefreshRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        }}
+        className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 relative"
+      >
+        {/* Pull to refresh indicator */}
+        <div
+          className="absolute top-0 left-0 right-0 flex items-center justify-center pointer-events-none z-50"
+          style={{
+            transform: `translateY(${isPulling ? Math.min(pullDistance, 80) : -80}px)`,
+            opacity: progress,
+          }}
+        >
+          <RefreshCw
+            className={`h-6 w-6 text-outside-500 transition-transform ${isRefreshing ? "animate-spin" : ""}`}
+            style={{ transform: isRefreshing ? "none" : `rotate(${progress * 360}deg)` }}
+          />
+        </div>
         {loading ? (
           <div className="flex items-center justify-center py-12 text-[var(--os-muted)]">
             <Loader2 className="h-5 w-5 animate-spin" />

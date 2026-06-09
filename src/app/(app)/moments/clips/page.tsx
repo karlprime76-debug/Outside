@@ -182,6 +182,12 @@ export default function ClipsPage() {
     const clip = clips[index];
     if (!clip) return;
 
+    // Track impression on first play
+    if (!sentThresholdsRef.current[index]) {
+      sentThresholdsRef.current[index] = new Set();
+      trackEvent(clip.id, "IMPRESSION");
+    }
+
     if (startTimeRef.current[index] === null) {
       startTimeRef.current[index] = Date.now();
     }
@@ -434,7 +440,12 @@ export default function ClipsPage() {
         </button>
         <p className="text-sm font-bold text-white drop-shadow-md">Clips</p>
         <button
-          onClick={() => setMuted((m) => !m)}
+          onClick={() => {
+            const newMuted = !muted;
+            setMuted(newMuted);
+            const clip = clips[activeIndex];
+            if (clip) trackEvent(clip.id, "VIEW", { source: newMuted ? "sound_off" : "sound_on" });
+          }}
           className="rounded-full bg-black/40 p-2.5 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
           aria-label={muted ? "Activer le son" : "Couper le son"}
         >

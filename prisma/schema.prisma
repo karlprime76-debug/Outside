@@ -473,6 +473,10 @@ model User {
   acceptedReferral  ReferralInvite?   @relation("ReferralAccepted")
   placeWishlist     PlaceWishlist[]
 
+  lastActiveDate    DateTime?
+  currentStreak     Int       @default(0)
+  longestStreak     Int       @default(0)
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

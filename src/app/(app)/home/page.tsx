@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { PlanCard } from "@/components/plan-card";
@@ -29,9 +29,12 @@ import {
   CalendarDays,
   X,
   Compass,
+  RefreshCw,
 } from "lucide-react";
 import { AvailabilitySheet } from "@/components/availability/availability-sheet";
 import { useMomentPolling } from "@/hooks/use-moment-polling";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useHaptic } from "@/hooks/use-haptic";
 import { AccountSuggestions } from "@/components/users/account-suggestions";
 import { DailyChallenges } from "@/components/challenges/daily-challenges";
 import { CityMissions } from "@/components/missions/city-missions";
@@ -86,6 +89,7 @@ export default function HomePage() {
   const [moments, setMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null } }[]>([]);
   const [loadingMoments, setLoadingMoments] = useState(true);
   useMomentPolling({ scope: "for-you", media: "all", enabled: !loadingMoments });
+  const haptic = useHaptic();
   const [trendingMoments, setTrendingMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null }; badge: string | null }[]>([]);
   const [loadingTrending, setLoadingTrending] = useState(true);
 
@@ -187,8 +191,48 @@ export default function HomePage() {
     ? plans.filter((p) => preferredMoods.includes(p.mood)).slice(0, 3)
     : plans.slice(0, 3);
 
+  const handleRefresh = useCallback(async () => {
+    haptic.medium();
+    const fetches = [
+      fetch("/api/plans?limit=6").then((r) => r.json()).then((data) => setPlans(data.plans?.slice(0, 6) || [])).catch(() => {}),
+      fetch("/api/places?limit=6").then((r) => r.json()).then((data) => setPlaces(data.places?.slice(0, 6) || [])).catch(() => {}),
+      fetch("/api/lives?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setLives(data?.lives?.slice(0, 3) || [])).catch(() => {}),
+      fetch("/api/events?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setEvents(data?.events?.slice(0, 3) || [])).catch(() => {}),
+      fetch("/api/moments?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setMoments(data?.moments?.slice(0, 3) || [])).catch(() => {}),
+      fetch("/api/availability?mine=1").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.availability) setMyAvailability(data.availability); }).catch(() => {}),
+      fetch("/api/outside-status").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.status) setOutsideStatus(data.status); }).catch(() => {}),
+    ];
+    if (activeCity?.name) {
+      fetches.push(
+        fetch(`/api/moments/trending?city=${encodeURIComponent(activeCity.name)}&limit=5`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => setTrendingMoments(data?.moments || []))
+          .catch(() => {})
+      );
+    }
+    await Promise.allSettled(fetches);
+  }, [activeCity]);
+
+  const { containerRef: pullRefreshRef, isPulling, pullDistance, isRefreshing, progress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    enabled: true,
+  });
+
   return (
-    <>
+    <div ref={pullRefreshRef as React.Ref<HTMLDivElement>} className="h-full overflow-y-auto scrollbar-hide relative">
+      {/* Pull to refresh indicator */}
+      <div
+        className="absolute top-0 left-0 right-0 flex items-center justify-center pointer-events-none z-50"
+        style={{
+          transform: `translateY(${isPulling ? Math.min(pullDistance, 80) : -80}px)`,
+          opacity: progress,
+        }}
+      >
+        <RefreshCw
+          className={`h-6 w-6 text-outside-500 transition-transform ${isRefreshing ? "animate-spin" : ""}`}
+          style={{ transform: isRefreshing ? "none" : `rotate(${progress * 360}deg)` }}
+        />
+      </div>
       <HomeHeader activeCity={activeCity} />
       <AnimatedPage className="space-y-8 p-4 max-w-5xl mx-auto pb-24 md:pb-4">
       {/* Onboarding social banner (UI-only, safe) */}
@@ -603,6 +647,6 @@ export default function HomePage() {
         </Link>
       </section>
       </AnimatedPage>
-    </>
+    </div>
   );
 }

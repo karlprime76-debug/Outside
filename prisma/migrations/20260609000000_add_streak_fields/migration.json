@@ -1,0 +1,9 @@
+{
+  "version": "6.6.0",
+  "steps": [
+    {
+      "tag": "CreateMigration",
+      "sql": "ALTER TABLE \"User\" ADD COLUMN IF NOT EXISTS \"lastActiveDate\" TIMESTAMPTZ;\nALTER TABLE \"User\" ADD COLUMN IF NOT EXISTS \"currentStreak\" INTEGER NOT NULL DEFAULT 0;\nALTER TABLE \"User\" ADD COLUMN IF NOT EXISTS \"longestStreak\" INTEGER NOT NULL DEFAULT 0;"
+    }
+  ]
+}

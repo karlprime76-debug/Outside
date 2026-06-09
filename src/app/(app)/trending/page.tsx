@@ -1,13 +1,22 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Flame } from "lucide-react";
+import { Flame, Volume2, VolumeX, Play } from "lucide-react";
 import { OutsidePage } from "@/components/ui/outside-page";
 import { OutsideHeader } from "@/components/ui/outside-header";
 
 type TrendingScope = "city" | "country" | "global";
+
+interface TrendingAuthor {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+  role: string;
+  isVerified: boolean;
+}
 
 interface TrendingMoment {
   id: string;
@@ -17,18 +26,7 @@ interface TrendingMoment {
   city: string | null;
   countryCode: string | null;
   createdAt: string;
-  author: {
-    id: string;
-    name: string | null;
-    username: string | null;
-    image: string | null;
-    role: string;
-    isVerified: boolean;
-  };
-  _count: {
-    likes: number;
-    comments: number;
-  };
+  author: TrendingAuthor;
   badge: string | null;
   trendingScore: number;
 }
@@ -39,6 +37,132 @@ const SCOPE_LABELS: Record<TrendingScope, string> = {
   global: "Global",
 };
 
+function TrendingCard({ moment }: { moment: TrendingMoment }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [hover, setHover] = useState(false);
+
+  const togglePlay = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    if (playing) {
+      video.pause();
+    } else {
+      video.muted = muted;
+      video.play().catch(() => {});
+    }
+    setPlaying(!playing);
+  }, [playing, muted]);
+
+  const toggleMute = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !muted;
+    setMuted(!muted);
+  }, [muted]);
+
+  const isVideo = moment.type === "VIDEO";
+
+  return (
+    <Link
+      href={`/u/${moment.author.username || moment.author.id}`}
+      className="group relative rounded-2xl overflow-hidden bg-black aspect-[3/4] block"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {isVideo ? (
+        <>
+          <video
+            ref={videoRef}
+            src={moment.mediaUrl}
+            className="h-full w-full object-cover"
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            onClick={togglePlay}
+          />
+          {/* Play/pause overlay */}
+          {hover && !playing && (
+            <div
+              className="absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer"
+              onClick={togglePlay}
+            >
+              <Play className="h-10 w-10 text-white/80 drop-shadow-lg" />
+            </div>
+          )}
+          {/* Mute toggle on hover */}
+          {hover && playing && (
+            <button
+              onClick={toggleMute}
+              className="absolute bottom-14 right-2 p-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white/80 hover:text-white transition-colors"
+            >
+              {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+            </button>
+          )}
+        </>
+      ) : (
+        <img
+          src={moment.mediaUrl}
+          alt={moment.caption || "Moment"}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+      )}
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+
+      {/* Badge */}
+      {moment.badge && (
+        <div className="absolute top-2 left-2">
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              moment.badge === "Tendance"
+                ? "bg-orange-500/90 text-white"
+                : moment.badge === "Monte vite"
+                ? "bg-green-500/90 text-white"
+                : "bg-blue-500/90 text-white"
+            }`}
+          >
+            {moment.badge}
+          </span>
+        </div>
+      )}
+
+      {/* Location */}
+      <div className="absolute top-2 right-2">
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/50 text-white backdrop-blur-sm">
+          {moment.city || moment.countryCode || "Global"}
+        </span>
+      </div>
+
+      {/* Author */}
+      <div
+        className="absolute bottom-0 left-0 right-0 p-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Link
+          href={`/u/${moment.author.username || moment.author.id}`}
+          className="text-xs font-bold text-white truncate hover:underline block"
+        >
+          {moment.author.name || "Anonyme"}
+        </Link>
+      </div>
+
+      {/* Score */}
+      <div className="absolute bottom-1 right-2">
+        <span className="text-[9px] font-semibold text-white/50">
+          {moment.trendingScore?.toFixed?.(0) ?? moment.trendingScore}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 export default function TrendingPage() {
   const { data: session } = useSession();
   const [scope, setScope] = useState<TrendingScope>("city");
@@ -46,11 +170,10 @@ export default function TrendingPage() {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{
     activeCity?: { name: string };
-    preferredMoods?: string[];
   } | null>(null);
 
   const activeCity = userProfile?.activeCity;
-  const activeCountry = (session?.user?.country as string) || "";
+  const activeCountry = (session?.user as Record<string, string>)?.country || "";
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -73,13 +196,11 @@ export default function TrendingPage() {
       } else if (scope === "country" && activeCountry) {
         params.set("countryCode", activeCountry);
       }
-      // Global doesn't need location params
 
       const res = await fetch(`/api/moments/trending?${params.toString()}`);
       const data = await res.json();
       setMoments(data.moments || []);
-    } catch (error) {
-      console.error("Error fetching trending moments:", error);
+    } catch {
       setMoments([]);
     } finally {
       setLoading(false);
@@ -97,7 +218,6 @@ export default function TrendingPage() {
         subtitle="Les contenus les plus populaires"
       />
 
-      {/* Tabs */}
       <div className="sticky top-0 z-30 bg-[var(--os-bg)]/80 backdrop-blur-md border-b border-[var(--os-card-border)]">
         <div className="flex items-center justify-center gap-1 px-3 py-2 overflow-x-auto scrollbar-hide">
           {(Object.keys(SCOPE_LABELS) as TrendingScope[]).map((s) => {
@@ -124,11 +244,10 @@ export default function TrendingPage() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto scrollbar-hide p-4">
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] rounded-2xl bg-[var(--os-bg)] shimmer" />
             ))}
           </div>
@@ -152,70 +271,7 @@ export default function TrendingPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {moments.map((moment) => (
-              <Link
-                key={moment.id}
-                href="/moments"
-                className="group relative rounded-2xl overflow-hidden bg-black aspect-[3/4] block"
-              >
-                {moment.type === "VIDEO" ? (
-                  <video
-                    src={moment.mediaUrl}
-                    className="h-full w-full object-cover"
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                  />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={moment.mediaUrl}
-                    alt={moment.caption || "Moment"}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                
-                {/* Badge */}
-                {moment.badge && (
-                  <div className="absolute top-2 left-2">
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        moment.badge === "Tendance"
-                          ? "bg-orange-500/90 text-white"
-                          : moment.badge === "Monte vite"
-                          ? "bg-green-500/90 text-white"
-                          : "bg-blue-500/90 text-white"
-                      }`}
-                    >
-                      {moment.badge}
-                    </span>
-                  </div>
-                )}
-
-                {/* Location */}
-                <div className="absolute top-2 right-2">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/50 text-white backdrop-blur-sm">
-                    {moment.city || moment.countryCode || "Global"}
-                  </span>
-                </div>
-
-                {/* Author */}
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <p className="text-xs font-bold text-white truncate">
-                    {moment.author.name || "Anonyme"}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] text-white/80">
-                      {moment._count.likes} J&apos;aime
-                    </span>
-                    <span className="text-[10px] text-white/80">
-                      {moment._count.comments} commentaires
-                    </span>
-                  </div>
-                </div>
-              </Link>
+              <TrendingCard key={moment.id} moment={moment} />
             ))}
           </div>
         )}

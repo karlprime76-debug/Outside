@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
@@ -22,22 +23,23 @@ import {
   Compass,
 } from "lucide-react";
 
-interface Notification {
+interface NotificationItem {
   id: string;
   type: string;
   title: string;
   body: string | null;
   createdAt: string;
   isRead: boolean;
-  link?: string;
-  actorName?: string | null;
-  actorImage?: string | null;
-  data?: Record<string, unknown>;
+  link: string | null;
+  actorName: string | null;
+  actorImage: string | null;
+  data: Record<string, string> | null;
 }
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const { addToast } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchNotifications = useCallback(() => {
@@ -137,7 +139,7 @@ export default function NotificationsPage() {
     }
   }
 
-  function getLink(n: Notification): string {
+  function getLink(n: NotificationItem): string {
     if (n.link) return n.link;
     if (n.data?.planId) return `/plans/${n.data.planId}`;
     if (n.data?.liveId) return `/live/${n.data.liveId}`;
@@ -198,7 +200,7 @@ export default function NotificationsPage() {
                   if (!n.isRead) {
                     e.preventDefault();
                     markOneRead(n.id).then(() => {
-                      window.location.href = href;
+                      router.push(href);
                     });
                   }
                 }}
