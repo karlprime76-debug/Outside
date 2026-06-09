@@ -75,7 +75,7 @@ export default function WishlistPage() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {wishlist.map((item) => (
-            <div key={item.id} className="os-card p-5 shadow-card relative">
+            <div key={item.id} className="os-card p-5 shadow-card relative card-hover">
               <div className="flex gap-2 mb-3">
                 <Badge variant="orange">{item.place.category}</Badge>
                 {item.place.isPartner && <Badge variant="pink">Partenaire</Badge>}
@@ -108,7 +108,7 @@ export default function WishlistPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {friendWishlist.map((item) => (
-              <div key={item.id} className="os-card p-5 shadow-card">
+              <div key={item.id} className="os-card p-5 shadow-card card-hover">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-6 w-6 rounded-full bg-[var(--os-card)] overflow-hidden">
                     {item.user.image && (

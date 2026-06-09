@@ -9,7 +9,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, ArrowLeft, UserPlus, UserMinus, CheckCircle, Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { MapPin, ArrowLeft, UserPlus, UserMinus, CheckCircle, Calendar, ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface UserProfile {
   id: string;
@@ -184,8 +185,10 @@ export default function UserPage() {
       )}
 
       {/* Bio */}
-      {user.bio && (
+      {user.bio ? (
         <p className="text-sm text-[var(--os-fg)] leading-relaxed">{user.bio}</p>
+      ) : (
+        <EmptyState icon={FileText} title="Pas de bio" description="Cet utilisateur n'a pas encore renseigné de bio." />
       )}
 
       {/* Actions */}

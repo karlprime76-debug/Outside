@@ -128,12 +128,12 @@ export default function NewPlanPage() {
 
       <form onSubmit={onSubmit} className="space-y-5">
         <InputField name="title" label="Titre" placeholder={t.newPlan.titlePlaceholder} required />
-        <div>
+        <div className="animate-fade-in animate-stagger-1">
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Description</label>
           <textarea name="description" placeholder={t.newPlan.descPlaceholder} rows={3} className={inputBase + " resize-none"} />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="animate-stagger-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Catégorie</label>
             <select name="planCategory" required className={inputBase}>
@@ -198,7 +198,7 @@ export default function NewPlanPage() {
           </div>
         </div>
 
-        <div>
+        <div className="animate-stagger-3">
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">{t.newPlan.mood}</label>
           <div className="flex flex-wrap gap-2">
             {MOODS.map((m) => (
@@ -217,7 +217,7 @@ export default function NewPlanPage() {
           <input type="hidden" name="mood" value={selectedMood} required />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="animate-stagger-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Ville</label>
             <CitySelect name="cityId" required onChange={(_value, countryCode) => {
@@ -228,7 +228,7 @@ export default function NewPlanPage() {
           <InputField name="neighborhood" label={t.auth.neighborhood} placeholder="Ton quartier" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="animate-stagger-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Début</label>
             <input name="startDate" type="datetime-local" required className={inputBase} />
@@ -239,7 +239,7 @@ export default function NewPlanPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="animate-stagger-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Participants max</label>
             <input name="maxParticipants" type="number" min={2} max={100} defaultValue={10} required className={inputBase} />
@@ -252,7 +252,7 @@ export default function NewPlanPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="animate-stagger-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Sécurité</label>
             <select name="safetyLevel" required className={inputBase}>
@@ -265,7 +265,7 @@ export default function NewPlanPage() {
           </label>
         </div>
 
-        <div>
+        <div className="animate-stagger-8">
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Règles</label>
           <textarea name="rules" placeholder={t.newPlan.rulesPlaceholder} rows={2} className={inputBase + " resize-none"} />
         </div>

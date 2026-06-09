@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { BarChart, Plus, X, CheckCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PollOption {
   id: string;
@@ -98,7 +99,24 @@ export default function PollsSection({ planId, isParticipant, isCreator }: { pla
     return options.reduce((sum, o) => sum + o._count.votes, 0);
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-[var(--os-card-border)] px-4 sm:px-5 py-3">
+          <Skeleton className="h-4 w-4 rounded" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+        <div className="p-4 space-y-3">
+          {[1,2,3].map((i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-8 w-full rounded-lg" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)]  overflow-hidden">

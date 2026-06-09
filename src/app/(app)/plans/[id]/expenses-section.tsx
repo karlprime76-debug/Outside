@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Avatar } from "@/components/ui/avatar";
 import { Wallet, Plus, Check, X, Trash2, ChevronRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ExpenseShare {
   id: string;
@@ -192,7 +193,12 @@ export function ExpensesSection({
         title="Dépenses"
       >
         {loading ? (
-          <p className="text-sm text-[var(--os-muted)]">Chargement...</p>
+          <div className="space-y-3 p-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-16 w-full rounded-xl" />
+            <Skeleton className="h-16 w-full rounded-xl" />
+            <Skeleton className="h-16 w-full rounded-xl" />
+          </div>
         ) : (
           <div className="space-y-4">
             {/* Balances */}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Repeat, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const RECURRENCE_LABELS: Record<string, string> = {
   DAILY: "Tous les jours",
@@ -48,7 +49,18 @@ export function RecurringSection({
       .catch(() => setLoading(false));
   }, [planId]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-4 rounded" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
+    );
+  }
   if (!recurrence && childPlans.length === 0 && !parentPlan) return null;
 
   const upcoming = childPlans.filter((p) => p.status === "ACTIVE");

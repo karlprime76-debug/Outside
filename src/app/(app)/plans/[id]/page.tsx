@@ -568,7 +568,7 @@ export default function PlanDetailPage() {
       {/* Participants */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-[var(--os-fg)]">{t.planDetail.participantsTitle} ({plan._count.going} y vont · {plan._count.maybe} intéressés)</h3>
+          <h3 className="text-lg font-bold gradient-text">{t.planDetail.participantsTitle} ({plan._count.going} y vont · {plan._count.maybe} intéressés)</h3>
           {plan.status === "COMPLETED" && isParticipant && (
             <span className="text-xs text-[var(--os-muted)]">Clique sur un participant pour lui donner un retour</span>
           )}
@@ -623,7 +623,7 @@ export default function PlanDetailPage() {
       <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] overflow-hidden">
         <div className="flex items-center gap-2 border-b border-[var(--os-card-border)] px-4 sm:px-5 py-3">
           <MessageSquare className="h-4 w-4 text-outside-500" />
-          <h3 className="text-sm font-bold text-[var(--os-fg)]">Discussion du plan</h3>
+          <h3 className="text-sm font-bold gradient-text">Discussion du plan</h3>
           {(plan.status === "COMPLETED" || plan.status === "CANCELLED") && (
             <span className="ml-auto text-[10px] font-bold uppercase text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
               Archivée
@@ -936,7 +936,7 @@ export default function PlanDetailPage() {
                   }
                 }}
                 disabled={safetyLoading}
-                className="flex w-full items-center gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-3 text-left hover:bg-[var(--os-bg)] transition-colors"
+                className="flex w-full items-center gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-3 text-left hover:bg-[var(--os-bg)] transition-colors pressable"
               >
                 <Avatar src={c.trustedUser.image} name={c.trustedUser.name} size="md" />
                 <div className="flex-1">

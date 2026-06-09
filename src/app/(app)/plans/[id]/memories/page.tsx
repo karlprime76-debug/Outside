@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Users, MessageSquare, Wallet, MapPin, Star, Trophy, Camera, CheckCircle2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface MemoriesData {
   plan: {
@@ -71,7 +72,13 @@ export default function MemoriesPage() {
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="p-4 max-w-3xl mx-auto">
+        <EmptyState icon={Camera} title="Aucun souvenir" description="Ce plan n'a pas encore de souvenirs à afficher." />
+      </div>
+    );
+  }
 
   const { plan, participants, checkedInCount, participantCount, messageCount, recentMessages, polls, expenses, highlight } = data;
   const date = new Date(plan.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });

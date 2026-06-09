@@ -111,7 +111,7 @@ export default function PlacesPage() {
             <Link
               key={place.id}
               href={`/places/${place.id}`}
-              className="group os-card p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
+              className="group os-card p-5 shadow-card card-hover"
             >
               <div className="flex gap-2 mb-3">
                 <Badge variant="orange">{place.category}</Badge>

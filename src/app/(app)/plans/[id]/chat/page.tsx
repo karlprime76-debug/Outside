@@ -107,7 +107,7 @@ export default function ChatPage() {
   return (
     <AnimatedPage className="flex flex-col h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-3.5rem)]">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-[var(--os-card-border)] bg-[var(--os-card)]/80 px-4 py-3 backdrop-blur">
+      <div className="flex items-center gap-3 border-b border-[var(--os-glass-border)] bg-[var(--os-glass)] px-4 py-3 backdrop-blur">
         <Link
           href={`/plans/${id}`}
           className="rounded-lg p-1.5 hover:bg-[var(--os-bg)] transition-colors"

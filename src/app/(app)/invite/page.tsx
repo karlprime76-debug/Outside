@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Copy, Share2, MessageCircle, Users, CheckCircle, Sparkles, ArrowRight } from "lucide-react";
+import { AnimatedPage, StaggerContainer } from "@/components/ui/animated-page";
 import { OutsidePage } from "@/components/ui/outside-page";
 import { OutsideHeader } from "@/components/ui/outside-header";
 import { Avatar } from "@/components/ui/avatar";
@@ -124,15 +125,15 @@ export default function InvitePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="text-center p-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)]">
+          <div className="text-center p-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] animate-fade-in animate-stagger-1">
             <div className="text-2xl font-black text-outside-500">{data.stats.total}</div>
             <div className="text-xs text-[var(--os-muted)]">Invités</div>
           </div>
-          <div className="text-center p-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)]">
+          <div className="text-center p-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] animate-fade-in animate-stagger-2">
             <div className="text-2xl font-black text-green-500">{data.stats.accepted}</div>
             <div className="text-xs text-[var(--os-muted)]">Acceptés</div>
           </div>
-          <div className="text-center p-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)]">
+          <div className="text-center p-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] animate-fade-in animate-stagger-3">
             <div className="text-2xl font-black text-amber-500">{data.stats.pending}</div>
             <div className="text-xs text-[var(--os-muted)]">En attente</div>
           </div>
