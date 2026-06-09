@@ -84,7 +84,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Demande d'ami envoyée.", code: "REQUEST_SENT" });
   } catch (error) {
-    console.error("[POST /api/friends/request] Error:", error);
+    console.error("[FRIEND_REQUEST]", error);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

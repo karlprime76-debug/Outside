@@ -129,7 +129,7 @@ export default function DmInboxPage() {
         const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`);
         const data = await res.json();
         setSearchResults(data.users || []);
-      } catch { setSearchResults([]); }
+      } catch (e) { console.error("[SEARCH_USERS]", e); setSearchResults([]); }
       setSearching(false);
     }, 300);
     return () => clearTimeout(t);
@@ -146,7 +146,7 @@ export default function DmInboxPage() {
       if (res.ok && data.conversationId) {
         router.push(`/dm/${data.conversationId}`);
       }
-    } catch { /* noop */ }
+    } catch (e) { console.error("[START_CONVERSATION]", e); }
   };
 
   const filtered = items.filter((c) => {

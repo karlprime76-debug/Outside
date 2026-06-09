@@ -9,7 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, ArrowLeft, UserPlus, UserMinus, CheckCircle, Calendar } from "lucide-react";
+import { MapPin, ArrowLeft, UserPlus, UserMinus, CheckCircle, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 
 interface UserProfile {
   id: string;
@@ -35,6 +35,8 @@ export default function UserPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [reliability, setReliability] = useState<{ level: string; outsideScore: number; presenceScore: number; respectScore: number; plansJoined: number; plansCreated: number; positiveReviews: number } | null>(null);
+  const [showReliability, setShowReliability] = useState(false);
 
   const isMe = session?.user?.id === id;
 
@@ -46,6 +48,11 @@ export default function UserPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    fetch(`/api/users/${id}/reliability`)
+      .then((r) => r.json())
+      .then((data) => setReliability(data.trustProfile || null))
+      .catch(() => {});
   }, [id]);
 
   async function toggleFriend() {
@@ -123,6 +130,58 @@ export default function UserPage() {
           </p>
         </div>
       </div>
+
+      {/* Reliability */}
+      {reliability && (
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-surface-border dark:bg-surface-card">
+          <button
+            onClick={() => setShowReliability(!showReliability)}
+            className="flex w-full items-center justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-black uppercase tracking-wider ${
+                reliability.level === "Nouveau" ? "text-zinc-400" :
+                reliability.level === "Confirmé" ? "text-blue-500" :
+                reliability.level === "Fiable" ? "text-emerald-500" :
+                "text-purple-500"
+              }`}>
+                ●
+              </span>
+              <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                {reliability.level}
+              </span>
+              <span className="text-xs text-zinc-400">
+                Score: {Math.round(reliability.outsideScore)}
+              </span>
+            </div>
+            {showReliability ? <ChevronUp className="h-4 w-4 text-zinc-400" /> : <ChevronDown className="h-4 w-4 text-zinc-400" />}
+          </button>
+          {showReliability && (
+            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-xs text-zinc-400">Présence</p>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{Math.round(reliability.presenceScore)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-zinc-400">Respect</p>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{Math.round(reliability.respectScore)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-zinc-400">Plans créés</p>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{reliability.plansCreated}</p>
+              </div>
+              <div>
+                <p className="text-xs text-zinc-400">Plans rejoints</p>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{reliability.plansJoined}</p>
+              </div>
+              <div>
+                <p className="text-xs text-zinc-400">Avis positifs</p>
+                <p className="font-semibold text-zinc-900 dark:text-zinc-100">{reliability.positiveReviews}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Bio */}
       {user.bio && (

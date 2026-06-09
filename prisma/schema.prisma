@@ -466,6 +466,8 @@ model User {
   directMessageReactions  DirectMessageReaction[]
   savedPlans        SavedPlan[]
   planReminders     PlanReminder[]
+  expensesPaid      PlanExpense[]
+  expenseShares     PlanExpenseShare[]
   proVenues         ProVenue[]
   safetyContacts    SafetyContact[] @relation("UserSafetyContacts")
   trustedByContacts SafetyContact[] @relation("TrustedByContacts")
@@ -476,6 +478,7 @@ model User {
   onboardingProgress OnboardingProgress?
   referralInvites   ReferralInvite[] @relation("ReferralInviter")
   acceptedReferral  ReferralInvite?   @relation("ReferralAccepted")
+  placeWishlist     PlaceWishlist[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -656,6 +659,7 @@ model Place {
   popularityScore Int           @default(0)
 
   plans           Plan[]
+  wishlistedBy    PlaceWishlist[]
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -663,6 +667,21 @@ model Place {
   @@index([cityId])
   @@index([category])
   @@index([isVisible])
+}
+
+model PlaceWishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  placeId   String
+  note      String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, placeId])
+  @@index([userId])
+  @@index([placeId])
 }
 
 model Plan {
@@ -700,6 +719,12 @@ model Plan {
   isExpress          Boolean         @default(false)
   expiresAt          DateTime?
 
+  recurrence         String?
+  recurrenceEndDate  DateTime?
+  parentPlanId       String?
+  parentPlan         Plan?           @relation("RecurringPlans", fields: [parentPlanId], references: [id])
+  childPlans         Plan[]          @relation("RecurringPlans")
+
   creatorId         String
   creator           User            @relation(fields: [creatorId], references: [id])
   participants      PlanParticipant[]
@@ -708,6 +733,8 @@ model Plan {
   reports           Report[]
   savedPlans        SavedPlan[]
   reminders         PlanReminder[]
+  polls             PlanPoll[]
+  expenses          PlanExpense[]
   reviews           PlanParticipantReview[]
 
   createdAt         DateTime        @default(now())
@@ -754,14 +781,16 @@ model SavedPlan {
 }
 
 model PlanParticipant {
-  id        String            @id @default(cuid())
-  planId    String
-  plan      Plan              @relation(fields: [planId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status      ParticipantStatus   @default(PENDING)
-  attendance  PlanAttendanceStatus @default(GOING)
-  joinedAt    DateTime            @default(now())
+  id              String            @id @default(cuid())
+  planId          String
+  plan            Plan              @relation(fields: [planId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status            ParticipantStatus   @default(PENDING)
+  attendance        PlanAttendanceStatus @default(GOING)
+  joinedAt          DateTime            @default(now())
+  checkedInAt       DateTime?
+  checkinPhotoUrl   String?
 
   @@unique([planId, userId])
   @@index([planId])
@@ -793,6 +822,44 @@ model PlanParticipantReview {
   @@index([reviewerId])
   @@index([reviewedUserId])
   @@unique([planId, reviewerId, reviewedUserId])
+}
+
+model PlanPoll {
+  id        String   @id @default(cuid())
+  planId    String
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  question  String
+  multiple  Boolean  @default(false)
+  endsAt    DateTime?
+  isClosed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  options   PlanPollOption[]
+
+  @@index([planId])
+}
+
+model PlanPollOption {
+  id        String      @id @default(cuid())
+  pollId    String
+  poll      PlanPoll    @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label     String
+  createdAt DateTime    @default(now())
+
+  votes     PlanPollVote[]
+
+  @@index([pollId])
+}
+
+model PlanPollVote {
+  id        String   @id @default(cuid())
+  optionId  String
+  option    PlanPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([optionId, userId])
+  @@index([optionId])
 }
 
 model PlanReminder {
@@ -1634,4 +1701,33 @@ model ReferralInvite {
 
   @@index([inviterId])
   @@index([code])
+}
+
+model PlanExpense {
+  id          String         @id @default(cuid())
+  planId      String
+  plan        Plan           @relation(fields: [planId], references: [id], onDelete: Cascade)
+  paidById    String
+  paidBy      User           @relation(fields: [paidById], references: [id])
+  title       String
+  amount      Decimal
+  currency    String         @default("XOF")
+  createdAt   DateTime       @default(now())
+
+  shares      PlanExpenseShare[]
+
+  @@index([planId])
+}
+
+model PlanExpenseShare {
+  id         String       @id @default(cuid())
+  expenseId  String
+  expense    PlanExpense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User         @relation(fields: [userId], references: [id])
+  amount     Decimal
+  settled    Boolean      @default(false)
+
+  @@unique([expenseId, userId])
+  @@index([expenseId])
 }

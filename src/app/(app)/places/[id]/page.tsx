@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Badge } from "@/components/ui/badge";
 import { ReportButton } from "@/components/report-button";
+import { WishlistButton } from "@/components/wishlist-button";
 import { MapPin, Clock, Shield, ArrowLeft, Star } from "lucide-react";
 
 interface PlaceDetail {
@@ -50,7 +51,10 @@ export default function PlaceDetailPage() {
           <Badge variant="orange">{place.category}</Badge>
           {place.isPartner && <Badge variant="pink">{t.places.partner}</Badge>}
         </div>
-        <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100">{place.name}</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100">{place.name}</h1>
+          <WishlistButton placeId={place.id} />
+        </div>
         {place.description && <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{place.description}</p>}
       </div>
 

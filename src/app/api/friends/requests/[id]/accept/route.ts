@@ -64,7 +64,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
     return NextResponse.json({ message: "Vous êtes maintenant amis." });
   } catch (error) {
-    console.error("[POST /api/friends/requests/[id]/accept] Error:", error);
+    console.error("[FRIEND_ACCEPT]", error);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

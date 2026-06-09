@@ -10,7 +10,8 @@ import { InviteCircle } from "@/components/referrals/invite-circle";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, MapPin, Sparkles } from "lucide-react";
+import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, MapPin, Sparkles, List, Calendar } from "lucide-react";
+import { Tabs } from "@/components/ui/tabs";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
 import type { Plan } from "@/types/plan";
@@ -49,8 +50,11 @@ interface Invitation {
   createdAt: string;
 }
 
+type Tab = "tous" | "suggestions" | "mes-plans";
+
 export default function PlansPage() {
   const t = useDictionary();
+  const [tab, setTab] = useState<Tab>("tous");
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [mood, setMood] = useState("");
@@ -65,6 +69,10 @@ export default function PlansPage() {
   const debouncedSearch = useDebounce(search, 300);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loadingInvitations, setLoadingInvitations] = useState(true);
+  const [suggestions, setSuggestions] = useState<Plan[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [myPlansData, setMyPlansData] = useState<Plan[]>([]);
+  const [loadingMyPlans, setLoadingMyPlans] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -96,6 +104,30 @@ export default function PlansPage() {
       })
       .catch(() => setLoadingInvitations(false));
   }, []);
+
+  useEffect(() => {
+    if (tab !== "suggestions") return;
+    setLoadingSuggestions(true);
+    fetch("/api/plans/suggestions")
+      .then((r) => r.json())
+      .then((data) => {
+        setSuggestions(data.plans || []);
+        setLoadingSuggestions(false);
+      })
+      .catch(() => setLoadingSuggestions(false));
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "mes-plans") return;
+    setLoadingMyPlans(true);
+    fetch("/api/plans?myPlans=true")
+      .then((r) => r.json())
+      .then((data) => {
+        setMyPlansData(data.plans || []);
+        setLoadingMyPlans(false);
+      })
+      .catch(() => setLoadingMyPlans(false));
+  }, [tab]);
 
   const hasFilters = mood || budget || planCategory || isFree || nearMe || dateFrom || dateTo || search;
 
@@ -146,6 +178,18 @@ export default function PlansPage() {
         </div>
       </ImmersiveBackground>
 
+      <Tabs
+        tabs={[
+          { id: "tous", label: "Tous", icon: List },
+          { id: "suggestions", label: "Suggestions", icon: Sparkles },
+          { id: "mes-plans", label: "Mes plans", icon: Calendar },
+        ]}
+        active={tab}
+        onChange={(id) => setTab(id as Tab)}
+      />
+
+      {tab === "tous" && (
+      <>
       {/* Search */}
       <SearchBar
         placeholder="Rechercher un plan..."
@@ -475,6 +519,54 @@ export default function PlansPage() {
             return sections;
           })()}
         </div>
+      )}
+      </>
+      )}
+
+      {tab === "suggestions" && (
+        <>
+        {loadingSuggestions ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : suggestions.length === 0 ? (
+          <EmptyState
+            icon={Sparkles}
+            title="Aucune suggestion"
+            description="Personnalise tes préférences pour recevoir des suggestions personnalisées."
+            cta={{ label: "Modifier mes préférences", href: "/settings" }}
+          />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {suggestions.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} showJoin />
+            ))}
+          </div>
+        )}
+        </>
+      )}
+
+      {tab === "mes-plans" && (
+        <>
+        {loadingMyPlans ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : myPlansData.length === 0 ? (
+          <EmptyState
+            icon={CalendarDays}
+            title="Aucun plan créé"
+            description="Tu n'as pas encore créé de plan."
+            cta={{ label: "Créer un plan", href: "/plans/new" }}
+          />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {myPlansData.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} showJoin />
+            ))}
+          </div>
+        )}
+        </>
       )}
     </AnimatedPage>
   );

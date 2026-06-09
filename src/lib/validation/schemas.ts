@@ -56,6 +56,8 @@ export const createPlanSchema = z.object({
   isTravelerFriendly: z.boolean().default(false),
   safetyLevel: z.nativeEnum(SafetyLevel).default(SafetyLevel.MEDIUM),
   rules: z.string().max(500).optional(),
+  recurrence: z.enum(["DAILY", "WEEKLY", "MONTHLY"]).optional(),
+  recurrenceEndDate: z.string().datetime().optional(),
 });
 
 export const updateProfileSchema = z.object({

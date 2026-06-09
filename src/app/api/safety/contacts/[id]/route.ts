@@ -3,25 +3,30 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth();
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const user = await db.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
+    }
+
+    const { id } = await params;
+
+    await db.safetyContact.deleteMany({
+      where: { id, userId: user.id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[SAFETY_CONTACT_DELETE]", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
-
-  const user = await db.user.findUnique({
-    where: { email: session.user.email },
-    select: { id: true },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
-  }
-
-  const { id } = await params;
-
-  await db.safetyContact.deleteMany({
-    where: { id, userId: user.id },
-  });
-
-  return NextResponse.json({ success: true });
 }
