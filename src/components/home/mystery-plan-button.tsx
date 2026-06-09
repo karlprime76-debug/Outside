@@ -76,7 +76,7 @@ export function MysteryPlanButton() {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4" onClick={() => setIsOpen(false)}>
           <div className="bg-white dark:bg-zinc-900 rounded-t-2xl w-full max-w-lg p-6 animate-in slide-in-from-bottom">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">

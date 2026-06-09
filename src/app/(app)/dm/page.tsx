@@ -352,8 +352,8 @@ export default function DmInboxPage() {
 
       {/* New Message Modal */}
       {showNewMessage && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
-          <div className="w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl bg-[var(--os-bg)] border border-[var(--os-card-border)] shadow-2xl max-h-[80dvh] flex flex-col">
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => { setShowNewMessage(false); setSearchUserQuery(""); setSearchResults([]); }}>
+          <div className="w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl bg-[var(--os-bg)] border border-[var(--os-card-border)] shadow-2xl max-h-[80dvh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Modal header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
               <p className="text-lg font-black text-[var(--os-fg)]">Nouveau message</p>

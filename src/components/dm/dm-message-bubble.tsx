@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download, Heart } from "lucide-react";
 import { MediaViewer } from "@/components/media/media-viewer";
+import { useClickOutside } from "@/hooks/use-click-outside";
 
 export interface DmMessage {
   id: string;
@@ -64,6 +65,8 @@ function MessageReactions({
   isMine: boolean;
 }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  useClickOutside(pickerRef, () => setShowEmojiPicker(false), showEmojiPicker);
 
   // Group reactions by emoji
   const grouped = reactions.reduce((acc, r) => {
@@ -115,7 +118,7 @@ function MessageReactions({
         </button>
       </div>
       {showEmojiPicker && (
-        <div className="flex gap-1 mt-2">
+        <div ref={pickerRef} className="flex gap-1 mt-2">
           {ALLOWED_EMOJIS.map((emoji) => (
             <button
               key={emoji}

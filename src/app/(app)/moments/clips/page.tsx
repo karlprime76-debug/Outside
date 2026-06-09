@@ -77,6 +77,22 @@ export default function ClipsPage() {
   const playCountRef = useRef<Record<number, number>>({});
   const isFetchingRef = useRef(false);
 
+  // Close menu on Escape or outside click
+  useEffect(() => {
+    if (!menuOpenId) return;
+    const handleClick = () => setMenuOpenId(null);
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpenId(null);
+    };
+    const timer = setTimeout(() => document.addEventListener("click", handleClick), 0);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [menuOpenId]);
+
   const { newMoments, hasNew, clearNew } = useMomentPolling({
     scope,
     media: "clips",
@@ -541,9 +557,10 @@ export default function ClipsPage() {
 
               <div className="relative">
                 <button
-                  onClick={() =>
-                    setMenuOpenId(menuOpenId === clip.id ? null : clip.id)
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpenId(menuOpenId === clip.id ? null : clip.id);
+                  }}
                   className="rounded-full bg-black/30 backdrop-blur-sm p-2.5 hover:bg-black/50 transition-colors"
                 >
                   <MoreHorizontal className="h-6 w-6 text-white" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Camera, ImageIcon, Mic, Plus, SendHorizontal, X, Paperclip } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { compressImage, shouldCompressImage } from "@/lib/media/compress-image";
@@ -34,7 +34,25 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLInputElement>(null);
+  const plusRef = useRef<HTMLDivElement>(null);
   const { addToast } = useToast();
+
+  // Close plus menu on outside click
+  useEffect(() => {
+    if (!showPlus) return;
+    const handleClick = (e: MouseEvent | TouchEvent) => {
+      if (plusRef.current && !plusRef.current.contains(e.target as Node)) {
+        setShowPlus(false);
+      }
+    };
+    const timer = setTimeout(() => document.addEventListener("click", handleClick), 0);
+    document.addEventListener("touchstart", handleClick);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("touchstart", handleClick);
+    };
+  }, [showPlus]);
 
   function handleSubmit() {
     const t = text.trim();
@@ -295,7 +313,7 @@ export function DmMessageComposer({ onSend, sending, conversationId, onOpenPlanS
 
       {/* Plus menu */}
       {showPlus && (
-        <div className="mt-2 grid grid-cols-3 gap-2 max-w-2xl mx-auto">
+        <div ref={plusRef} className="mt-2 grid grid-cols-3 gap-2 max-w-2xl mx-auto">
           {[
             { key: "photo", label: "Photo", icon: ImageIcon },
             { key: "camera", label: "Caméra", icon: Camera },
