@@ -127,10 +127,11 @@ async function main() {
 
   // ── Outside Tips ──
   const TIPS = [
-    { id: "default-tip-1", title: "Commence avec le Starter Pack", description: "Découvre les comptes à suivre, les lieux et les missions de ta ville", mood: "CHILL", actionLabel: "Voir le Starter Pack", actionUrl: "/cities/{city}/starter-pack", active: true },
-    { id: "default-tip-2", title: "Utilise l'assistant ce soir", description: "Trouve quoi faire ce soir selon ton mood et budget", mood: "FOOD", actionLabel: "Assistant ce soir", actionUrl: "/tonight-assistant", active: true },
-    { id: "default-tip-3", title: "Essaie le Plan mystère", description: "Laisse OUTSIDE te proposer une sortie surprise", mood: "PARTY", actionLabel: "Plan mystère", actionUrl: "/plans/mystery", active: true },
-    { id: "default-tip-4", title: "Active ton statut", description: "Montre aux autres que tu es disponible pour sortir", mood: null, actionLabel: "Activer", actionUrl: "/available", active: true },
+    { id: "default-tip-1", title: "Trouve un plan gratuit ce soir", description: "Explore les sorties sans dépenser dans ta ville", mood: "FREE", actionLabel: "Découvrir", actionUrl: "/plans?budget=FREE", active: true },
+    { id: "default-tip-2", title: "Publie l'ambiance d'un lieu", description: "Partage l'atmosphère d'un spot que tu connais", mood: "CHILL", actionLabel: "Publier", actionUrl: "/places", active: true },
+    { id: "default-tip-3", title: "Crée un plan express", description: "Lance une sortie rapide pour ce soir", mood: "TONIGHT", actionLabel: "Créer", actionUrl: "/plans/new?mood=TONIGHT", active: true },
+    { id: "default-tip-4", title: "Invite quelqu'un à sortir", description: "Ramène ton cercle sur OUTSIDE", mood: null, actionLabel: "Inviter", actionUrl: "/invite", active: true },
+    { id: "default-tip-5", title: "Utilise l'assistant ce soir", description: "Trouve quoi faire selon ton mood et budget", mood: "FOOD", actionLabel: "Assistant", actionUrl: "/tonight-assistant", active: true },
   ] as const;
 
   for (const tip of TIPS) {
@@ -143,40 +144,46 @@ async function main() {
       actionUrl: tip.actionUrl,
       active: tip.active,
     };
-    await db.outsideTip.upsert({ where: { id: tip.id }, update: {}, create: createData });
+    await db.outsideTip.upsert({ where: { id: tip.id }, update: createData, create: createData });
   }
   console.log(`Seeded ${TIPS.length} Outside Tips`);
 
   // ── Official OUTSIDE Accounts ──
   const OFFICIAL = [
-    { email: "guide@outside.com", username: "outside_guide", name: "OUTSIDE Guide", bio: "Compte officiel OUTSIDE — Guide et conseils pour profiter de l'app", cityId: "Cotonou" },
-    { email: "cotonou@outside.com", username: "outside_cotonou", name: "OUTSIDE Cotonou", bio: "Compte officiel OUTSIDE Cotonou — Les meilleurs plans à Cotonou", cityId: "Cotonou" },
-    { email: "abidjan@outside.com", username: "outside_abidjan", name: "OUTSIDE Abidjan", bio: "Compte officiel OUTSIDE Abidjan — Les meilleurs plans à Abidjan", cityId: "Abidjan" },
-    { email: "paris@outside.com", username: "outside_paris", name: "OUTSIDE Paris", bio: "Compte officiel OUTSIDE Paris — Les meilleurs plans à Paris", cityId: "Paris" },
-    { email: "food@outside.com", username: "outside_food", name: "OUTSIDE Food", bio: "Compte officiel OUTSIDE Food — Les meilleurs plans food et restaurants", cityId: null },
-    { email: "night@outside.com", username: "outside_night", name: "OUTSIDE Night", bio: "Compte officiel OUTSIDE Night — Les meilleurs plans nocturnes", cityId: null },
-    { email: "sport@outside.com", username: "outside_sport", name: "OUTSIDE Sport", bio: "Compte officiel OUTSIDE Sport — Les meilleurs plans sportifs", cityId: null },
+    { email: "guide@outside.com", username: "outside_guide", name: "OUTSIDE Guide", bio: "Compte officiel OUTSIDE — Guide et conseils pour profiter de l'app", cityId: "Cotonou", accountKind: "OFFICIAL_GUIDE" as const },
+    { email: "cotonou@outside.com", username: "outside_cotonou", name: "OUTSIDE Cotonou", bio: "Compte officiel OUTSIDE Cotonou — Les meilleurs plans à Cotonou", cityId: "Cotonou", accountKind: "OFFICIAL_CITY" as const },
+    { email: "abidjan@outside.com", username: "outside_abidjan", name: "OUTSIDE Abidjan", bio: "Compte officiel OUTSIDE Abidjan — Les meilleurs plans à Abidjan", cityId: "Abidjan", accountKind: "OFFICIAL_CITY" as const },
+    { email: "paris@outside.com", username: "outside_paris", name: "OUTSIDE Paris", bio: "Compte officiel OUTSIDE Paris — Les meilleurs plans à Paris", cityId: "Paris", accountKind: "OFFICIAL_CITY" as const },
+    { email: "food@outside.com", username: "outside_food", name: "OUTSIDE Food", bio: "Compte officiel OUTSIDE Food — Les meilleurs plans food et restaurants", cityId: null, accountKind: "OFFICIAL_PARTNER" as const },
+    { email: "night@outside.com", username: "outside_night", name: "OUTSIDE Night", bio: "Compte officiel OUTSIDE Night — Les meilleurs plans nocturnes", cityId: null, accountKind: "OFFICIAL_PARTNER" as const },
+    { email: "sport@outside.com", username: "outside_sport", name: "OUTSIDE Sport", bio: "Compte officiel OUTSIDE Sport — Les meilleurs plans sportifs", cityId: null, accountKind: "OFFICIAL_PARTNER" as const },
   ];
 
   for (const acc of OFFICIAL) {
     const existing = await db.user.findUnique({ where: { username: acc.username } });
+    let homeCityId: string | undefined;
+    let activeCityId: string | undefined;
+    if (acc.cityId) {
+      const city = await db.city.findUnique({ where: { name_country: { name: acc.cityId, country: cities.find(c => c.name === acc.cityId)?.country ?? "" } } });
+      if (city) { homeCityId = city.id; activeCityId = city.id; }
+    }
     if (!existing) {
       const password = await bcrypt.hash(Math.random().toString(36).slice(-8), 12);
-      let homeCityId: string | undefined;
-      let activeCityId: string | undefined;
-      if (acc.cityId) {
-        const city = await db.city.findUnique({ where: { name_country: { name: acc.cityId, country: cities.find(c => c.name === acc.cityId)?.country ?? "" } } });
-        if (city) { homeCityId = city.id; activeCityId = city.id; }
-      }
       await db.user.create({
         data: {
           email: acc.email, username: acc.username, name: acc.name, bio: acc.bio,
           password, isVerified: true, emailVerified: new Date(),
           termsAcceptedAt: new Date(), privacyAcceptedAt: new Date(),
           language: "fr", role: "USER", homeCityId, activeCityId, isDemoAccount: false,
+          accountKind: acc.accountKind,
         },
       });
       console.log(`Created official account: ${acc.username}`);
+    } else {
+      await db.user.update({
+        where: { id: existing.id },
+        data: { accountKind: acc.accountKind, isVerified: true },
+      });
     }
   }
 

@@ -280,6 +280,11 @@ export default function HomePage() {
       {/* Hero card — Main action card */}
       <HeroActionCard activeCity={activeCity} />
 
+      {/* Ce soir sur OUTSIDE — daily hub */}
+      <section className="animate-slide-up animate-stagger-1">
+        <TonightSection />
+      </section>
+
       {/* Quick Actions & Status */}
       <QuickActions outsideStatus={outsideStatus} onStatusUpdate={setOutsideStatus} />
 
@@ -469,13 +474,8 @@ export default function HomePage() {
         }}
       />
 
-      {/* Tonight Section */}
-      <section className="animate-slide-up animate-stagger-1">
-        <TonightSection />
-      </section>
-
       {/* Daily Challenges */}
-      <section className="animate-slide-up animate-stagger-2">
+      <section id="challenges" className="animate-slide-up animate-stagger-2">
         <DailyChallenges />
       </section>
 
