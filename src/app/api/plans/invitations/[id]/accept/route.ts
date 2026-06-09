@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createPlanReminders } from "@/lib/plan-reminders";
+import { recordTripHistory } from "@/lib/passport";
 
 const VALID_ATTENDANCE = ["GOING", "MAYBE"] as const;
 
@@ -77,6 +78,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     createPlanReminders(user.id, invitation.planId, invitation.plan.startDate).catch(() => {});
+
+    db.plan.findUnique({
+      where: { id: invitation.planId },
+      select: { city: { select: { name: true, countryCode: true } } },
+    }).then((plan) => {
+      if (plan?.city) {
+        recordTripHistory({
+          userId: user.id,
+          city: plan.city.name,
+          countryCode: plan.city.countryCode,
+          source: "PLAN_JOINED",
+          planId: invitation.planId,
+        }).catch(() => {});
+      }
+    }).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

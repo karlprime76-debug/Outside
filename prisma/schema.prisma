@@ -478,6 +478,8 @@ model User {
   referralInvites   ReferralInvite[] @relation("ReferralInviter")
   acceptedReferral  ReferralInvite?   @relation("ReferralAccepted")
   placeWishlist     PlaceWishlist[]
+  outingCircles     OutingCircle[]
+  circleMemberships OutingCircleMember[]
 
   lastActiveDate    DateTime?
   currentStreak     Int       @default(0)
@@ -1503,6 +1505,33 @@ model UserTripHistory {
   @@index([userId])
   @@index([city])
   @@index([createdAt])
+}
+
+model OutingCircle {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     OutingCircleMember[]
+
+  @@index([ownerId])
+}
+
+model OutingCircleMember {
+  id        String   @id @default(cuid())
+  circleId  String
+  circle    OutingCircle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([circleId, userId])
+  @@index([circleId])
+  @@index([userId])
 }
 
 model UserOutsideStatus {

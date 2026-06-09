@@ -88,6 +88,9 @@ export async function GET() {
       where: {
         activeCityId: cityId,
         isAvailable: true,
+        userSettings: {
+          privateDiscoveryMode: false,
+        },
       },
       select: {
         id: true,

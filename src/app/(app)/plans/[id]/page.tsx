@@ -13,6 +13,7 @@ import { ReportButton } from "@/components/report-button";
 import { SavePlanButton } from "@/components/save-plan-button";
 import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download, Bell, ShieldCheck, Home, AlertTriangle, Camera, Trophy } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
+import { AfterPlanSheet } from "@/components/plans/after-plan-sheet";
 import { formatBudget } from "@/lib/currency";
 import { useHaptic } from "@/hooks/use-haptic";
 import { ExpensesSection } from "./expenses-section";
@@ -119,6 +120,7 @@ export default function PlanDetailPage() {
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [remindersLoading, setRemindersLoading] = useState(false);
   const [reliabilities, setReliabilities] = useState<Record<string, { level: string; outsideScore: number }>>({});
+  const [afterPlanOpen, setAfterPlanOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/plans/${id}`)
@@ -510,13 +512,22 @@ export default function PlanDetailPage() {
           </>
         )}
         {plan.status === "COMPLETED" && isParticipant && (
-          <Link
-            href={`/plans/${plan.id}/memories`}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-          >
-            <Trophy className="h-4 w-4" />
-            Voir les souvenirs
-          </Link>
+          <>
+            <Link
+              href={`/plans/${plan.id}/memories`}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+            >
+              <Trophy className="h-4 w-4" />
+              Voir les souvenirs
+            </Link>
+            <button
+              onClick={() => setAfterPlanOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-all"
+            >
+              <Star className="h-4 w-4" />
+              Bilan du plan
+            </button>
+          </>
         )}
         {isParticipant && (
           myParticipant?.checkedInAt ? (
@@ -954,6 +965,18 @@ export default function PlanDetailPage() {
           )}
         </div>
       </BottomSheet>
+
+      {plan && (
+        <AfterPlanSheet
+          isOpen={afterPlanOpen}
+          onClose={() => setAfterPlanOpen(false)}
+          planId={plan.id}
+          planTitle={plan.title}
+          participants={plan.participants
+            .filter((p) => p.user.id !== session?.user?.id)
+            .map((p) => ({ id: p.user.id, name: p.user.name, image: p.user.image }))}
+        />
+      )}
     </div>
   );
 }

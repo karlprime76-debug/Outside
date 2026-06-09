@@ -22,6 +22,7 @@ import {
   Calendar,
   AlertTriangle,
   TrendingUp,
+  Award,
 } from "lucide-react";
 import type { Plan } from "@/types/plan";
 
@@ -69,6 +70,7 @@ export default function PassportPage() {
   const [passportStats, setPassportStats] = useState<PassportStats | null>(null);
   const [citiesExplored, setCitiesExplored] = useState<CityExplored[]>([]);
   const [history, setHistory] = useState<TripHistoryEntry[]>([]);
+  const [badges, setBadges] = useState<{ id: string; badge: { key: string; name: string; description: string; icon: string | null } }[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [geoDetecting, setGeoDetecting] = useState(false);
@@ -84,8 +86,9 @@ export default function PassportPage() {
       fetch("/api/auth/me").then((r) => (r.ok ? r.json() : null)),
       fetch("/api/plans").then((r) => r.json()),
       fetch("/api/passport").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/badges").then((r) => (r.ok ? r.json() : { badges: [] })),
     ])
-      .then(([citiesData, meData, plansData, passportData]) => {
+      .then(([citiesData, meData, plansData, passportData, badgesData]) => {
         setCities(citiesData.cities || []);
         if (meData?.user) setUserProfile(meData.user);
         setPlans(plansData.plans?.slice(0, 4) || []);
@@ -94,6 +97,7 @@ export default function PassportPage() {
           setCitiesExplored(passportData.citiesExplored || []);
           setHistory(passportData.history || []);
         }
+        setBadges(badgesData?.badges || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -461,6 +465,33 @@ export default function PassportPage() {
               <p className="text-2xl font-black text-outside-600">{passportStats.createdPlans}</p>
               <p className="text-xs text-[var(--os-muted)]">Plans créés</p>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Badges */}
+      {badges.length > 0 && (
+        <section className="os-card p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-10 w-10 rounded-xl bg-yellow-100 flex items-center justify-center">
+              <Award className="h-5 w-5 text-yellow-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-[var(--os-fg)]">Badges</h2>
+              <p className="text-xs text-[var(--os-muted)]">Tes accomplissements OUTSIDE.</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {badges.map((ub) => (
+              <div
+                key={ub.id}
+                className="inline-flex items-center gap-1.5 rounded-full border border-yellow-200 bg-yellow-50 px-4 py-2 text-sm font-bold text-yellow-700 dark:border-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-400"
+                title={ub.badge.description}
+              >
+                <Award className="h-3.5 w-3.5" />
+                {ub.badge.name}
+              </div>
+            ))}
           </div>
         </section>
       )}
