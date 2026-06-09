@@ -50,8 +50,7 @@ export default function NewPlanPage() {
   const [error, setError] = useState("");
   const [selectedMood, setSelectedMood] = useState("");
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
-  const [budgetMode, setBudgetMode] = useState<"free" | "exact">("exact");
-  const [budgetIsFrom, setBudgetIsFrom] = useState(false);
+  const [priceType, setPriceType] = useState<"FREE" | "PAID" | "FROM">("FREE");
   const [budgetAmount, setBudgetAmount] = useState<number | undefined>(undefined);
   const [selectedCurrency, setSelectedCurrency] = useState("XOF");
   // Update currency when country changes, unless user manually changed it
@@ -70,17 +69,18 @@ export default function NewPlanPage() {
     const form = new FormData(e.currentTarget);
     const cityId = form.get("cityId") as string;
     const budgetAmountRaw = form.get("budgetAmount") as string;
-    const budgetAmount = budgetMode === "free" ? 0 : budgetAmountRaw ? parseFloat(budgetAmountRaw) : undefined;
+    const budgetAmount = priceType === "FREE" ? null : budgetAmountRaw ? parseFloat(budgetAmountRaw) : undefined;
 
     const data = {
       title: form.get("title") as string,
       description: (form.get("description") as string) || undefined,
       planCategory: form.get("planCategory") as string,
       mood: selectedMood || (form.get("mood") as string),
-      budgetLevel: budgetMode === "free" ? "FREE" : "MEDIUM",
+      priceType,
+      budgetLevel: priceType === "FREE" ? "FREE" : "MEDIUM",
       budgetAmount,
       budgetCurrency: selectedCurrency,
-      budgetIsFrom: budgetMode !== "free" && budgetIsFrom,
+      budgetIsFrom: priceType === "FROM",
       cityId,
       countryCode: (form.get("countryCode") as string) || undefined,
       placeId: (form.get("placeId") as string) || undefined,
@@ -151,12 +151,12 @@ export default function NewPlanPage() {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Budget</label>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <button
                 type="button"
-                onClick={() => setBudgetMode("free")}
+                onClick={() => setPriceType("FREE")}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                  budgetMode === "free"
+                  priceType === "FREE"
                     ? "bg-outside-500 text-white border-outside-500"
                     : "border-[var(--os-card-border)] text-[var(--os-muted)]"
                 }`}
@@ -165,17 +165,28 @@ export default function NewPlanPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setBudgetMode("exact")}
+                onClick={() => setPriceType("PAID")}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                  budgetMode === "exact"
+                  priceType === "PAID"
                     ? "bg-outside-500 text-white border-outside-500"
                     : "border-[var(--os-card-border)] text-[var(--os-muted)]"
                 }`}
               >
-                Montant
+                Payant
+              </button>
+              <button
+                type="button"
+                onClick={() => setPriceType("FROM")}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                  priceType === "FROM"
+                    ? "bg-outside-500 text-white border-outside-500"
+                    : "border-[var(--os-card-border)] text-[var(--os-muted)]"
+                }`}
+              >
+                À partir de
               </button>
             </div>
-            {budgetMode === "exact" && (
+            {priceType !== "FREE" && (
               <div className="space-y-1.5">
                 <div className="flex gap-2">
                   <input
@@ -196,18 +207,9 @@ export default function NewPlanPage() {
                     {SUPPORTED_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                <label className="flex items-center gap-2 text-xs text-[var(--os-muted)]">
-                  <input
-                    type="checkbox"
-                    checked={budgetIsFrom}
-                    onChange={(e) => setBudgetIsFrom(e.target.checked)}
-                    className="rounded accent-outside-500"
-                  />
-                  À partir de ce montant
-                </label>
                 {budgetAmount && (
                   <div className="text-xs font-semibold text-outside-600 dark:text-outside-400">
-                    {formatBudget(budgetAmount, selectedCurrency, budgetIsFrom)}
+                    {formatBudget(budgetAmount, selectedCurrency, priceType === "FROM", priceType)}
                   </div>
                 )}
               </div>

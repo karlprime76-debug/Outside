@@ -250,6 +250,12 @@ enum PlanCategory {
   AUTRE
 }
 
+enum PlanPriceType {
+  FREE
+  PAID
+  FROM
+}
+
 enum SafetyLevel {
   LOW
   MEDIUM
@@ -691,6 +697,7 @@ model Plan {
   budgetAmount      Decimal?
   budgetCurrency    String?
   budgetIsFrom      Boolean         @default(false)
+  priceType         PlanPriceType   @default(FREE)
   estimatedCost     Float?
   cityId            String
   city              City            @relation(fields: [cityId], references: [id])

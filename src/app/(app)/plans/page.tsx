@@ -63,6 +63,8 @@ export default function PlansPage() {
   const [budget, setBudget] = useState("");
   const [planCategory, setPlanCategory] = useState("");
   const [isFree, setIsFree] = useState("");
+  const [priceType, setPriceType] = useState("");
+  const [filterFreeToday, setFilterFreeToday] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
   const priceRef = useRef<HTMLDivElement>(null);
   useClickOutside(priceRef, () => setPriceOpen(false), priceOpen);
@@ -85,6 +87,8 @@ export default function PlansPage() {
     if (budget) params.set("budgetLevel", budget);
     if (planCategory) params.set("planCategory", planCategory);
     if (isFree) params.set("isFree", isFree);
+    if (priceType) params.set("priceType", priceType);
+    if (filterFreeToday) params.set("filter", "freeToday");
     if (nearMe) params.set("nearMe", nearMe);
     if (dateFrom) params.set("dateFrom", dateFrom);
     if (dateTo) params.set("dateTo", dateTo);
@@ -98,7 +102,7 @@ export default function PlansPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [mood, budget, planCategory, isFree, nearMe, dateFrom, dateTo, sortBy]);
+  }, [mood, budget, planCategory, isFree, priceType, filterFreeToday, nearMe, dateFrom, dateTo, sortBy]);
 
   useEffect(() => {
     fetch("/api/plans/invitations")
@@ -134,7 +138,7 @@ export default function PlansPage() {
       .catch(() => setLoadingMyPlans(false));
   }, [tab]);
 
-  const hasFilters = mood || budget || planCategory || isFree || nearMe || dateFrom || dateTo || search;
+  const hasFilters = mood || budget || planCategory || isFree || priceType || filterFreeToday || nearMe || dateFrom || dateTo || search;
 
   const filteredPlans = debouncedSearch
     ? plans.filter((p) =>
@@ -222,26 +226,38 @@ export default function PlansPage() {
           <option value="">Catégorie</option>
           {PLAN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
+        <button
+          onClick={() => setFilterFreeToday((v) => !v)}
+          className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
+            filterFreeToday
+              ? "border-outside-500 bg-outside-50 text-outside-700"
+              : "border-[var(--os-card-border)] bg-[var(--os-card)] text-[var(--os-fg)] hover:bg-[var(--os-card-border)]"
+          }`}
+        >
+          <Calendar className="h-3 w-3" />
+          Gratuit aujourd&apos;hui
+        </button>
         <div ref={priceRef} className="relative">
           <button
             onClick={() => setPriceOpen((o) => !o)}
             className="inline-flex items-center gap-1.5 rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors"
           >
-            {isFree === "true" ? "Gratuit" : isFree === "false" ? "Payant" : "Prix"}
+            {priceType === "FREE" ? "Gratuit" : priceType === "PAID" ? "Payant" : priceType === "FROM" ? "À partir de" : "Prix"}
             <ChevronDown className={`h-3 w-3 transition-transform ${priceOpen ? "rotate-180" : ""}`} />
           </button>
           {priceOpen && (
-            <div className="absolute top-full left-0 mt-1 z-50 min-w-[140px] rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-1 shadow-xl">
+            <div className="absolute top-full left-0 mt-1 min-w-[150px] rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-1 shadow-xl z-40">
               {[
                 { value: "", label: "Tous" },
-                { value: "true", label: "Gratuit" },
-                { value: "false", label: "Payant" },
+                { value: "FREE", label: "Gratuit" },
+                { value: "PAID", label: "Payant" },
+                { value: "FROM", label: "À partir de" },
               ].map((opt) => (
                 <button
                   key={opt.value}
-                  onClick={() => { setIsFree(opt.value); setPriceOpen(false); }}
+                  onClick={() => { setPriceType(opt.value); setIsFree(opt.value ? (opt.value === "FREE" ? "true" : "false") : ""); setPriceOpen(false); }}
                   className={`w-full text-left rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
-                    isFree === opt.value
+                    (priceType || (isFree === "true" && opt.value === "FREE") || (isFree === "false" && opt.value === "PAID")) === opt.value
                       ? "bg-outside-50 text-outside-700"
                       : "text-[var(--os-fg)] hover:bg-[var(--os-card-border)]"
                   }`}
@@ -257,11 +273,16 @@ export default function PlansPage() {
           className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold ${
             nearMe === "true"
               ? "border-outside-500 bg-outside-50 text-outside-700"
-              : "border-[var(--os-card-border)] bg-[var(--os-card)] text-[var(--os-fg)]"
-          } focus:outline-none focus:ring-2 focus:ring-outside-500`}
+              : "border-[var(--os-card-border)] bg-[var(--os-card)] text-[var(--os-muted)]"
+          } focus:outline-none focus:ring-2 focus:ring-outside-500 transition-colors relative`}
         >
           <MapPin className="h-3 w-3" />
           Proche de moi
+          {nearMe !== "true" && (
+            <span className="absolute -top-1.5 -right-1.5 text-[8px] font-bold bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 leading-none border border-white">
+              Bientôt
+            </span>
+          )}
         </button>
         <select
           value={sortBy}
@@ -290,7 +311,7 @@ export default function PlansPage() {
         />
         {hasFilters && (
           <button
-            onClick={() => { setMood(""); setBudget(""); setPlanCategory(""); setIsFree(""); setNearMe(""); setDateFrom(""); setDateTo(""); setSearch(""); setSortBy("dateAsc"); }}
+            onClick={() => { setMood(""); setBudget(""); setPlanCategory(""); setIsFree(""); setPriceType(""); setFilterFreeToday(false); setNearMe(""); setDateFrom(""); setDateTo(""); setSearch(""); setSortBy("dateAsc"); }}
             className="inline-flex items-center gap-1 text-xs font-bold text-[var(--os-muted)] hover:text-red-500 transition-colors"
           >
             <X className="h-3 w-3" />
@@ -310,9 +331,10 @@ export default function PlansPage() {
           {planCategory && (
             <Badge variant="slate">{PLAN_CATEGORIES.find(c => c.value === planCategory)?.label || planCategory}</Badge>
           )}
-          {isFree && (
-            <Badge variant="slate">{isFree === "true" ? "Gratuit" : "Payant"}</Badge>
-          )}
+          {priceType === "FREE" && <Badge variant="slate">Gratuit</Badge>}
+          {priceType === "PAID" && <Badge variant="slate">Payant</Badge>}
+          {priceType === "FROM" && <Badge variant="slate">À partir de</Badge>}
+          {filterFreeToday && <Badge variant="green">Gratuit aujourd&apos;hui</Badge>}
           {nearMe === "true" && (
             <Badge variant="slate">Proche de moi</Badge>
           )}
@@ -454,9 +476,9 @@ export default function PlansPage() {
             const sections: JSX.Element[] = [];
             const usedIds = new Set<string>();
 
-            // Special sections: Free, Tonight, Weekend
+            // Special sections: Free, From, Tonight, Weekend
             const freePlans = filteredPlans.filter((p) =>
-              (p.budgetAmount === null || p.budgetAmount === 0) && !usedIds.has(p.id)
+              (p.priceType === "FREE" || p.budgetAmount === null || p.budgetAmount === 0) && !usedIds.has(p.id)
             );
             if (freePlans.length > 0) {
               sections.push(
@@ -470,6 +492,26 @@ export default function PlansPage() {
                 </section>
               );
               freePlans.forEach((p) => usedIds.add(p.id));
+            }
+
+            const fromPlans = filteredPlans.filter((p) =>
+              (p.priceType === "FROM" || p.budgetIsFrom) && !usedIds.has(p.id)
+            );
+            if (fromPlans.length > 0) {
+              sections.push(
+                <section key="from">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h2 className="text-lg font-black text-[var(--os-fg)]">À partir de</h2>
+                    <Badge variant="slate" className="text-[10px]">Pro</Badge>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {fromPlans.map((plan) => (
+                      <PlanCard key={plan.id} plan={plan} showJoin />
+                    ))}
+                  </div>
+                </section>
+              );
+              fromPlans.forEach((p) => usedIds.add(p.id));
             }
 
             const tonightPlans = filteredPlans.filter((p) => {

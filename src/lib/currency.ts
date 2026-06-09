@@ -51,7 +51,13 @@ export function getCurrencyForCountry(countryCode?: string | null): string {
   return COUNTRY_CURRENCY_MAP[countryCode.toUpperCase()] || "XOF";
 }
 
-export function formatCurrency(amount: number, currency: string, locale = "fr-FR"): string {
+export function getDefaultCurrencyForUser(user?: { countryCode?: string | null; preferredCurrency?: string | null } | null): string {
+  if (user?.preferredCurrency) return user.preferredCurrency;
+  if (user?.countryCode) return getCurrencyForCountry(user.countryCode);
+  return "XOF";
+}
+
+export function formatMoney(amount: number, currency: string, locale = "fr-FR"): string {
   try {
     return new Intl.NumberFormat(locale, {
       style: "currency",
@@ -63,14 +69,22 @@ export function formatCurrency(amount: number, currency: string, locale = "fr-FR
   }
 }
 
-export function formatBudget(amount?: unknown, currency?: string | null, isFrom = false): string {
-  if (amount === null || amount === undefined) {
+export { formatMoney as formatCurrency };
+
+export function formatBudget(
+  amount?: unknown,
+  currency?: string | null,
+  isFrom = false,
+  priceType?: string | null
+): string {
+  const effectivePriceType = priceType || (isFrom ? "FROM" : null);
+  if (effectivePriceType === "FREE" || amount === null || amount === undefined) {
     return "Gratuit";
   }
   const num = typeof amount === "number" ? amount : Number(amount);
   if (isNaN(num) || num === 0) {
     return "Gratuit";
   }
-  const formatted = formatCurrency(num, currency || "XOF");
-  return isFrom ? `À partir de ${formatted}` : formatted;
+  const formatted = formatMoney(num, currency || "XOF");
+  return effectivePriceType === "FROM" ? `À partir de ${formatted}` : formatted;
 }

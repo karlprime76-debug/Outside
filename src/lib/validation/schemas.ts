@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BudgetLevel, Mood, PlanVisibility, PlanCategory, SafetyLevel } from "@/types";
+import { BudgetLevel, Mood, PlanVisibility, PlanCategory, SafetyLevel, PlanPriceType } from "@/types";
 
 export const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -38,6 +38,7 @@ export const createPlanSchema = z.object({
   description: z.string().max(500).optional(),
   planCategory: z.nativeEnum(PlanCategory),
   mood: z.nativeEnum(Mood),
+  priceType: z.nativeEnum(PlanPriceType).optional(),
   budgetLevel: z.nativeEnum(BudgetLevel).optional(),
   budgetAmount: z.number().nonnegative().optional(),
   budgetCurrency: z.string().optional(),

@@ -3,6 +3,7 @@ export interface Plan {
   title: string;
   mood: string;
   planCategory: string;
+  priceType?: string;
   budgetLevel: string;
   budgetAmount: unknown;
   budgetCurrency: string | null;

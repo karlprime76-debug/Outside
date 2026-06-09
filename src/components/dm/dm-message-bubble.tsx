@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download, Heart, User } from "lucide-react";
+import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download, Heart, User, RefreshCw } from "lucide-react";
 import { MediaViewer } from "@/components/media/media-viewer";
 import { useClickOutside } from "@/hooks/use-click-outside";
 
@@ -43,6 +43,7 @@ interface DmMessageBubbleProps {
   onDelete?: (id: string) => void;
   onReport?: (id: string) => void;
   onReact?: (messageId: string, emoji: string) => void;
+  onRetry?: (id: string) => void;
 }
 
 function formatTime(iso: string) {
@@ -361,6 +362,7 @@ export function DmMessageBubble({
   onDelete,
   onReport,
   onReact,
+  onRetry,
 }: DmMessageBubbleProps) {
   const isMoment = message.type === "MOMENT" && !message.isDeleted;
   const isImage = message.type === "IMAGE" && message.mediaUrl && !message.isDeleted;
@@ -433,9 +435,21 @@ export function DmMessageBubble({
 
           {/* Time + actions */}
           <div className="flex items-center justify-end gap-2 mt-1">
+            {isMine && message.status === "FAILED" && (
+              <button
+                onClick={() => onRetry?.(message.id)}
+                className="text-[10px] inline-flex items-center gap-0.5 text-red-400 hover:text-red-300"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Réessayer
+              </button>
+            )}
             <span className={`text-[10px] ${isMine ? "text-white/70" : "text-[var(--os-muted)]"}`}>
               {formatTime(message.createdAt)}
             </span>
+            {isMine && message.status === "SENDING" && (
+              <span className="text-[10px] text-white/50">Envoi...</span>
+            )}
             {!message.isDeleted && (
               <div className="hidden group-hover:flex items-center gap-1.5">
                 {isMine && onDelete && (

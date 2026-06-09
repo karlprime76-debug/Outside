@@ -261,7 +261,11 @@ export default function DmConversationPage() {
       const j = await res.json();
       if (!res.ok) {
         setError(j.error || "Impossible d'envoyer le message.");
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId ? { ...m, status: "FAILED" } : m
+          )
+        );
         return;
       }
       setMessages((prev) =>
@@ -269,7 +273,11 @@ export default function DmConversationPage() {
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur.");
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId ? { ...m, status: "FAILED" } : m
+        )
+      );
     } finally {
       setSending(false);
     }
@@ -327,6 +335,37 @@ export default function DmConversationPage() {
         })
       );
     } catch (e) { console.error("[REACT_MSG]", e); }
+  }
+
+  async function onRetryMessage(mid: string) {
+    const msg = messages.find((m) => m.id === mid);
+    if (!msg) return;
+    setMessages((prev) => prev.map((m) => (m.id === mid ? { ...m, status: "SENDING" } : m)));
+    try {
+      const body: Record<string, unknown> = { content: msg.content, type: msg.type || "TEXT" };
+      if (msg.mediaUrl) body.mediaUrl = msg.mediaUrl;
+      if (msg.mediaPath) body.mediaPath = msg.mediaPath;
+      if (msg.mediaName) body.mediaName = msg.mediaName;
+      if (msg.mediaMimeType) body.mediaMimeType = msg.mediaMimeType;
+      if (msg.mediaSize) body.mediaSize = msg.mediaSize;
+      if (msg.momentId) body.momentId = msg.momentId;
+      if (msg.metadata) body.metadata = JSON.parse(msg.metadata);
+      const res = await fetch(`/api/dm/conversations/${id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = await res.json();
+      if (!res.ok) {
+        setMessages((prev) => prev.map((m) => (m.id === mid ? { ...m, status: "FAILED" } : m)));
+        return;
+      }
+      setMessages((prev) =>
+        prev.map((m) => (m.id === mid ? { ...j.message, createdAt: j.message.createdAt } : m))
+      );
+    } catch {
+      setMessages((prev) => prev.map((m) => (m.id === mid ? { ...m, status: "FAILED" } : m)));
+    }
   }
 
   const handleRefresh = useCallback(async () => {
@@ -422,6 +461,7 @@ export default function DmConversationPage() {
                   onDelete={item.isMine ? onDeleteMessage : undefined}
                   onReport={onReportMessage}
                   onReact={onReactMessage}
+                  onRetry={item.isMine ? onRetryMessage : undefined}
                 />
               );
             })}

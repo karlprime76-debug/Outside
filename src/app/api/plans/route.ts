@@ -39,6 +39,8 @@ export async function GET(req: Request) {
     const budgetLevel = searchParams.get("budgetLevel");
     const planCategory = searchParams.get("planCategory");
     const isFree = searchParams.get("isFree");
+    const priceType = searchParams.get("priceType");
+    const filter = searchParams.get("filter");
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
     const travelerFriendly = searchParams.get("travelerFriendly");
@@ -113,6 +115,18 @@ export async function GET(req: Request) {
     } else if (isFree === "false") {
       baseWhere.AND = { NOT: { budgetAmount: { equals: 0 } } };
     }
+    if (priceType) {
+      baseWhere.priceType = priceType;
+    }
+    if (filter === "freeToday") {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      baseWhere.priceType = "FREE";
+      baseWhere.startDate = { gte: todayStart, lte: todayEnd };
+      baseWhere.status = { not: "COMPLETED" };
+    }
     if (dateFrom || dateTo) {
       baseWhere.startDate = {};
       if (dateFrom) (baseWhere.startDate as Record<string, unknown>).gte = new Date(dateFrom);
@@ -122,16 +136,17 @@ export async function GET(req: Request) {
     if (myPlans === "true") baseWhere.creatorId = user.id;
 
     // Determine orderBy based on sortBy parameter
-    let orderBy: Record<string, "asc" | "desc"> = { startDate: "asc" };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let orderBy: any = { startDate: "asc" };
     switch (sortBy) {
       case "dateAsc":
         orderBy = { startDate: "asc" };
         break;
       case "priceAsc":
-        orderBy = { budgetAmount: "asc" };
+        orderBy = { budgetAmount: { sort: "asc", nulls: "last" } };
         break;
       case "priceDesc":
-        orderBy = { budgetAmount: "desc" };
+        orderBy = { budgetAmount: { sort: "desc", nulls: "last" } };
         break;
       case "popular":
         orderBy = { createdAt: "desc" }; // Simplified: use createdAt as proxy for popularity
@@ -264,6 +279,7 @@ export async function POST(req: Request) {
         description: data.description,
         planCategory: data.planCategory,
         mood: data.mood,
+        priceType: (data.priceType ?? (data.budgetIsFrom ? "FROM" : data.budgetLevel === "FREE" ? "FREE" : "PAID")) as "FREE" | "PAID" | "FROM",
         budgetLevel: data.budgetLevel || "MEDIUM",
         budgetAmount: data.budgetAmount ?? undefined,
         budgetCurrency: data.budgetCurrency,

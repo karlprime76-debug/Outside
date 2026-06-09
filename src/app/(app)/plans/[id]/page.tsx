@@ -24,6 +24,7 @@ interface PlanDetail {
   description: string | null;
   mood: string;
   planCategory: string;
+  priceType?: string;
   budgetLevel: string;
   budgetAmount: unknown;
   budgetCurrency: string | null;
@@ -226,7 +227,7 @@ export default function PlanDetailPage() {
           </Badge>
           <Badge variant="slate">
             <Wallet className="h-3 w-3 mr-1 inline" />
-            {formatBudget(plan.budgetAmount, plan.budgetCurrency, plan.budgetIsFrom)}
+            {formatBudget(plan.budgetAmount, plan.budgetCurrency, plan.budgetIsFrom, plan.priceType)}
           </Badge>
           <Badge variant={plan.status === "ACTIVE" ? "green" : plan.status === "FULL" ? "orange" : plan.status === "CANCELLED" ? "red" : "default"}>
             {plan.status}
