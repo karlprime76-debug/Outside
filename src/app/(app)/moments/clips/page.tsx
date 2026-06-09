@@ -244,10 +244,7 @@ export default function ClipsPage() {
     });
 
     return () => {
-<<<<<<< HEAD
-=======
       const currentRefs = videoRefs.current;
->>>>>>> 8c85852 (fix: clean console.log, fix eslint warnings, improve user-quality-score, integrate trip history)
       Object.values(currentRefs).forEach((video) => {
         if (!video) return;
         video.removeEventListener("timeupdate", () => {});

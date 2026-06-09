@@ -5,6 +5,7 @@ import { AnimatedPage } from "@/components/ui/animated-page";
 import { Avatar } from "@/components/ui/avatar";
 import { InputField } from "@/components/ui/input-field";
 import { InviteCircle } from "@/components/referrals/invite-circle";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Search, UserPlus, UserCheck, UserX, Users, Loader2, UserCircle, UserSearch, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
 

@@ -13,7 +13,6 @@ import {
   Archive,
   X,
   SendHorizontal,
-  Users,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { OutsideHeader } from "@/components/ui/outside-header";

@@ -7,6 +7,7 @@ import { PlanCard } from "@/components/plan-card";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { InviteCircle } from "@/components/referrals/invite-circle";
+import { EmptyState } from "@/components/ui/empty-state";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";

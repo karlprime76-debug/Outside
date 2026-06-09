@@ -21,6 +21,7 @@ enum AccountKind {
   OFFICIAL_CITY
   OFFICIAL_PARTNER
   VERIFIED_CREATOR
+  PARTNER_VENUE
 }
 
 enum Gender {
@@ -181,14 +182,6 @@ enum DirectMessageType {
   PLAN
   PLAN_INVITE
   SYSTEM
-}
-
-enum AccountKind {
-  STANDARD
-  OFFICIAL_GUIDE
-  OFFICIAL_CITY
-  VERIFIED_CREATOR
-  PARTNER_VENUE
 }
 
 enum DirectMessagePermission {
@@ -1661,46 +1654,6 @@ model OutsideDrop {
   @@index([countryCode])
   @@index([active])
   @@index([type])
-}
-
-model DailyChallenge {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  title       String
-  description String?
-  rewardLabel String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-
-  @@index([active])
-}
-
-model UserChallengeProgress {
-  id           String   @id @default(cuid())
-  userId       String
-  challengeKey String
-  completedAt  DateTime?
-  createdAt    DateTime @default(now())
-
-  @@unique([userId, challengeKey])
-  @@index([userId])
-  @@index([challengeKey])
-}
-
-model ReferralInvite {
-  id            String    @id @default(cuid())
-  inviterId     String
-  inviter       User      @relation("ReferralInviter", fields: [inviterId], references: [id], onDelete: Cascade)
-  code          String    @unique
-  invitedEmail  String?
-  invitedPhone  String?
-  acceptedUserId String?  @unique
-  acceptedUser  User?     @relation("ReferralAccepted", fields: [acceptedUserId], references: [id], onDelete: SetNull)
-  createdAt     DateTime  @default(now())
-  acceptedAt    DateTime?
-
-  @@index([inviterId])
-  @@index([code])
 }
 
 model PlanExpense {
