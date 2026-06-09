@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Copy, Share2, MessageCircle, Users, CheckCircle, Sparkles, ArrowRight } from "lucide-react";
-import { AnimatedPage, StaggerContainer } from "@/components/ui/animated-page";
 import { OutsidePage } from "@/components/ui/outside-page";
 import { OutsideHeader } from "@/components/ui/outside-header";
 import { Avatar } from "@/components/ui/avatar";
