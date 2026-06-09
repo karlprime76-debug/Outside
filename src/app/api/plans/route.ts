@@ -4,6 +4,9 @@ import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createPlanSchema } from "@/lib/validation/schemas";
 import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
+import { createPlanReminders } from "@/lib/plan-reminders";
+import { generateRecurringPlans } from "@/lib/recurring-plans";
+import { recordTripHistory } from "@/lib/passport";
 import { PlanVisibility } from "@prisma/client";
 
 // Haversine formula to calculate distance between two points in kilometers
@@ -40,6 +43,7 @@ export async function GET(req: Request) {
     const dateTo = searchParams.get("dateTo");
     const travelerFriendly = searchParams.get("travelerFriendly");
     const nearMe = searchParams.get("nearMe");
+    const myPlans = searchParams.get("myPlans");
     const sortBy = searchParams.get("sortBy") || "dateAsc";
     let limit = parseInt(searchParams.get("limit") || "50", 10);
     if (isNaN(limit) || limit < 1) limit = 50;
@@ -115,6 +119,7 @@ export async function GET(req: Request) {
       if (dateTo) (baseWhere.startDate as Record<string, unknown>).lte = new Date(dateTo);
     }
     if (travelerFriendly === "true") baseWhere.isTravelerFriendly = true;
+    if (myPlans === "true") baseWhere.creatorId = user.id;
 
     // Determine orderBy based on sortBy parameter
     let orderBy: Record<string, "asc" | "desc"> = { startDate: "asc" };
@@ -277,6 +282,8 @@ export async function POST(req: Request) {
         isTravelerFriendly: data.isTravelerFriendly,
         safetyLevel: data.safetyLevel,
         rules: data.rules,
+        recurrence: data.recurrence ?? null,
+        recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : null,
         creatorId: user.id,
       },
       include: {
@@ -285,9 +292,27 @@ export async function POST(req: Request) {
       },
     });
 
-    evaluateBadgesAfterPlanCreated(user.id).catch((err) => {
-      console.error("[POST /api/plans] Background task error:", err);
+    // Auto-join creator as GOING participant
+    await db.planParticipant.create({
+      data: { planId: plan.id, userId: user.id, status: "CONFIRMED", attendance: "GOING" },
     });
+
+    createPlanReminders(user.id, plan.id, plan.startDate).catch(() => {});
+    evaluateBadgesAfterPlanCreated(user.id).catch(() => {});
+
+    if (data.recurrence) {
+      generateRecurringPlans(plan.id, data.recurrence, data.recurrenceEndDate ?? null).catch(() => {});
+    }
+
+    if (plan.city?.name) {
+      recordTripHistory({
+        userId: user.id,
+        city: plan.city.name,
+        countryCode: data.countryCode,
+        source: "PLAN_CREATED",
+        planId: plan.id,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ plan }, { status: 201 });
   } catch (error) {

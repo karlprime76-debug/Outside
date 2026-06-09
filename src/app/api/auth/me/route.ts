@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { recordTripHistory } from "@/lib/passport";
 
 export async function GET() {
   try {
@@ -25,6 +26,11 @@ export async function PATCH(req: Request) {
 
     const body = await req.json();
 
+    const prevUser = await db.user.findUnique({
+      where: { id: user.id },
+      select: { homeCityId: true, activeCityId: true },
+    });
+
     const updated = await db.user.update({
       where: { id: user.id },
       data: {
@@ -43,6 +49,19 @@ export async function PATCH(req: Request) {
         activeCity: true,
       },
     });
+
+    // Record trip history when changing active city (travel mode)
+    if (body.activeCityId && body.activeCityId !== prevUser?.homeCityId && body.activeCityId !== prevUser?.activeCityId) {
+      const newCity = updated.activeCity;
+      if (newCity?.name) {
+        recordTripHistory({
+          userId: user.id,
+          city: newCity.name,
+          countryCode: updated.countryCode || undefined,
+          source: "TRAVEL_MODE",
+        }).catch(() => {});
+      }
+    }
 
     return NextResponse.json({ user: updated });
   } catch (error) {

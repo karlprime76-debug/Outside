@@ -10,7 +10,7 @@ import { AnimatedPage } from "@/components/ui/animated-page";
 import { PageHeader } from "@/components/ui/page-header";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { MapPin, Store } from "lucide-react";
+import { MapPin, Store, Heart } from "lucide-react";
 
 interface Place {
   id: string;
@@ -59,6 +59,15 @@ export default function PlacesPage() {
       <PageHeader
         title={t.places.title}
         icon={<Store className="h-5 w-5 text-white" />}
+        action={
+          <Link
+            href="/places/wishlist"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors dark:border-red-900 dark:bg-red-950/20 dark:text-red-400"
+          >
+            <Heart className="h-3.5 w-3.5" />
+            Wishlist
+          </Link>
+        }
       />
 
       {/* Search */}

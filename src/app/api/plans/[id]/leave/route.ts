@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { removePlanReminders } from "@/lib/plan-reminders";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -22,6 +23,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     await db.planParticipant.delete({
       where: { id: participant.id },
     });
+
+    removePlanReminders(user.id, id).catch(() => {});
 
     const plan = await db.plan.findUnique({
       where: { id },

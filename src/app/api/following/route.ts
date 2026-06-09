@@ -20,7 +20,7 @@ export async function GET() {
 
     return NextResponse.json({ following: following.map((f) => f.following) });
   } catch (error) {
-    console.error("[GET /api/following] Error:", error);
+    console.error("[FOLLOWING]", error);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

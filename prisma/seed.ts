@@ -21,6 +21,44 @@ async function main() {
   }
 
   console.log("Seeded cities:", cities.length);
+
+  // Seed referral badges
+  const badges = [
+    {
+      key: "FIRST_INVITE",
+      name: "Premier invité",
+      description: "Tu as invité ton premier ami sur OUTSIDE",
+      icon: "🎯",
+    },
+    {
+      key: "FIVE_INVITES",
+      name: "5 amis ramenés",
+      description: "Tu as ramené 5 amis sur OUTSIDE",
+      icon: "🌟",
+    },
+    {
+      key: "CIRCLE_LAUNCHER",
+      name: "Cercle lancé",
+      description: "Tu as lancé ton cercle sur OUTSIDE",
+      icon: "🚀",
+    },
+    {
+      key: "LOCAL_AMBASSADOR",
+      name: "Ambassadeur local",
+      description: "Tu es un ambassadeur OUTSIDE dans ta ville",
+      icon: "🏆",
+    },
+  ];
+
+  for (const badge of badges) {
+    await db.badge.upsert({
+      where: { key: badge.key },
+      update: {},
+      create: badge,
+    });
+  }
+
+  console.log("Seeded badges:", badges.length);
 }
 
 main()

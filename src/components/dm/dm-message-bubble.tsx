@@ -135,7 +135,9 @@ function MomentCardInBubble({ momentId, metadata, isMine }: { momentId: string; 
   let parsed: { mediaUrl?: string; caption?: string | null } | null = null;
   try {
     if (metadata) parsed = JSON.parse(metadata);
-  } catch { /* noop */ }
+  } catch (e) {
+    console.error("[PARSE_MOMENT_META]", e);
+  }
 
   return (
     <Link
@@ -193,7 +195,9 @@ function PlanInviteCard({ metadata, isMine }: { metadata?: string | null; isMine
   let parsed: PlanMeta | null = null;
   try {
     if (metadata) parsed = JSON.parse(metadata);
-  } catch { /* noop */ }
+  } catch (e) {
+    console.error("[PARSE_PLAN_META]", e);
+  }
 
   if (!parsed) {
     return <span className="italic opacity-70">Invitation indisponible</span>;

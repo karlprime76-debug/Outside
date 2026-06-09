@@ -61,7 +61,7 @@ export function TrustReviewDialog({ planId, reviewedId, reviewedName, onClose, o
 
   const canSubmit = wasPresent !== null && respectful !== null && realPlan !== null && goodVibe !== null;
 
-  function Toggle({ label, value, onChange }: { label: string; value: boolean | null; onChange: (v: boolean) => void }) {
+  function Toggle({ label, value, onChange }: { label: string; value: boolean | null; onChange: (_v: boolean) => void }) {
     return (
       <div className="flex items-center justify-between">
         <span className="text-sm text-[var(--os-fg)]">{label}</span>

@@ -154,7 +154,7 @@ export default function DmConversationPage() {
         if (isNearBottomRef.current) {
           fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch(() => {});
         }
-      } catch { /* noop */ }
+      } catch (e) { console.error("[DM_POLL]", e); }
     };
     pollingRef.current = setInterval(poll, 5000);
     return () => {
@@ -268,14 +268,14 @@ export default function DmConversationPage() {
       const res = await fetch(`/api/dm/messages/${mid}/delete`, { method: "POST" });
       if (!res.ok) return;
       setMessages((prev) => prev.map((m) => (m.id === mid ? { ...m, isDeleted: true, content: null } : m)));
-    } catch { /* noop */ }
+    } catch (e) { console.error("[DELETE_MSG]", e); }
   }
 
   async function onReportMessage(mid: string) {
     try {
       const res = await fetch(`/api/dm/messages/${mid}/report`, { method: "POST" });
       if (!res.ok) return;
-    } catch { /* noop */ }
+    } catch (e) { console.error("[REPORT_MSG]", e); }
   }
 
   async function onReactMessage(messageId: string, emoji: string) {
@@ -314,7 +314,7 @@ export default function DmConversationPage() {
           }
         })
       );
-    } catch { /* noop */ }
+    } catch (e) { console.error("[REACT_MSG]", e); }
   }
 
   // Build render items with separators

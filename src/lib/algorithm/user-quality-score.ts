@@ -19,7 +19,7 @@ export interface UserQualityFactors {
 export async function calculateUserQualityScore(userId: string): Promise<number> {
   const now = new Date();
 
-  const [user, momentCounts, followerData, reportData, planCount] = await Promise.all([
+  const [user, momentCounts, followerData, reportData, planCount, userMoments, hiddenContent, spamReports] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
       select: {
@@ -50,7 +50,26 @@ export async function calculateUserQualityScore(userId: string): Promise<number>
     db.planParticipant.count({
       where: { userId },
     }),
+    db.moment.findMany({
+      where: { authorId: userId },
+      select: { id: true },
+    }),
+    db.moment.count({
+      where: { authorId: userId, visibility: "PRIVATE" },
+    }),
+    db.report.count({
+      where: { targetId: userId, targetType: "USER", reason: "SPAM" },
+    }),
   ]);
+
+  const momentIds = userMoments.map((m) => m.id);
+
+  const momentScores = momentIds.length > 0
+    ? await db.momentScore.aggregate({
+        where: { momentId: { in: momentIds } },
+        _avg: { likes: true, views: true, comments: true },
+      })
+    : { _avg: { likes: null, views: null, comments: null } };
 
   if (!user) return 50;
 
@@ -78,17 +97,20 @@ export async function calculateUserQualityScore(userId: string): Promise<number>
   // Plan participation (total plans joined)
   const planParticipation = Math.min(1, planCount / 5); // 5+ plans = max
 
-  // Spam signals (placeholder - would need more data)
-  const spamSignals = 0;
+  // Spam signals (based on SPAM reports against user)
+  const spamSignals = Math.min(1, spamReports / 3);
 
-  // Content hidden rate (placeholder - would need MomentEvent data)
-  const contentHiddenRate = 0;
+  // Content hidden rate (private moments vs total moments)
+  const totalMoments = momentCounts.length;
+  const contentHiddenRate = totalMoments > 0 ? Math.min(1, hiddenContent / totalMoments) : 0;
 
-  // Repetitive content rate (placeholder - would need content analysis)
-  const repetitiveContentRate = 0;
+  // Repetitive content rate (based on low engagement across many moments)
+  const repetitiveContentRate = totalMoments > 3 && (!momentScores._avg.likes || momentScores._avg.likes < 1) ? 0.5 : 0;
 
-  // Avg engagement rate (placeholder - would need MomentScore data)
-  const avgEngagementRate = 0.5;
+  // Avg engagement rate (calculated from MomentScore aggregate data)
+  const avgEngagementRate = momentScores._avg.likes && momentScores._avg.views
+    ? Math.min(1, (momentScores._avg.likes + (momentScores._avg.comments || 0) * 2) / (momentScores._avg.views || 1))
+    : 0.5;
 
   const factors: UserQualityFactors = {
     profileComplete,

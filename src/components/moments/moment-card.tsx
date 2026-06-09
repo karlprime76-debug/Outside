@@ -54,11 +54,11 @@ interface MomentItem {
 
 interface MomentCardProps {
   moment: MomentItem;
-  onLikeToggle: (id: string, liked: boolean) => void;
-  onOpenComments: (moment: MomentItem) => void;
-  onDelete?: (id: string) => void;
-  onHide?: (id: string) => void;
-  onHideAccount?: (authorId: string) => void;
+  onLikeToggle: (_id: string, _liked: boolean) => void;
+  onOpenComments: (_moment: MomentItem) => void;
+  onDelete?: (_id: string) => void;
+  onHide?: (_id: string) => void;
+  onHideAccount?: (_authorId: string) => void;
 }
 
 export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onHide, onHideAccount }: MomentCardProps) {
@@ -162,11 +162,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
 
   // Expose handlers for video player integration
   useEffect(() => {
-    const handlers = (window as typeof window & { __momentCardHandlers?: Record<string, { handleVideoProgress: (percent: number, watchMs: number) => void; handleQuickSkip: () => void }> }).__momentCardHandlers || {};
+    const handlers = (window as typeof window & { __momentCardHandlers?: Record<string, { handleVideoProgress: (_percent: number, _watchMs: number) => void; handleQuickSkip: () => void }> }).__momentCardHandlers || {};
     handlers[moment.id] = { handleVideoProgress, handleQuickSkip };
-    (window as typeof window & { __momentCardHandlers?: Record<string, { handleVideoProgress: (percent: number, watchMs: number) => void; handleQuickSkip: () => void }> }).__momentCardHandlers = handlers;
+    (window as typeof window & { __momentCardHandlers?: Record<string, { handleVideoProgress: (_percent: number, _watchMs: number) => void; handleQuickSkip: () => void }> }).__momentCardHandlers = handlers;
     return () => {
-      delete (window as typeof window & { __momentCardHandlers?: Record<string, { handleVideoProgress: (percent: number, watchMs: number) => void; handleQuickSkip: () => void }> }).__momentCardHandlers?.[moment.id];
+      delete (window as typeof window & { __momentCardHandlers?: Record<string, { handleVideoProgress: (_percent: number, _watchMs: number) => void; handleQuickSkip: () => void }> }).__momentCardHandlers?.[moment.id];
     };
   }, [moment.id, handleVideoProgress, handleQuickSkip]);
 

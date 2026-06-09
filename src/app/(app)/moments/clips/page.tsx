@@ -244,6 +244,7 @@ export default function ClipsPage() {
     });
 
     return () => {
+      const currentRefs = videoRefs.current;
       Object.values(currentRefs).forEach((video) => {
         if (!video) return;
         video.removeEventListener("timeupdate", () => {});

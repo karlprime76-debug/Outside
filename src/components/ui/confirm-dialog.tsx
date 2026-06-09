@@ -16,7 +16,7 @@ interface ConfirmDialogState {
 }
 
 interface ConfirmContextType {
-  confirm: (options: Omit<ConfirmDialogState, "open">) => void;
+  confirm: (_options: Omit<ConfirmDialogState, "open">) => void;
 }
 
 const ConfirmContext = createContext<ConfirmContextType | null>(null);

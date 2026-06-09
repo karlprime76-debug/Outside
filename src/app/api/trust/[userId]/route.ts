@@ -23,7 +23,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ userId:
       badgeLabel: data.badgeLabel,
       signals: data.signals,
     });
-  } catch {
+  } catch (error) {
+    console.error("[TRUST]", error);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

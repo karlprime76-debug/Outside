@@ -25,10 +25,14 @@ export default async function AppLayout({
       unreadCount = await db.notification.count({
         where: { recipientId: session.user.id, isRead: false },
       });
-    } catch {}
+    } catch (e) {
+      console.error("[UNREAD_COUNT]", e);
+    }
     try {
       dmUnread = await getUnreadDmCount(session.user.id);
-    } catch {}
+    } catch (e) {
+      console.error("[DM_UNREAD]", e);
+    }
   }
 
   const NAV_LINKS = [

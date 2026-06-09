@@ -25,7 +25,9 @@ export async function POST(req: Request) {
       targetId = searchParams.get("userId");
       momentId = searchParams.get("momentId");
     }
-  } catch {}
+  } catch (e) {
+    console.error("[FOLLOW_PARSE]", e);
+  }
 
   if (!targetId) {
     return NextResponse.json({ error: "Paramètre manquant." }, { status: 400 });

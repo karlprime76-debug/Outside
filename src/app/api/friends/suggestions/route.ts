@@ -112,7 +112,7 @@ export async function GET() {
 
     return NextResponse.json({ suggestions: results });
   } catch (error) {
-    console.error("[GET /api/friends/suggestions] Error:", error);
+    console.error("[FRIEND_SUGGESTIONS]", error);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return NextResponse.json({ events });
   } catch (error) {
-    console.error("[GET /api/events] Error:", error);
+    console.error("[EVENTS]", error);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

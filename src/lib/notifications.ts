@@ -76,6 +76,8 @@ const typeToPushCategory: Record<NotificationType, Parameters<typeof sendPushToU
   PLAN_GROUP_MESSAGE: "dm",
   WEEKLY_RECAP_READY: "system",
   AMBASSADOR_TO_DISCOVER: "friend",
+  PLAN_REVIEW_PENDING: "plan",
+  PLAN_CONFIRMED: "plan",
 };
 
 export async function createNotification(input: CreateNotificationInput) {

@@ -1,8 +1,8 @@
 export interface RetryOptions {
   maxAttempts?: number;
   baseDelay?: number;
-  onRetry?: (attempt: number, error: Error) => void;
-  shouldRetry?: (error: Error) => boolean;
+  onRetry?: (_attempt: number, _error: Error) => void;
+  shouldRetry?: (_error: Error) => boolean;
 }
 
 export interface UploadProgress {
@@ -87,9 +87,9 @@ function defaultShouldRetry(error: Error): boolean {
 }
 
 export async function uploadWithRetry<T>(
-  file: File,
-  uploadFn: (file: File, progress?: (progress: UploadProgress) => void) => Promise<T>,
+  _file: File,
+  uploadFn: (file: File, _progress?: (_progress: UploadProgress) => void) => Promise<T>,
   options: RetryOptions = {}
 ): Promise<T> {
-  return retryAsync(() => uploadFn(file), options);
+  return retryAsync(() => uploadFn(_file), options);
 }

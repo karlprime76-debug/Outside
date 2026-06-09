@@ -12,11 +12,8 @@ import {
 
 export async function POST(req: Request) {
   try {
-    console.log("[AVATAR_UPLOAD] start");
-
     const session = await auth();
     if (!session?.user?.email) {
-      console.log("[AVATAR_UPLOAD] UNAUTHORIZED");
       return NextResponse.json(
         { message: "Tu dois être connecté.", code: "UNAUTHORIZED" },
         { status: 401 }
@@ -28,19 +25,11 @@ export async function POST(req: Request) {
       select: { id: true },
     });
     if (!user) {
-      console.log("[AVATAR_UPLOAD] USER_NOT_FOUND");
       return NextResponse.json(
         { message: "Utilisateur non trouvé.", code: "USER_NOT_FOUND" },
         { status: 404 }
       );
     }
-    console.log("[AVATAR_UPLOAD] userId:", user.id);
-
-    console.log("[AVATAR_UPLOAD] env:", {
-      hasSupabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
-      hasAnonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
-      hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
-    });
 
     let supabase;
     try {
@@ -77,21 +66,13 @@ export async function POST(req: Request) {
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      console.log("[AVATAR_UPLOAD] NO_FILE");
       return NextResponse.json(
         { message: "Aucune image reçue.", code: "NO_FILE" },
         { status: 400 }
       );
     }
 
-    console.log("[AVATAR_UPLOAD] file:", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    });
-
     if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
-      console.log("[AVATAR_UPLOAD] INVALID_FILE_TYPE:", file.type);
       return NextResponse.json(
         { message: "Format d'image non accepté. Utilise JPG, PNG ou WebP.", code: "INVALID_FILE_TYPE" },
         { status: 400 }
@@ -99,7 +80,6 @@ export async function POST(req: Request) {
     }
 
     if (file.size > AVATAR_MAX_SIZE) {
-      console.log("[AVATAR_UPLOAD] FILE_TOO_LARGE:", file.size);
       return NextResponse.json(
         { message: "Cette image est trop lourde. Taille maximale : 5 Mo.", code: "FILE_TOO_LARGE" },
         { status: 400 }
@@ -107,12 +87,9 @@ export async function POST(req: Request) {
     }
 
     const filePath = buildAvatarPath(user.id, file.type);
-    console.log("[AVATAR_UPLOAD] bucket:", AVATARS_BUCKET);
-    console.log("[AVATAR_UPLOAD] path:", filePath);
 
     try {
       await ensureAvatarsBucket(supabase);
-      console.log("[AVATAR_UPLOAD] bucket ensured");
     } catch (bucketErr) {
       const raw = bucketErr instanceof Error ? bucketErr.message : "Erreur inconnue";
       console.error("[AVATAR_UPLOAD] Bucket error:", raw);
@@ -166,7 +143,6 @@ export async function POST(req: Request) {
 
     const { data: publicUrlData } = supabase.storage.from(AVATARS_BUCKET).getPublicUrl(filePath);
     const publicUrl = publicUrlData.publicUrl;
-    console.log("[AVATAR_UPLOAD] publicUrl:", publicUrl);
 
     try {
       const updated = await db.user.update({
@@ -175,7 +151,6 @@ export async function POST(req: Request) {
         include: { homeCity: true, activeCity: true },
       });
 
-      console.log("[AVATAR_UPLOAD] success");
       return NextResponse.json({
         message: "Photo de profil mise à jour.",
         image: publicUrl,

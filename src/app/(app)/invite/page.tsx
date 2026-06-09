@@ -113,7 +113,6 @@ export default function InvitePage() {
       <OutsideHeader title="Invite ton cercle" />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
-        {/* Hero */}
         <div className="text-center py-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 mb-4">
             <Users className="h-8 w-8 text-white" />
@@ -124,7 +123,6 @@ export default function InvitePage() {
           </p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center p-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)]">
             <div className="text-2xl font-black text-outside-500">{data.stats.total}</div>
@@ -140,7 +138,6 @@ export default function InvitePage() {
           </div>
         </div>
 
-        {/* Referral Link */}
         <div className="p-4 rounded-xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)]">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-bold text-[var(--os-fg)]">Ton lien d&apos;invitation</span>
@@ -162,7 +159,6 @@ export default function InvitePage() {
           </div>
         </div>
 
-        {/* Share Actions */}
         <div className="space-y-3">
           <button
             onClick={shareWhatsApp}
@@ -190,7 +186,6 @@ export default function InvitePage() {
           </Link>
         </div>
 
-        {/* Invites List */}
         {data.invites.length > 0 && (
           <div>
             <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)] mb-3">Tes invitations</h2>
@@ -226,7 +221,6 @@ export default function InvitePage() {
           </div>
         )}
 
-        {/* Badges Info */}
         <div className="p-4 rounded-xl border border-[var(--os-card-border)] bg-gradient-to-br from-outside-50/50 to-accent-50/50">
           <h3 className="text-sm font-bold text-[var(--os-fg)] mb-2">Récompenses</h3>
           <ul className="space-y-2 text-xs text-[var(--os-muted)]">

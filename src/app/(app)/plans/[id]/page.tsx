@@ -8,12 +8,15 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { RecurringSection } from "./recurring-section";
 import { ReportButton } from "@/components/report-button";
 import { SavePlanButton } from "@/components/save-plan-button";
-import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download, Bell, ShieldCheck, Home, AlertTriangle } from "lucide-react";
+import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download, Bell, ShieldCheck, Home, AlertTriangle, Camera, Trophy } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
 import { formatBudget } from "@/lib/currency";
 import { useHaptic } from "@/hooks/use-haptic";
+import { ExpensesSection } from "./expenses-section";
+import PollsSection from "./polls-section";
 
 interface PlanDetail {
   id: string;
@@ -33,11 +36,13 @@ interface PlanDetail {
   isTravelerFriendly: boolean;
   safetyLevel: string;
   rules: string | null;
+  recurrence: string | null;
+  parentPlanId: string | null;
   creator: { id: string; name: string | null; image: string | null };
   city: { name: string };
   place: { name: string } | null;
-  participants: { attendance: string; user: { id: string; name: string | null; image: string | null } }[];
-  _count: { participants: number; going: number; maybe: number };
+  participants: { attendance: string; checkedInAt: string | null; checkinPhotoUrl: string | null; user: { id: string; name: string | null; image: string | null } }[];
+  _count: { participants: number; going: number; maybe: number; expenses: number };
 }
 
 interface ChatMessage {
@@ -110,6 +115,9 @@ export default function PlanDetailPage() {
   const [safetyLoading, setSafetyLoading] = useState(false);
   const [safetyContacts, setSafetyContacts] = useState<{ id: string; trustedUser: { id: string; name: string | null; image: string | null } }[]>([]);
   const [showSafetySheet, setShowSafetySheet] = useState(false);
+  const [remindersEnabled, setRemindersEnabled] = useState(true);
+  const [remindersLoading, setRemindersLoading] = useState(false);
+  const [reliabilities, setReliabilities] = useState<Record<string, { level: string; outsideScore: number }>>({});
 
   useEffect(() => {
     fetch(`/api/plans/${id}`)
@@ -117,6 +125,7 @@ export default function PlanDetailPage() {
       .then((data) => {
         setPlan(data.plan || null);
         setLoading(false);
+        setRemindersEnabled(data.plan?.hasReminders ?? true);
       })
       .catch(() => setLoading(false));
 
@@ -138,6 +147,21 @@ export default function PlanDetailPage() {
       .then((data) => setSafetyContacts(data?.contacts || []))
       .catch(() => {});
   }, [id]);
+
+  useEffect(() => {
+    if (!plan) return;
+    const ids = [...new Set(plan.participants.map((p) => p.user.id))];
+    ids.forEach((uid) => {
+      fetch(`/api/users/${uid}/reliability`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.trustProfile) {
+            setReliabilities((prev) => ({ ...prev, [uid]: data.trustProfile }));
+          }
+        })
+        .catch(() => {});
+    });
+  }, [plan]);
 
   const isFull = plan?.status === "FULL";
   const myParticipant = session?.user?.id
@@ -182,12 +206,12 @@ export default function PlanDetailPage() {
     }
   }
 
-  if (loading) return <div className="p-6 text-zinc-500 dark:text-zinc-400">{t.common.loading}</div>;
-  if (!plan) return <div className="p-6 text-zinc-500 dark:text-zinc-400">{t.planDetail.notFound}</div>;
+  if (loading) return <div className="p-6 text-[var(--os-muted)]">{t.common.loading}</div>;
+  if (!plan) return <div className="p-6 text-[var(--os-muted)]">{t.planDetail.notFound}</div>;
 
   return (
     <div className="p-4 max-w-3xl mx-auto space-y-6">
-      <Link href="/plans" className="inline-flex items-center gap-1 text-sm font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors">
+      <Link href="/plans" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
         <ArrowLeft className="h-4 w-4" />
         {t.planDetail.back}
       </Link>
@@ -214,12 +238,12 @@ export default function PlanDetailPage() {
             <Badge variant="green">{t.planDetail.travelerFriendly}</Badge>
           )}
         </div>
-        <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100">{plan.title}</h1>
-        {plan.description && <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{plan.description}</p>}
+        <h1 className="text-3xl font-black text-[var(--os-fg)]">{plan.title}</h1>
+        {plan.description && <p className="text-[var(--os-fg)]/70 leading-relaxed">{plan.description}</p>}
       </div>
 
       {/* Info card */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 space-y-4 dark:border-surface-border dark:bg-surface-card">
+      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-6 space-y-4">
         <InfoRow icon={MapPin} label={t.planDetail.city} value={plan.city.name} />
         {plan.place && <InfoRow icon={MapPin} label={t.planDetail.place} value={plan.place.name} />}
         <InfoRow icon={Calendar} label={t.planDetail.when} value={new Date(plan.startDate).toLocaleString("fr-FR")} />
@@ -228,6 +252,10 @@ export default function PlanDetailPage() {
         <InfoRow icon={Users} label={t.planDetail.spots} value={`${plan._count.going} y vont · ${plan._count.maybe} intéressés / ${plan.maxParticipants} max`} />
       </div>
 
+      {(plan.recurrence || plan.parentPlanId) && (
+        <RecurringSection planId={plan.id} isCreator={isCreator} />
+      )}
+
       {actionError && (
         <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
           {actionError}
@@ -235,10 +263,32 @@ export default function PlanDetailPage() {
       )}
 
       {isParticipant && (
-        <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
-          <Bell className="h-3.5 w-3.5" />
-          <span>Rappel activé ({myAttendance === "GOING" ? "J&apos;y vais" : "Peut-être"})</span>
-        </div>
+        <button
+          onClick={async () => {
+            if (remindersLoading) return;
+            setRemindersLoading(true);
+            try {
+              const res = await fetch(`/api/plans/${id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ enabled: !remindersEnabled }),
+              });
+              if (res.ok) {
+                setRemindersEnabled(!remindersEnabled);
+              }
+            } finally {
+              setRemindersLoading(false);
+            }
+          }}
+          disabled={remindersLoading}
+          className="inline-flex items-center gap-2 text-xs font-semibold transition-colors disabled:opacity-50"
+          style={{ color: remindersEnabled ? "var(--os-green, #059669)" : "var(--os-muted, #a1a1aa)" }}
+        >
+          <Bell className={`h-3.5 w-3.5 ${remindersLoading ? "animate-pulse" : ""}`} />
+          {remindersEnabled
+            ? `Rappel activé (${myAttendance === "GOING" ? "J'y vais" : "Peut-être"})`
+            : "Rappel désactivé"}
+        </button>
       )}
 
       {/* Actions */}
@@ -294,7 +344,7 @@ export default function PlanDetailPage() {
           </>
         ) : null}
         {!isCreator && <SavePlanButton planId={plan.id} variant="button" />}
-        {isParticipant && (
+          {isParticipant && (
           <Link
             href={`/plans/${plan.id}/chat`}
             className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -302,6 +352,9 @@ export default function PlanDetailPage() {
             <MessageSquare className="h-4 w-4" />
             Chat
           </Link>
+        )}
+        {isParticipant && (
+          <ExpensesSection planId={plan.id} isParticipant={isParticipant} expenseCount={plan._count.expenses} />
         )}
         {isParticipant && (
           <button
@@ -337,7 +390,7 @@ export default function PlanDetailPage() {
             if (navigator.share) {
               try {
                 await navigator.share({ title: plan.title, url });
-              } catch {}
+              } catch (e) { console.error("[SHARE]", e); }
             } else {
               await navigator.clipboard.writeText(url);
               alert("Lien copié !");
@@ -369,6 +422,14 @@ export default function PlanDetailPage() {
           <QrCode className="h-4 w-4" />
           QR code
         </button>
+        <a
+          href={`/api/plans/${plan.id}/calendar`}
+          download
+          className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        >
+          <Calendar className="h-4 w-4" />
+          Export
+        </a>
         {isParticipant && (
           <>
             {!safetyShare ? (
@@ -438,7 +499,7 @@ export default function PlanDetailPage() {
                   </button>
                 )}
                 {safetyShare.status === "RETURNED" && (
-                  <span className="inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2 text-sm font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2 text-sm font-bold text-[var(--os-fg)]/70 dark:bg-zinc-800">
                     <Home className="h-4 w-4" />
                     Rentré
                   </span>
@@ -447,12 +508,67 @@ export default function PlanDetailPage() {
             )}
           </>
         )}
+        {plan.status === "COMPLETED" && isParticipant && (
+          <Link
+            href={`/plans/${plan.id}/memories`}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+          >
+            <Trophy className="h-4 w-4" />
+            Voir les souvenirs
+          </Link>
+        )}
+        {isParticipant && (
+          myParticipant?.checkedInAt ? (
+            <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+              <Camera className="h-4 w-4" />
+              Check-in ✓
+            </span>
+          ) : new Date(plan.startDate) <= new Date() && plan.status !== "COMPLETED" ? (
+            <button
+              onClick={async () => {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = "image/jpeg,image/png,image/webp";
+                input.onchange = async () => {
+                  const file = input.files?.[0];
+                  if (!file) return;
+                  setActionLoading(true);
+                  setActionError("");
+                  const formData = new FormData();
+                  formData.append("file", file);
+                  try {
+                    const res = await fetch(`/api/plans/${plan.id}/checkin`, {
+                      method: "POST",
+                      body: formData,
+                    });
+                    if (res.ok) {
+                      window.location.reload();
+                    } else {
+                      const json = await res.json();
+                      setActionError(json.error || t.common.error);
+                    }
+                  } catch {
+                    setActionError("Erreur réseau");
+                  } finally {
+                    setActionLoading(false);
+                  }
+                };
+                input.click();
+              }}
+              disabled={actionLoading}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50"
+            >
+              <Camera className="h-4 w-4" />
+              {actionLoading ? "..." : "Check-in"}
+            </button>
+          ) : null
+        )}
       </div>
 
       {/* Participants */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{t.planDetail.participantsTitle} ({plan._count.going} y vont · {plan._count.maybe} intéressés)</h3>
+          <h3 className="text-lg font-bold text-[var(--os-fg)]">{t.planDetail.participantsTitle} ({plan._count.going} y vont · {plan._count.maybe} intéressés)</h3>
           {plan.status === "COMPLETED" && isParticipant && (
             <span className="text-xs text-[var(--os-muted)]">Clique sur un participant pour lui donner un retour</span>
           )}
@@ -467,14 +583,24 @@ export default function PlanDetailPage() {
                   setReviewOpen(true);
                 }
               }}
-              className={`flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 transition-colors dark:border-surface-border dark:bg-surface-card ${
+              className={`flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-2 transition-colors ${
                 plan.status === "COMPLETED" && isParticipant && p.user.id !== session?.user?.id
                   ? "cursor-pointer hover:border-outside-300 hover:shadow-sm"
                   : ""
               }`}
             >
               <Avatar src={p.user.image} name={p.user.name} size="sm" />
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{p.user.name || t.plans.anonymous}</span>
+              <span className="text-sm font-semibold text-[var(--os-fg)]">{p.user.name || t.plans.anonymous}</span>
+              {reliabilities[p.user.id] && (
+                <span className={`text-[10px] font-bold ml-1 ${
+                  reliabilities[p.user.id].level === "Nouveau" ? "text-zinc-400" :
+                  reliabilities[p.user.id].level === "Confirmé" ? "text-blue-500" :
+                  reliabilities[p.user.id].level === "Fiable" ? "text-emerald-500" :
+                  "text-purple-500"
+                }`}>
+                  ●
+                </span>
+              )}
               {plan.status === "COMPLETED" && isParticipant && p.user.id !== session?.user?.id && (
                 <Star className="h-3 w-3 text-outside-500" />
               )}
@@ -494,7 +620,7 @@ export default function PlanDetailPage() {
       )}
 
       {/* Chat */}
-      <div className="rounded-2xl border border-zinc-200 bg-white dark:border-surface-border dark:bg-surface-card overflow-hidden">
+      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] overflow-hidden">
         <div className="flex items-center gap-2 border-b border-zinc-100 px-5 py-3 dark:border-zinc-800">
           <MessageSquare className="h-4 w-4 text-outside-500" />
           <h3 className="text-sm font-bold text-[var(--os-fg)]">Discussion du plan</h3>
@@ -526,7 +652,7 @@ export default function PlanDetailPage() {
                 <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
                   <Avatar src={msg.author.image} name={msg.author.name} size="sm" />
                   <div className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
-                    <div className={`rounded-2xl px-3 py-2 text-sm ${isMe ? "bg-outside-100 text-outside-900" : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"}`}>
+                    <div className={`rounded-2xl px-3 py-2 text-sm ${isMe ? "bg-outside-100 text-outside-900" : "bg-zinc-100 text-[var(--os-fg)] dark:bg-zinc-800"}`}>
                       <p>{msg.content}</p>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
@@ -584,7 +710,7 @@ export default function PlanDetailPage() {
                 onChange={(e) => setChatInput(e.target.value)}
                 maxLength={500}
                 placeholder="Écris un message..."
-                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-outside-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                className="flex-1 rounded-xl border border-zinc-200 bg-[var(--os-bg)] px-3 py-2 text-sm text-[var(--os-fg)] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-outside-500 dark:border-zinc-700"
               />
               <button
                 type="submit"
@@ -598,6 +724,11 @@ export default function PlanDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Polls */}
+      {(isParticipant || isCreator) && (
+        <PollsSection planId={plan.id} isParticipant={isParticipant} isCreator={isCreator} />
+      )}
 
       {/* Report */}
       <div className="flex justify-end">

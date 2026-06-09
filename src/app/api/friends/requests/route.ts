@@ -32,7 +32,7 @@ export async function GET() {
 
     return NextResponse.json({ received, sent });
   } catch (error) {
-    console.error("[GET /api/friends/requests] Error:", error);
+    console.error("[FRIEND_REQUESTS]", error);
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }
 }

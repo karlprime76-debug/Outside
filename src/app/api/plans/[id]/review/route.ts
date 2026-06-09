@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { calculateUserTrust } from "@/lib/trust/calculate-user-trust";
+import { calculatePlanConfirmation } from "@/lib/trust/calculate-user-trust";
 
 export async function POST(
   req: Request,
@@ -110,6 +112,14 @@ export async function POST(
         comment,
       },
     });
+
+    // Recalculate trust score for reviewed user
+    if (reviewedUserId) {
+      await calculateUserTrust(reviewedUserId).catch(() => {});
+    }
+
+    // Recalculate plan confirmation
+    await calculatePlanConfirmation(planId).catch(() => {});
 
     return NextResponse.json({ review }, { status: 201 });
   } catch (error) {

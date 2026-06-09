@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { createPlanReminders } from "@/lib/plan-reminders";
 
 const VALID_ATTENDANCE = ["GOING", "MAYBE"] as const;
 
@@ -23,6 +24,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             id: true,
             maxParticipants: true,
             status: true,
+            startDate: true,
           },
         },
       },
@@ -73,6 +75,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         }
       }
     }
+
+    createPlanReminders(user.id, invitation.planId, invitation.plan.startDate).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

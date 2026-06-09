@@ -23,24 +23,6 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.log("[REGISTER] body keys:", Object.keys(body));
-      // eslint-disable-next-line no-console
-      console.log("[REGISTER] payload:", {
-        name: body.name,
-        username: body.username,
-        email: body.email,
-        countryCode: body.countryCode,
-        homeCity: body.homeCity,
-        hasPassword: Boolean(body.password),
-        hasConfirmPassword: Boolean(body.confirmPassword),
-        passwordLength: body.password?.length,
-        homeCityLat: body.homeCityLat,
-        homeCityLng: body.homeCityLng,
-      });
-    }
-
     const parsed = registerSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -60,11 +42,6 @@ export async function POST(req: Request) {
       };
 
       const preciseError = messages[field] || firstIssue.message || "Veuillez vérifier les informations saisies.";
-
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.log("[REGISTER] Validation failed:", field, firstIssue.message);
-      }
 
       return NextResponse.json(
         { error: preciseError },
@@ -87,10 +64,6 @@ export async function POST(req: Request) {
     }
 
     if (!isValidCountryCode(countryCode)) {
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.log("[REGISTER] Validation failed: invalid_country_code", countryCode);
-      }
       return NextResponse.json(
         { error: "Le pays sélectionné est invalide." },
         { status: 400 }
@@ -101,10 +74,6 @@ export async function POST(req: Request) {
 
     const existingEmail = await db.user.findUnique({ where: { email } });
     if (existingEmail) {
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.log("[REGISTER] Validation failed: email_already_exists", email);
-      }
       return NextResponse.json({ error: "Un compte existe déjà avec cet email." }, { status: 409 });
     }
 
@@ -117,10 +86,6 @@ export async function POST(req: Request) {
       }
       const existingUsername = await db.user.findUnique({ where: { username: norm } });
       if (existingUsername) {
-        if (process.env.NODE_ENV === "development") {
-          // eslint-disable-next-line no-console
-          console.log("[REGISTER] Validation failed: username_already_taken", norm);
-        }
         return NextResponse.json({ error: "Ce nom d'utilisateur est déjà utilisé." }, { status: 409 });
       }
       username = norm;
@@ -252,11 +217,6 @@ export async function POST(req: Request) {
         }
       }
     } catch (dbError: unknown) {
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.log("[REGISTER] Prisma error:", dbError);
-      }
-
       const err = dbError as { code?: string; meta?: { target?: string[] } };
       if (err.code === "P2002") {
         const target = err.meta?.target?.[0] ?? "field";
@@ -273,10 +233,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Compte créé avec succès." }, { status: 201 });
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.error("[REGISTER] Unexpected error:", error);
-    }
+    console.error("[REGISTER] Unexpected error:", error);
     return NextResponse.json({ error: "Une erreur est survenue. Veuillez réessayer." }, { status: 500 });
   }
 }
