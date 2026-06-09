@@ -253,12 +253,27 @@ export function DmMessageComposer({
     });
   }
 
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+  const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+  const MAX_AUDIO_SIZE = 10 * 1024 * 1024;
+
+  function checkFileSize(file: File, maxSize: number, label: string): boolean {
+    if (file.size <= maxSize) return true;
+    addToast(`Fichier ${label} max ${maxSize / (1024 * 1024)} Mo.`, "error");
+    return false;
+  }
+
   async function handleGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const isVideo = file.type.startsWith("video/");
+    if (!checkFileSize(file, isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE, isVideo ? "vidéo" : "photo")) {
+      if (galleryRef.current) galleryRef.current.value = "";
+      return;
+    }
     setUploadProgress({ status: "preparing", percentage: 0 });
     try {
-      if (shouldCompressImage(file)) {
+      if (!isVideo && shouldCompressImage(file)) {
         setUploadProgress({ status: "compressing", percentage: 10, message: "Compression..." });
       }
       setUploadProgress({ status: "uploading", percentage: 30, message: "Envoi..." });
@@ -285,6 +300,10 @@ export function DmMessageComposer({
   async function handleCameraChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!checkFileSize(file, MAX_IMAGE_SIZE, "photo")) {
+      if (cameraRef.current) cameraRef.current.value = "";
+      return;
+    }
     setUploadProgress({ status: "preparing", percentage: 0 });
     try {
       if (shouldCompressImage(file)) {
@@ -314,6 +333,10 @@ export function DmMessageComposer({
   async function handleAudioPickerChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!checkFileSize(file, MAX_AUDIO_SIZE, "audio")) {
+      if (audioPickerRef.current) audioPickerRef.current.value = "";
+      return;
+    }
     setUploadProgress({ status: "preparing", percentage: 0 });
     try {
       setUploadProgress({ status: "uploading", percentage: 30, message: "Envoi..." });

@@ -51,8 +51,7 @@ export function getCurrencyForCountry(countryCode?: string | null): string {
   return COUNTRY_CURRENCY_MAP[countryCode.toUpperCase()] || "XOF";
 }
 
-export function getDefaultCurrencyForUser(user?: { countryCode?: string | null; preferredCurrency?: string | null } | null): string {
-  if (user?.preferredCurrency) return user.preferredCurrency;
+export function getDefaultCurrencyForUser(user?: { countryCode?: string | null } | null): string {
   if (user?.countryCode) return getCurrencyForCountry(user.countryCode);
   return "XOF";
 }
@@ -78,7 +77,12 @@ export function formatBudget(
   priceType?: string | null
 ): string {
   const effectivePriceType = priceType || (isFrom ? "FROM" : null);
-  if (effectivePriceType === "FREE" || amount === null || amount === undefined) {
+  if (effectivePriceType === "FREE") {
+    return "Gratuit";
+  }
+  if (amount === null || amount === undefined) {
+    if (effectivePriceType === "PAID") return "Payant";
+    if (effectivePriceType === "FROM") return "À partir de";
     return "Gratuit";
   }
   const num = typeof amount === "number" ? amount : Number(amount);

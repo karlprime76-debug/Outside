@@ -98,6 +98,8 @@ export default async function AdminPage() {
       {/* Quick links */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
+          { label: "Signalements", href: "/admin/reports", icon: AlertTriangle, color: "from-red-500 to-orange-500" },
+          { label: "Confiance", href: "/admin/trust", icon: Shield, color: "from-outside-500 to-accent-500" },
           { label: "Gérer les plans", href: "/plans", icon: CalendarDays, color: "from-outside-500 to-accent-500" },
           { label: "Gérer les lieux", href: "/places", icon: MapPin, color: "from-indigo-500 to-purple-500" },
           { label: "Demandes pro", href: "/admin/pro-requests", icon: Briefcase, color: "from-amber-500 to-orange-500" },

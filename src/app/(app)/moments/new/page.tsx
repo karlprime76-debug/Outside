@@ -134,7 +134,6 @@ export default function NewMomentPage() {
           const vertical = v.videoHeight > v.videoWidth;
           setIsVerticalVideo(vertical);
           setPublishAsClip(vertical);
-          URL.revokeObjectURL(v.src);
           // Open video editor for trimming
           setShowVideoEditor(true);
         };

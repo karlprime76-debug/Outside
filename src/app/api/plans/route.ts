@@ -103,17 +103,18 @@ export async function GET(req: Request) {
     }
 
     const baseWhere: Record<string, unknown> = { status: "ACTIVE" };
+    const priceOrConditions: Record<string, unknown>[] = [];
     if (cityId) baseWhere.cityId = cityId;
     if (mood) baseWhere.mood = mood;
     if (budgetLevel) baseWhere.budgetLevel = budgetLevel;
     if (planCategory) baseWhere.planCategory = planCategory;
     if (isFree === "true") {
-      baseWhere.OR = [
+      priceOrConditions.push(
         { budgetAmount: { equals: 0 } },
         { budgetAmount: null, budgetLevel: "FREE" },
-      ];
+      );
     } else if (isFree === "false") {
-      baseWhere.AND = { NOT: { budgetAmount: { equals: 0 } } };
+      baseWhere.NOT = { budgetAmount: { equals: 0 } };
     }
     if (priceType) {
       baseWhere.priceType = priceType;
@@ -158,6 +159,16 @@ export async function GET(req: Request) {
         orderBy = { startDate: "asc" };
     }
 
+    function visibilityOr(userId: string) {
+      return [
+        { visibility: PlanVisibility.PUBLIC },
+        { creatorId: userId },
+        { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
+        { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
+        ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
+      ];
+    }
+
     // Near me filter: filter plans within 50km of user's active city location
     if (nearMe === "true" && userCityLocation) {
       const userLat = userCityLocation.latitude;
@@ -166,7 +177,13 @@ export async function GET(req: Request) {
 
       // Get all plans first, then filter by distance
       const allPlans = await db.plan.findMany({
-        where: baseWhere,
+        where: {
+          AND: [
+            baseWhere,
+            ...(priceOrConditions.length > 0 ? [{ OR: priceOrConditions }] : []),
+            { OR: visibilityOr(user.id) },
+          ],
+        },
         orderBy,
         take: limit * 2, // Fetch more to account for distance filtering
         include: {
@@ -203,13 +220,10 @@ export async function GET(req: Request) {
         ? {
             OR: [
               {
-                ...baseWhere,
-                OR: [
-                  { visibility: PlanVisibility.PUBLIC },
-                  { creatorId: user.id },
-                  { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
-                  { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
-                  ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
+                AND: [
+                  baseWhere,
+                  ...(priceOrConditions.length > 0 ? [{ OR: priceOrConditions }] : []),
+                  { OR: visibilityOr(user.id) },
                 ],
               },
               // Demo plans visible globally
@@ -217,13 +231,10 @@ export async function GET(req: Request) {
             ],
           }
         : {
-            ...baseWhere,
-            OR: [
-              { visibility: PlanVisibility.PUBLIC },
-              { creatorId: user.id },
-              { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
-              { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
-              ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
+            AND: [
+              baseWhere,
+              ...(priceOrConditions.length > 0 ? [{ OR: priceOrConditions }] : []),
+              { OR: visibilityOr(user.id) },
             ],
           },
       orderBy,
