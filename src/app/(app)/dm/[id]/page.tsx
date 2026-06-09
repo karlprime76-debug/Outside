@@ -7,6 +7,8 @@ import { Loader2, MapPin, Calendar, X, RefreshCw, ImageOff } from "lucide-react"
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useHaptic } from "@/hooks/use-haptic";
 import { DmConversationHeader } from "@/components/dm/dm-conversation-header";
+import { DmSearchOverlay } from "@/components/dm/dm-search-overlay";
+import { DmMediaHistory } from "@/components/dm/dm-media-history";
 import { DmMessageBubble, type DmMessage } from "@/components/dm/dm-message-bubble";
 import { DmDateSeparator } from "@/components/dm/dm-date-separator";
 import { DmMessageComposer } from "@/components/dm/dm-message-composer";
@@ -51,6 +53,8 @@ export default function DmConversationPage() {
     _count: { participants: number };
   }>>([]);
   const [plansLoading, setPlansLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [mediaOpen, setMediaOpen] = useState(false);
   const [momentSelectorOpen, setMomentSelectorOpen] = useState(false);
   const [momentsList, setMomentsList] = useState<Array<{
     id: string;
@@ -411,6 +415,8 @@ export default function DmConversationPage() {
       <DmConversationHeader 
         other={other} 
         onBack={() => router.back()} 
+        onOpenSearch={() => setSearchOpen(true)}
+        onOpenMedia={() => setMediaOpen(true)}
       />
 
       {/* Messages */}
@@ -635,6 +641,21 @@ export default function DmConversationPage() {
             )}
           </div>
         </div>
+      )}
+
+      {searchOpen && (
+        <DmSearchOverlay
+          conversationId={id}
+          myId={myId}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
+
+      {mediaOpen && (
+        <DmMediaHistory
+          conversationId={id}
+          onClose={() => setMediaOpen(false)}
+        />
       )}
     </OutsidePage>
   );
