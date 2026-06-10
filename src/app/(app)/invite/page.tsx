@@ -61,7 +61,7 @@ export default function InvitePage() {
 
   if (loading) {
     return (
-      <OutsidePage className="flex flex-col h-[100dvh]">
+      <OutsidePage className="flex flex-col h-[100dvh] pb-24">
         <OutsideHeader title="Invite ton cercle" />
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin h-8 w-8 border-2 border-outside-500 border-t-transparent rounded-full" />
@@ -72,7 +72,7 @@ export default function InvitePage() {
 
   if (!data) {
     return (
-      <OutsidePage className="flex flex-col h-[100dvh]">
+      <OutsidePage className="flex flex-col h-[100dvh] pb-24">
         <OutsideHeader title="Invite ton cercle" />
         <div className="flex-1 flex items-center justify-center p-4">
           <p className="text-center text-[var(--os-muted)]">Erreur lors du chargement.</p>
@@ -82,7 +82,7 @@ export default function InvitePage() {
   }
 
   return (
-    <OutsidePage className="flex flex-col h-[100dvh]">
+    <OutsidePage className="flex flex-col h-[100dvh] pb-24">
       <OutsideHeader title="Invite ton cercle" />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-6">

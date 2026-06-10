@@ -171,10 +171,10 @@
 
   /* Neon border glow */
   .neon-border {
-    box-shadow: 0 0 0 1px rgba(255, 107, 53, 0.3), 0 0 20px rgba(245, 158, 11, 0.15);
+    box-shadow: 0 0 0 1px rgba(176, 118, 84, 0.3), 0 0 20px rgba(196, 163, 90, 0.15);
   }
   .dark .neon-border {
-    box-shadow: 0 0 0 1px rgba(255, 149, 0, 0.3), 0 0 20px rgba(245, 158, 11, 0.15);
+    box-shadow: 0 0 0 1px rgba(125, 78, 53, 0.3), 0 0 20px rgba(168, 136, 69, 0.15);
   }
 
   /* Theme-aware card */

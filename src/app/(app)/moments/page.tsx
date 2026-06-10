@@ -9,7 +9,7 @@ import { OutsideHeader } from "@/components/ui/outside-header";
 
 export default function MomentsPage() {
   return (
-    <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh]">
+    <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh] pb-24 md:pb-4">
       <OutsideHeader
         title="Moments"
         subtitle="Ce qui se passe dehors, maintenant."

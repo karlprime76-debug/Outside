@@ -207,7 +207,7 @@ export default function EditProfilePage() {
   }
 
   return (
-    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6">
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/profile" className="rounded-full p-2 hover:bg-[var(--os-card-border)] transition-colors">

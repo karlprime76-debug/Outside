@@ -414,7 +414,7 @@ export default function DmConversationPage() {
   }, [ordered, myId]);
 
   return (
-    <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh]">
+    <OutsidePage className="flex flex-col max-h-[100dvh] pb-24 md:pb-0">
       <DmConversationHeader 
         other={other} 
         onBack={() => router.back()} 
@@ -422,13 +422,13 @@ export default function DmConversationPage() {
         onOpenMedia={() => setMediaOpen(true)}
       />
 
-      {/* Messages */}
+      {/* Messages - seule zone scrollable */}
       <div
         ref={(el) => {
           (listRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
           (pullRefreshRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
         }}
-        className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 relative"
+        className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 relative min-h-0"
       >
         {/* Pull to refresh indicator */}
         <div

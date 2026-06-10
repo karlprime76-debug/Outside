@@ -214,7 +214,7 @@ export default function TrendingPage() {
   }, [fetchTrendingMoments]);
 
   return (
-    <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh]">
+    <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh] pb-24 md:pb-4">
       <OutsideHeader
         title="Tendances"
         subtitle="Les contenus les plus populaires"

@@ -161,7 +161,7 @@ export default function DmInboxPage() {
   const unreadTotal = items.reduce((sum, c) => sum + c.unread, 0);
 
   return (
-    <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh]">
+    <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh] pb-24 md:pb-4">
       <OutsideHeader
         title={unreadTotal > 0 ? `Messages (${unreadTotal})` : "Messages"}
         subtitle="Tes conversations"

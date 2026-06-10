@@ -242,7 +242,7 @@ export default function ActivityPage() {
   }
 
   return (
-    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 animate-slide-up">
+    <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-slide-up">
       <button
         onClick={() => router.back()}
         className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"

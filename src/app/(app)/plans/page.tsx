@@ -121,7 +121,7 @@ export default function PlansPage() {
     : plans;
 
   return (
-    <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6 animate-slide-up">
+    <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6 pb-24 md:pb-4 animate-slide-up">
       <ImmersiveBackground
         daySrc={backgrounds.plans.day}
         nightSrc={backgrounds.plans.night}
@@ -308,14 +308,11 @@ export default function PlansPage() {
         <div className="space-y-8">
           {(() => {
             const now = new Date();
-            const tonight = new Date();
-            tonight.setHours(23, 59, 59, 999);
-            const weekendStart = new Date();
-            weekendStart.setDate(now.getDate() + (6 - now.getDay() + 7) % 7);
-            weekendStart.setHours(0, 0, 0, 0);
-            const weekendEnd = new Date(weekendStart);
-            weekendEnd.setDate(weekendStart.getDate() + 2);
-            weekendEnd.setHours(23, 59, 59, 999);
+            const endOfToday = new Date();
+            endOfToday.setHours(23, 59, 59, 999);
+            const endOfTomorrow = new Date();
+            endOfTomorrow.setDate(endOfTomorrow.getDate() + 1);
+            endOfTomorrow.setHours(23, 59, 59, 999);
 
             const byCity: Record<string, Plan[]> = {};
             filteredPlans.forEach((p) => {
@@ -324,104 +321,49 @@ export default function PlansPage() {
               byCity[city].push(p);
             });
 
-            const sections: JSX.Element[] = [];
-            const usedIds = new Set<string>();
+            return Object.entries(byCity)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([cityName, cityPlans]) => {
+                const tonight: Plan[] = [];
+                const tomorrow: Plan[] = [];
+                const thisWeek: Plan[] = [];
+                const later: Plan[] = [];
 
-            // 1. Ce soir
-            const tonightPlans = filteredPlans.filter((p) => {
-              const d = new Date(p.startDate);
-              return d >= now && d <= tonight && !usedIds.has(p.id);
-            });
-            if (tonightPlans.length > 0) {
-              sections.push(
-                <section key="tonight">
-                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Ce soir</h2>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{tonightPlans.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
-                </section>
-              );
-              tonightPlans.forEach((p) => usedIds.add(p.id));
-            }
+                cityPlans.forEach((p) => {
+                  const d = new Date(p.startDate);
+                  if (d >= now && d <= endOfToday) { tonight.push(p); }
+                  else if (d > endOfToday && d <= endOfTomorrow) { tomorrow.push(p); }
+                  else if (d.getTime() - now.getTime() < 7 * 86400000) { thisWeek.push(p); }
+                  else { later.push(p); }
+                });
 
-            // 2. Ce weekend
-            const weekendPlans = filteredPlans.filter((p) => {
-              const d = new Date(p.startDate);
-              return d >= weekendStart && d <= weekendEnd && !usedIds.has(p.id);
-            });
-            if (weekendPlans.length > 0) {
-              sections.push(
-                <section key="weekend">
-                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Ce weekend</h2>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{weekendPlans.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
-                </section>
-              );
-              weekendPlans.forEach((p) => usedIds.add(p.id));
-            }
+                const groups = [
+                  { label: "Ce soir", plans: tonight },
+                  { label: "Demain", plans: tomorrow },
+                  { label: "Cette semaine", plans: thisWeek },
+                  { label: "Prochains", plans: later },
+                ].filter((g) => g.plans.length > 0);
 
-            // 3. Cette semaine
-            const thisWeekStart = new Date();
-            thisWeekStart.setHours(0, 0, 0, 0);
-            thisWeekStart.setDate(thisWeekStart.getDate() + (1 - thisWeekStart.getDay() + 7) % 7);
-            const thisWeekEnd = new Date(thisWeekStart);
-            thisWeekEnd.setDate(thisWeekStart.getDate() + 7);
-            thisWeekEnd.setHours(23, 59, 59, 999);
+                if (groups.length === 0) return null;
 
-            const thisWeekPlans = filteredPlans.filter((p) => {
-              const d = new Date(p.startDate);
-              return d >= thisWeekStart && d <= thisWeekEnd && !usedIds.has(p.id);
-            });
-            if (thisWeekPlans.length > 0) {
-              sections.push(
-                <section key="this-week">
-                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Cette semaine</h2>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{thisWeekPlans.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
-                </section>
-              );
-              thisWeekPlans.forEach((p) => usedIds.add(p.id));
-            }
-
-            // 4. Par catégorie (plans restants)
-            const remaining = filteredPlans.filter((p) => !usedIds.has(p.id));
-            if (remaining.length > 0) {
-              const grouped: Record<string, Plan[]> = {};
-              remaining.forEach((p) => {
-                const cat = p.planCategory || "AUTRE";
-                if (!grouped[cat]) grouped[cat] = [];
-                grouped[cat].push(p);
-              });
-
-              const categoryOrder = ["CHILL", "FOOD", "SPORT", "MUSIC", "SORTIE", "CULTURE", "BUSINESS", "VOYAGE", "ETUDES", "AUTRE"];
-              categoryOrder.forEach((cat) => {
-                if (!grouped[cat]) return;
-                const label = PLAN_CATEGORIES.find((c) => c.value === cat)?.label || cat;
-                sections.push(
-                  <section key={cat}>
-                    <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">{label}</h2>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{grouped[cat].map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
-                  </section>
-                );
-                grouped[cat].forEach((p) => usedIds.add(p.id));
-              });
-            }
-
-            // 5. Par ville (plans véritablement restants)
-            const leftOvers = filteredPlans.filter((p) => !usedIds.has(p.id));
-            if (leftOvers.length > 0) {
-              const cityGroups: Record<string, Plan[]> = {};
-              leftOvers.forEach((p) => {
-                if (!cityGroups[p.city.name]) cityGroups[p.city.name] = [];
-                cityGroups[p.city.name].push(p);
-              });
-              Object.entries(cityGroups).forEach(([cityName, cityPlans]) => {
-                sections.push(
+                return (
                   <section key={cityName}>
-                    <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Plans à {cityName}</h2>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{cityPlans.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
+                    <h2 className="text-lg font-black text-[var(--os-fg)] mb-3 flex items-center gap-2">
+                      Plans à {cityName}
+                    </h2>
+                    <div className="space-y-5">
+                      {groups.map((g) => (
+                        <div key={g.label}>
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)] mb-2">{g.label}</h3>
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {g.plans.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </section>
                 );
               });
-            }
-
-            return sections;
           })()}
         </div>
       )}
