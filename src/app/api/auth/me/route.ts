@@ -20,17 +20,45 @@ function sanitizeUser(user: any) {
     privacyAcceptedAt: undefined,
     trustScore: undefined,
     referralCode: undefined,
+    _count: undefined,
   };
 }
 
 export async function GET() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    return NextResponse.json({ user: sanitizeUser(user) });
+    const user = await db.user.findUnique({
+      where: { id: sessionUser.id },
+      include: {
+        _count: {
+          select: {
+            plansCreated: true,
+            moments: true,
+            friendshipsInitiated: true,
+            friendshipsReceived: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "Utilisateur non trouvé" }, { status: 404 });
+    }
+
+    const stats = {
+      plansCount: user._count.plansCreated,
+      momentsCount: user._count.moments,
+      friendsCount: user._count.friendshipsInitiated + user._count.friendshipsReceived,
+    };
+
+    return NextResponse.json({ 
+      user: sanitizeUser(user),
+      stats
+    });
   } catch (error) {
     console.error("Get me error:", error);
     return NextResponse.json({ error: "Une erreur est survenue." }, { status: 500 });

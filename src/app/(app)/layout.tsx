@@ -54,7 +54,7 @@ export default async function AppLayout({
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link
             href="/home"
-            className="text-xl font-extrabold tracking-tight gradient-text"
+            className="text-xl font-extrabold tracking-tight gradient-text drop-shadow-[0_0_8px_rgba(255,138,0,0.5)]"
           >
             OUTSIDE
           </Link>

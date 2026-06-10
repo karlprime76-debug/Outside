@@ -15,7 +15,7 @@ interface BottomSheetProps {
   maxHeight?: string;
 }
 
-export function BottomSheet({ open, onClose, title, children, footer, maxHeight = "85vh" }: BottomSheetProps) {
+export function BottomSheet({ open, onClose, title, children, footer, maxHeight = "calc(100dvh - 4rem)" }: BottomSheetProps) {
   const [show, setShow] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [dragY, setDragY] = useState(0);
@@ -108,7 +108,7 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
           "relative w-full max-w-lg rounded-t-3xl bg-[var(--os-bg)] shadow-[0_-8px_32px_rgba(0,0,0,0.2)] flex flex-col",
           isDragging ? "transition-none" : "transition-transform duration-300 ease-out"
         )}
-        style={{ maxHeight, paddingBottom: "env(safe-area-inset-bottom, 0px)", transform }}
+        style={{ maxHeight, transform }}
         role="dialog"
         aria-modal="true"
       >
@@ -133,7 +133,7 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
             <h2 className="text-lg font-bold text-[var(--os-fg)]">{title}</h2>
             <button
               onClick={onClose}
-              className="rounded-full p-1.5 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] transition-colors active:scale-95"
+              className="rounded-full p-2.5 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] transition-colors active:scale-95"
               aria-label={t.common.close}
             >
               <X className="h-5 w-5" />
@@ -142,13 +142,13 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
         )}
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto overscroll-y-contain px-5 pb-4">
+        <div className="flex-1 overflow-y-auto overscroll-y-contain px-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {children}
         </div>
 
         {/* Sticky footer */}
         {footer && (
-          <div className="shrink-0 border-t border-[var(--os-card-border)] px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+          <div className="shrink-0 border-t border-[var(--os-card-border)] px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             {footer}
           </div>
         )}

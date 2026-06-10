@@ -37,6 +37,7 @@ import { AccountSuggestions } from "@/components/users/account-suggestions";
 import { DailyChallenges } from "@/components/challenges/daily-challenges";
 import { TonightSection } from "@/components/home/tonight-section";
 import { HomeHeader } from "@/components/home/home-header";
+import { StarterPack } from "@/components/home/starter-pack";
 import type { Plan } from "@/types/plan";
 import { useDictionary } from "@/hooks/use-dictionary";
 
@@ -55,6 +56,7 @@ export default function HomePage() {
   const { data: session } = useSession();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
+  const [showStarterPack, setShowStarterPack] = useState(false);
   const [userProfile, setUserProfile] = useState<{
     activeCity?: { name: string };
     preferredMoods?: string[];
@@ -92,6 +94,11 @@ export default function HomePage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.user) setUserProfile(data.user);
+        if (data?.stats) {
+          const { plansCount, momentsCount, friendsCount } = data.stats;
+          // Show starter pack if user is relatively new or inactive
+          setShowStarterPack(plansCount === 0 || momentsCount === 0 || friendsCount < 3);
+        }
       })
       .catch((err) => { console.error("[AUTH_ERROR] Failed to fetch user profile:", err); });
 
@@ -255,6 +262,9 @@ export default function HomePage() {
         <section className="animate-slide-up">
           <TonightSection />
         </section>
+
+        {/* Starter Pack for new users */}
+        <StarterPack show={showStarterPack} activeCity={activeCity?.name} />
 
         {/* Plans du jour — horizontal scroll */}
         <section id="plans-section">

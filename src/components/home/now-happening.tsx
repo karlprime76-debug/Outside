@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Flame, Radio, Sparkles, Plus } from "lucide-react";
 import { SectionTitle } from "@/components/ui/section-title";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
@@ -73,10 +74,16 @@ export function NowHappening({ lives = [], moments = [], loadingLives, loadingMo
           <Link
             key={moment.id}
             href={`/moments/${moment.id}`}
-            className="shrink-0 w-32 h-20 rounded-lg bg-cover bg-center relative group"
-            style={{ backgroundImage: `url(${moment.mediaUrl})` }}
+            className="shrink-0 w-32 h-20 rounded-lg relative group overflow-hidden"
           >
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors rounded-lg flex items-end p-2">
+            <Image
+              src={moment.mediaUrl}
+              alt="Moment"
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-500"
+              sizes="128px"
+            />
+            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-end p-2">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
           </Link>

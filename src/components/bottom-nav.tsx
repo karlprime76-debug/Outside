@@ -45,7 +45,7 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               onClick={() => haptic.light()}
-              className="relative flex flex-col items-center gap-1 px-3 py-1.5 transition-colors active:scale-95"
+              className={cn("relative flex flex-col items-center gap-1 px-3 py-1.5 transition-all", isActive ? "scale-105" : "")}
               aria-current={isActive ? "page" : undefined}
             >
               {isActive && (
