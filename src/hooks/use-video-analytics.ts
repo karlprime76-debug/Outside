@@ -26,7 +26,7 @@ export function useVideoAnalytics({ momentId, enabled = true, onEvent }: VideoAn
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, ...data }),
-      }).catch(() => {});
+      }).catch((err) => { console.error("[MOMENT_ERROR] Failed to track video analytics event:", err); });
       onEvent?.(type, data);
     },
     [momentId, enabled, onEvent]

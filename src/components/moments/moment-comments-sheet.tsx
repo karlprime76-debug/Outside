@@ -95,7 +95,7 @@ export function MomentCommentsSheet({ momentId, open, onClose }: MomentCommentsS
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--os-card-border)]">
           <h3 className="text-sm font-bold text-[var(--os-fg)]">Commentaires</h3>
-          <button onClick={onClose} className="rounded-full p-2.5 hover:bg-[var(--os-bg)] transition-colors">
+          <button onClick={onClose} aria-label="Fermer" className="rounded-full p-2.5 hover:bg-[var(--os-bg)] transition-colors">
             <X className="h-5 w-5 text-[var(--os-muted)]" />
           </button>
         </div>

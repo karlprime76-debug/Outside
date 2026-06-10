@@ -220,6 +220,9 @@ enum MomentEventType {
   NOT_INTERESTED
   SEE_MORE_LIKE_THIS
   REPORT
+  HASHTAG_OPEN
+  HASHTAG_FOLLOW
+  HASHTAG_UNFOLLOW
 }
 
 enum PlaceCategory {
@@ -381,112 +384,114 @@ enum TrustSignalType {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  name              String?
-  username          String?  @unique
-  email             String   @unique
-  password          String?
-  emailVerified     DateTime?
-  phone             String?  @unique
-  phoneVerified     DateTime?
-  image             String?
-  bio               String?
-  gender            Gender?
-  role              UserRole @default(USER)
-  accountKind       AccountKind @default(STANDARD)
-  isDemoAccount     Boolean  @default(false)
+  id            String      @id @default(cuid())
+  name          String?
+  username      String?     @unique
+  email         String      @unique
+  password      String?
+  emailVerified DateTime?
+  phone         String?     @unique
+  phoneVerified DateTime?
+  image         String?
+  bio           String?
+  gender        Gender?
+  role          UserRole    @default(USER)
+  accountKind   AccountKind @default(STANDARD)
+  isDemoAccount Boolean     @default(false)
 
   birthDate         DateTime?
-  isAdultConfirmed  Boolean  @default(false)
+  isAdultConfirmed  Boolean   @default(false)
   termsAcceptedAt   DateTime?
   privacyAcceptedAt DateTime?
 
-  homeCityId        String?
-  homeCity          City?    @relation("UserHomeCity", fields: [homeCityId], references: [id])
-  activeCityId      String?
-  activeCity        City?    @relation("UserActiveCity", fields: [activeCityId], references: [id])
-  neighborhood      String?
-  language          String   @default("fr")
-  preferredBudget   BudgetLevel?
-  preferredMoods    Mood[]
+  homeCityId      String?
+  homeCity        City?        @relation("UserHomeCity", fields: [homeCityId], references: [id])
+  activeCityId    String?
+  activeCity      City?        @relation("UserActiveCity", fields: [activeCityId], references: [id])
+  neighborhood    String?
+  language        String       @default("fr")
+  preferredBudget BudgetLevel?
+  preferredMoods  Mood[]
 
-  country           String?
-  countryCode       String?
+  country     String?
+  countryCode String?
 
-  isVerified        Boolean  @default(false)
-  referralCode      String?  @unique
-  isAmbassador      Boolean  @default(false)
-  ambassadorCity    String?
-  trustScore        Int      @default(0)
+  isVerified                 Boolean                    @default(false)
+  referralCode               String?                    @unique
+  isAmbassador               Boolean                    @default(false)
+  ambassadorCity             String?
+  trustScore                 Int                        @default(0)
   identityVerificationStatus IdentityVerificationStatus @default(NOT_SUBMITTED)
-  isAvailable       Boolean  @default(false)
-  travelModeEnabled Boolean  @default(false)
+  isAvailable                Boolean                    @default(false)
+  travelModeEnabled          Boolean                    @default(false)
 
-  plansCreated      Plan[]
-  planParticipants  PlanParticipant[]
-  planMessages      PlanMessage[]
-  planInvitationsSent    PlanInvitation[] @relation("PlanInvitationSender")
-  planInvitationsReceived PlanInvitation[] @relation("PlanInvitationReceiver")
-  moments            Moment[]
-  audioTracks        AudioTrack[]
-  userBadges         UserBadge[]
-  reportsMade       Report[] @relation("Reporter")
-  reportsReceived   Report[] @relation("Reported")
-  blocksMade        UserBlock[] @relation("Blocker")
-  blocksReceived    UserBlock[] @relation("Blocked")
-  visitedCities     UserVisitedCity[]
-  friendshipsInitiated Friendship[] @relation("FriendshipInitiator")
-  friendshipsReceived  Friendship[] @relation("FriendshipReceiver")
+  plansCreated            Plan[]
+  planParticipants        PlanParticipant[]
+  planMessages            PlanMessage[]
+  planInvitationsSent     PlanInvitation[]  @relation("PlanInvitationSender")
+  planInvitationsReceived PlanInvitation[]  @relation("PlanInvitationReceiver")
+  moments                 Moment[]
+  audioTracks             AudioTrack[]
+  userBadges              UserBadge[]
+  reportsMade             Report[]          @relation("Reporter")
+  reportsReceived         Report[]          @relation("Reported")
+  blocksMade              UserBlock[]       @relation("Blocker")
+  blocksReceived          UserBlock[]       @relation("Blocked")
+  visitedCities           UserVisitedCity[]
+  friendshipsInitiated    Friendship[]      @relation("FriendshipInitiator")
+  friendshipsReceived     Friendship[]      @relation("FriendshipReceiver")
 
   friendRequestsSent     FriendRequest[] @relation("FriendRequestSender")
   friendRequestsReceived FriendRequest[] @relation("FriendRequestReceiver")
 
-  followers  Follow[] @relation("UserFollowers")
-  following  Follow[] @relation("UserFollowing")
+  followers Follow[] @relation("UserFollowers")
+  following Follow[] @relation("UserFollowing")
 
-  notifications     Notification[] @relation("NotificationRecipient")
-  trustReviewsGiven    TrustReview[] @relation("TrustReviewReviewer")
-  trustReviewsReceived TrustReview[] @relation("TrustReviewReviewed")
+  notifications        Notification[]          @relation("NotificationRecipient")
+  trustReviewsGiven    TrustReview[]           @relation("TrustReviewReviewer")
+  trustReviewsReceived TrustReview[]           @relation("TrustReviewReviewed")
   planReviewsGiven     PlanParticipantReview[] @relation("PlanReviewReviewer")
   planReviewsReceived  PlanParticipantReview[] @relation("PlanReviewReviewed")
   availabilities       Availability[]
 
-  liveSessions      LiveSession[]
-  proAccount        ProAccount?
-  identityVerification IdentityVerification?
-  trustSignals      TrustSignal[]
-  userSettings      UserSettings?
-  trustProfile      UserTrustProfile?
-  pushSubscriptions PushSubscription[]
-  momentLikes       MomentLike[]
-  momentComments    MomentComment[]
+  liveSessions             LiveSession[]
+  proAccount               ProAccount?
+  identityVerification     IdentityVerification?
+  trustSignals             TrustSignal[]
+  userSettings             UserSettings?
+  trustProfile             UserTrustProfile?
+  pushSubscriptions        PushSubscription[]
+  momentLikes              MomentLike[]
+  momentcomments           MomentComment[]
   conversationParticipants ConversationParticipant[]
   directMessagesSent       DirectMessage[]
-  directMessageReactions  DirectMessageReaction[]
-  savedPlans        SavedPlan[]
-  planReminders     PlanReminder[]
-  expensesPaid      PlanExpense[]
-  expenseShares     PlanExpenseShare[]
-  proVenues         ProVenue[]
-  safetyContacts    SafetyContact[] @relation("UserSafetyContacts")
-  trustedByContacts SafetyContact[] @relation("TrustedByContacts")
-  safetyShares      PlanSafetyShare[]
-  outsideStatus     UserOutsideStatus?
-  challengeProgress UserChallengeProgress[]
-  missionProgress   UserCityMissionProgress[]
-  onboardingProgress OnboardingProgress?
-  referralInvites   ReferralInvite[] @relation("ReferralInviter")
-  acceptedReferral  ReferralInvite?   @relation("ReferralAccepted")
-  placeWishlist     PlaceWishlist[]
-  outingCircles     OutingCircle[]
-  circleMemberships OutingCircleMember[]
+  directMessageReactions   DirectMessageReaction[]
+  savedPlans               SavedPlan[]
+  planReminders            PlanReminder[]
+  expensesPaid             PlanExpense[]
+  expenseShares            PlanExpenseShare[]
+  proVenues                ProVenue[]
+  safetyContacts           SafetyContact[]           @relation("UserSafetyContacts")
+  trustedByContacts        SafetyContact[]           @relation("TrustedByContacts")
+  safetyShares             PlanSafetyShare[]
+  outsideStatus            UserOutsideStatus?
+  challengeProgress        UserChallengeProgress[]
+  missionProgress          UserCityMissionProgress[]
+  onboardingProgress       OnboardingProgress?
+  referralInvites          ReferralInvite[]          @relation("ReferralInviter")
+  acceptedReferral         ReferralInvite?           @relation("ReferralAccepted")
+  placeWishlist            PlaceWishlist[]
+  outingCircles            OutingCircle[]
+  circleMemberships        OutingCircleMember[]
+  hashtagFollows           UserHashtagFollow[]
 
-  lastActiveDate    DateTime?
-  currentStreak     Int       @default(0)
-  longestStreak     Int       @default(0)
+  tokenVersion  Int       @default(0)
+  lastActiveDate DateTime?
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([homeCityId])
   @@index([activeCityId])
@@ -496,17 +501,17 @@ model User {
 }
 
 model UserSettings {
-  id        String @id @default(cuid())
-  userId    String @unique
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  profileVisibility        String  @default("PUBLIC")
-  showCityOnProfile        Boolean @default(true)
-  allowFriendRequests      Boolean @default(true)
-  directMessagePermission  DirectMessagePermission @default(FRIENDS_ONLY)
-  allowFollowers           Boolean @default(true)
-  allowFriendSuggestions   Boolean @default(true)
-  privateDiscoveryMode     Boolean @default(false)
+  profileVisibility       String                  @default("PUBLIC")
+  showCityOnProfile       Boolean                 @default(true)
+  allowFriendRequests     Boolean                 @default(true)
+  directMessagePermission DirectMessagePermission @default(FRIENDS_ONLY)
+  allowFollowers          Boolean                 @default(true)
+  allowFriendSuggestions  Boolean                 @default(true)
+  privateDiscoveryMode    Boolean                 @default(false)
 
   notificationFriendRequests Boolean @default(true)
   notificationPlanInvites    Boolean @default(true)
@@ -516,13 +521,13 @@ model UserSettings {
   notificationProEvents      Boolean @default(true)
   notificationMoments        Boolean @default(true)
 
-  pushEnabled                Boolean @default(false)
-  pushDm                     Boolean @default(true)
-  pushPlans                  Boolean @default(true)
-  pushPlanReminders          Boolean @default(true)
-  pushMoments                Boolean @default(true)
-  pushLive                   Boolean @default(true)
-  pushPro                    Boolean @default(true)
+  pushEnabled       Boolean @default(false)
+  pushDm            Boolean @default(true)
+  pushPlans         Boolean @default(true)
+  pushPlanReminders Boolean @default(true)
+  pushMoments       Boolean @default(true)
+  pushLive          Boolean @default(true)
+  pushPro           Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -544,15 +549,15 @@ model PushSubscription {
 }
 
 model Conversation {
-  id        String           @id @default(cuid())
-  type      ConversationType @default(DIRECT)
-  planId    String?
+  id     String           @id @default(cuid())
+  type   ConversationType @default(DIRECT)
+  planId String?
 
   participants ConversationParticipant[]
   messages     DirectMessage[]
 
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([updatedAt])
   @@index([planId])
@@ -565,11 +570,11 @@ model ConversationParticipant {
   userId         String
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  lastReadAt     DateTime?
-  mutedAt        DateTime?
-  archivedAt     DateTime?
+  lastReadAt DateTime?
+  mutedAt    DateTime?
+  archivedAt DateTime?
 
-  createdAt      DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([conversationId, userId])
   @@index([userId])
@@ -577,11 +582,11 @@ model ConversationParticipant {
 }
 
 model DirectMessage {
-  id             String           @id @default(cuid())
+  id             String       @id @default(cuid())
   conversationId String
-  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
-  sender         User            @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
   content        String?
   mediaUrl       String?
   mediaPath      String?
@@ -589,17 +594,17 @@ model DirectMessage {
   mediaMimeType  String?
   mediaSize      Int?
 
-  type           DirectMessageType @default(TEXT)
-  momentId       String?
-  metadata       String?          // JSON stringifié
+  type     DirectMessageType @default(TEXT)
+  momentId String?
+  metadata String? // JSON stringifié
 
-  status         MessageStatus @default(SENT)
-  isDeleted      Boolean       @default(false)
+  status    MessageStatus @default(SENT)
+  isDeleted Boolean       @default(false)
 
-  reactions      DirectMessageReaction[]
+  reactions DirectMessageReaction[]
 
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([conversationId, createdAt])
   @@index([senderId])
@@ -607,13 +612,13 @@ model DirectMessage {
 }
 
 model DirectMessageReaction {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   messageId String
   message   DirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   emoji     String
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now())
 
   @@unique([messageId, userId, emoji])
   @@index([messageId])
@@ -621,25 +626,25 @@ model DirectMessageReaction {
 }
 
 model City {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   country     String
   countryCode String
   currency    String
   timezone    String
-  language    String   @default("fr")
+  language    String  @default("fr")
   latitude    Float
   longitude   Float
-  isActive    Boolean  @default(true)
+  isActive    Boolean @default(true)
 
-  homeUsers   User[]   @relation("UserHomeCity")
-  activeUsers User[]   @relation("UserActiveCity")
+  homeUsers   User[]            @relation("UserHomeCity")
+  activeUsers User[]            @relation("UserActiveCity")
   places      Place[]
   plans       Plan[]
   visitedBy   UserVisitedCity[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([name, country])
 }
@@ -663,11 +668,11 @@ model Place {
   safetyLevel     SafetyLevel   @default(MEDIUM)
   popularityScore Int           @default(0)
 
-  plans           Plan[]
-  wishlistedBy    PlaceWishlist[]
+  plans        Plan[]
+  wishlistedBy PlaceWishlist[]
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([cityId])
   @@index([category])
@@ -681,8 +686,8 @@ model PlaceWishlist {
   note      String?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  place     Place    @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, placeId])
   @@index([userId])
@@ -690,61 +695,62 @@ model PlaceWishlist {
 }
 
 model Plan {
-  id                String          @id @default(cuid())
-  title             String
-  description       String?
-  planCategory      PlanCategory    @default(AUTRE)
-  mood              Mood
-  budgetLevel       BudgetLevel     @default(MEDIUM)
-  budgetAmount      Decimal?
-  budgetCurrency    String?
-  budgetIsFrom      Boolean         @default(false)
-  priceType         PlanPriceType   @default(FREE)
-  estimatedCost     Float?
-  cityId            String
-  city              City            @relation(fields: [cityId], references: [id])
-  countryCode       String?
-  placeId           String?
-  place             Place?          @relation(fields: [placeId], references: [id])
-  neighborhood      String?
-  latitude          Float?
-  longitude         Float?
-  startDate         DateTime
-  endDate           DateTime?
-  maxParticipants   Int             @default(10)
-  visibility        PlanVisibility  @default(PUBLIC)
-  status            PlanStatus      @default(ACTIVE)
+  id                 String         @id @default(cuid())
+  title              String
+  description        String?
+  planCategory       PlanCategory   @default(AUTRE)
+  mood               Mood
+  budgetLevel        BudgetLevel    @default(MEDIUM)
+  budgetAmount       Decimal?
+  budgetCurrency     String?
+  budgetIsFrom       Boolean        @default(false)
+  priceType          PlanPriceType  @default(FREE)
+  estimatedCost      Float?
+  cityId             String
+  city               City           @relation(fields: [cityId], references: [id])
+  countryCode        String?
+  placeId            String?
+  place              Place?         @relation(fields: [placeId], references: [id])
+  neighborhood       String?
+  latitude           Float?
+  longitude          Float?
+  startDate          DateTime
+  endDate            DateTime?
+  maxParticipants    Int            @default(10)
+  visibility         PlanVisibility @default(PUBLIC)
+  status             PlanStatus     @default(ACTIVE)
   isTravelerFriendly Boolean        @default(false)
-  safetyLevel       SafetyLevel     @default(MEDIUM)
-  rules             String?
-  isDemo            Boolean         @default(false)
+  safetyLevel        SafetyLevel    @default(MEDIUM)
+  rules              String?
+  isDemo             Boolean        @default(false)
 
-  isCommunityConfirmed Boolean        @default(false)
-  confirmationScore    Float          @default(0)
+  isCommunityConfirmed Boolean @default(false)
+  confirmationScore    Float   @default(0)
 
-  isExpress          Boolean         @default(false)
-  expiresAt          DateTime?
+  isExpress Boolean   @default(false)
+  expiresAt DateTime?
 
-  recurrence         String?
-  recurrenceEndDate  DateTime?
-  parentPlanId       String?
-  parentPlan         Plan?           @relation("RecurringPlans", fields: [parentPlanId], references: [id])
-  childPlans         Plan[]          @relation("RecurringPlans")
+  recurrence        String?
+  recurrenceEndDate DateTime?
+  parentPlanId      String?
+  parentPlan        Plan?     @relation("RecurringPlans", fields: [parentPlanId], references: [id])
+  childPlans        Plan[]    @relation("RecurringPlans")
 
-  creatorId         String
-  creator           User            @relation(fields: [creatorId], references: [id])
-  participants      PlanParticipant[]
-  messages          PlanMessage[]
-  invitations       PlanInvitation[]
-  reports           Report[]
-  savedPlans        SavedPlan[]
-  reminders         PlanReminder[]
-  polls             PlanPoll[]
-  expenses          PlanExpense[]
-  reviews           PlanParticipantReview[]
+  creatorId    String
+  creator      User                    @relation(fields: [creatorId], references: [id])
+  participants PlanParticipant[]
+  messages     PlanMessage[]
+  invitations  PlanInvitation[]
+  reports      Report[]
+  savedPlans   SavedPlan[]
+  reminders    PlanReminder[]
+  polls        PlanPoll[]
+  expenses     PlanExpense[]
+  reviews      PlanParticipantReview[]
+  hashtags     PlanHashtag[]
 
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([cityId])
   @@index([creatorId])
@@ -787,16 +793,16 @@ model SavedPlan {
 }
 
 model PlanParticipant {
-  id              String            @id @default(cuid())
+  id              String               @id @default(cuid())
   planId          String
-  plan            Plan              @relation(fields: [planId], references: [id], onDelete: Cascade)
+  plan            Plan                 @relation(fields: [planId], references: [id], onDelete: Cascade)
   userId          String
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status            ParticipantStatus   @default(PENDING)
-  attendance        PlanAttendanceStatus @default(GOING)
-  joinedAt          DateTime            @default(now())
-  checkedInAt       DateTime?
-  checkinPhotoUrl   String?
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status          ParticipantStatus    @default(PENDING)
+  attendance      PlanAttendanceStatus @default(GOING)
+  joinedAt        DateTime             @default(now())
+  checkedInAt     DateTime?
+  checkinPhotoUrl String?
 
   @@unique([planId, userId])
   @@index([planId])
@@ -804,79 +810,79 @@ model PlanParticipant {
 }
 
 model PlanParticipantReview {
-  id             String           @id @default(cuid())
+  id String @id @default(cuid())
 
   planId         String
-  plan           Plan             @relation(fields: [planId], references: [id], onDelete: Cascade)
+  plan           Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
   reviewerId     String
-  reviewer       User             @relation("PlanReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewer       User    @relation("PlanReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
   reviewedUserId String?
-  reviewedUser   User?            @relation("PlanReviewReviewed", fields: [reviewedUserId], references: [id], onDelete: Cascade)
+  reviewedUser   User?   @relation("PlanReviewReviewed", fields: [reviewedUserId], references: [id], onDelete: Cascade)
 
-  wasPresent     Boolean?
-  wasRespectful  Boolean?
+  wasPresent        Boolean?
+  wasRespectful     Boolean?
   profileSeemedReal Boolean?
-  planWasReal    Boolean?
-  comment        String?
+  planWasReal       Boolean?
+  comment           String?
 
-  status         PlanReviewStatus @default(SUBMITTED)
+  status PlanReviewStatus @default(SUBMITTED)
 
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@unique([planId, reviewerId, reviewedUserId])
   @@index([planId])
   @@index([reviewerId])
   @@index([reviewedUserId])
-  @@unique([planId, reviewerId, reviewedUserId])
 }
 
 model PlanPoll {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   planId    String
-  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  plan      Plan      @relation(fields: [planId], references: [id], onDelete: Cascade)
   question  String
-  multiple  Boolean  @default(false)
+  multiple  Boolean   @default(false)
   endsAt    DateTime?
-  isClosed  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  isClosed  Boolean   @default(false)
+  createdAt DateTime  @default(now())
 
-  options   PlanPollOption[]
+  options PlanPollOption[]
 
   @@index([planId])
 }
 
 model PlanPollOption {
-  id        String      @id @default(cuid())
+  id        String   @id @default(cuid())
   pollId    String
-  poll      PlanPoll    @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  poll      PlanPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
   label     String
-  createdAt DateTime    @default(now())
+  createdAt DateTime @default(now())
 
-  votes     PlanPollVote[]
+  votes PlanPollVote[]
 
   @@index([pollId])
 }
 
 model PlanPollVote {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   optionId  String
   option    PlanPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
   userId    String
-  createdAt DateTime @default(now())
+  createdAt DateTime       @default(now())
 
   @@unique([optionId, userId])
   @@index([optionId])
 }
 
 model PlanReminder {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   planId    String
-  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  plan      Plan      @relation(fields: [planId], references: [id], onDelete: Cascade)
   remindAt  DateTime
   sentAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId])
   @@index([planId])
@@ -910,31 +916,32 @@ model Moment {
   visibility  MomentVisibility @default(PUBLIC)
   isDemo      Boolean          @default(false)
 
-  planId      String?
-  placeId     String?
-  eventId     String?
-  liveId      String?
+  planId  String?
+  placeId String?
+  eventId String?
+  liveId  String?
 
-  audioTrackId String?
-  audioStartTime Int?           @default(0)
-  audioVolume Float?             @default(1)
-  audioTrack   AudioTrack?       @relation(fields: [audioTrackId], references: [id], onDelete: SetNull)
+  audioTrackId   String?
+  audioStartTime Int?        @default(0)
+  audioVolume    Float?      @default(1)
+  audioTrack     AudioTrack? @relation(fields: [audioTrackId], references: [id], onDelete: SetNull)
 
   // Media editing metadata
-  mediaWidth      Int?
-  mediaHeight     Int?
-  mediaDuration   Int?
-  mediaCrop       Json?
-  videoStartTime  Int?
-  videoEndTime    Int?
+  mediaWidth       Int?
+  mediaHeight      Int?
+  mediaDuration    Int?
+  mediaCrop        Json?
+  videoStartTime   Int?
+  videoEndTime     Int?
   mediaAspectRatio String?
 
-  expiresAt   DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  likes       MomentLike[]
-  comments    MomentComment[]
+  likes    MomentLike[]
+  comments MomentComment[]
+  hashtags MomentHashtag[]
 
   @@index([city, createdAt])
   @@index([authorId])
@@ -945,30 +952,30 @@ model Moment {
 }
 
 model AudioTrack {
-  id          String           @id @default(cuid())
-  ownerId     String?
-  owner       User?            @relation(fields: [ownerId], references: [id], onDelete: SetNull)
-  title       String
-  artistName  String?
-  sourceType  AudioSourceType  @default(USER_ORIGINAL)
-  status      AudioStatus      @default(ACTIVE)
+  id         String          @id @default(cuid())
+  ownerId    String?
+  owner      User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  title      String
+  artistName String?
+  sourceType AudioSourceType @default(USER_ORIGINAL)
+  status     AudioStatus     @default(ACTIVE)
 
-  audioUrl    String
-  audioPath   String?
-  duration    Int?
-  coverUrl    String?
+  audioUrl  String
+  audioPath String?
+  duration  Int?
+  coverUrl  String?
 
-  isOfficial      Boolean          @default(false)
-  isOriginal      Boolean          @default(false)
-  usageCount      Int              @default(0)
-  rightsConfirmed Boolean          @default(false)
+  isOfficial      Boolean @default(false)
+  isOriginal      Boolean @default(false)
+  usageCount      Int     @default(0)
+  rightsConfirmed Boolean @default(false)
   rightsNote      String?
-  reportCount     Int              @default(0)
+  reportCount     Int     @default(0)
 
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  moments         Moment[]
+  moments Moment[]
 
   @@index([ownerId])
   @@index([status])
@@ -977,10 +984,10 @@ model AudioTrack {
 }
 
 model MomentEvent {
-  id          String          @id @default(cuid())
-  momentId    String
-  userId      String?
-  type        MomentEventType
+  id       String          @id @default(cuid())
+  momentId String
+  userId   String?
+  type     MomentEventType
 
   watchMs     Int?
   percent     Float?
@@ -988,7 +995,7 @@ model MomentEvent {
   city        String?
   countryCode String?
 
-  createdAt   DateTime        @default(now())
+  createdAt DateTime @default(now())
 
   @@index([momentId])
   @@index([userId])
@@ -997,14 +1004,14 @@ model MomentEvent {
 }
 
 model MomentScore {
-  id        String   @id @default(cuid())
-  momentId  String   @unique
+  id       String @id @default(cuid())
+  momentId String @unique
 
-  score         Float   @default(0)
-  viralScore    Float   @default(0)
-  localScore    Float   @default(0)
-  qualityScore  Float   @default(0)
-  safetyScore   Float   @default(1)
+  score        Float @default(0)
+  viralScore   Float @default(0)
+  localScore   Float @default(0)
+  qualityScore Float @default(0)
+  safetyScore  Float @default(1)
 
   impressions      Int @default(0)
   views            Int @default(0)
@@ -1021,11 +1028,11 @@ model MomentScore {
   notInterested    Int @default(0)
   seeMoreLikeThis  Int @default(0)
 
-  avgWatchMs       Int @default(0)
-  replayRate       Float @default(0)
-  quickSkipRate    Float @default(0)
+  avgWatchMs    Int   @default(0)
+  replayRate    Float @default(0)
+  quickSkipRate Float @default(0)
 
-  audienceLevel    Int @default(0)
+  audienceLevel    Int       @default(0)
   lastCalculatedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -1039,43 +1046,43 @@ model MomentScore {
 }
 
 model UserQualityScore {
-  id        String @id @default(cuid())
-  userId    String @unique
+  id     String @id @default(cuid())
+  userId String @unique
 
-  score         Float @default(50)
-  trust         Float @default(0)
-  activity      Float @default(0)
+  score          Float @default(50)
+  trust          Float @default(0)
+  activity       Float @default(0)
   reportsPenalty Float @default(0)
   creatorBoost   Float @default(0)
 
   lastCalculatedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model UserTrustProfile {
-  id        String @id @default(cuid())
-  userId    String @unique
+  id     String @id @default(cuid())
+  userId String @unique
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  outsideScore      Float @default(0)
-  presenceScore     Float @default(0)
-  respectScore      Float @default(0)
-  realProfileScore  Float @default(0)
-  organizerScore    Float @default(0)
+  outsideScore     Float @default(0)
+  presenceScore    Float @default(0)
+  respectScore     Float @default(0)
+  realProfileScore Float @default(0)
+  organizerScore   Float @default(0)
 
-  plansJoined        Int @default(0)
-  plansCreated       Int @default(0)
+  plansJoined          Int @default(0)
+  plansCreated         Int @default(0)
   validatedAttendances Int @default(0)
-  positiveReviews    Int @default(0)
-  reportsCount       Int @default(0)
+  positiveReviews      Int @default(0)
+  reportsCount         Int @default(0)
 
   level String @default("Nouveau")
 
   lastCalculatedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model MomentLike {
@@ -1092,13 +1099,13 @@ model MomentLike {
 }
 
 model MomentComment {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   momentId  String
-  moment    Moment   @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  moment    Moment  @relation(fields: [momentId], references: [id], onDelete: Cascade)
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   content   String
-  isDeleted Boolean  @default(false)
+  isDeleted Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1130,22 +1137,22 @@ model UserBadge {
 }
 
 model Report {
-  id              String       @id @default(cuid())
-  reporterId      String
-  reporter        User         @relation("Reporter", fields: [reporterId], references: [id])
-  reportedUserId  String?
-  reportedUser    User?        @relation("Reported", fields: [reportedUserId], references: [id])
-  planId          String?
-  plan            Plan?        @relation(fields: [planId], references: [id])
-  placeId         String?
-  targetType      String?
-  targetId        String?
-  reason          ReportReason
-  description     String?
-  status          ReportStatus @default(PENDING)
+  id             String       @id @default(cuid())
+  reporterId     String
+  reporter       User         @relation("Reporter", fields: [reporterId], references: [id])
+  reportedUserId String?
+  reportedUser   User?        @relation("Reported", fields: [reportedUserId], references: [id])
+  planId         String?
+  plan           Plan?        @relation(fields: [planId], references: [id])
+  placeId        String?
+  targetType     String?
+  targetId       String?
+  reason         ReportReason
+  description    String?
+  status         ReportStatus @default(PENDING)
 
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([reporterId])
   @@index([targetType, targetId])
@@ -1166,11 +1173,11 @@ model UserBlock {
 }
 
 model UserVisitedCity {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cityId        String
-  city          City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cityId         String
+  city           City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
   firstVisitedAt DateTime @default(now())
   lastVisitedAt  DateTime @updatedAt
 
@@ -1191,17 +1198,17 @@ model Friendship {
 }
 
 model FriendRequest {
-  id         String              @id @default(cuid())
+  id         String @id @default(cuid())
   senderId   String
   receiverId String
 
-  sender     User                @relation("FriendRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver   User                @relation("FriendRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User @relation("FriendRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("FriendRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
-  status     FriendRequestStatus @default(PENDING)
+  status FriendRequestStatus @default(PENDING)
 
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([senderId, receiverId])
   @@index([receiverId, status])
@@ -1209,15 +1216,15 @@ model FriendRequest {
 }
 
 model Follow {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
   followerId  String
   followingId String
 
-  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([followerId, followingId])
   @@index([followerId])
@@ -1225,33 +1232,33 @@ model Follow {
 }
 
 model Notification {
-  id          String           @id @default(cuid())
-  type        NotificationType
-  title       String
-  body        String?
-  data        String?          // JSON stringifié pour metadata
+  id    String           @id @default(cuid())
+  type  NotificationType
+  title String
+  body  String?
+  data  String? // JSON stringifié pour metadata
 
   recipientId String
-  recipient   User             @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient   User   @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
 
-  actorId     String?
-  actorName   String?
-  actorImage  String?
+  actorId    String?
+  actorName  String?
+  actorImage String?
 
-  isRead      Boolean          @default(false)
-  readAt      DateTime?
+  isRead Boolean   @default(false)
+  readAt DateTime?
 
-  createdAt   DateTime         @default(now())
+  createdAt DateTime @default(now())
 
   @@index([recipientId, isRead])
   @@index([createdAt])
 }
 
 model TrustReview {
-  id          String   @id @default(cuid())
-  reviewerId  String
-  reviewedId  String
-  planId      String?
+  id         String  @id @default(cuid())
+  reviewerId String
+  reviewedId String
+  planId     String?
 
   wasPresent  Boolean?
   respectful  Boolean?
@@ -1260,32 +1267,32 @@ model TrustReview {
   goodVibe    Boolean?
   comment     String?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  reviewer    User     @relation("TrustReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
-  reviewed    User     @relation("TrustReviewReviewed", fields: [reviewedId], references: [id], onDelete: Cascade)
+  reviewer User @relation("TrustReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewed User @relation("TrustReviewReviewed", fields: [reviewedId], references: [id], onDelete: Cascade)
 
   @@unique([reviewerId, reviewedId, planId])
   @@index([reviewedId])
 }
 
 model IdentityVerification {
-  id          String                     @id @default(cuid())
-  userId      String                     @unique
-  user        User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  status      IdentityVerificationStatus @default(PENDING)
-  fullName    String?
+  status       IdentityVerificationStatus @default(PENDING)
+  fullName     String?
   documentType String?
   documentPath String?
   selfiePath   String?
 
-  reviewedById String?
-  reviewedAt   DateTime?
+  reviewedById    String?
+  reviewedAt      DateTime?
   rejectionReason String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TrustSignal {
@@ -1304,42 +1311,42 @@ model TrustSignal {
 }
 
 model Availability {
-  id          String           @id @default(cuid())
-  userId      String
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   mood        AvailabilityMood
   city        String?
   country     String?
   countryCode String?
 
-  isActive    Boolean          @default(true)
-  expiresAt   DateTime
+  isActive  Boolean  @default(true)
+  expiresAt DateTime
 
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([city, isActive])
   @@index([userId, isActive])
 }
 
 model LiveSession {
-  id             String         @id @default(cuid())
-  title          String
-  description    String?
-  status         LiveStatus     @default(SCHEDULED)
-  visibility     LiveVisibility @default(CITY)
+  id          String         @id @default(cuid())
+  title       String
+  description String?
+  status      LiveStatus     @default(SCHEDULED)
+  visibility  LiveVisibility @default(CITY)
 
-  city           String?
-  country        String?
-  countryCode    String?
+  city        String?
+  country     String?
+  countryCode String?
 
-  hostId         String
-  host           User           @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  hostId String
+  host   User   @relation(fields: [hostId], references: [id], onDelete: Cascade)
 
-  planId         String?
-  eventId        String?
-  placeId        String?
+  planId  String?
+  eventId String?
+  placeId String?
 
   thumbnailUrl    String?
   streamProvider  String?
@@ -1347,13 +1354,13 @@ model LiveSession {
   playbackUrl     String?
   livekitRoomName String?
 
-  viewerCount    Int            @default(0)
-  startedAt      DateTime?
-  endedAt        DateTime?
-  isDemo         Boolean        @default(false)
+  viewerCount Int       @default(0)
+  startedAt   DateTime?
+  endedAt     DateTime?
+  isDemo      Boolean   @default(false)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([hostId])
   @@index([status])
@@ -1362,34 +1369,34 @@ model LiveSession {
 }
 
 model ProAccount {
-  id              String            @id @default(cuid())
-  userId          String            @unique
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  businessName    String
-  businessType    ProBusinessType   @default(OTHER)
-  description     String?
-  country         String?
-  countryCode     String?
-  city            String?
-  addressLabel    String?
-  phone           String?
-  email           String?
-  website         String?
-  logoUrl         String?
+  businessName String
+  businessType ProBusinessType @default(OTHER)
+  description  String?
+  country      String?
+  countryCode  String?
+  city         String?
+  addressLabel String?
+  phone        String?
+  email        String?
+  website      String?
+  logoUrl      String?
 
-  socialMedia     Json?
-  documentUrl     String?
-  category        String?
+  socialMedia Json?
+  documentUrl String?
+  category    String?
 
-  status          ProAccountStatus  @default(PENDING)
-  verifiedAt      DateTime?
-  rejectedReason  String?
+  status         ProAccountStatus @default(PENDING)
+  verifiedAt     DateTime?
+  rejectedReason String?
 
-  events          ProEvent[]
+  events ProEvent[]
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -1397,30 +1404,30 @@ model ProAccount {
 }
 
 model ProVenue {
-  id              String                  @id @default(cuid())
-  ownerId         String
-  owner           User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  name            String
-  category        String?
-  description     String?
-  country         String?
-  countryCode     String?
-  city            String?
-  area            String?
-  addressPublic   String?
-  phone           String?
-  email           String?
-  instagram       String?
-  tiktok          String?
-  logoUrl         String?
-  documentUrl     String?
+  name          String
+  category      String?
+  description   String?
+  country       String?
+  countryCode   String?
+  city          String?
+  area          String?
+  addressPublic String?
+  phone         String?
+  email         String?
+  instagram     String?
+  tiktok        String?
+  logoUrl       String?
+  documentUrl   String?
 
   status          VenueVerificationStatus @default(PENDING)
   rejectionReason String?
 
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([ownerId])
   @@index([city])
@@ -1428,32 +1435,32 @@ model ProVenue {
 }
 
 model ProEvent {
-  id              String          @id @default(cuid())
-  proAccountId    String
-  proAccount      ProAccount      @relation(fields: [proAccountId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  proAccountId String
+  proAccount   ProAccount @relation(fields: [proAccountId], references: [id], onDelete: Cascade)
 
-  title           String
-  description     String?
-  category        String?
-  coverImageUrl   String?
-  city            String?
-  country         String?
-  countryCode     String?
-  venueName       String?
-  addressLabel    String?
+  title         String
+  description   String?
+  category      String?
+  coverImageUrl String?
+  city          String?
+  country       String?
+  countryCode   String?
+  venueName     String?
+  addressLabel  String?
 
-  startsAt        DateTime
-  endsAt          DateTime?
-  priceLabel      String?
-  currency        String?
-  ticketUrl       String?
-  reservationUrl  String?
+  startsAt       DateTime
+  endsAt         DateTime?
+  priceLabel     String?
+  currency       String?
+  ticketUrl      String?
+  reservationUrl String?
 
-  status          EventStatus     @default(DRAFT)
-  visibility      EventVisibility @default(PUBLIC)
+  status     EventStatus     @default(DRAFT)
+  visibility EventVisibility @default(PUBLIC)
 
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([proAccountId])
   @@index([status])
@@ -1516,18 +1523,18 @@ model OutingCircle {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  members     OutingCircleMember[]
+  members OutingCircleMember[]
 
   @@index([ownerId])
 }
 
 model OutingCircleMember {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   circleId  String
   circle    OutingCircle @relation(fields: [circleId], references: [id], onDelete: Cascade)
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
 
   @@unique([circleId, userId])
   @@index([circleId])
@@ -1535,33 +1542,33 @@ model OutingCircleMember {
 }
 
 model UserOutsideStatus {
-  id        String           @id @default(cuid())
-  userId    String           @unique
+  id     String @id @default(cuid())
+  userId String @unique
 
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type      OutsideStatusType
-  text      String?
-  city      String?
+  type        OutsideStatusType
+  text        String?
+  city        String?
   countryCode String?
-  expiresAt DateTime
+  expiresAt   DateTime
 
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([city])
   @@index([expiresAt])
 }
 
 model PlaceVibeSignal {
-  id        String           @id @default(cuid())
-  placeId   String?
-  userId    String
-  city      String?
+  id          String              @id @default(cuid())
+  placeId     String?
+  userId      String
+  city        String?
   countryCode String?
-  type      PlaceVibeSignalType
-  note      String?
-  createdAt DateTime         @default(now())
+  type        PlaceVibeSignalType
+  note        String?
+  createdAt   DateTime            @default(now())
 
   @@index([placeId])
   @@index([city])
@@ -1569,26 +1576,26 @@ model PlaceVibeSignal {
 }
 
 model DailyChallenge {
-  id           String   @id @default(cuid())
-  key          String   @unique
-  title        String
-  description  String
-  rewardLabel  String
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  key         String   @unique
+  title       String
+  description String
+  rewardLabel String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([key])
   @@index([active])
 }
 
 model UserChallengeProgress {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  challengeKey  String
-  completedAt   DateTime?
-  createdAt     DateTime @default(now())
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeKey String
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
 
   @@unique([userId, challengeKey])
   @@index([userId])
@@ -1596,15 +1603,15 @@ model UserChallengeProgress {
 }
 
 model CityMission {
-  id           String   @id @default(cuid())
-  key          String   @unique
-  title        String
-  description  String
-  city         String?
-  rewardLabel  String
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  key         String   @unique
+  title       String
+  description String
+  city        String?
+  rewardLabel String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([key])
   @@index([city])
@@ -1612,12 +1619,12 @@ model CityMission {
 }
 
 model UserCityMissionProgress {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  missionKey String
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missionKey  String
   completedAt DateTime?
-  createdAt DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@unique([userId, missionKey])
   @@index([userId])
@@ -1625,34 +1632,34 @@ model UserCityMissionProgress {
 }
 
 model OnboardingProgress {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hasProfilePhoto   Boolean  @default(false)
-  hasActiveCity     Boolean  @default(false)
-  hasFollowedUsers  Boolean  @default(false)
-  hasSavedPlan      Boolean  @default(false)
-  hasViewedMoment   Boolean  @default(false)
-  hasActivatedStatus Boolean  @default(false)
-  completedAt       DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hasProfilePhoto    Boolean   @default(false)
+  hasActiveCity      Boolean   @default(false)
+  hasFollowedUsers   Boolean   @default(false)
+  hasSavedPlan       Boolean   @default(false)
+  hasViewedMoment    Boolean   @default(false)
+  hasActivatedStatus Boolean   @default(false)
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   @@index([userId])
 }
 
 model OutsideTip {
-  id           String   @id @default(cuid())
-  city         String?
-  countryCode  String?
-  title        String
-  description  String
-  mood         Mood?
-  actionLabel  String
-  actionUrl    String
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  city        String?
+  countryCode String?
+  title       String
+  description String
+  mood        Mood?
+  actionLabel String
+  actionUrl   String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([city])
   @@index([countryCode])
@@ -1660,15 +1667,15 @@ model OutsideTip {
 }
 
 model ReferralInvite {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   inviterId      String
-  inviter        User     @relation("ReferralInviter", fields: [inviterId], references: [id], onDelete: Cascade)
-  code           String   @unique
+  inviter        User      @relation("ReferralInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  code           String    @unique
   invitedEmail   String?
   invitedPhone   String?
-  acceptedUserId String?  @unique
-  acceptedUser   User?    @relation("ReferralAccepted", fields: [acceptedUserId], references: [id], onDelete: SetNull)
-  createdAt      DateTime @default(now())
+  acceptedUserId String?   @unique
+  acceptedUser   User?     @relation("ReferralAccepted", fields: [acceptedUserId], references: [id], onDelete: SetNull)
+  createdAt      DateTime  @default(now())
   acceptedAt     DateTime?
 
   @@index([inviterId])
@@ -1677,18 +1684,18 @@ model ReferralInvite {
 }
 
 model OutsideDrop {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   city        String?
   countryCode String?
   title       String
   description String?
   type        String
   targetUrl   String?
-  active      Boolean  @default(true)
+  active      Boolean   @default(true)
   startsAt    DateTime?
   endsAt      DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([city])
   @@index([countryCode])
@@ -1697,30 +1704,145 @@ model OutsideDrop {
 }
 
 model PlanExpense {
-  id          String         @id @default(cuid())
-  planId      String
-  plan        Plan           @relation(fields: [planId], references: [id], onDelete: Cascade)
-  paidById    String
-  paidBy      User           @relation(fields: [paidById], references: [id])
-  title       String
-  amount      Decimal
-  currency    String         @default("XOF")
-  createdAt   DateTime       @default(now())
+  id        String   @id @default(cuid())
+  planId    String
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  paidById  String
+  paidBy    User     @relation(fields: [paidById], references: [id])
+  title     String
+  amount    Decimal
+  currency  String   @default("XOF")
+  createdAt DateTime @default(now())
 
-  shares      PlanExpenseShare[]
+  shares PlanExpenseShare[]
 
   @@index([planId])
 }
 
 model PlanExpenseShare {
-  id         String       @id @default(cuid())
-  expenseId  String
-  expense    PlanExpense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  userId     String
-  user       User         @relation(fields: [userId], references: [id])
-  amount     Decimal
-  settled    Boolean      @default(false)
+  id        String      @id @default(cuid())
+  expenseId String
+  expense   PlanExpense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  amount    Decimal
+  settled   Boolean     @default(false)
 
   @@unique([expenseId, userId])
   @@index([expenseId])
+}
+
+model Hashtag {
+  id String @id @default(cuid())
+
+  tag         String
+  displayName String?
+
+  city        String?
+  countryCode String?
+
+  isOfficial Boolean @default(false)
+  isBlocked  Boolean @default(false)
+
+  usageCount       Int @default(0)
+  momentUsageCount Int @default(0)
+  planUsageCount   Int @default(0)
+
+  trendingScore      Float @default(0)
+  localTrendingScore Float @default(0)
+
+  momentHashtags MomentHashtag[]
+  planHashtags   PlanHashtag[]
+  userFollows    UserHashtagFollow[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tag, city, countryCode])
+  @@index([tag])
+  @@index([city])
+  @@index([countryCode])
+  @@index([isOfficial])
+  @@index([trendingScore])
+  @@index([localTrendingScore])
+}
+
+model MomentHashtag {
+  id        String @id @default(cuid())
+  momentId  String
+  hashtagId String
+
+  moment  Moment  @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([momentId, hashtagId])
+  @@index([momentId])
+  @@index([hashtagId])
+}
+
+model PlanHashtag {
+  id        String @id @default(cuid())
+  planId    String
+  hashtagId String
+
+  plan    Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([planId, hashtagId])
+  @@index([planId])
+  @@index([hashtagId])
+}
+
+model UserHashtagFollow {
+  id        String @id @default(cuid())
+  userId    String
+  hashtagId String
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  city        String?
+  countryCode String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, hashtagId])
+  @@index([userId])
+  @@index([hashtagId])
+  @@index([city])
+}
+
+model RateLimit {
+  id         String   @id @default(cuid())
+  identifier String   @unique
+  count      Int      @default(1)
+  resetAt    DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([identifier])
+  @@index([resetAt])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
 }

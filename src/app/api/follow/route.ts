@@ -4,11 +4,20 @@ import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { isBlocked } from "@/lib/social/friendship";
 import { calculateMomentScore } from "@/lib/algorithm/moment-score";
+import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  }
+
+  const followLimit = await rateLimit(`follow:${session.user.id}`, 30, 3600000);
+  if (!followLimit.success) {
+    return NextResponse.json(
+      { error: "Trop d'actions. Réessaie plus tard." },
+      { status: 429, headers: getRateLimitHeaders(followLimit) }
+    );
   }
 
   let targetId: string | null = null;
@@ -69,8 +78,12 @@ export async function POST(req: Request) {
         city: session.user.activeCity?.name ?? null,
         countryCode: session.user.countryCode ?? null,
       },
-    }).catch(() => {});
-    calculateMomentScore(momentId).catch(() => {});
+    }).catch((err) => {
+      console.error("[FOLLOW] Failed to create moment event:", err);
+    });
+    calculateMomentScore(momentId).catch((err) => {
+      console.error("[FOLLOW] Failed to calculate moment score:", err);
+    });
   }
 
   if (currentUserId !== target.id) {

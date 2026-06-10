@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Sparkles,
   Calendar,
@@ -179,8 +180,7 @@ function buildCards(data: TonightData): HubCard[] {
           accent: "border-orange-200 bg-orange-50/30 dark:border-orange-800",
           media: (
             <div className="relative h-16 w-full overflow-hidden rounded-lg">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={moment.mediaUrl} alt="" className="h-full w-full object-cover" />
+              <Image src={moment.mediaUrl} alt="" fill className="object-cover" sizes="168px" />
             </div>
           ),
         }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { getUserLocale } from "@/lib/locale";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -144,12 +145,12 @@ export default function PlanDetailPage() {
     fetch(`/api/plans/${id}/safety`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => setSafetyShare(data?.share || null))
-      .catch(() => {});
+      .catch((err) => { console.error("[PLAN_ERROR] Failed to fetch safety share:", err); });
 
     fetch("/api/safety/contacts")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => setSafetyContacts(data?.contacts || []))
-      .catch(() => {});
+      .catch((err) => { console.error("[PLAN_ERROR] Failed to fetch safety contacts:", err); });
   }, [id]);
 
   useEffect(() => {
@@ -163,7 +164,7 @@ export default function PlanDetailPage() {
             setReliabilities((prev) => ({ ...prev, [uid]: data.trustProfile }));
           }
         })
-        .catch(() => {});
+        .catch((err) => { console.error("[PLAN_ERROR] Failed to fetch user reliability:", err); });
     });
   }, [plan]);
 
@@ -250,7 +251,7 @@ export default function PlanDetailPage() {
       <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 sm:p-6 space-y-4">
         <InfoRow icon={MapPin} label={t.planDetail.city} value={plan.city.name} />
         {plan.place && <InfoRow icon={MapPin} label={t.planDetail.place} value={plan.place.name} />}
-        <InfoRow icon={Calendar} label={t.planDetail.when} value={new Date(plan.startDate).toLocaleString("fr-FR")} />
+        <InfoRow icon={Calendar} label={t.planDetail.when} value={new Date(plan.startDate).toLocaleString(getUserLocale())} />
         {plan.rules && <InfoRow icon={Shield} label={t.planDetail.rules} value={plan.rules} />}
         <InfoRow icon={Shield} label={t.planDetail.safety} value={plan.safetyLevel} />
         <InfoRow icon={Users} label={t.planDetail.spots} value={`${plan._count.going} y vont · ${plan._count.maybe} intéressés / ${plan.maxParticipants} max`} />

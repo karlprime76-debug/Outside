@@ -11,8 +11,13 @@ import { linkNewUserToReferral } from "@/lib/referral";
 
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get("x-forwarded-for") || "anonymous";
-    const limit = rateLimit(`register:${ip}`, 3, 3600000);
+    const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
+    if (contentLength > 100000) {
+      return NextResponse.json({ error: "Requête trop volumineuse." }, { status: 413 });
+    }
+
+    const ip = req.headers.get("x-real-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
+    const limit = await rateLimit(`register:${ip}`, 3, 3600000);
     if (!limit.success) {
       return NextResponse.json(
         { error: "Trop de tentatives d'inscription. Veuillez réessayer plus tard." },
@@ -76,9 +81,9 @@ export async function POST(req: Request) {
 
     const countryName = getCountryName(countryCode) || "";
 
-    const existingEmail = await db.user.findUnique({ where: { email } });
+    const existingEmail = await db.user.findUnique({ where: { email }, select: { id: true } });
     if (existingEmail) {
-      return NextResponse.json({ error: "Un compte existe déjà avec cet email." }, { status: 409 });
+      return NextResponse.json({ error: "Vérifie tes informations et réessaie." }, { status: 409 });
     }
 
     let username: string | null = null;
@@ -144,14 +149,18 @@ export async function POST(req: Request) {
           }
         });
       } else {
-        evaluateFounderBadges(newUser.id).catch(() => {});
+        evaluateFounderBadges(newUser.id).catch((err) => {
+          if (process.env.NODE_ENV === "development") {
+            console.error("[REGISTER] Badge evaluation error:", err);
+          }
+        });
       }
     } catch (dbError: unknown) {
       const err = dbError as { code?: string; meta?: { target?: string[] } };
       if (err.code === "P2002") {
         const target = err.meta?.target?.[0] ?? "field";
         if (target === "email") {
-          return NextResponse.json({ error: "Un compte existe déjà avec cet email." }, { status: 409 });
+          return NextResponse.json({ error: "Vérifie tes informations et réessaie." }, { status: 409 });
         }
         if (target === "username") {
           return NextResponse.json({ error: "Ce nom d'utilisateur est déjà utilisé." }, { status: 409 });

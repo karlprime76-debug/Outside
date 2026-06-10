@@ -120,7 +120,7 @@ export async function createNotification(input: CreateNotificationInput) {
       body: input.body || "",
       url,
       tag: notification.id,
-    }).catch(() => {});
+    }).catch((err) => { console.error("[PUSH_ERROR] Failed to send push notification:", err); });
   }
 
   return notification;

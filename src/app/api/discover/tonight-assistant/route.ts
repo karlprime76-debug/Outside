@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function POST(req: Request) {
   try {
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
       timing = "tonight";
     }
 
+    const blockedIds = await getUserBlockedIds(user.id);
     const city = user.activeCity?.name ?? null;
     const cityId = user.activeCityId ?? null;
 
@@ -75,6 +77,7 @@ export async function POST(req: Request) {
     const whereClause: Record<string, unknown> = {
       cityId: cityId,
       status: "ACTIVE",
+      creatorId: { notIn: blockedIds },
       startDate: {
         gte: startDate,
         lte: endDate,
@@ -114,7 +117,8 @@ export async function POST(req: Request) {
       where: {
         activeCityId: cityId,
         isAvailable: true,
-        id: { not: user.id },
+        id: { not: user.id, notIn: blockedIds },
+        userSettings: { privateDiscoveryMode: false },
       },
       select: {
         id: true,
@@ -132,6 +136,7 @@ export async function POST(req: Request) {
       where: {
         city: city,
         visibility: "PUBLIC",
+        authorId: { notIn: blockedIds },
       },
       include: {
         author: {
@@ -189,7 +194,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       city,
-      recommendedPlans,
+      recommendedPlans: recommendedPlans.map((p) => ({ ...p, latitude: undefined, longitude: undefined })),
       availableUsers,
       recentMoments,
       officialTips,

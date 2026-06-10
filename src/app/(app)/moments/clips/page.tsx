@@ -155,7 +155,7 @@ export default function ClipsPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type, ...data }),
-    }).catch(() => {});
+    }).catch((err) => { console.error("[MOMENT_ERROR] Failed to track clip event:", err); });
   }, []);
 
   const handleVideoTimeUpdate = useCallback((index: number) => {
@@ -283,7 +283,7 @@ export default function ClipsPage() {
       if (!video) return;
       const idx = parseInt(idxStr, 10);
       if (idx === activeIndex) {
-        video.play().catch(() => {});
+        video.play().catch((err) => { console.error("[MOMENT_ERROR] Failed to play video:", err); });
       } else {
         video.pause();
         video.currentTime = 0;
@@ -507,7 +507,7 @@ export default function ClipsPage() {
                 const v = videoRefs.current[index];
                 if (!v) return;
                 if (v.paused) {
-                  v.play().catch(() => {});
+                  v.play().catch((err) => { console.error("[MOMENT_ERROR] Failed to play video:", err); });
                 } else {
                   v.pause();
                 }

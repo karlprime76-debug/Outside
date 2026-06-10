@@ -5,11 +5,12 @@ import { logError } from "@/lib/log";
 
 export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!cronSecret) {
+    return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
+  }
+  const authHeader = req.headers.get("authorization");
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const now = new Date();
@@ -55,10 +56,10 @@ export async function GET(req: Request) {
         try {
           const { calculateUserTrust } = await import("@/lib/trust/calculate-user-trust");
           for (const userId of participantIds) {
-            await calculateUserTrust(userId).catch(() => {});
+            await calculateUserTrust(userId).catch((err) => { logError("[PLAN_COMPLETE]", "Failed to calculate user trust", { error: String(err) }); });
           }
           const { calculatePlanConfirmation } = await import("@/lib/trust/calculate-user-trust");
-          await calculatePlanConfirmation(plan.id).catch(() => {});
+          await calculatePlanConfirmation(plan.id).catch((err) => { logError("[PLAN_COMPLETE]", "Failed to calculate plan confirmation", { error: String(err) }); });
         } catch {
           // Non-blocking
         }

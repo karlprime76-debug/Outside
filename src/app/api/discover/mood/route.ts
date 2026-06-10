@@ -87,6 +87,7 @@ export async function GET(req: Request) {
             userId: { notIn: blockedIds },
             ...(city ? { city } : {}),
             ...(user?.activeCityId && !city ? { city: user.activeCity?.name ?? null } : {}),
+            user: { userSettings: { privateDiscoveryMode: false } },
           },
           include: {
             user: {

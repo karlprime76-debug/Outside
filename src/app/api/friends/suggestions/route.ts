@@ -64,6 +64,7 @@ export async function GET() {
       where: {
         id: { notIn: Array.from(excludeIds) },
         NOT: { id: currentUserId },
+        userSettings: { privateDiscoveryMode: false },
         OR: [
           { activeCityId: currentUser.activeCityId },
           { homeCityId: currentUser.homeCityId },

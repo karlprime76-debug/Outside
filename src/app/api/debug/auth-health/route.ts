@@ -3,21 +3,17 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function GET() {
-  // Only allow in development or for admins
+  const isDev = process.env.NODE_ENV !== "production";
+  if (!isDev) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   try {
     const session = await auth();
-    const isDev = process.env.NODE_ENV !== "production";
     const isAdmin = Boolean(session?.user?.role && ["ADMIN", "MODERATOR"].includes(session.user.role as string));
-
-    if (!isDev && !isAdmin) {
-      return NextResponse.json({ ok: false, error: "Accès refusé" }, { status: 403 });
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-
-    const env = {
-      hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
-      hasNextAuthSecret: Boolean(process.env.NEXTAUTH_SECRET),
-      hasNextAuthUrl: Boolean(process.env.NEXTAUTH_URL),
-    };
 
     let canConnect = false;
     try {
@@ -27,8 +23,8 @@ export async function GET() {
       canConnect = false;
     }
 
-    return NextResponse.json({ ok: true, env, database: { canConnect } });
+    return NextResponse.json({ ok: true, database: { canConnect } });
   } catch {
-    return NextResponse.json({ ok: false, error: "Unexpected" }, { status: 500 });
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 }

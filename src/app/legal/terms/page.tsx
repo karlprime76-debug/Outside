@@ -1,5 +1,7 @@
+import { getUserLocale } from "@/lib/locale";
+
 export default function TermsPage() {
-  const updated = new Date().toLocaleDateString("fr-FR");
+  const updated = new Date().toLocaleDateString(getUserLocale());
   return (
     <article className="prose prose-sm max-w-none text-[var(--os-fg)] prose-headings:text-[var(--os-fg)] prose-p:text-[var(--os-fg)]">
       <h1 className="text-2xl font-black">Conditions d’utilisation</h1>

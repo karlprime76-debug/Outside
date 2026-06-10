@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { getUserLocale } from "@/lib/locale";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Briefcase, CheckCircle, XCircle, ArrowLeft, Loader2, Ban, ExternalLink, AlertTriangle } from "lucide-react";
 
@@ -170,7 +171,7 @@ export default function AdminProRequestsPage() {
                     {req.businessType} {req.category ? `· ${req.category}` : ""} · {req.city}{req.country ? `, ${req.country}` : ""}
                   </p>
                   <p className="text-xs text-[var(--os-muted)]">
-                    Par {req.user.name || req.user.email} · {new Date(req.createdAt).toLocaleDateString("fr-FR")}
+                    Par {req.user.name || req.user.email} · {new Date(req.createdAt).toLocaleDateString(getUserLocale())}
                   </p>
                 </div>
                 <button

@@ -34,7 +34,7 @@ export function AccountSuggestions({ title, limit = 5 }: AccountSuggestionsProps
       .then((data) => {
         setSuggestions(data?.suggestions || []);
       })
-      .catch(() => {})
+      .catch((err) => { console.error("[PROFILE_ERROR] Failed to fetch suggestions:", err); })
       .finally(() => setLoading(false));
   }, [limit]);
 
@@ -104,7 +104,7 @@ export function AccountSuggestions({ title, limit = 5 }: AccountSuggestionsProps
                         )
                       );
                     })
-                    .catch(() => {});
+                    .catch((err) => { console.error("[PROFILE_ERROR] Failed to follow user:", err); });
                 }}
                 className="mt-1 flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1 text-[10px] font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
               >

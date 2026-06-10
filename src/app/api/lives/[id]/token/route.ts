@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createLiveKitToken, createLiveKitRoomName, getLiveKitEnv } from "@/lib/livekit";
 import { notifyLiveStarted } from "@/lib/live-notifications";
+import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -77,6 +78,14 @@ export async function POST(req: Request, { params }: Params) {
       return NextResponse.json(
         { message: "Ce live est terminé.", code: "LIVE_ENDED" },
         { status: 400 }
+      );
+    }
+
+    const tokenLimit = await rateLimit(`liveToken:${user.id}`, 10, 60000);
+    if (!tokenLimit.success) {
+      return NextResponse.json(
+        { message: "Trop de requêtes. Réessaie plus tard.", code: "RATE_LIMITED" },
+        { status: 429, headers: getRateLimitHeaders(tokenLimit) }
       );
     }
 

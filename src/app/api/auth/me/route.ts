@@ -2,6 +2,26 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { recordTripHistory } from "@/lib/passport";
+import bcrypt from "bcryptjs";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function sanitizeUser(user: any) {
+  return {
+    ...user,
+    password: undefined,
+    email: undefined,
+    birthDate: undefined,
+    gender: undefined,
+    phone: undefined,
+    phoneVerified: undefined,
+    emailVerified: undefined,
+    identityVerificationStatus: undefined,
+    termsAcceptedAt: undefined,
+    privacyAcceptedAt: undefined,
+    trustScore: undefined,
+    referralCode: undefined,
+  };
+}
 
 export async function GET() {
   try {
@@ -10,7 +30,7 @@ export async function GET() {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    return NextResponse.json({ user });
+    return NextResponse.json({ user: sanitizeUser(user) });
   } catch (error) {
     console.error("Get me error:", error);
     return NextResponse.json({ error: "Une erreur est survenue." }, { status: 500 });
@@ -59,22 +79,37 @@ export async function PATCH(req: Request) {
           city: newCity.name,
           countryCode: updated.countryCode || undefined,
           source: "TRAVEL_MODE",
-        }).catch(() => {});
+        }).catch((err) => {
+          if (process.env.NODE_ENV === "development") {
+            console.error("[PATCH ME] Trip history error:", err);
+          }
+        });
       }
     }
 
-    return NextResponse.json({ user: updated });
+    return NextResponse.json({ user: sanitizeUser(updated) });
   } catch (error) {
     console.error("Patch me error:", error);
     return NextResponse.json({ error: "Une erreur est survenue." }, { status: 500 });
   }
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const password = body.password as string | undefined;
+    if (!password || !user.password) {
+      return NextResponse.json({ error: "Mot de passe requis pour supprimer le compte." }, { status: 400 });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return NextResponse.json({ error: "Mot de passe incorrect." }, { status: 403 });
     }
 
     await db.user.delete({ where: { id: user.id } });

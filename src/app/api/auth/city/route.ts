@@ -41,7 +41,7 @@ export async function PATCH(req: Request) {
         city: cityData.name,
         countryCode: cityData.countryCode,
         source: "TRAVEL_MODE",
-      }).catch(() => {});
+      }).catch((err) => { console.error("[PLAN_ERROR] Failed to record trip history:", err); });
     }
 
     return NextResponse.json({ user: updated });

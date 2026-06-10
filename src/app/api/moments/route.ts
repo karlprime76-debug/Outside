@@ -5,9 +5,13 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { canViewPlan } from "@/lib/plans/permissions";
 import { recordTripHistory } from "@/lib/passport";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { validateMomentFile, buildMomentPath, ensureMomentsBucket, MOMENTS_BUCKET } from "@/lib/supabase/moments-storage";
+import { validateMomentFile, buildMomentPath, ensureMomentsBucket, MOMENTS_BUCKET, ALLOWED_MOMENT_TYPES } from "@/lib/supabase/moments-storage";
+import { validateFileByMagicBytes } from "@/lib/files/magic-bytes";
 import { MomentVisibility } from "@prisma/client";
 import { buildFeed } from "@/lib/algorithm/feed-builder";
+import { createMomentSchema } from "@/lib/validation/schemas";
+import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+
 
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/moments";
@@ -107,6 +111,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
+    if (contentLength > 100000) {
+      return NextResponse.json({ error: "Requête trop volumineuse." }, { status: 413 });
+    }
+
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -139,9 +148,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Aucun fichier reçu." }, { status: 400 });
     }
 
+    const momentLimit = await rateLimit(`moment:${user.id}`, 20, 3600000);
+    if (!momentLimit.success) {
+      return NextResponse.json(
+        { error: "Trop de moments pubiliés. Réessaie plus tard." },
+        { status: 429, headers: getRateLimitHeaders(momentLimit) }
+      );
+    }
+
     const validation = validateMomentFile(file);
     if (!validation.ok) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const magicCheck = await validateFileByMagicBytes(file, ALLOWED_MOMENT_TYPES);
+    if (!magicCheck.ok) {
+      return NextResponse.json({ error: "Le fichier ne correspond pas au format déclaré." }, { status: 400 });
+    }
+
+    const momentFields = { caption, visibility, city, countryCode, planId, placeId, eventId, liveId };
+    const parsed = createMomentSchema.safeParse(momentFields);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
     if (!city && !planId && !placeId && !eventId && !liveId) {
@@ -225,6 +253,13 @@ export async function POST(req: Request) {
       },
     });
 
+    // Attach hashtags from caption (deferred, non-blocking)
+    import("@/lib/hashtags/hashtag-service").then(({ attachHashtagsToMoment }) => {
+      attachHashtagsToMoment(moment.id, caption, city, countryCode).catch((err) => {
+        console.error("[POST /api/moments] Background hashtag error:", err);
+      });
+    });
+
     if (audioTrackId) {
       await db.audioTrack.update({
         where: { id: audioTrackId },
@@ -252,3 +287,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
+
+
+
+
+
+
+
+
+
+

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Repeat, X } from "lucide-react";
+import { getUserLocale } from "@/lib/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const RECURRENCE_LABELS: Record<string, string> = {
@@ -77,7 +78,7 @@ export function RecurringSection({
       {parentPlan && (
         <div className="text-sm text-[var(--os-muted)]">
           Fait partie d&apos;une série récurrente commencée le{" "}
-          {new Date(parentPlan.startDate).toLocaleDateString("fr-FR")}
+          {new Date(parentPlan.startDate).toLocaleDateString(getUserLocale())}
         </div>
       )}
 

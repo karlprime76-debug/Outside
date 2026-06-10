@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download, Heart, User, RefreshCw } from "lucide-react";
 import { MediaViewer } from "@/components/media/media-viewer";
 import { useClickOutside } from "@/hooks/use-click-outside";
@@ -154,11 +155,12 @@ function MomentCardInBubble({ momentId, metadata, isMine }: { momentId: string; 
     >
       {parsed?.mediaUrl ? (
         <div className="relative h-32 w-full bg-black">
-          <img
+          <Image
             src={parsed.mediaUrl}
             alt="Moment partagé"
-            className="h-full w-full object-cover"
-            loading="lazy"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 80vw, 400px"
           />
         </div>
       ) : (
@@ -292,7 +294,7 @@ function ProfileCard({ metadata, isMine }: { metadata?: string | null; isMine: b
     >
       <div className="flex items-center gap-3 p-3">
         {image ? (
-          <img src={image} alt={name} className="h-12 w-12 rounded-full object-cover" loading="lazy" />
+          <Image src={image} alt={name} width={48} height={48} className="rounded-full object-cover" />
         ) : (
           <div className={`h-12 w-12 rounded-full flex items-center justify-center ${isMine ? "bg-white/20" : "bg-[var(--os-card-border)]"}`}>
             <User className={`h-6 w-6 ${isMine ? "text-white/60" : "text-[var(--os-muted)]"}`} />
@@ -327,11 +329,12 @@ function MediaMessage({
         className="block p-0 border-0 bg-transparent text-left"
       >
         {type === "image" ? (
-          <img
+          <Image
             src={url}
             alt="Image"
+            width={320}
+            height={240}
             className="max-w-full max-h-64 rounded-lg object-cover"
-            loading="lazy"
           />
         ) : (
           <video className="max-w-full max-h-64 rounded-lg" preload="metadata">
@@ -377,11 +380,12 @@ export function DmMessageBubble({
         {/* Avatar for received messages */}
         {!isMine && showAvatar && (
           <div className="shrink-0 pb-1">
-            <img
-              src={otherImage || undefined}
+            <Image
+              src={otherImage || ""}
               alt={otherName || ""}
-              className="h-6 w-6 rounded-full object-cover bg-[var(--os-card)]"
-              loading="lazy"
+              width={24}
+              height={24}
+              className="rounded-full object-cover bg-[var(--os-card)]"
             />
           </div>
         )}

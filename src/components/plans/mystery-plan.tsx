@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { getUserLocale } from "@/lib/locale";
 import { Sparkles, Coffee, Dumbbell, Music, PartyPopper, BookOpen, Briefcase, Plane, Shuffle, ArrowRight, Calendar, Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -155,7 +156,7 @@ export function MysteryPlan() {
                 <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
                   <h4 className="font-bold text-[var(--os-fg)]">{result.plan.title}</h4>
                   <p className="text-xs text-[var(--os-muted)] mt-1">
-                    par {result.plan.creator.name} · {new Date(result.plan.startDate).toLocaleDateString("fr-FR")}
+                    par {result.plan.creator.name} · {new Date(result.plan.startDate).toLocaleDateString(getUserLocale())}
                   </p>
                   <Link
                     href={`/plans/${result.plan.id}`}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function POST(req: Request) {
   try {
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
       budget = undefined;
     }
 
+    const blockedIds = await getUserBlockedIds(user.id);
     const cityId = user.activeCityId ?? null;
     const city = user.activeCity?.name ?? null;
 
@@ -47,6 +49,7 @@ export async function POST(req: Request) {
     const whereClause: Record<string, unknown> = {
       cityId: cityId,
       status: "ACTIVE",
+      creatorId: { notIn: blockedIds },
       startDate: {
         gte: now,
         lte: tonight,
@@ -88,7 +91,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         type: "existing_plan",
-        plan: selectedPlan,
+        plan: { ...selectedPlan, latitude: undefined, longitude: undefined },
         message: "Nous avons trouvé ce plan pour toi ce soir !",
       });
     }
@@ -123,7 +126,7 @@ export async function POST(req: Request) {
         const randomIndex = Math.floor(Math.random() * broadPlans.length);
         return NextResponse.json({
           type: "existing_plan",
-          plan: broadPlans[randomIndex],
+          plan: { ...broadPlans[randomIndex], latitude: undefined, longitude: undefined },
           message: "Voici un plan correspondant à ton humeur !",
         });
       }

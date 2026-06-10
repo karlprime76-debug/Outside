@@ -52,7 +52,7 @@ function TrendingCard({ moment }: { moment: TrendingMoment }) {
       video.pause();
     } else {
       video.muted = muted;
-      video.play().catch(() => {});
+      video.play().catch((err) => { console.error("[MOMENT_ERROR] Failed to play video:", err); });
     }
     setPlaying(!playing);
   }, [playing, muted]);
@@ -181,7 +181,7 @@ export default function TrendingPage() {
       .then((data) => {
         if (data?.user) setUserProfile(data.user);
       })
-      .catch(() => {});
+      .catch((err) => { console.error("[AUTH_ERROR] Failed to fetch user profile:", err); });
   }, []);
 
   const fetchTrendingMoments = useCallback(async () => {

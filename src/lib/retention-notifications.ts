@@ -23,7 +23,7 @@ export async function notifyDropAvailable(city: string, dropTitle: string) {
       body: dropTitle,
       recipientId: user.id,
       data: { url: "/home" },
-    }).catch(() => {});
+    }).catch((err) => { console.error("[NOTIFICATION_ERROR] Failed to send drop available notification:", err); });
   }
 }
 
@@ -48,7 +48,7 @@ export async function notifyMissionAvailable(city: string, missionTitle: string)
       body: missionTitle,
       recipientId: user.id,
       data: { url: "/home" },
-    }).catch(() => {});
+    }).catch((err) => { console.error("[NOTIFICATION_ERROR] Failed to send mission available notification:", err); });
   }
 }
 
@@ -62,7 +62,7 @@ export async function notifyWeeklyRecapReady(userId: string) {
     body: "Découvrez ton récapitulatif hebdomadaire",
     recipientId: userId,
     data: { url: "/activity" },
-  }).catch(() => {});
+  }).catch((err) => { console.error("[NOTIFICATION_ERROR] Failed to send weekly recap notification:", err); });
 }
 
 /**
@@ -75,6 +75,5 @@ export async function notifyAmbassadorToDiscover(userId: string, ambassadorName:
     body: `${ambassadorName} est ambassadeur OUTSIDE à ${city}`,
     recipientId: userId,
     data: { url: `/friends` },
-    actorName: ambassadorName,
-  }).catch(() => {});
+  }).catch((err) => { console.error("[NOTIFICATION_ERROR] Failed to send ambassador notification:", err); });
 }

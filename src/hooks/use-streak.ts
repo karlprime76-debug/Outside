@@ -34,7 +34,7 @@ export function useStreak() {
       .then((data) => {
         if (data) setStreak(data);
       })
-      .catch(() => {})
+      .catch((err) => { console.error("[SETTINGS_ERROR] Failed to update streak:", err); })
       .finally(() => setLoading(false));
   }, [session?.user?.id]);
 

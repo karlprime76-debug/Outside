@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
 
     // ——— Official accounts ———
     const officialAccounts = await db.user.findMany({
-      where: { OR: [{ role: "ADMIN" }, { isAmbassador: true }] },
+      where: { OR: [{ role: "ADMIN" }, { isAmbassador: true }], userSettings: { privateDiscoveryMode: false } },
       select: { id: true },
     });
     const officialIds = new Set(officialAccounts.map((u) => u.id));
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
     // 2. Same city + active
     if (userCity) {
       const cityUsers = await db.user.findMany({
-        where: { activeCity: { name: userCity }, id: { not: userId } },
+        where: { activeCity: { name: userCity }, id: { not: userId }, userSettings: { privateDiscoveryMode: false } },
         select: { id: true },
       });
       cityUsers.forEach((u) => {
@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
     const candidateIds = sorted.map(([id]) => id);
     const candidates = candidateIds.length > 0
       ? await db.user.findMany({
-          where: { id: { in: candidateIds } },
+          where: { id: { in: candidateIds }, userSettings: { privateDiscoveryMode: false } },
           select: {
             id: true, name: true, username: true, image: true,
             activeCity: { select: { name: true } },

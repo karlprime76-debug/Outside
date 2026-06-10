@@ -53,7 +53,7 @@ export default function UserPage() {
     fetch(`/api/users/${id}/reliability`)
       .then((r) => r.json())
       .then((data) => setReliability(data.trustProfile || null))
-      .catch(() => {});
+      .catch((err) => { console.error("[PROFILE_ERROR] Failed to fetch user reliability:", err); });
   }, [id]);
 
   async function toggleFriend() {

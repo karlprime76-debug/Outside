@@ -64,7 +64,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Must join plan to chat" }, { status: 403 });
     }
 
-    const limit = rateLimit(`message:${user.id}:${id}`, 20, 60000);
+    const limit = await rateLimit(`message:${user.id}:${id}`, 20, 60000);
     if (!limit.success) {
       return NextResponse.json(
         { error: "Too many messages. Please slow down." },

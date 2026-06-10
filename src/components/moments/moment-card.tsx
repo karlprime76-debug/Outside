@@ -95,7 +95,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type: "IMPRESSION" }),
-    }).catch(() => {});
+    }).catch((err) => { console.error("[MOMENT_ERROR] Failed to track moment impression:", err); });
 
     let timer: ReturnType<typeof setTimeout>;
     const observer = new IntersectionObserver(
@@ -108,7 +108,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ type: "VIEW" }),
-            }).catch(() => {});
+            }).catch((err) => { console.error("[MOMENT_ERROR] Failed to track moment view:", err); });
           }, 2000);
         } else if (!entry.isIntersecting && timer) {
           clearTimeout(timer);
@@ -130,7 +130,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, ...extra }),
-      }).catch(() => {});
+      }).catch((err) => { console.error("[MOMENT_ERROR] Failed to track moment event:", err); });
     },
     [moment.id]
   );

@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const limit = rateLimit(`report:${user.id}`, 5, 60000);
+    const limit = await rateLimit(`report:${user.id}`, 5, 60000);
     if (!limit.success) {
       return NextResponse.json(
         { error: "Trop de signalements. Réessaie plus tard." },

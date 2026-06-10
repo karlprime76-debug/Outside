@@ -101,6 +101,7 @@ export async function GET(
     const similarPlanParticipants = await db.planParticipant.findMany({
       where: {
         userId: { notIn: [user.id, ...blockedIds] },
+        user: { userSettings: { privateDiscoveryMode: false } },
         plan: {
           cityId,
           OR: [{ mood }, { planCategory }],
@@ -128,6 +129,7 @@ export async function GET(
         following: {
           activeCityId: cityId,
           id: { notIn: blockedIds },
+          userSettings: { privateDiscoveryMode: false },
         },
       },
       include: {

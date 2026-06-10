@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { getUserLocale } from "@/lib/locale";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { ArrowLeft, Loader2, CheckCircle, XCircle, Eye } from "lucide-react";
 
@@ -182,7 +183,7 @@ export default function AdminReportsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-[var(--os-muted)] text-xs">
-                    {new Date(report.createdAt).toLocaleDateString("fr-FR")}
+                    {new Date(report.createdAt).toLocaleDateString(getUserLocale())}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_COLORS[report.status] || STATUS_COLORS.PENDING}`}>

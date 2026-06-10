@@ -77,7 +77,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
     }
 
-    createPlanReminders(user.id, invitation.planId, invitation.plan.startDate).catch(() => {});
+    createPlanReminders(user.id, invitation.planId, invitation.plan.startDate).catch((err) => { console.error("[PLAN_ERROR] Failed to create plan reminders:", err); });
 
     db.plan.findUnique({
       where: { id: invitation.planId },
@@ -90,9 +90,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           countryCode: plan.city.countryCode,
           source: "PLAN_JOINED",
           planId: invitation.planId,
-        }).catch(() => {});
+        }).catch((err) => { console.error("[PLAN_ERROR] Failed to record trip history:", err); });
       }
-    }).catch(() => {});
+    }).catch((err) => { console.error("[PLAN_ERROR] Failed to lookup plan city:", err); });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -128,11 +128,11 @@ export async function POST(
 
     // Recalculate trust score for reviewed user
     if (reviewedUserId) {
-      await calculateUserTrust(reviewedUserId).catch(() => {});
+      await calculateUserTrust(reviewedUserId).catch((err) => { console.error("[PLAN_ERROR] Failed to calculate user trust:", err); });
     }
 
     // Recalculate plan confirmation
-    await calculatePlanConfirmation(planId).catch(() => {});
+    await calculatePlanConfirmation(planId).catch((err) => { console.error("[PLAN_ERROR] Failed to calculate plan confirmation:", err); });
 
     return NextResponse.json({ review }, { status: 201 });
   } catch (error) {

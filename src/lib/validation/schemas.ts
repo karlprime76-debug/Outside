@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { BudgetLevel, Mood, PlanVisibility, PlanCategory, SafetyLevel, PlanPriceType } from "@/types";
+import { BudgetLevel, Mood, PlanVisibility, PlanCategory, SafetyLevel, PlanPriceType, PlanStatus } from "@/types";
+import { LiveStatus, LiveVisibility, MomentVisibility } from "@prisma/client";
 
 export const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -10,7 +11,7 @@ export const registerSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(50),
   username: z.string().min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères").max(30).regex(/^[a-zA-Z0-9_]+$/, "Lettres, chiffres et underscore uniquement"),
   email: z.string().email("Email invalide"),
-  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères").regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre"),
   confirmPassword: z.string(),
   gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(),
   countryCode: z.string().length(2, "Code pays invalide"),
@@ -83,9 +84,52 @@ export const reportSchema = z.object({
   placeId: z.string().optional(),
 });
 
+export const updatePlanSchema = z.object({
+  title: z.string().min(3).max(100).optional(),
+  description: z.string().max(500).optional(),
+  status: z.nativeEnum(PlanStatus).optional(),
+  maxParticipants: z.number().int().min(2).max(100).optional(),
+  visibility: z.nativeEnum(PlanVisibility).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+});
+
+export const createLiveSchema = z.object({
+  title: z.string().min(2).max(100),
+  description: z.string().max(500).optional(),
+  visibility: z.nativeEnum(LiveVisibility).optional(),
+  planId: z.string().optional(),
+  eventId: z.string().optional(),
+  placeId: z.string().optional(),
+  city: z.string().optional(),
+  countryCode: z.string().optional(),
+});
+
+export const updateLiveSchema = z.object({
+  title: z.string().min(2).max(100).optional(),
+  description: z.string().max(500).optional(),
+  visibility: z.nativeEnum(LiveVisibility).optional(),
+  status: z.nativeEnum(LiveStatus).optional(),
+});
+
+export const createMomentSchema = z.object({
+  caption: z.string().max(500).optional(),
+  visibility: z.nativeEnum(MomentVisibility).optional(),
+  city: z.string().optional(),
+  countryCode: z.string().optional(),
+  planId: z.string().optional(),
+  placeId: z.string().optional(),
+  eventId: z.string().optional(),
+  liveId: z.string().optional(),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type OnboardingInput = z.infer<typeof onboardingSchema>;
 export type CreatePlanInput = z.infer<typeof createPlanSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type ReportInput = z.infer<typeof reportSchema>;
+export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;
+export type CreateLiveInput = z.infer<typeof createLiveSchema>;
+export type UpdateLiveInput = z.infer<typeof updateLiveSchema>;
+export type CreateMomentInput = z.infer<typeof createMomentSchema>;

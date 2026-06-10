@@ -128,7 +128,7 @@ export default function HomePage() {
       .then((data) => {
         if (data?.user) setUserProfile(data.user);
       })
-      .catch(() => {});
+      .catch((err) => { console.error("[AUTH_ERROR] Failed to fetch user profile:", err); });
 
     fetch("/api/lives?limit=3")
       .then((r) => (r.ok ? r.json() : null))
@@ -136,7 +136,7 @@ export default function HomePage() {
         setLives(data?.lives?.slice(0, 3) || []);
         setLoadingLives(false);
       })
-      .catch(() => setLoadingLives(false));
+      .catch((err) => { console.error("[LIVE_ERROR] Failed to fetch lives:", err); setLoadingLives(false); });
 
     fetch("/api/events?limit=3")
       .then((r) => (r.ok ? r.json() : null))
@@ -144,21 +144,21 @@ export default function HomePage() {
         setEvents(data?.events?.slice(0, 3) || []);
         setLoadingEvents(false);
       })
-      .catch(() => setLoadingEvents(false));
+      .catch((err) => { console.error("[PLAN_ERROR] Failed to fetch events:", err); setLoadingEvents(false); });
 
     fetch("/api/availability?mine=1")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.availability) setMyAvailability(data.availability);
       })
-      .catch(() => {});
+      .catch((err) => { console.error("[SETTINGS_ERROR] Failed to fetch availability:", err); });
 
     fetch("/api/outside-status")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.status) setOutsideStatus(data.status);
       })
-      .catch(() => {});
+      .catch((err) => { console.error("[SETTINGS_ERROR] Failed to fetch outside status:", err); });
 
     fetch("/api/moments?limit=3")
       .then((r) => (r.ok ? r.json() : null))
@@ -194,20 +194,20 @@ export default function HomePage() {
   const handleRefresh = useCallback(async () => {
     haptic.medium();
     const fetches = [
-      fetch("/api/plans?limit=6").then((r) => r.json()).then((data) => setPlans(data.plans?.slice(0, 6) || [])).catch(() => {}),
-      fetch("/api/places?limit=6").then((r) => r.json()).then((data) => setPlaces(data.places?.slice(0, 6) || [])).catch(() => {}),
-      fetch("/api/lives?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setLives(data?.lives?.slice(0, 3) || [])).catch(() => {}),
-      fetch("/api/events?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setEvents(data?.events?.slice(0, 3) || [])).catch(() => {}),
-      fetch("/api/moments?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setMoments(data?.moments?.slice(0, 3) || [])).catch(() => {}),
-      fetch("/api/availability?mine=1").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.availability) setMyAvailability(data.availability); }).catch(() => {}),
-      fetch("/api/outside-status").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.status) setOutsideStatus(data.status); }).catch(() => {}),
+      fetch("/api/plans?limit=6").then((r) => r.json()).then((data) => setPlans(data.plans?.slice(0, 6) || [])).catch((err) => { console.error("[PLAN_ERROR] Failed to fetch plans:", err); }),
+      fetch("/api/places?limit=6").then((r) => r.json()).then((data) => setPlaces(data.places?.slice(0, 6) || [])).catch((err) => { console.error("[PLAN_ERROR] Failed to fetch places:", err); }),
+      fetch("/api/lives?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setLives(data?.lives?.slice(0, 3) || [])).catch((err) => { console.error("[LIVE_ERROR] Failed to fetch lives:", err); }),
+      fetch("/api/events?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setEvents(data?.events?.slice(0, 3) || [])).catch((err) => { console.error("[PLAN_ERROR] Failed to fetch events:", err); }),
+      fetch("/api/moments?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setMoments(data?.moments?.slice(0, 3) || [])).catch((err) => { console.error("[MOMENT_ERROR] Failed to fetch moments:", err); }),
+      fetch("/api/availability?mine=1").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.availability) setMyAvailability(data.availability); }).catch((err) => { console.error("[SETTINGS_ERROR] Failed to fetch availability:", err); }),
+      fetch("/api/outside-status").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.status) setOutsideStatus(data.status); }).catch((err) => { console.error("[SETTINGS_ERROR] Failed to fetch outside status:", err); }),
     ];
     if (activeCity?.name) {
       fetches.push(
         fetch(`/api/moments/trending?city=${encodeURIComponent(activeCity.name)}&limit=5`)
           .then((r) => r.ok ? r.json() : null)
           .then((data) => setTrendingMoments(data?.moments || []))
-          .catch(() => {})
+          .catch((err) => { console.error("[MOMENT_ERROR] Failed to fetch trending moments:", err); })
       );
     }
     await Promise.allSettled(fetches);

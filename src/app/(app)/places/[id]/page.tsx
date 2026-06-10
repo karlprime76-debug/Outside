@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { getUserLocale } from "@/lib/locale";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Badge } from "@/components/ui/badge";
 import { ReportButton } from "@/components/report-button";
@@ -81,7 +82,7 @@ export default function PlaceDetailPage() {
             {place.plans.map((plan) => (
               <Link key={plan.id} href={`/plans/${plan.id}`} className="group block rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 hover:border-outside-400 transition-colors ">
                 <p className="font-bold text-[var(--os-fg)] group-hover:text-outside-600 dark:group-hover:text-outside-400 transition-colors">{plan.title}</p>
-                <p className="text-xs text-[var(--os-muted)] mt-1">{plan.mood} · {new Date(plan.startDate).toLocaleDateString("fr-FR")}</p>
+                <p className="text-xs text-[var(--os-muted)] mt-1">{plan.mood} · {new Date(plan.startDate).toLocaleDateString(getUserLocale())}</p>
               </Link>
             ))}
           </div>

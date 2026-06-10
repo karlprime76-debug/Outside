@@ -5,6 +5,7 @@ import { Image, Film, Music, Sparkles, Calendar, ChevronLeft, Download, Loader2,
 import { MediaViewer } from "@/components/media/media-viewer";
 import { Avatar } from "@/components/ui/avatar";
 import { useHaptic } from "@/hooks/use-haptic";
+import { getUserLocale } from "@/lib/locale";
 
 interface MediaItem {
   id: string;
@@ -161,7 +162,7 @@ export function DmMediaHistory({ conversationId, onClose }: DmMediaHistoryProps)
                         {item.mediaName || "Audio"}
                       </p>
                       <p className="text-[10px] text-[var(--os-muted)]">
-                        {item.sender.name || item.sender.username} · {new Date(item.createdAt).toLocaleDateString("fr-FR")}
+                        {item.sender.name || item.sender.username} · {new Date(item.createdAt).toLocaleDateString(getUserLocale())}
                       </p>
                       <audio controls className="mt-1 w-full h-8" src={item.mediaUrl || ""} />
                     </div>
@@ -187,7 +188,7 @@ export function DmMediaHistory({ conversationId, onClose }: DmMediaHistoryProps)
                     </div>
                     <p className="text-xs text-[var(--os-fg)] font-semibold">{item.type === "MOMENT" ? "Moment" : "Invitation"}</p>
                     <p className="text-[10px] text-[var(--os-muted)]">
-                      {new Date(item.createdAt).toLocaleDateString("fr-FR")}
+                      {new Date(item.createdAt).toLocaleDateString(getUserLocale())}
                     </p>
                   </div>
                 ))}

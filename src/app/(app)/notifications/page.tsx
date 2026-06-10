@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getUserLocale } from "@/lib/locale";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
@@ -66,7 +67,7 @@ export default function NotificationsPage() {
     if (minutes < 1) return "À l'instant";
     if (minutes < 60) return `Il y a ${minutes} min`;
     if (hours < 24) return `Il y a ${hours} h`;
-    return new Date(dateStr).toLocaleDateString("fr-FR");
+    return new Date(dateStr).toLocaleDateString(getUserLocale());
   }
 
   function iconFor(type: string) {

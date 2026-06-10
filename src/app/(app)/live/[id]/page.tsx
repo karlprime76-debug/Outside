@@ -124,7 +124,7 @@ export default function LiveDetailPage() {
       isHost={tokenData.isHost}
       onDisconnected={() => {
         if (tokenData.isHost) {
-          fetch(`/api/lives/${id}/end`, { method: "POST" }).catch(() => {});
+          fetch(`/api/lives/${id}/end`, { method: "POST" }).catch((err) => { console.error("[LIVE_ERROR] Failed to end live:", err); });
         }
         window.location.href = "/live";
       }}

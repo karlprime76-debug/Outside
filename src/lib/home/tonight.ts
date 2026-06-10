@@ -26,6 +26,11 @@ const todayRange = () => {
   return { start, end };
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function stripCoords<T extends Record<string, any>>(obj: T) {
+  return { ...obj, latitude: undefined, longitude: undefined };
+}
+
 async function cityIdsForCountry(countryCode: string): Promise<string[]> {
   const cities = await db.city.findMany({
     where: { countryCode },
@@ -71,7 +76,7 @@ async function fillFromScopes<T extends { id: string }>(
 
 export async function fetchRecommendedPlans(scope: GeoScope) {
   const { start, end } = todayRange();
-  return fillFromScopes(
+  const plans = await fillFromScopes(
     async (cityIds) =>
       db.plan.findMany({
         where: {
@@ -86,10 +91,11 @@ export async function fetchRecommendedPlans(scope: GeoScope) {
       }),
     scope
   );
+  return plans.map(stripCoords);
 }
 
 export async function fetchFreePlans(scope: GeoScope) {
-  return fillFromScopes(
+  const plans = await fillFromScopes(
     async (cityIds) =>
       db.plan.findMany({
         where: {
@@ -105,11 +111,12 @@ export async function fetchFreePlans(scope: GeoScope) {
       }),
     scope
   );
+  return plans.map(stripCoords);
 }
 
 export async function fetchExpressPlans(scope: GeoScope) {
   const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-  return fillFromScopes(
+  const plans = await fillFromScopes(
     async (cityIds) =>
       db.plan.findMany({
         where: {
@@ -131,6 +138,7 @@ export async function fetchExpressPlans(scope: GeoScope) {
       }),
     scope
   );
+  return plans.map(stripCoords);
 }
 
 export async function fetchTrendingMoments(scope: GeoScope) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET(
   req: Request,
@@ -13,11 +14,15 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const blockedIds = await getUserBlockedIds(user.id);
+
     // Get ambassadors for this city
     const ambassadors = await db.user.findMany({
       where: {
         isAmbassador: true,
         ambassadorCity: city,
+        id: { notIn: blockedIds },
+        userSettings: { privateDiscoveryMode: false },
       },
       select: {
         id: true,

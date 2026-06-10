@@ -54,7 +54,7 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
           const status = (err as { statusCode?: number })?.statusCode;
           if (status === 404 || status === 410) {
             // Subscription expired or invalid
-            await db.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+            await db.pushSubscription.delete({ where: { id: sub.id } }).catch((err) => { logError("[PUSH_ERROR]", "Failed to delete expired subscription", { error: String(err) }); });
           } else {
             logError("[PUSH_ERROR]", "sendPushNotification failed for subscription", {
               userId,

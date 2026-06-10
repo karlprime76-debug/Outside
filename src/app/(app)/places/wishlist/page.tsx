@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -110,9 +111,9 @@ export default function WishlistPage() {
             {friendWishlist.map((item) => (
               <div key={item.id} className="os-card p-5 shadow-card card-hover">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="h-6 w-6 rounded-full bg-[var(--os-card)] overflow-hidden">
+                  <div className="h-6 w-6 rounded-full bg-[var(--os-card)] overflow-hidden relative">
                     {item.user.image && (
-                      <img src={item.user.image} alt="" className="h-full w-full object-cover" />
+                      <Image src={item.user.image} alt="" fill className="object-cover" />
                     )}
                   </div>
                   <span className="text-xs font-semibold text-[var(--os-muted)]">

@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 import { createPlanSchema } from "@/lib/validation/schemas";
 import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
 import { createPlanReminders } from "@/lib/plan-reminders";
 import { generateRecurringPlans } from "@/lib/recurring-plans";
 import { recordTripHistory } from "@/lib/passport";
 import { PlanVisibility } from "@prisma/client";
+import { attachHashtagsToPlan } from "@/lib/hashtags/hashtag-service";
 
 // Haversine formula to calculate distance between two points in kilometers
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -32,6 +34,8 @@ export async function GET(req: Request) {
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
+
+    const blockedIds = await getUserBlockedIds(user.id);
 
     const { searchParams } = new URL(req.url);
     const cityId = searchParams.get("cityId");
@@ -134,7 +138,11 @@ export async function GET(req: Request) {
       if (dateTo) (baseWhere.startDate as Record<string, unknown>).lte = new Date(dateTo);
     }
     if (travelerFriendly === "true") baseWhere.isTravelerFriendly = true;
-    if (myPlans === "true") baseWhere.creatorId = user.id;
+    if (myPlans === "true") {
+      baseWhere.creatorId = user.id;
+    } else {
+      baseWhere.creatorId = { notIn: blockedIds };
+    }
 
     // Determine orderBy based on sortBy parameter
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -269,6 +277,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
+    if (contentLength > 100000) {
+      return NextResponse.json({ error: "Requête trop volumineuse." }, { status: 413 });
+    }
+
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -278,8 +291,9 @@ export async function POST(req: Request) {
     const parsed = createPlanSchema.safeParse(body);
 
     if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
       return NextResponse.json(
-        { error: "Données invalides", details: parsed.error.flatten() },
+        { error: firstIssue?.message || "Données invalides" },
         { status: 400 }
       );
     }
@@ -321,16 +335,21 @@ export async function POST(req: Request) {
       },
     });
 
+    // Attach hashtags from description
+    attachHashtagsToPlan(plan.id, data.description ?? null, plan.city?.name ?? null, data.countryCode ?? null).catch((err) => {
+      console.error("[POST /api/plans] Background task error:", err);
+    });
+
     // Auto-join creator as GOING participant
     await db.planParticipant.create({
       data: { planId: plan.id, userId: user.id, status: "CONFIRMED", attendance: "GOING" },
     });
 
-    createPlanReminders(user.id, plan.id, plan.startDate).catch(() => {});
-    evaluateBadgesAfterPlanCreated(user.id).catch(() => {});
+    createPlanReminders(user.id, plan.id, plan.startDate).catch((err) => { logError("[PLAN_ERROR]", "Failed to create plan reminders", { error: String(err) }); });
+    evaluateBadgesAfterPlanCreated(user.id).catch((err) => { logError("[PLAN_ERROR]", "Failed to evaluate badges after plan created", { error: String(err) }); });
 
     if (data.recurrence) {
-      generateRecurringPlans(plan.id, data.recurrence, data.recurrenceEndDate ?? null).catch(() => {});
+      generateRecurringPlans(plan.id, data.recurrence, data.recurrenceEndDate ?? null).catch((err) => { logError("[RECURRING_ERROR]", "Failed to generate recurring plans", { error: String(err) }); });
     }
 
     if (plan.city?.name) {
@@ -340,7 +359,7 @@ export async function POST(req: Request) {
         countryCode: data.countryCode,
         source: "PLAN_CREATED",
         planId: plan.id,
-      }).catch(() => {});
+      }).catch((err) => { logError("[PLAN_ERROR]", "Failed to record trip history", { error: String(err) }); });
     }
 
     return NextResponse.json({ plan }, { status: 201 });
@@ -349,3 +368,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+

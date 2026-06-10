@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getUserLocale } from "@/lib/locale";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Users, CalendarDays, Store, AlertTriangle, Shield, MapPin, ArrowRight, Briefcase, Video, Building2, Music } from "lucide-react";
 
@@ -87,7 +88,7 @@ export default async function AdminPage() {
                   </p>
                 </div>
                 <span className="text-[10px] font-bold text-[var(--os-muted)] whitespace-nowrap ml-2">
-                  {new Date(r.createdAt).toLocaleDateString("fr-FR")}
+                  {new Date(r.createdAt).toLocaleDateString(getUserLocale())}
                 </span>
               </div>
             ))}

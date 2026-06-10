@@ -141,7 +141,7 @@ export async function linkNewUserToReferral(
   await awardReferralBadges(inviter.id);
   const referredBadge = await awardBadge(newUserId, "REFERRED_BY_FRIEND");
   if (!referredBadge) await awardBadge(newUserId, "new_outside");
-  evaluateFounderBadges(newUserId).catch(() => {});
+  evaluateFounderBadges(newUserId).catch((err) => { console.error("[MOMENT_ERROR] Failed to evaluate founder badges:", err); });
   return true;
 }
 

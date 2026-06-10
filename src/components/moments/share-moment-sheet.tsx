@@ -34,7 +34,7 @@ export function ShareMomentSheet({ open, momentId, onClose }: ShareMomentSheetPr
       .then((data) => {
         if (data?.conversations) setConversations(data.conversations);
       })
-      .catch(() => {})
+      .catch((err) => { console.error("[DM_ERROR] Failed to fetch conversations:", err); })
       .finally(() => setLoading(false));
   }, [open]);
 

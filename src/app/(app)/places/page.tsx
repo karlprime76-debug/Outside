@@ -80,11 +80,11 @@ export default function PlacesPage() {
 
       {/* Category pills */}
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => setCategory("")}>
+        <button onClick={() => setCategory("")} aria-label="Toutes les catégories">
           <Badge variant={category === "" ? "orange" : "default"}>{t.home.all}</Badge>
         </button>
         {CATEGORIES.map((c) => (
-          <button key={c} onClick={() => setCategory(c)}>
+          <button key={c} onClick={() => setCategory(c)} aria-label={`Catégorie : ${c.charAt(0) + c.slice(1).toLowerCase()}`}>
             <Badge variant={category === c ? "orange" : "default"}>
               {c.charAt(0) + c.slice(1).toLowerCase()}
             </Badge>

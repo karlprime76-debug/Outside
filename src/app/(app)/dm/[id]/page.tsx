@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Loader2, MapPin, Calendar, X, RefreshCw, ImageOff } from "lucide-react";
+import { getUserLocale } from "@/lib/locale";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useHaptic } from "@/hooks/use-haptic";
 import { DmConversationHeader } from "@/components/dm/dm-conversation-header";
@@ -82,7 +83,7 @@ export default function DmConversationPage() {
         const conv = data.conversations.find((c: { id: string }) => c.id === id);
         if (conv?.other) setOther(conv.other);
       })
-      .catch(() => {});
+      .catch((err) => { console.error("[DM_ERROR] Failed to fetch conversation:", err); });
   }, [id]);
 
   const fetchMessages = useCallback(async (cursor?: string) => {
@@ -109,7 +110,7 @@ export default function DmConversationPage() {
         setNextCursor(data.nextCursor);
         prevMessagesLen.current = data.messages.length;
         // mark as read
-        fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch(() => {});
+        fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch((err) => { console.error("[DM_ERROR] Failed to mark conversation as read:", err); });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erreur.");
       } finally {
@@ -168,7 +169,7 @@ export default function DmConversationPage() {
         });
         // mark read if near bottom
         if (isNearBottomRef.current) {
-          fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch(() => {});
+          fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch((err) => { console.error("[DM_ERROR] Failed to mark conversation as read:", err); });
         }
       } catch (e) { console.error("[DM_POLL]", e); }
     };
@@ -378,7 +379,7 @@ export default function DmConversationPage() {
     if (data) {
       setMessages(data.messages);
       setNextCursor(data.nextCursor);
-      fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch(() => {});
+      fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch((err) => { console.error("[DM_ERROR] Failed to mark conversation as read:", err); });
     }
   }, [fetchMessages, id]);
 
@@ -567,7 +568,7 @@ export default function DmConversationPage() {
                         )}
                         <span className="flex items-center gap-0.5">
                           <Calendar className="h-3 w-3" />
-                          {new Date(p.startDate).toLocaleDateString("fr-FR")}
+                          {new Date(p.startDate).toLocaleDateString(getUserLocale())}
                         </span>
                       </div>
                     </div>

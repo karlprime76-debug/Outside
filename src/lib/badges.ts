@@ -20,7 +20,7 @@ export async function awardBadge(userId: string, badgeKey: string): Promise<bool
     body: `Tu as débloqué le badge "${badge.name}"`,
     recipientId: userId,
     data: { badgeId: badge.id, badgeKey: badge.key },
-  }).catch(() => {});
+  }).catch((err) => { console.error("[NOTIFICATION_ERROR] Failed to send badge earned notification:", err); });
 
   return true;
 }

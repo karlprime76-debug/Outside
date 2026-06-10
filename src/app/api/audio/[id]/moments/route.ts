@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,11 +11,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }
 
     const { id } = await params;
+    const blockedIds = await getUserBlockedIds(user.id);
 
     const moments = await db.moment.findMany({
       where: {
         audioTrackId: id,
         visibility: "PUBLIC",
+        authorId: { notIn: blockedIds },
       },
       orderBy: { createdAt: "desc" },
       take: 9,
