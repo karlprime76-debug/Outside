@@ -14,7 +14,6 @@ import { DmMediaHistory } from "@/components/dm/dm-media-history";
 import { DmMessageBubble, type DmMessage } from "@/components/dm/dm-message-bubble";
 import { DmDateSeparator } from "@/components/dm/dm-date-separator";
 import { DmMessageComposer } from "@/components/dm/dm-message-composer";
-import { OutsidePage } from "@/components/ui/outside-page";
 
 interface OtherUser {
   id: string;
@@ -414,7 +413,7 @@ export default function DmConversationPage() {
   }, [ordered, myId]);
 
   return (
-    <OutsidePage className="flex flex-col max-h-[100dvh] pb-24 md:pb-0">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <DmConversationHeader 
         other={other} 
         onBack={() => router.back()} 
@@ -428,7 +427,7 @@ export default function DmConversationPage() {
           (listRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
           (pullRefreshRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
         }}
-        className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 relative min-h-0"
+        className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 relative min-h-0 pb-2"
       >
         {/* Pull to refresh indicator */}
         <div
@@ -660,6 +659,6 @@ export default function DmConversationPage() {
           onClose={() => setMediaOpen(false)}
         />
       )}
-    </OutsidePage>
+    </div>
   );
 }

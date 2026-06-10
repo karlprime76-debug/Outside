@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { PlanCard } from "@/components/plan-card";
@@ -11,7 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, Sparkles, List, Calendar } from "lucide-react";
+import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, Sparkles, List, Calendar, Sun, Moon, Clock } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
@@ -30,6 +31,13 @@ const PLAN_CATEGORIES = [
   { value: "AUTRE", label: "Autre" },
 ];
 
+const TIME_RANGES = [
+  { value: "", label: "Toutes les dates", icon: CalendarDays },
+  { value: "today", label: "Aujourd'hui", icon: Sun },
+  { value: "tonight", label: "Ce soir", icon: Moon },
+  { value: "weekend", label: "Week-end", icon: Clock },
+];
+
 interface Invitation {
   id: string;
   plan: { id: string; title: string; mood: string; startDate: string; city: { name: string }; creator: { id: string; name: string | null; image: string | null } };
@@ -40,15 +48,29 @@ interface Invitation {
 type Tab = "tous" | "suggestions" | "mes-plans";
 
 export default function PlansPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useDictionary();
-  const [tab, setTab] = useState<Tab>("tous");
+
+  const tabFromUrl = searchParams.get("tab") as Tab | null;
+  const categoryFromUrl = searchParams.get("category") || "";
+  const moodFromUrl = searchParams.get("mood") || "";
+  const freeFromUrl = searchParams.get("free") === "true";
+  const searchFromUrl = searchParams.get("search") || "";
+  const timeRangeFromUrl = searchParams.get("timeRange") || "";
+  const cityIdFromUrl = searchParams.get("cityId") || "";
+  const sortFromUrl = searchParams.get("sort") || "dateAsc";
+
+  const [tab, setTab] = useState<Tab>(tabFromUrl || "tous");
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mood, setMood] = useState("");
-  const [planCategory, setPlanCategory] = useState("");
-  const [freeOnly, setFreeOnly] = useState(false);
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("dateAsc");
+  const [mood, setMood] = useState(moodFromUrl);
+  const [planCategory, setPlanCategory] = useState(categoryFromUrl);
+  const [freeOnly, setFreeOnly] = useState(freeFromUrl);
+  const [search, setSearch] = useState(searchFromUrl);
+  const [sortBy, setSortBy] = useState(sortFromUrl);
+  const [timeRange, setTimeRange] = useState(timeRangeFromUrl);
+  const [cityId, setCityId] = useState(cityIdFromUrl);
   const [recalcKey, setRecalcKey] = useState(0);
   const debouncedSearch = useDebounce(search, 300);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -58,14 +80,34 @@ export default function PlansPage() {
   const [myPlansData, setMyPlansData] = useState<Plan[]>([]);
   const [loadingMyPlans, setLoadingMyPlans] = useState(false);
 
+  // Sync filters to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (tab !== "tous") params.set("tab", tab);
+    if (planCategory) params.set("category", planCategory);
+    if (mood) params.set("mood", mood);
+    if (freeOnly) params.set("free", "true");
+    if (search) params.set("search", search);
+    if (timeRange) params.set("timeRange", timeRange);
+    if (cityId) params.set("cityId", cityId);
+    if (sortBy !== "dateAsc") params.set("sort", sortBy);
+    const qs = params.toString();
+    const url = qs ? `/plans?${qs}` : "/plans";
+    router.replace(url, { scroll: false });
+  }, [tab, planCategory, mood, freeOnly, search, timeRange, cityId, sortBy, router]);
+
   useEffect(() => {
     const params = new URLSearchParams();
     if (mood) params.set("mood", mood);
     if (planCategory) params.set("planCategory", planCategory);
     if (freeOnly) params.set("isFree", "true");
     if (sortBy) params.set("sortBy", sortBy);
+    if (timeRange) params.set("timeRange", timeRange);
+    if (cityId) params.set("cityId", cityId);
+    if (debouncedSearch) params.set("search", debouncedSearch);
 
     setLoading(true);
+    setPlans([]);
     fetch(`/api/plans?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => {
@@ -73,7 +115,7 @@ export default function PlansPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [mood, planCategory, freeOnly, sortBy, recalcKey]);
+  }, [mood, planCategory, freeOnly, sortBy, timeRange, cityId, debouncedSearch, recalcKey]);
 
   useEffect(() => {
     fetch("/api/plans/invitations")
@@ -88,19 +130,26 @@ export default function PlansPage() {
   useEffect(() => {
     if (tab !== "suggestions") return;
     setLoadingSuggestions(true);
-    fetch("/api/plans/suggestions")
+    setSuggestions([]);
+    const params = new URLSearchParams();
+    if (cityId) params.set("cityId", cityId);
+    if (planCategory) params.set("planCategory", planCategory);
+    if (mood) params.set("mood", mood);
+    const qs = params.toString();
+    fetch(`/api/plans/suggestions${qs ? `?${qs}` : ""}`)
       .then((r) => r.json())
       .then((data) => {
         setSuggestions(data.plans || []);
         setLoadingSuggestions(false);
       })
       .catch(() => setLoadingSuggestions(false));
-  }, [tab]);
+  }, [tab, cityId, planCategory, mood]);
 
   useEffect(() => {
     if (tab !== "mes-plans") return;
     setLoadingMyPlans(true);
-    fetch("/api/plans?myPlans=true")
+    setMyPlansData([]);
+    fetch("/api/plans/my?scope=created")
       .then((r) => r.json())
       .then((data) => {
         setMyPlansData(data.plans || []);
@@ -109,16 +158,18 @@ export default function PlansPage() {
       .catch(() => setLoadingMyPlans(false));
   }, [tab]);
 
-  const hasFilters = mood || planCategory || freeOnly || search;
+  const hasFilters = mood || planCategory || freeOnly || search || timeRange || cityId;
 
-  const filteredPlans = debouncedSearch
-    ? plans.filter((p) =>
-        p.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        p.mood.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        p.city.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        p.planCategory.toLowerCase().includes(debouncedSearch.toLowerCase())
-      )
-    : plans;
+  function clearFilters() {
+    setMood("");
+    setPlanCategory("");
+    setFreeOnly(false);
+    setSearch("");
+    setSortBy("dateAsc");
+    setTimeRange("");
+    setCityId("");
+    setRecalcKey((k) => k + 1);
+  }
 
   return (
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6 pb-24 md:pb-4 animate-slide-up">
@@ -221,13 +272,31 @@ export default function PlansPage() {
         </select>
         {hasFilters && (
           <button
-            onClick={() => { setMood(""); setPlanCategory(""); setFreeOnly(false); setSearch(""); setSortBy("dateAsc"); setRecalcKey((k) => k + 1); }}
+            onClick={clearFilters}
             className="inline-flex items-center gap-1 text-xs font-bold text-[var(--os-muted)] hover:text-red-500 transition-colors"
           >
             <X className="h-3 w-3" />
             Réinitialiser
           </button>
         )}
+      </div>
+
+      {/* Quick date filters */}
+      <div className="flex flex-wrap gap-2">
+        {TIME_RANGES.map((tr) => (
+          <button
+            key={tr.value}
+            onClick={() => setTimeRange(tr.value === timeRange ? "" : tr.value)}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              timeRange === tr.value
+                ? "border-outside-500 bg-outside-50 text-outside-700"
+                : "border-[var(--os-card-border)] bg-[var(--os-card)] text-[var(--os-fg)] hover:bg-[var(--os-card-border)]"
+            }`}
+          >
+            <tr.icon className="h-3 w-3" />
+            {tr.label}
+          </button>
+        ))}
       </div>
 
       {hasFilters && (
@@ -237,6 +306,9 @@ export default function PlansPage() {
           )}
           {mood && <Badge variant="slate">{mood}</Badge>}
           {freeOnly && <Badge variant="green">Gratuit</Badge>}
+          {timeRange && (
+            <Badge variant="slate">{TIME_RANGES.find((tr) => tr.value === timeRange)?.label || timeRange}</Badge>
+          )}
         </div>
       )}
 
@@ -286,16 +358,16 @@ export default function PlansPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
         </div>
-      ) : filteredPlans.length === 0 ? (
+      ) : plans.length === 0 ? (
         <div className="os-card p-8 text-center">
           <CalendarDays className="h-12 w-12 text-[var(--os-muted)] mx-auto mb-4" />
           <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">
-            {search ? t.planFilters.noResults : t.planFilters.noPlansInCity}
+            {search || hasFilters ? t.planFilters.noResults : t.planFilters.noPlansInCity}
           </h3>
           <p className="text-sm text-[var(--os-muted)] mb-6">
-            {search ? "Essaye un autre mot-clé ou filtre." : "Lance le premier plan pour remplir ton OUTSIDE."}
+            {search || hasFilters ? "Essaye un autre mot-clé ou filtre." : "Lance le premier plan pour remplir ton OUTSIDE."}
           </p>
-          {!search && (
+          {!hasFilters && (
             <div className="flex flex-col gap-3 items-center">
               <Link href="/plans/new" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all">
                 <Plus className="h-4 w-4" /> Créer un plan
@@ -315,7 +387,7 @@ export default function PlansPage() {
             endOfTomorrow.setHours(23, 59, 59, 999);
 
             const byCity: Record<string, Plan[]> = {};
-            filteredPlans.forEach((p) => {
+            plans.forEach((p) => {
               const city = p.city.name;
               if (!byCity[city]) byCity[city] = [];
               byCity[city].push(p);

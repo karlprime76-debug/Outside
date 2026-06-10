@@ -58,12 +58,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               "pointer-events-auto flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold shadow-lg transition-all animate-in slide-in-from-bottom-4 fade-in duration-300",
               toast.type === "success" && "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800",
               toast.type === "error" && "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-800",
-              toast.type === "info" && "bg-white text-zinc-800 border border-zinc-200 dark:bg-surface-card dark:text-zinc-200 dark:border-surface-border"
+              toast.type === "info" && "bg-white text-zinc-800 border border-zinc-200 dark:bg-surface-card dark:text-zinc-200 dark:border-[var(--os-card-border)]"
             )}
           >
             {toast.type === "success" && <CheckCircle className="h-4 w-4" />}
             {toast.type === "error" && <AlertCircle className="h-4 w-4" />}
-            {toast.type === "info" && <Info className="h-4 w-4 text-outside-500" />}
+            {toast.type === "info" && <Info className="h-4 w-4 text-neon-orange" />}
             <span>{toast.message}</span>
             <button
               onClick={() => removeToast(toast.id)}

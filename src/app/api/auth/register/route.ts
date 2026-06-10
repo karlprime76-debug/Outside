@@ -129,6 +129,7 @@ export async function POST(req: Request) {
           username,
           email,
           password: hashedPassword,
+          accountKind: "STANDARD",
           gender: gender || "PREFER_NOT_TO_SAY",
           country: countryName,
           countryCode: countryCode.toUpperCase(),

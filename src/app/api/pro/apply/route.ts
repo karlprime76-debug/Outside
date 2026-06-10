@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AccountKind } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
     const {
       businessName,
       businessType,
+      requestedAccountKind,
       description,
       country,
       countryCode,
@@ -51,6 +53,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Le nom de l'établissement est requis." }, { status: 400 });
     }
 
+    const validAccountKinds = ["OFFICIAL_GUIDE", "OFFICIAL_CITY", "OFFICIAL_PARTNER", "VERIFIED_CREATOR", "PARTNER_VENUE"];
+    const safeAccountKind = validAccountKinds.includes(requestedAccountKind) ? requestedAccountKind : "VERIFIED_CREATOR";
+
     const validBusinessTypes = ["ORGANIZER", "VENUE", "BRAND", "RESTAURANT_BAR", "EVENT_AGENCY", "PROMOTER", "ARTIST_TEAM", "OTHER"];
     const safeBusinessType = validBusinessTypes.includes(businessType) ? businessType : "OTHER";
 
@@ -59,6 +64,7 @@ export async function POST(req: Request) {
         userId: user.id,
         businessName: businessName.trim(),
         businessType: safeBusinessType,
+        requestedAccountKind: safeAccountKind as AccountKind,
         description: description?.trim() || null,
         country: country?.trim() || null,
         countryCode: countryCode?.trim() || null,

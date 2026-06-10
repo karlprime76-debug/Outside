@@ -50,6 +50,8 @@ export async function GET(req: Request) {
     const travelerFriendly = searchParams.get("travelerFriendly");
     const nearMe = searchParams.get("nearMe");
     const myPlans = searchParams.get("myPlans");
+    const search = searchParams.get("search");
+    const timeRange = searchParams.get("timeRange");
     const sortBy = searchParams.get("sortBy") || "dateAsc";
     let limit = parseInt(searchParams.get("limit") || "50", 10);
     if (isNaN(limit) || limit < 1) limit = 50;
@@ -137,16 +139,52 @@ export async function GET(req: Request) {
       if (dateFrom) (baseWhere.startDate as Record<string, unknown>).gte = new Date(dateFrom);
       if (dateTo) (baseWhere.startDate as Record<string, unknown>).lte = new Date(dateTo);
     }
+    if (timeRange) {
+      const now = new Date();
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      if (timeRange === "today") {
+        baseWhere.startDate = { gte: now, lte: endOfDay };
+      } else if (timeRange === "tonight") {
+        const tonightStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0, 0);
+        baseWhere.startDate = { gte: tonightStart, lte: endOfDay };
+      } else if (timeRange === "weekend") {
+        const saturday = new Date(now);
+        saturday.setDate(now.getDate() + (6 - now.getDay()));
+        saturday.setHours(0, 0, 0, 0);
+        const sunday = new Date(saturday);
+        sunday.setDate(saturday.getDate() + 1);
+        sunday.setHours(23, 59, 59, 999);
+        baseWhere.startDate = { gte: saturday, lte: sunday };
+      }
+      baseWhere.status = { not: "COMPLETED" };
+    }
     if (travelerFriendly === "true") baseWhere.isTravelerFriendly = true;
     if (myPlans === "true") {
       baseWhere.creatorId = user.id;
     } else {
       baseWhere.creatorId = { notIn: blockedIds };
     }
+    if (search) {
+      const searchWhere: Record<string, unknown>[] = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { planCategory: { contains: search, mode: "insensitive" } },
+        { mood: { contains: search, mode: "insensitive" } },
+        { city: { name: { contains: search, mode: "insensitive" } } },
+        { creator: { name: { contains: search, mode: "insensitive" } } },
+      ];
+      const existingOR = baseWhere.OR as Record<string, unknown>[] | undefined;
+      if (existingOR) {
+        baseWhere.AND = [{ OR: searchWhere }, ...(baseWhere.AND ? [baseWhere.AND] : [])];
+      } else {
+        baseWhere.OR = searchWhere;
+      }
+    }
 
     // Determine orderBy based on sortBy parameter
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let orderBy: any = { startDate: "asc" };
+    let isPopularSort = false;
     switch (sortBy) {
       case "dateAsc":
         orderBy = { startDate: "asc" };
@@ -158,7 +196,8 @@ export async function GET(req: Request) {
         orderBy = { budgetAmount: { sort: "desc", nulls: "last" } };
         break;
       case "popular":
-        orderBy = { createdAt: "desc" }; // Simplified: use createdAt as proxy for popularity
+        isPopularSort = true;
+        orderBy = { createdAt: "desc" };
         break;
       case "recent":
         orderBy = { createdAt: "desc" };
@@ -265,6 +304,15 @@ export async function GET(req: Request) {
         _count: { participants: going + maybe, going, maybe },
       };
     });
+
+    if (isPopularSort) {
+      plansWithCounts.sort((a, b) => {
+        const aTotal = a._count.participants;
+        const bTotal = b._count.participants;
+        if (bTotal !== aTotal) return bTotal - aTotal;
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+    }
 
     logPerfEnd(perfLabel);
     return NextResponse.json({ plans: plansWithCounts });

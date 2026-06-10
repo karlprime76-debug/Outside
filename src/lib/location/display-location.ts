@@ -30,32 +30,22 @@ export function isCityCountryConsistent(
 /**
  * Formats the user's location for display with validation
  * Returns formatted location string or empty string if no city
+ *
+ * Uses only the activeCity data — never cross-references with user's
+ * separate country field (avoids mismatches from accents, spelling).
  */
 export function formatUserLocation(data: LocationData): string {
-  const { activeCity, userCountry, userCountryCode } = data;
+  const { activeCity } = data;
 
-  // If no active city, return empty
   if (!activeCity?.name) {
     return "";
   }
 
-  // Check consistency
-  const isConsistent = isCityCountryConsistent(activeCity.country, userCountry);
-
-  // If consistent, show city · country
-  if (isConsistent && userCountry) {
-    return `${activeCity.name} · ${userCountry}`;
+  // Show city only — never mix city.country with user.country (different data sources)
+  if (activeCity.country) {
+    return `${activeCity.name} · ${activeCity.country}`;
   }
 
-  // If not consistent or no userCountry but have countryCode, try to get country name
-  if (!isConsistent && userCountryCode) {
-    const countryName = getCountryName(userCountryCode);
-    if (countryName) {
-      return `${activeCity.name} · ${countryName}`;
-    }
-  }
-
-  // Fallback: just show city name
   return activeCity.name;
 }
 

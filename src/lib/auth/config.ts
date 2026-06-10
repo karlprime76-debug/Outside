@@ -49,6 +49,7 @@ export const authConfig: NextAuthConfig = {
             activeCity: user.activeCity?.name || null,
             homeCityId: user.homeCityId,
             activeCityId: user.activeCityId,
+            accountKind: user.accountKind,
           };
         } catch (error: unknown) {
           // Server/Prisma error → log securely and surface as AUTH_SERVER_ERROR
@@ -70,6 +71,7 @@ export const authConfig: NextAuthConfig = {
     jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
+        token.accountKind = user.accountKind;
         token.username = user.username;
         token.image = user.image;
         token.country = user.country;
@@ -106,6 +108,9 @@ export const authConfig: NextAuthConfig = {
       }
       if (token.role) {
         session.user.role = token.role as string;
+      }
+      if (token.accountKind) {
+        session.user.accountKind = token.accountKind as string;
       }
       if (token.username) {
         session.user.username = token.username as string;

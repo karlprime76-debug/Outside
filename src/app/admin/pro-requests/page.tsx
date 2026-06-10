@@ -21,6 +21,7 @@ interface ProRequest {
   id: string;
   businessName: string;
   businessType?: string;
+  requestedAccountKind?: string;
   category?: string;
   city?: string;
   country?: string;
@@ -37,6 +38,13 @@ interface ProRequest {
   createdAt: string;
   user: { id: string; name: string | null; email: string; image: string | null };
 }
+
+const ACCOUNT_KIND_LABELS: Record<string, string> = {
+  OFFICIAL_GUIDE: "Guide officiel",
+  OFFICIAL_CITY: "Ville officielle",
+  OFFICIAL_PARTNER: "Partenaire officiel",
+  VERIFIED_CREATOR: "Créateur vérifié",
+};
 
 const STATUS_LABELS: Record<ProStatus, string> = {
   PENDING: "En attente",
@@ -166,6 +174,11 @@ export default function AdminProRequestsPage() {
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_COLORS[req.status]}`}>
                       {STATUS_LABELS[req.status]}
                     </span>
+                    {req.requestedAccountKind && (
+                      <span className="rounded-full bg-outside-100 dark:bg-outside-900/30 px-2 py-0.5 text-[10px] font-bold text-outside-700 dark:text-outside-300">
+                        {ACCOUNT_KIND_LABELS[req.requestedAccountKind] || req.requestedAccountKind}
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-[var(--os-muted)]">
                     {req.businessType} {req.category ? `· ${req.category}` : ""} · {req.city}{req.country ? `, ${req.country}` : ""}

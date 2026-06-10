@@ -142,15 +142,15 @@ function RegisterForm() {
         <div className="hidden lg:flex lg:flex-1 flex-col justify-center px-16 xl:px-24 animate-auth-fade">
           <div className="max-w-lg space-y-8">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center animate-auth-soft">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-neon-orange via-accent-500 to-neon-pink shadow-glow flex items-center justify-center animate-auth-soft">
                 <span className="text-xl font-black text-white">O</span>
               </div>
               <span className="text-2xl font-black text-white tracking-tight">OUTSIDE</span>
             </div>
 
             <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-white/90 border border-white/10">
-                <Sparkles className="h-3.5 w-3.5 text-outside-400" />
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-white/90 border border-white/10">
+                <Sparkles className="h-3.5 w-3.5 text-neon-orange" />
                 Le monde est dehors.
               </div>
               <h1 className="text-5xl font-black text-white leading-tight drop-shadow-lg">
@@ -169,7 +169,7 @@ function RegisterForm() {
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 text-white/70">
                   <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
-                    <item.icon className="h-4 w-4 text-outside-400" />
+                    <item.icon className="h-4 w-4 text-neon-orange" />
                   </div>
                   <span className="text-sm font-medium">{item.text}</span>
                 </div>
@@ -183,7 +183,7 @@ function RegisterForm() {
           {/* Mobile marketing compact */}
           <div className="lg:hidden flex-1 flex flex-col justify-end px-6 pb-5 pt-20 animate-auth-fade">
             <div className="flex items-center gap-2 mb-3">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-neon-orange via-accent-500 to-neon-pink shadow-glow flex items-center justify-center">
                 <span className="text-sm font-black text-white">O</span>
               </div>
               <span className="text-lg font-black text-white">OUTSIDE</span>
@@ -209,7 +209,7 @@ function RegisterForm() {
               )}
 
               {referralCode && (
-                <div className="mb-4 rounded-xl border border-outside-400/30 bg-outside-500/10 px-4 py-3 text-center">
+                <div className="mb-4 rounded-xl border border-neon-orange/30 bg-neon-orange/10 px-4 py-3 text-center">
                   <p className="text-sm font-bold text-white">Tu as été invité sur OUTSIDE</p>
                   <p className="text-xs text-white/70 mt-1">Crée ton compte pour rejoindre ton cercle.</p>
                 </div>
@@ -305,26 +305,34 @@ function RegisterForm() {
                   />
                   <span>
                     J’ai lu et j’accepte les
-                    {' '}<Link href="/legal/terms" className="font-bold text-outside-300 hover:text-outside-200">Conditions d’utilisation</Link>
+                    {' '}<Link href="/legal/terms" className="font-bold text-neon-orange hover:text-accent-500">Conditions d’utilisation</Link>
                     {' '}et la{' '}
-                    <Link href="/legal/privacy" className="font-bold text-outside-300 hover:text-outside-200">Politique de confidentialité</Link>.
+                    <Link href="/legal/privacy" className="font-bold text-neon-orange hover:text-accent-500">Politique de confidentialité</Link>.
                   </span>
                 </label>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 py-3.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 pressable"
+                  className="w-full rounded-xl bg-gradient-to-r from-neon-orange via-accent-500 to-neon-pink py-3.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 pressable"
                 >
                   {loading ? "Création..." : "Créer mon compte"}
                 </button>
               </form>
 
-              <p className="text-center text-sm text-white/60 mt-6">
-                Déjà un compte ?{" "}
-                <Link href="/login" className="font-bold text-outside-400 hover:text-outside-300 transition-colors">
-                  Se connecter
-                </Link>
-              </p>
+              <div className="mt-6 space-y-3">
+                <p className="text-center text-sm text-white/60">
+                  Déjà un compte ?{" "}
+                  <Link href="/login" className="font-bold text-neon-orange hover:text-accent-500 transition-colors">
+                    Se connecter
+                  </Link>
+                </p>
+                <p className="text-center text-xs text-white/40">
+                  Tu es organisateur, guide, ville ou partenaire ?{" "}
+                  <Link href="/signup/pro" className="font-bold text-neon-orange hover:text-accent-500 transition-colors">
+                    Crée un compte pro
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
         </div>

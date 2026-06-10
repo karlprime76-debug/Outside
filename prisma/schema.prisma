@@ -1391,9 +1391,10 @@ model ProAccount {
   documentUrl String?
   category    String?
 
-  status         ProAccountStatus @default(PENDING)
-  verifiedAt     DateTime?
-  rejectedReason String?
+  status                ProAccountStatus @default(PENDING)
+  requestedAccountKind  AccountKind?
+  verifiedAt            DateTime?
+  rejectedReason        String?
 
   events ProEvent[]
 

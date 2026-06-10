@@ -68,10 +68,10 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-outside-50/50 to-[var(--os-bg)] py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-gradient-to-b from-neon-orange/5 to-[var(--os-bg)] py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
+          <div className="mx-auto mb-4 h-12 w-12 rounded-2xl bg-gradient-to-br from-neon-orange via-accent-500 to-neon-pink shadow-glow flex items-center justify-center">
             <span className="text-lg font-black text-white">O</span>
           </div>
           <h1 className="text-2xl font-bold text-[var(--os-fg)]">{t.auth.onboardingTitle}</h1>
@@ -150,7 +150,7 @@ export default function OnboardingPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 pressable"
+            className="w-full rounded-xl bg-gradient-to-r from-neon-orange via-accent-500 to-neon-pink py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 pressable"
           >
             {loading ? t.common.loading : t.auth.saveButton}
           </button>

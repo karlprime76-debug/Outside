@@ -53,6 +53,14 @@ export async function PATCH(req: Request) {
       },
     });
 
+    // When approved, update the user's accountKind to the requested kind
+    if (status === "APPROVED" && updated.requestedAccountKind) {
+      await db.user.update({
+        where: { id: updated.userId },
+        data: { accountKind: updated.requestedAccountKind },
+      });
+    }
+
     logError("[ADMIN_PRO]", `ProAccount ${id} updated to ${status} by ${session.user.email}`, {
       reason: rejectedReason || null,
     });

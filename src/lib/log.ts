@@ -11,7 +11,8 @@ export type LogTag =
   | "[PUSH_ERROR]"
   | "[ADMIN_PRO]"
   | "[ADMIN_PRO_ERROR]"
-  | "[RECURRING_ERROR]";
+  | "[RECURRING_ERROR]"
+  | "[REGISTER_PRO]";
 
 function safeSerialize(obj: unknown) {
   try {

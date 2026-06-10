@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getUserBlockedIds } from "@/lib/blocks";
 import { PlanVisibility } from "@prisma/client";
 
-export async function GET() {
+export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/plans/suggestions";
   logPerfStart(perfLabel);
 
@@ -14,6 +14,11 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
+
+    const { searchParams } = new URL(req.url);
+    const filterCityId = searchParams.get("cityId");
+    const filterPlanCategory = searchParams.get("planCategory");
+    const filterMood = searchParams.get("mood");
 
     const blockedIds = await getUserBlockedIds(user.id);
 
@@ -27,6 +32,7 @@ export async function GET() {
     }
 
     const { preferredMoods, preferredBudget, activeCityId } = userPrefs;
+    const effectiveCityId = filterCityId || activeCityId;
 
     const friendRows = await db.friendship.findMany({
       where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
@@ -90,9 +96,14 @@ export async function GET() {
       creatorId: { not: user.id, notIn: blockedIds },
       OR: visibilityOr,
     };
-    if (activeCityId) prefWhere.cityId = activeCityId;
-    if (preferredMoods.length > 0) prefWhere.mood = { in: preferredMoods };
-    if (preferredBudget) prefWhere.budgetLevel = preferredBudget;
+    if (effectiveCityId) prefWhere.cityId = effectiveCityId;
+    if (filterMood) {
+      prefWhere.mood = filterMood;
+    } else if (preferredMoods.length > 0) {
+      prefWhere.mood = { in: preferredMoods };
+    }
+    if (filterPlanCategory) prefWhere.planCategory = filterPlanCategory;
+    if (!filterPlanCategory && preferredBudget) prefWhere.budgetLevel = preferredBudget;
 
     const prefPlans = await db.plan.findMany({ where: prefWhere, select: { id: true }, take: 30 });
     prefPlans.forEach((p) => planScores.set(p.id, (planScores.get(p.id) || 0) + 3));

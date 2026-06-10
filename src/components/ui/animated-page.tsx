@@ -13,7 +13,7 @@ export function AnimatedPage({ children, className, delay = 0 }: AnimatedPagePro
   return (
     <div
       className={cn(
-        "animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards duration-500",
+        "animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
         className
       )}
       style={{ animationDelay: `${delay}ms` }}
