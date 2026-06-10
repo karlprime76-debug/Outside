@@ -179,8 +179,8 @@ function buildCards(data: TonightData): HubCard[] {
           cta: "Voir",
           accent: "border-orange-200 bg-orange-50/30 dark:border-orange-800",
           media: (
-            <div className="relative h-16 w-full overflow-hidden rounded-lg">
-              <Image src={moment.mediaUrl} alt="" fill className="object-cover" sizes="168px" />
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black/5">
+              <Image src={moment.mediaUrl} alt="" fill className="object-cover" sizes="260px" />
             </div>
           ),
         }
@@ -280,21 +280,23 @@ function HubCardTile({ card }: { card: HubCard }) {
   return (
     <Link
       href={card.href}
-      className={`group min-w-[168px] max-w-[168px] sm:min-w-[180px] sm:max-w-[180px] flex-shrink-0 rounded-2xl border-2 p-3.5 transition-all hover:border-outside-300 hover:shadow-sm pressable ${card.accent}`}
+      className={`group flex flex-col min-w-[220px] sm:min-w-[240px] md:min-w-[260px] flex-shrink-0 rounded-2xl border-2 p-5 transition-all hover:border-outside-300 hover:shadow-sm pressable ${card.accent}`}
     >
-      <div className="flex items-center gap-1.5 mb-2">
-        <Icon className="h-3.5 w-3.5 text-outside-500" />
-        <span className="text-[10px] font-bold uppercase tracking-wide text-outside-600">{card.label}</span>
+      <div className="flex items-center gap-1.5 mb-3">
+        <Icon className="h-4 w-4 text-outside-500 shrink-0" />
+        <span className="text-[11px] font-bold uppercase tracking-wide text-outside-600 truncate">{card.label}</span>
       </div>
-      {card.media}
-      <h4 className="text-sm font-bold text-[var(--os-fg)] line-clamp-2 mt-1">{card.title}</h4>
+      {card.media && <div className="relative mb-3">{card.media}</div>}
+      <h4 className="text-sm font-bold text-[var(--os-fg)] line-clamp-2 leading-snug">{card.title}</h4>
       {card.subtitle && (
-        <p className="text-[11px] text-[var(--os-muted)] mt-1 line-clamp-2">{card.subtitle}</p>
+        <p className="text-xs text-[var(--os-muted)] mt-1.5 line-clamp-2 leading-relaxed">{card.subtitle}</p>
       )}
-      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-outside-600 group-hover:translate-x-0.5 transition-transform">
-        {card.cta}
-        <ArrowRight className="h-3 w-3" />
-      </span>
+      <div className="mt-auto pt-3">
+        <span className="inline-flex items-center gap-1 text-xs font-bold text-outside-600 group-hover:translate-x-0.5 transition-transform">
+          {card.cta}
+          <ArrowRight className="h-3.5 w-3.5" />
+        </span>
+      </div>
     </Link>
   );
 }
@@ -325,7 +327,7 @@ export function TonightSection() {
         <div className="h-6 w-48 bg-[var(--os-muted)]/20 rounded mb-4" />
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="min-w-[168px] h-36 bg-[var(--os-muted)]/10 rounded-2xl" />
+            <div key={i} className="min-w-[220px] sm:min-w-[240px] h-36 bg-[var(--os-muted)]/10 rounded-2xl" />
           ))}
         </div>
       </div>
@@ -355,9 +357,9 @@ export function TonightSection() {
         </Link>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1 snap-x snap-mandatory">
+      <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2 snap-x snap-mandatory">
         {cards.map((card) => (
-          <div key={card.key} className="snap-start">
+          <div key={card.key} className="snap-start shrink-0">
             <HubCardTile card={card} />
           </div>
         ))}
@@ -368,7 +370,7 @@ export function TonightSection() {
           <p className="text-xs text-center text-[var(--os-muted)] mb-3">
             La communauté grandit — lance le mouvement ce soir
           </p>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {IDEA_ACTIONS.map((idea) => {
               const Icon = idea.icon;
               return (
