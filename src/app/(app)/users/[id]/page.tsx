@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import { Avatar } from "@/components/ui/avatar";
@@ -30,6 +29,7 @@ interface UserProfile {
 }
 
 export default function UserPage() {
+  const router = useRouter();
   const { id } = useParams() as { id: string };
   const { data: session } = useSession();
   const { addToast } = useToast();
@@ -104,13 +104,13 @@ export default function UserPage() {
 
   return (
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6">
-      <Link
-        href="/home"
+      <button
+        onClick={() => router.back()}
         className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour
-      </Link>
+      </button>
 
       {/* Profile header */}
       <div className="flex items-center gap-4">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
@@ -53,6 +54,7 @@ function formatRemaining(expiresAt: string): string {
 }
 
 export default function AvailablePage() {
+  const router = useRouter();
   const [items, setItems] = useState<AvailabilityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [myCity, setMyCity] = useState<string>("");
@@ -79,21 +81,22 @@ export default function AvailablePage() {
 
   return (
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-slide-up">
-      <Link
-        href="/home"
+      <button
+        onClick={() => router.back()}
         className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour
-      </Link>
+      </button>
 
-      <div className="flex items-center justify-between">
+      <div>
         <h1 className="text-2xl font-black text-[var(--os-fg)] flex items-center gap-3">
           <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
             <Zap className="h-5 w-5 text-white" />
           </div>
           Disponibles maintenant
         </h1>
+        <p className="mt-1 text-sm text-[var(--os-muted)]">Les personnes prêtes à sortir maintenant.</p>
       </div>
 
       {myCity && (

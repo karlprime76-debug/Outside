@@ -17,7 +17,7 @@ export interface OutsideThemeClasses {
   muted: string;
   /** Texte primary (orange) */
   primary: string;
-  /** Texte accent (rose) */
+  /** Texte accent (amber) */
   accent: string;
   /** Background header/glass */
   header: string;
@@ -51,7 +51,7 @@ const nightClasses: OutsideThemeClasses = {
   primary: "text-outside-400",
   accent: "text-accent-400",
   header: "bg-[#0a0a0f]/80 border-[#1e1e2d]/50",
-  glow: "shadow-glow-pink",
+  glow: "shadow-glow-accent",
 };
 
 export function useOutsideTheme() {

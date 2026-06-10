@@ -154,21 +154,22 @@ export default function NotificationsPage() {
 
   return (
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 animate-slide-up">
-      <Link
-        href="/home"
+      <button
+        onClick={() => router.back()}
         className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour
-      </Link>
+      </button>
 
-      <div className="flex items-center justify-between">
+      <div>
         <h1 className="text-2xl font-black text-[var(--os-fg)] flex items-center gap-3">
           <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
             <Bell className="h-5 w-5 text-white" />
           </div>
           Notifications
         </h1>
+        <p className="mt-1 text-sm text-[var(--os-muted)]">Les alertes et mises à jour importantes.</p>
         {notifications.length > 0 && (
           <button
             onClick={markAllRead}

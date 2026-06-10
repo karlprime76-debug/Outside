@@ -1,19 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { ArrowLeft, Briefcase, CheckCircle, Globe, CalendarDays, TrendingUp, Star, Building2 } from "lucide-react";
 
 export default function ProPage() {
+  const router = useRouter();
   return (
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-8 pb-24 md:pb-4 animate-slide-up">
-      <Link
-        href="/home"
+      <button
+        onClick={() => router.back()}
         className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour
-      </Link>
+      </button>
 
       {/* Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-8 text-white shadow-glow animate-fade-in">

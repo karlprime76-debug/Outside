@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Badge } from "@/components/ui/badge";
 import { useDictionary } from "@/hooks/use-dictionary";
@@ -95,6 +96,7 @@ const MOOD_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]> = {
 };
 
 export default function CityMapPage() {
+  const router = useRouter();
   const [data, setData] = useState<CityMapData | null>(null);
   const [loading, setLoading] = useState(true);
   const t = useDictionary();
@@ -113,13 +115,13 @@ export default function CityMapPage() {
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-8 pb-24 md:pb-4 animate-slide-up">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Link
-          href="/home"
+        <button
+          onClick={() => router.back()}
           className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Retour
-        </Link>
+        </button>
       </div>
 
       <div>

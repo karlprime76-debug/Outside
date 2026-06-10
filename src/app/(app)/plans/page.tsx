@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { PlanCard } from "@/components/plan-card";
@@ -11,14 +11,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useClickOutside } from "@/hooks/use-click-outside";
-import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, MapPin, Sparkles, List, Calendar, ChevronDown } from "lucide-react";
+import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, Sparkles, List, Calendar } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
 import { backgrounds } from "@/lib/backgrounds";
 import type { Plan } from "@/types/plan";
 
-const MOODS = ["CHILL", "FOOD", "SPORT", "PARTY", "MUSIC", "DATING", "FRIENDS", "STUDY", "BUSINESS", "CULTURE", "TRAVEL", "GAMING", "FITNESS"];
 const PLAN_CATEGORIES = [
   { value: "CHILL", label: "Chill" },
   { value: "FOOD", label: "Food" },
@@ -32,22 +30,9 @@ const PLAN_CATEGORIES = [
   { value: "AUTRE", label: "Autre" },
 ];
 
-const MOOD_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]> = {
-  CHILL: "blue", FOOD: "orange", SPORT: "green", PARTY: "purple",
-  MUSIC: "pink", DATING: "pink", FRIENDS: "blue", STUDY: "amber",
-  BUSINESS: "slate", CULTURE: "purple", TRAVEL: "green", GAMING: "orange", FITNESS: "green",
-};
-
 interface Invitation {
   id: string;
-  plan: {
-    id: string;
-    title: string;
-    mood: string;
-    startDate: string;
-    city: { name: string };
-    creator: { id: string; name: string | null; image: string | null };
-  };
+  plan: { id: string; title: string; mood: string; startDate: string; city: { name: string }; creator: { id: string; name: string | null; image: string | null } };
   sender: { id: string; name: string | null; image: string | null };
   createdAt: string;
 }
@@ -60,19 +45,11 @@ export default function PlansPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [mood, setMood] = useState("");
-  const [budget, setBudget] = useState("");
   const [planCategory, setPlanCategory] = useState("");
-  const [isFree, setIsFree] = useState("");
-  const [priceType, setPriceType] = useState("");
-  const [filterFreeToday, setFilterFreeToday] = useState(false);
-  const [priceOpen, setPriceOpen] = useState(false);
-  const priceRef = useRef<HTMLDivElement>(null);
-  useClickOutside(priceRef, () => setPriceOpen(false), priceOpen);
-  const [nearMe, setNearMe] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [freeOnly, setFreeOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("dateAsc");
+  const [recalcKey, setRecalcKey] = useState(0);
   const debouncedSearch = useDebounce(search, 300);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loadingInvitations, setLoadingInvitations] = useState(true);
@@ -84,14 +61,8 @@ export default function PlansPage() {
   useEffect(() => {
     const params = new URLSearchParams();
     if (mood) params.set("mood", mood);
-    if (budget) params.set("budgetLevel", budget);
     if (planCategory) params.set("planCategory", planCategory);
-    if (isFree) params.set("isFree", isFree);
-    if (priceType) params.set("priceType", priceType);
-    if (filterFreeToday) params.set("filter", "freeToday");
-    if (nearMe) params.set("nearMe", nearMe);
-    if (dateFrom) params.set("dateFrom", dateFrom);
-    if (dateTo) params.set("dateTo", dateTo);
+    if (freeOnly) params.set("isFree", "true");
     if (sortBy) params.set("sortBy", sortBy);
 
     setLoading(true);
@@ -102,7 +73,7 @@ export default function PlansPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [mood, budget, planCategory, isFree, priceType, filterFreeToday, nearMe, dateFrom, dateTo, sortBy]);
+  }, [mood, planCategory, freeOnly, sortBy, recalcKey]);
 
   useEffect(() => {
     fetch("/api/plans/invitations")
@@ -138,7 +109,7 @@ export default function PlansPage() {
       .catch(() => setLoadingMyPlans(false));
   }, [tab]);
 
-  const hasFilters = mood || budget || planCategory || isFree || priceType || filterFreeToday || nearMe || dateFrom || dateTo || search;
+  const hasFilters = mood || planCategory || freeOnly || search;
 
   const filteredPlans = debouncedSearch
     ? plans.filter((p) =>
@@ -151,7 +122,6 @@ export default function PlansPage() {
 
   return (
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6 animate-slide-up">
-      {/* Bandeau immersif */}
       <ImmersiveBackground
         daySrc={backgrounds.plans.day}
         nightSrc={backgrounds.plans.night}
@@ -199,25 +169,10 @@ export default function PlansPage() {
 
       {tab === "tous" && (
       <>
-      {/* Search */}
-      <SearchBar
-        placeholder="Rechercher un plan..."
-        value={search}
-        onChange={setSearch}
-        className="max-w-md"
-      />
+      <SearchBar placeholder="Rechercher un plan..." value={search} onChange={setSearch} className="max-w-md" />
 
-      {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <SlidersHorizontal className="h-4 w-4 text-[var(--os-muted)]" />
-        <select
-          value={mood}
-          onChange={(e) => setMood(e.target.value)}
-          className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
-        >
-          <option value="">{t.planFilters.mood}</option>
-          {MOODS.map((m) => <option key={m} value={m}>{m.charAt(0) + m.slice(1).toLowerCase()}</option>)}
-        </select>
         <select
           value={planCategory}
           onChange={(e) => setPlanCategory(e.target.value)}
@@ -226,63 +181,32 @@ export default function PlansPage() {
           <option value="">{t.planFilters.category}</option>
           {PLAN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
+        <select
+          value={mood}
+          onChange={(e) => setMood(e.target.value)}
+          className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
+        >
+          <option value="">{t.planFilters.mood}</option>
+          <option value="CHILL">Chill</option>
+          <option value="FOOD">Food</option>
+          <option value="SPORT">Sport</option>
+          <option value="MUSIC">Musique</option>
+          <option value="DATING">Dating</option>
+          <option value="PARTY">Sortir</option>
+          <option value="CULTURE">Culture</option>
+          <option value="BUSINESS">Business</option>
+          <option value="TRAVEL">Voyage</option>
+          <option value="STUDY">Études</option>
+        </select>
         <button
-          onClick={() => setFilterFreeToday((v) => !v)}
+          onClick={() => setFreeOnly((v) => !v)}
           className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
-            filterFreeToday
+            freeOnly
               ? "border-outside-500 bg-outside-50 text-outside-700"
               : "border-[var(--os-card-border)] bg-[var(--os-card)] text-[var(--os-fg)] hover:bg-[var(--os-card-border)]"
           }`}
         >
-          <Calendar className="h-3 w-3" />
-          {t.planFilters.freeToday}
-        </button>
-        <div ref={priceRef} className="relative">
-          <button
-            onClick={() => setPriceOpen((o) => !o)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors"
-          >
-            {priceType === "FREE" ? t.planFilters.free : priceType === "PAID" ? t.planFilters.paid : priceType === "FROM" ? "À partir de" : "Prix"}
-            <ChevronDown className={`h-3 w-3 transition-transform ${priceOpen ? "rotate-180" : ""}`} />
-          </button>
-          {priceOpen && (
-            <div className="absolute top-full left-0 mt-1 min-w-[150px] rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-1 shadow-xl z-40">
-              {[
-                { value: "", label: "Tous" },
-                { value: "FREE", label: t.planFilters.free },
-                { value: "PAID", label: t.planFilters.paid },
-                { value: "FROM", label: "À partir de" },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => { setPriceType(opt.value); setIsFree(opt.value ? (opt.value === "FREE" ? "true" : "false") : ""); setPriceOpen(false); }}
-                  className={`w-full text-left rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
-                    (priceType || (isFree === "true" && opt.value === "FREE") || (isFree === "false" && opt.value === "PAID")) === opt.value
-                      ? "bg-outside-50 text-outside-700"
-                      : "text-[var(--os-fg)] hover:bg-[var(--os-card-border)]"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <button
-          onClick={() => setNearMe(nearMe === "true" ? "" : "true")}
-          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold ${
-            nearMe === "true"
-              ? "border-outside-500 bg-outside-50 text-outside-700"
-              : "border-[var(--os-card-border)] bg-[var(--os-card)] text-[var(--os-muted)]"
-          } focus:outline-none focus:ring-2 focus:ring-outside-500 transition-colors relative`}
-        >
-          <MapPin className="h-3 w-3" />
-          {t.planFilters.nearMe}
-          {nearMe !== "true" && (
-            <span className="absolute -top-1.5 -right-1.5 text-[8px] font-bold bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 leading-none border border-white">
-              Bientôt
-            </span>
-          )}
+          Gratuit
         </button>
         <select
           value={sortBy}
@@ -290,28 +214,14 @@ export default function PlansPage() {
           className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
         >
           <option value="dateAsc">{t.planFilters.soon}</option>
-          <option value="priceAsc">Moins cher</option>
-          <option value="priceDesc">Plus cher</option>
           <option value="popular">{t.planFilters.popular}</option>
           <option value="recent">{t.planFilters.recent}</option>
+          <option value="priceAsc">Moins cher</option>
+          <option value="priceDesc">Plus cher</option>
         </select>
-        <input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          placeholder="Du"
-          className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
-        />
-        <input
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          placeholder="Au"
-          className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
-        />
         {hasFilters && (
           <button
-            onClick={() => { setMood(""); setBudget(""); setPlanCategory(""); setIsFree(""); setPriceType(""); setFilterFreeToday(false); setNearMe(""); setDateFrom(""); setDateTo(""); setSearch(""); setSortBy("dateAsc"); }}
+            onClick={() => { setMood(""); setPlanCategory(""); setFreeOnly(false); setSearch(""); setSortBy("dateAsc"); setRecalcKey((k) => k + 1); }}
             className="inline-flex items-center gap-1 text-xs font-bold text-[var(--os-muted)] hover:text-red-500 transition-colors"
           >
             <X className="h-3 w-3" />
@@ -320,31 +230,16 @@ export default function PlansPage() {
         )}
       </div>
 
-      {/* Active filters display */}
       {hasFilters && (
         <div className="flex flex-wrap gap-2">
-          {mood && (
-            <Badge variant={MOOD_VARIANTS[mood] || "default"}>
-              {mood}
-            </Badge>
-          )}
           {planCategory && (
             <Badge variant="slate">{PLAN_CATEGORIES.find(c => c.value === planCategory)?.label || planCategory}</Badge>
           )}
-          {priceType === "FREE" && <Badge variant="slate">{t.planFilters.free}</Badge>}
-          {priceType === "PAID" && <Badge variant="slate">{t.planFilters.paid}</Badge>}
-          {priceType === "FROM" && <Badge variant="slate">À partir de</Badge>}
-          {filterFreeToday && <Badge variant="green">{t.planFilters.freeToday}</Badge>}
-          {nearMe === "true" && (
-            <Badge variant="slate">{t.planFilters.nearMe}</Badge>
-          )}
-          {(dateFrom || dateTo) && (
-            <Badge variant="slate">{dateFrom || "..."} → {dateTo || "..."}</Badge>
-          )}
+          {mood && <Badge variant="slate">{mood}</Badge>}
+          {freeOnly && <Badge variant="green">Gratuit</Badge>}
         </div>
       )}
 
-      {/* Invitations */}
       {!loadingInvitations && invitations.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-3">
@@ -356,49 +251,30 @@ export default function PlansPage() {
               <div key={inv.id} className="os-card p-4 flex items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-[var(--os-fg)] truncate">{inv.plan.title}</p>
-                  <p className="text-xs text-[var(--os-muted)]">
-                    Par {inv.sender.name || "Anonyme"} · {inv.plan.city.name}
-                  </p>
+                  <p className="text-xs text-[var(--os-muted)]">Par {inv.sender.name || "Anonyme"} · {inv.plan.city.name}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <button
                     onClick={async () => {
                       const res = await fetch(`/api/plans/invitations/${inv.id}/accept`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ attendance: "GOING" }) });
-                      if (res.ok) {
-                        setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
-                        window.location.reload();
-                      }
+                      if (res.ok) { setInvitations((prev) => prev.filter((i) => i.id !== inv.id)); window.location.reload(); }
                     }}
-                    className="rounded-lg bg-emerald-100 p-2 text-emerald-700 hover:bg-emerald-200 transition-colors"
-                    title="Accepter"
-                  >
-                    <Check className="h-4 w-4" />
-                  </button>
+                    className="rounded-lg bg-emerald-100 p-2 text-emerald-700 hover:bg-emerald-200 transition-colors" title="Accepter"
+                  ><Check className="h-4 w-4" /></button>
                   <button
                     onClick={async () => {
                       const res = await fetch(`/api/plans/invitations/${inv.id}/accept`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ attendance: "MAYBE" }) });
-                      if (res.ok) {
-                        setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
-                        window.location.reload();
-                      }
+                      if (res.ok) { setInvitations((prev) => prev.filter((i) => i.id !== inv.id)); window.location.reload(); }
                     }}
-                    className="rounded-lg bg-amber-100 p-2 text-amber-700 hover:bg-amber-200 transition-colors"
-                    title="Peut-être"
-                  >
-                    <Bookmark className="h-4 w-4" />
-                  </button>
+                    className="rounded-lg bg-amber-100 p-2 text-amber-700 hover:bg-amber-200 transition-colors" title="Peut-être"
+                  ><Bookmark className="h-4 w-4" /></button>
                   <button
                     onClick={async () => {
                       const res = await fetch(`/api/plans/invitations/${inv.id}/decline`, { method: "POST" });
-                      if (res.ok) {
-                        setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
-                      }
+                      if (res.ok) setInvitations((prev) => prev.filter((i) => i.id !== inv.id));
                     }}
-                    className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 transition-colors"
-                    title="Refuser"
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </button>
+                    className="rounded-lg bg-red-100 p-2 text-red-700 hover:bg-red-200 transition-colors" title="Refuser"
+                  ><XCircle className="h-4 w-4" /></button>
                 </div>
               </div>
             ))}
@@ -406,12 +282,9 @@ export default function PlansPage() {
         </section>
       )}
 
-      {/* Plans organized by city and category */}
       {loading ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <SkeletonCard key={i} />
-          ))}
+          {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
         </div>
       ) : filteredPlans.length === 0 ? (
         <div className="os-card p-8 text-center">
@@ -423,32 +296,10 @@ export default function PlansPage() {
             {search ? "Essaye un autre mot-clé ou filtre." : "Lance le premier plan pour remplir ton OUTSIDE."}
           </p>
           {!search && (
-            <div className="flex flex-col gap-3 justify-center">
-              <Link
-                href="/plans/new"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-              >
-                <Plus className="h-4 w-4" />
-                Créer un plan express
+            <div className="flex flex-col gap-3 items-center">
+              <Link href="/plans/new" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all">
+                <Plus className="h-4 w-4" /> Créer un plan
               </Link>
-              <Link
-                href="/plans?isFree=true"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all"
-              >
-                <Bookmark className="h-4 w-4" />
-                Voir les plans gratuits
-              </Link>
-              <Link
-                href="/tonight-assistant"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all"
-              >
-                <Sparkles className="h-4 w-4" />
-                Plan mystère
-              </Link>
-            </div>
-          )}
-          {!search && (
-            <div className="mt-4">
               <InviteCircle compact />
             </div>
           )}
@@ -476,44 +327,7 @@ export default function PlansPage() {
             const sections: JSX.Element[] = [];
             const usedIds = new Set<string>();
 
-            // Special sections: Free, From, Tonight, Weekend
-            const freePlans = filteredPlans.filter((p) =>
-              (p.priceType === "FREE" || p.budgetAmount === null || p.budgetAmount === 0) && !usedIds.has(p.id)
-            );
-            if (freePlans.length > 0) {
-              sections.push(
-                <section key="free">
-                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Gratuits</h2>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {freePlans.map((plan) => (
-                      <PlanCard key={plan.id} plan={plan} showJoin />
-                    ))}
-                  </div>
-                </section>
-              );
-              freePlans.forEach((p) => usedIds.add(p.id));
-            }
-
-            const fromPlans = filteredPlans.filter((p) =>
-              (p.priceType === "FROM" || p.budgetIsFrom) && !usedIds.has(p.id)
-            );
-            if (fromPlans.length > 0) {
-              sections.push(
-                <section key="from">
-                  <div className="flex items-center gap-2 mb-3">
-                    <h2 className="text-lg font-black text-[var(--os-fg)]">À partir de</h2>
-                    <Badge variant="slate" className="text-[10px]">Pro</Badge>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {fromPlans.map((plan) => (
-                      <PlanCard key={plan.id} plan={plan} showJoin />
-                    ))}
-                  </div>
-                </section>
-              );
-              fromPlans.forEach((p) => usedIds.add(p.id));
-            }
-
+            // 1. Ce soir
             const tonightPlans = filteredPlans.filter((p) => {
               const d = new Date(p.startDate);
               return d >= now && d <= tonight && !usedIds.has(p.id);
@@ -521,17 +335,14 @@ export default function PlansPage() {
             if (tonightPlans.length > 0) {
               sections.push(
                 <section key="tonight">
-                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">{t.planFilters.tonight}</h2>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {tonightPlans.map((plan) => (
-                      <PlanCard key={plan.id} plan={plan} showJoin />
-                    ))}
-                  </div>
+                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Ce soir</h2>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{tonightPlans.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
                 </section>
               );
               tonightPlans.forEach((p) => usedIds.add(p.id));
             }
 
+            // 2. Ce weekend
             const weekendPlans = filteredPlans.filter((p) => {
               const d = new Date(p.startDate);
               return d >= weekendStart && d <= weekendEnd && !usedIds.has(p.id);
@@ -539,50 +350,76 @@ export default function PlansPage() {
             if (weekendPlans.length > 0) {
               sections.push(
                 <section key="weekend">
-                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">{t.planFilters.thisWeekend}</h2>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {weekendPlans.map((plan) => (
-                      <PlanCard key={plan.id} plan={plan} showJoin />
-                    ))}
-                  </div>
+                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Ce weekend</h2>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{weekendPlans.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
                 </section>
               );
               weekendPlans.forEach((p) => usedIds.add(p.id));
             }
 
-            // City sections with categories
-            Object.entries(byCity).forEach(([cityName, cityPlans]) => {
-              const remaining = cityPlans.filter((p) => !usedIds.has(p.id));
-              if (remaining.length === 0) return;
+            // 3. Cette semaine
+            const thisWeekStart = new Date();
+            thisWeekStart.setHours(0, 0, 0, 0);
+            thisWeekStart.setDate(thisWeekStart.getDate() + (1 - thisWeekStart.getDay() + 7) % 7);
+            const thisWeekEnd = new Date(thisWeekStart);
+            thisWeekEnd.setDate(thisWeekStart.getDate() + 7);
+            thisWeekEnd.setHours(23, 59, 59, 999);
 
-              const byCategory: Record<string, Plan[]> = {};
-              remaining.forEach((p) => {
-                const cat = p.planCategory || "AUTRE";
-                if (!byCategory[cat]) byCategory[cat] = [];
-                byCategory[cat].push(p);
-              });
-
+            const thisWeekPlans = filteredPlans.filter((p) => {
+              const d = new Date(p.startDate);
+              return d >= thisWeekStart && d <= thisWeekEnd && !usedIds.has(p.id);
+            });
+            if (thisWeekPlans.length > 0) {
               sections.push(
-                <section key={cityName}>
-                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-1">Plans à {cityName}</h2>
-                  <div className="space-y-4">
-                    {Object.entries(byCategory).map(([cat, catPlans]) => {
-                      const catLabel = PLAN_CATEGORIES.find((c) => c.value === cat)?.label || cat;
-                      return (
-                        <div key={cat}>
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)] mb-2">{catLabel}</h3>
-                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {catPlans.map((plan) => (
-                              <PlanCard key={plan.id} plan={plan} showJoin />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                <section key="this-week">
+                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Cette semaine</h2>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{thisWeekPlans.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
                 </section>
               );
-            });
+              thisWeekPlans.forEach((p) => usedIds.add(p.id));
+            }
+
+            // 4. Par catégorie (plans restants)
+            const remaining = filteredPlans.filter((p) => !usedIds.has(p.id));
+            if (remaining.length > 0) {
+              const grouped: Record<string, Plan[]> = {};
+              remaining.forEach((p) => {
+                const cat = p.planCategory || "AUTRE";
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(p);
+              });
+
+              const categoryOrder = ["CHILL", "FOOD", "SPORT", "MUSIC", "SORTIE", "CULTURE", "BUSINESS", "VOYAGE", "ETUDES", "AUTRE"];
+              categoryOrder.forEach((cat) => {
+                if (!grouped[cat]) return;
+                const label = PLAN_CATEGORIES.find((c) => c.value === cat)?.label || cat;
+                sections.push(
+                  <section key={cat}>
+                    <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">{label}</h2>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{grouped[cat].map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
+                  </section>
+                );
+                grouped[cat].forEach((p) => usedIds.add(p.id));
+              });
+            }
+
+            // 5. Par ville (plans véritablement restants)
+            const leftOvers = filteredPlans.filter((p) => !usedIds.has(p.id));
+            if (leftOvers.length > 0) {
+              const cityGroups: Record<string, Plan[]> = {};
+              leftOvers.forEach((p) => {
+                if (!cityGroups[p.city.name]) cityGroups[p.city.name] = [];
+                cityGroups[p.city.name].push(p);
+              });
+              Object.entries(cityGroups).forEach(([cityName, cityPlans]) => {
+                sections.push(
+                  <section key={cityName}>
+                    <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Plans à {cityName}</h2>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{cityPlans.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
+                  </section>
+                );
+              });
+            }
 
             return sections;
           })()}
@@ -594,22 +431,11 @@ export default function PlansPage() {
       {tab === "suggestions" && (
         <>
         {loadingSuggestions ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
-          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{[1, 2, 3].map((i) => <SkeletonCard key={i} />)}</div>
         ) : suggestions.length === 0 ? (
-          <EmptyState
-            icon={Sparkles}
-            title={t.planFilters.noSuggestions}
-            description="Personnalise tes préférences pour recevoir des suggestions personnalisées."
-            cta={{ label: "Modifier mes préférences", href: "/settings" }}
-          />
+          <EmptyState icon={Sparkles} title={t.planFilters.noSuggestions} description="Personnalise tes préférences pour recevoir des suggestions personnalisées." cta={{ label: "Modifier mes préférences", href: "/settings" }} />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {suggestions.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} showJoin />
-            ))}
-          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{suggestions.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
         )}
         </>
       )}
@@ -617,22 +443,11 @@ export default function PlansPage() {
       {tab === "mes-plans" && (
         <>
         {loadingMyPlans ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
-          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{[1, 2, 3].map((i) => <SkeletonCard key={i} />)}</div>
         ) : myPlansData.length === 0 ? (
-          <EmptyState
-            icon={CalendarDays}
-            title={t.planFilters.noPlansCreated}
-            description="Tu n'as pas encore créé de plan."
-            cta={{ label: "Créer un plan", href: "/plans/new" }}
-          />
+          <EmptyState icon={CalendarDays} title={t.planFilters.noPlansCreated} description="Tu n'as pas encore créé de plan." cta={{ label: "Créer un plan", href: "/plans/new" }} />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {myPlansData.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} showJoin />
-            ))}
-          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{myPlansData.map((plan) => <PlanCard key={plan.id} plan={plan} showJoin />)}</div>
         )}
         </>
       )}
