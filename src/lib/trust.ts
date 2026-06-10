@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "@/lib/db";
 
 export type TrustBadge = "new" | "active" | "reliable" | "very_reliable";
@@ -29,7 +30,7 @@ export function getTrustBadge(score: number, isVerified?: boolean): { badge: Tru
   return { badge: "new", label: "Nouveau" };
 }
 
-export async function getTrustSignals(userId: string): Promise<TrustSignals> {
+export const getTrustSignals = cache(async (userId: string): Promise<TrustSignals> => {
   const user = await db.user.findUnique({
     where: { id: userId },
     select: {
@@ -41,10 +42,6 @@ export async function getTrustSignals(userId: string): Promise<TrustSignals> {
   });
 
   const plansCreated = await db.plan.count({ where: { creatorId: userId } });
-
-  const plansJoined = await db.planParticipant.count({
-    where: { userId, status: "CONFIRMED" },
-  });
 
   const plansConfirmed = await db.planParticipant.count({
     where: { userId, status: "CONFIRMED" },
@@ -66,12 +63,12 @@ export async function getTrustSignals(userId: string): Promise<TrustSignals> {
     phoneVerified: !!user?.phoneVerified,
     accountAgeDays,
     plansCreated,
-    plansJoined,
+    plansJoined: plansConfirmed,
     plansConfirmed,
     positiveReviews,
     reportsCount,
   };
-}
+});
 
 export async function calculateTrustScore(userId: string): Promise<number> {
   const user = await db.user.findUnique({
@@ -130,7 +127,7 @@ export async function canReviewUser(
   return { ok: true };
 }
 
-export async function getTrustData(userId: string): Promise<TrustData> {
+export const getTrustData = cache(async (userId: string): Promise<TrustData> => {
   const user = await db.user.findUnique({
     where: { id: userId },
     select: { trustScore: true, isVerified: true },
@@ -147,4 +144,4 @@ export async function getTrustData(userId: string): Promise<TrustData> {
     badgeLabel: label,
     signals,
   };
-}
+});

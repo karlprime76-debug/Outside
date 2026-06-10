@@ -71,6 +71,11 @@ async function main() {
         activeCityId: city.id,
         homeCityId: city.id,
         image: `https://i.pravatar.cc/300?img=${rand(1,70)}`,
+        coverImage: Math.random() < 0.4 ? `https://picsum.photos/seed/cover_${i}/1200/400` : null,
+        socialLinks: Math.random() < 0.3 ? JSON.stringify([
+          { platform: "instagram", url: `https://instagram.com/${username}`, label: null },
+          ...(Math.random() < 0.5 ? [{ platform: "twitter", url: `https://twitter.com/${username}`, label: null }] : []),
+        ]) : null,
         bio: pick([
           "Toujours partant pour sortir.",
           "Food, musique et nouvelles rencontres.",

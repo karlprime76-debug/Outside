@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "@/lib/db";
 import { MAX_FRIENDS } from "./constants";
 
@@ -17,14 +18,14 @@ export function normalizeFriendshipPair(userId1: string, userId2: string) {
   return { userAId: userId2, userBId: userId1 };
 }
 
-export async function getFriendCount(userId: string): Promise<number> {
+export const getFriendCount = cache(async (userId: string): Promise<number> => {
   const count = await db.friendship.count({
     where: {
       OR: [{ initiatorId: userId }, { receiverId: userId }],
     },
   });
   return count;
-}
+});
 
 export async function areFriends(userId1: string, userId2: string): Promise<boolean> {
   const count = await db.friendship.count({

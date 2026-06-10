@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     typedRoutes: false,
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
+  logging: {
+    fetches: { fullUrl: process.env.NODE_ENV === "development" },
   },
   async headers() {
     return [

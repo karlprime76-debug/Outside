@@ -7,6 +7,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
 import { Users, Pencil, Shield } from "lucide-react";
+import { getDictionary, type Locale } from "@/lib/i18n";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { TrustBadge } from "@/components/trust/trust-badge";
 import { TrustSignals } from "@/components/trust/trust-signals";
@@ -17,6 +18,8 @@ import { ProfileSocialLinks } from "@/components/profile/profile-social-links";
 import { PublicProfileMoments, type PublicMomentItem } from "@/components/profile/public-profile-moments";
 import { PublicProfilePlans } from "@/components/profile/public-profile-plans";
 import { PublicProfileTabs } from "@/components/profile/public-profile-tabs";
+import { ProfilePhotos } from "@/components/profile/profile-photos";
+import { ProfileActivity, type ActivityItem } from "@/components/profile/profile-activity";
 import { getTrustData } from "@/lib/trust";
 import { getFriendCount } from "@/lib/social/friendship";
 import type { TrustData } from "@/lib/trust";
@@ -44,6 +47,8 @@ export default async function ProfilePage() {
 
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  let t = getDictionary("fr");
 
   let user: {
     id: string; name: string | null; username: string | null; email: string;
@@ -84,17 +89,17 @@ export default async function ProfilePage() {
         },
       });
     }
-  } catch (error) {
-    console.error("[PROFILE_ERROR] Failed to fetch user:", error);
+  } catch {
+    console.error("[PROFILE_ERROR] Failed to fetch user:");
     if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
     return (
       <AnimatedPage className="p-6 max-w-2xl mx-auto">
         <div className="os-card p-8 text-center">
-          <p className="text-lg font-black text-[var(--os-fg)] mb-2">Impossible de charger ton profil pour le moment.</p>
-          <p className="text-sm text-[var(--os-muted)]">Un problème est survenu. Réessaie ou reviens plus tard.</p>
+          <p className="text-lg font-black text-[var(--os-fg)] mb-2">{t.profile.loadError}</p>
+          <p className="text-sm text-[var(--os-muted)]">{t.profile.loadErrorDesc}</p>
           <div className="mt-4 flex items-center justify-center gap-2">
-            <Link href="/profile" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--os-card)] px-4 py-2 text-sm font-bold text-[var(--os-fg)] border border-[var(--os-card-border)] hover:bg-[var(--os-card-border)] transition-colors">Réessayer</Link>
-            <Link href="/login" className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all">Se reconnecter</Link>
+            <Link href="/profile" className="inline-flex items-center gap-1.5 rounded-full bg-[var(--os-card)] px-4 py-2 text-sm font-bold text-[var(--os-fg)] border border-[var(--os-card-border)] hover:bg-[var(--os-card-border)] transition-colors">{t.profile.retry}</Link>
+            <Link href="/login" className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all">{t.profile.reconnect}</Link>
           </div>
         </div>
       </AnimatedPage>
@@ -102,6 +107,8 @@ export default async function ProfilePage() {
   }
 
   if (!user) redirect("/login");
+
+  t = getDictionary(user.language as Locale);
 
   let friends: { id: string; name: string | null; username: string | null; image: string | null }[] = [];
   let trust = defaultTrust;
@@ -111,6 +118,8 @@ export default async function ProfilePage() {
   let plansCount = 0;
   let recentMoments: PublicMomentItem[] = [];
   let recentPlans: unknown[] = [];
+  let recentPhotos: { id: string; mediaUrl: string; caption: string | null; createdAt: string; _count: { likes: number; comments: number } }[] = [];
+  let activityItems: ActivityItem[] = [];
 
   const [friendsRes, trustRes, friendCountRes, followersCountRes, momentsCountRes, plansCountRes] = await Promise.allSettled([
     db.friendship.findMany({
@@ -169,44 +178,96 @@ export default async function ProfilePage() {
     });
   } catch { recentPlans = []; }
 
+  try {
+    const photos = await db.moment.findMany({
+      where: { authorId: user.id, type: "PHOTO", visibility: "PUBLIC", OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      include: { _count: { select: { likes: true, comments: true } } },
+    });
+    recentPhotos = photos.map((p) => ({
+      id: p.id, mediaUrl: p.mediaUrl, caption: p.caption,
+      createdAt: p.createdAt.toISOString(),
+      _count: { likes: p._count.likes, comments: p._count.comments },
+    }));
+  } catch { recentPhotos = []; }
+
+  try {
+    const rawActivity: { id: string; type: ActivityItem["type"]; label: string; timestamp: Date; image?: string }[] = [];
+    const aMoments = recentMoments.slice(0, 5).map((m) => ({
+      id: `m_${m.id}`, type: "moment" as const, label: t.profile.publishedMoment,
+      timestamp: new Date(m.createdAt), image: m.mediaUrl,
+    }));
+    rawActivity.push(...aMoments);
+    const aPlans = (recentPlans as Array<Record<string, unknown>>).slice(0, 5).map((p) => ({
+      id: `pc_${p.id as string}`, type: "plan_created" as const, label: t.profile.createdPlan,
+      timestamp: new Date((p as { createdAt: string }).createdAt || Date.now()),
+    }));
+    rawActivity.push(...aPlans);
+    const aFriendships = await db.friendship.findMany({
+      where: { initiatorId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      include: { receiver: { select: { name: true, image: true } } },
+    });
+    rawActivity.push(...aFriendships.map((f) => ({
+      id: `f_${f.id}`, type: "friend" as const, label: `${t.profile.addedFriend} : ${f.receiver.name || ""}`,
+      timestamp: f.createdAt, image: f.receiver.image || undefined,
+    })));
+    const aParticipants = await db.planParticipant.findMany({
+      where: { userId: user.id, plan: { creatorId: { not: user.id } } },
+      orderBy: { joinedAt: "desc" },
+      take: 5,
+      include: { plan: { select: { title: true } } },
+    });
+    rawActivity.push(...aParticipants.map((p) => ({
+      id: `pj_${p.id}`, type: "plan_joined" as const, label: `${t.profile.joinedPlan} : ${p.plan?.title || ""}`,
+      timestamp: p.joinedAt,
+    })));
+    rawActivity.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    activityItems = rawActivity.slice(0, 20).map((a) => ({
+      id: a.id, type: a.type, label: a.label,
+      timestamp: a.timestamp.toISOString(), image: a.image,
+    }));
+  } catch { activityItems = []; }
+
   if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
 
   const aboutTab = (
     <div className="space-y-4">
       <div className="os-card p-5">
-        <h3 className="text-sm font-bold text-[var(--os-fg)] mb-3">Signaux de confiance</h3>
+        <h3 className="text-sm font-bold text-[var(--os-fg)] mb-3">{t.profile.trustSignals}</h3>
         <TrustSignals signals={trust.signals} compact />
       </div>
       <UserBadges userId={user.id} />
       <div className="os-card p-6 space-y-4">
-        <h2 className="text-lg font-bold text-[var(--os-fg)]">À propos</h2>
-        <div className="text-sm text-[var(--os-fg)] leading-relaxed whitespace-pre-wrap">{user.bio || "Aucune bio pour le moment."}</div>
+        <h2 className="text-lg font-bold text-[var(--os-fg)]">{t.profile.aboutSection}</h2>
+        <div className="text-sm text-[var(--os-fg)] leading-relaxed whitespace-pre-wrap">{user.bio || t.profile.noBio}</div>
         {user.socialLinks && <ProfileSocialLinks socialLinks={user.socialLinks} />}
         <div className="text-xs text-[var(--os-muted)] space-y-1">
-          {user.neighborhood && <p>Quartier: {user.neighborhood}</p>}
-          {user.country && <p>Pays: {user.country}</p>}
-          <p>Langue: {user.language === "fr" ? "Français" : "English"}</p>
-          {user.preferredBudget && <p>Budget: {user.preferredBudget}</p>}
-          <p>Inscrit(e) depuis {user.createdAt?.toLocaleDateString?.("fr-FR") || ""}</p>
+          {user.neighborhood && <p>{t.profile.neighborhood}: {user.neighborhood}</p>}
+          {user.country && <p>{t.profile.country}: {user.country}</p>}
+          {user.preferredBudget && <p>{t.profile.budget}: {user.preferredBudget}</p>}
+          <p>{t.profile.memberSince} {user.createdAt?.toLocaleDateString?.("fr-FR") || ""}</p>
         </div>
         <Link
           href="/settings/verification"
           className="inline-flex items-center gap-2 rounded-lg bg-outside-50 px-3 py-2 text-xs font-bold text-outside-700 hover:bg-outside-100 transition-colors"
         >
           <Shield className="h-3.5 w-3.5" />
-          {user.isVerified ? "Identité vérifiée" : "Vérifier mon identité"}
+          {user.isVerified ? t.profile.identityVerified : t.profile.verifyIdentity}
         </Link>
       </div>
       <div className="os-card p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-outside-500" />
-            <h2 className="text-lg font-bold text-[var(--os-fg)]">Amis ({friendCount})</h2>
+            <h2 className="text-lg font-bold text-[var(--os-fg)]">{t.profile.friends} ({friendCount})</h2>
           </div>
-          <Link href="/friends" className="text-xs font-bold text-outside-600 hover:text-outside-700 transition-colors">Voir tout</Link>
+          <Link href="/friends" className="text-xs font-bold text-outside-600 hover:text-outside-700 transition-colors">{t.profile.seeAll}</Link>
         </div>
         {friends.length === 0 ? (
-          <OutsideEmptyState icon={Users} title="Aucun ami pour l&rsquo;instant" description="Explore les plans pour rencontrer des personnes réelles." />
+          <OutsideEmptyState icon={Users} title={t.profile.noFriends} description={t.profile.noFriendsDesc} />
         ) : (
           <div className="flex flex-wrap gap-3">
             {friends.map((friend) => (
@@ -214,7 +275,7 @@ export default async function ProfilePage() {
                 className="flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-2 hover:border-outside-300 transition-colors"
               >
                 <img src={friend.image || "/default-avatar.png"} alt="" className="h-7 w-7 rounded-full object-cover" />
-                <span className="text-sm font-semibold text-[var(--os-fg)]">{friend.name || "Anonyme"}</span>
+                <span className="text-sm font-semibold text-[var(--os-fg)]">{friend.name || t.plans.anonymous}</span>
               </Link>
             ))}
           </div>
@@ -233,6 +294,7 @@ export default async function ProfilePage() {
       <ProfileStats momentsCount={momentsCount} friendsCount={friendCount} followersCount={followersCount} plansCount={plansCount} />
       <PublicProfileTabs
         moments={<PublicProfileMoments initial={recentMoments} mode="grid" />}
+        photos={<ProfilePhotos initial={recentPhotos} noPhotos={t.profile.noPhotos} noPhotosDesc={t.profile.noPhotosDesc} />}
         plans={<PublicProfilePlans initial={(recentPlans as Array<Record<string, unknown>>).map((p) => ({
           id: p.id as string, title: p.title as string, mood: p.mood as string,
           planCategory: p.planCategory as string, budgetLevel: p.budgetLevel as string,
@@ -244,14 +306,20 @@ export default async function ProfilePage() {
           creatorUsername: user.username || null, creatorId: user.id,
           _count: { participants: (p._count as { participants: number })?.participants || 0 },
         }))} />}
+        activity={<ProfileActivity initial={activityItems} noActivity={t.profile.noActivity} noActivityDesc={t.profile.noActivityDesc} justNow={t.profile.justNow} minutes={t.profile.minutes} hours={t.profile.hours} days={t.profile.days} />}
         about={aboutTab}
+        momentsLabel={t.profile.moments}
+        photosLabel={t.profile.photos}
+        plansLabel={t.profile.plans}
+        activityLabel={t.profile.activity}
+        aboutLabel={t.profile.about}
       />
       <div className="flex flex-col gap-3">
         <Link href="/profile/edit"
           className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
         >
           <Pencil className="h-4 w-4" />
-          Modifier mon profil
+          {t.profile.editProfile}
         </Link>
         <LogoutButton />
       </div>
