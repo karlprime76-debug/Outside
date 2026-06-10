@@ -22,6 +22,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { OfficialBadge } from "@/components/ui/official-badge";
 import type { TonightData } from "@/types/tonight";
 import type { Plan } from "@/types/plan";
+import type { Dictionary } from "@/lib/i18n/types";
 
 const EMPTY_PAYLOAD: TonightData = {
   city: null,
@@ -52,7 +53,7 @@ function planTime(plan: Plan) {
   return new Date(plan.startDate).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function buildCards(data: TonightData, t): HubCard[] {
+function buildCards(data: TonightData, t: Dictionary): HubCard[] {
   const cards: HubCard[] = [];
 
   const plan = data.recommendedPlans[0];
