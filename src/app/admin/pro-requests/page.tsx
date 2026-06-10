@@ -44,6 +44,7 @@ const ACCOUNT_KIND_LABELS: Record<string, string> = {
   OFFICIAL_CITY: "Ville officielle",
   OFFICIAL_PARTNER: "Partenaire officiel",
   VERIFIED_CREATOR: "Créateur vérifié",
+  PARTNER_VENUE: "Établissement partenaire",
 };
 
 const STATUS_LABELS: Record<ProStatus, string> = {
