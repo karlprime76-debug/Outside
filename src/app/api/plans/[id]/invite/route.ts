@@ -19,7 +19,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
-    const limit = rateLimit(`invite:${user.id}:${id}`, 5, 60000);
+    const limit = await rateLimit(`invite:${user.id}:${id}`, 5, 60000);
     if (!limit.success) {
       return NextResponse.json(
         { error: "Too many invitations. Please slow down." },

@@ -69,7 +69,7 @@ export function ReportSheet({ isOpen, onClose, targetType, targetId, targetName 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div className="w-full max-w-lg bg-[var(--os-card)] rounded-t-3xl p-6 animate-slide-up">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

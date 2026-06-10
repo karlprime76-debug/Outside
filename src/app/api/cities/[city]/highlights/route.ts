@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET(
   req: Request,
@@ -13,12 +14,16 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const blockedIds = await getUserBlockedIds(user.id);
+
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
     // Get active creators (users who posted moments this week)
     const activeCreators = await db.user.findMany({
       where: {
+        id: { notIn: blockedIds },
+        userSettings: { privateDiscoveryMode: false },
         moments: {
           some: {
             city: city,
@@ -43,6 +48,7 @@ export async function GET(
         city: city,
         visibility: "PUBLIC",
         createdAt: { gte: oneWeekAgo },
+        authorId: { notIn: blockedIds },
       },
       include: {
         author: {
@@ -63,6 +69,7 @@ export async function GET(
         city: { name: city },
         status: "ACTIVE",
         startDate: { gte: oneWeekAgo },
+        creatorId: { notIn: blockedIds },
       },
       include: {
         creator: {
@@ -80,6 +87,8 @@ export async function GET(
     // Get users making the city active (based on participation)
     const activeUsers = await db.user.findMany({
       where: {
+        id: { notIn: blockedIds },
+        userSettings: { privateDiscoveryMode: false },
         OR: [
           {
             plansCreated: {

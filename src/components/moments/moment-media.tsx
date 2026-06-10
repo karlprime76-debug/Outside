@@ -1,6 +1,7 @@
 "use client";
 
 import React, { forwardRef, useMemo, useState, useRef, useEffect } from "react";
+import Image from "next/image";
 
 interface MomentMediaProps {
   type: string; // "PHOTO" | "VIDEO" (string to align with existing types)
@@ -103,6 +104,17 @@ export const MomentMedia = forwardRef<HTMLVideoElement, MomentMediaProps>(functi
     );
   }
 
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={safeSrc} alt="Moment" className={className || "h-full w-full object-cover"} loading="lazy" onError={() => setError("error")} />;
+  return (
+    <div className="relative h-full w-full">
+      <Image
+        src={safeSrc}
+        alt="Moment"
+        fill
+        className={className || "object-cover"}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        loading="lazy"
+        onError={() => setError("error")}
+      />
+    </div>
+  );
 });

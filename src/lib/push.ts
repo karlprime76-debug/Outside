@@ -54,7 +54,7 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
           const status = (err as { statusCode?: number })?.statusCode;
           if (status === 404 || status === 410) {
             // Subscription expired or invalid
-            await db.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+            await db.pushSubscription.delete({ where: { id: sub.id } }).catch((err) => { logError("[PUSH_ERROR]", "Failed to delete expired subscription", { error: String(err) }); });
           } else {
             logError("[PUSH_ERROR]", "sendPushNotification failed for subscription", {
               userId,
@@ -72,7 +72,7 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
 
 export async function sendPushToUser(
   userId: string,
-  type: "dm" | "plan" | "moment" | "live" | "pro" | "friend" | "system",
+  type: "dm" | "plan" | "plan-reminder" | "moment" | "live" | "pro" | "friend" | "system",
   payload: PushPayload
 ) {
   try {
@@ -96,6 +96,7 @@ export async function sendPushToUser(
     const categoryMap: Record<string, keyof typeof settings> = {
       dm: "pushDm",
       plan: "pushPlans",
+      "plan-reminder": "pushPlanReminders",
       moment: "pushMoments",
       live: "pushLive",
       pro: "pushPro",
@@ -105,9 +106,6 @@ export async function sendPushToUser(
 
     const settingKey = categoryMap[type];
     if (settingKey && !settings[settingKey]) return;
-
-    // For plan reminders, also check the specific reminder toggle
-    if (type === "plan" && !settings.pushPlanReminders) return;
 
     await sendPushNotification(userId, payload);
   } catch (error) {

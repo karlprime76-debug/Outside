@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET(
   req: Request,
@@ -13,11 +14,15 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const blockedIds = await getUserBlockedIds(user.id);
+
     // Get suggested users (active users in city)
     const suggestedUsers = await db.user.findMany({
       where: {
         activeCity: { name: city },
         isAvailable: true,
+        id: { notIn: blockedIds },
+        userSettings: { privateDiscoveryMode: false },
       },
       select: {
         id: true,
@@ -36,6 +41,8 @@ export async function GET(
       where: {
         isAmbassador: true,
         ambassadorCity: city,
+        id: { notIn: blockedIds },
+        userSettings: { privateDiscoveryMode: false },
       },
       select: {
         id: true,
@@ -61,6 +68,7 @@ export async function GET(
       where: {
         city: city,
         visibility: "PUBLIC",
+        authorId: { notIn: blockedIds },
       },
       include: {
         author: {
@@ -83,6 +91,7 @@ export async function GET(
         budgetLevel: "FREE",
         startDate: { gte: new Date() },
         status: "ACTIVE",
+        creatorId: { notIn: blockedIds },
       },
       include: {
         creator: {

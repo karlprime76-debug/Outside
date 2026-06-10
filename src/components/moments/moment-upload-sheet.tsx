@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, ChangeEvent } from "react";
+import Image from "next/image";
 import { useToast } from "@/components/ui/toast";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { X, Image as ImageIcon, Video, Upload, MapPin } from "lucide-react";
@@ -129,8 +130,7 @@ export function MomentUploadSheet({ open, onClose, onUploaded, defaultCity, defa
             {file.type.startsWith("video/") ? (
               <video src={preview || undefined} className="w-full max-h-64 object-contain" controls />
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={preview || undefined} alt="Aperçu du moment" className="w-full max-h-64 object-contain" />
+              <Image src={preview || ""} alt="Aperçu du moment" width={500} height={400} className="w-full max-h-64 object-contain" unoptimized />
             )}
             <button
               onClick={() => { setFile(null); setPreview(null); }}

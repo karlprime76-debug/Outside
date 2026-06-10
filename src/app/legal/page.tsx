@@ -1,5 +1,7 @@
+import { getUserLocale } from "@/lib/locale";
+
 export default function LegalIndexPage() {
-  const updated = new Date().toLocaleDateString("fr-FR");
+  const updated = new Date().toLocaleDateString(getUserLocale());
   return (
     <div className="space-y-6">
       <div>

@@ -100,6 +100,14 @@ export async function DELETE() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const existing = await db.userOutsideStatus.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ success: true });
+    }
+
     await db.userOutsideStatus.delete({
       where: { userId: user.id },
     });

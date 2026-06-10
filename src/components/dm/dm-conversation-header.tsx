@@ -7,6 +7,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useState } from "react";
 import { useHaptic } from "@/hooks/use-haptic";
 import { ReportButton } from "@/components/report-button";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface DmConversationHeaderProps {
   other: {
@@ -15,14 +16,16 @@ interface DmConversationHeaderProps {
     username: string | null;
     image: string | null;
   } | null;
+  conversationId?: string;
   onBack?: () => void;
   onOpenSearch?: () => void;
   onOpenMedia?: () => void;
 }
 
-export function DmConversationHeader({ other, onBack, onOpenSearch, onOpenMedia }: DmConversationHeaderProps) {
+export function DmConversationHeader({ other, conversationId, onBack, onOpenSearch, onOpenMedia }: DmConversationHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const haptic = useHaptic();
+  const t = useDictionary();
 
   return (
     <div className="sticky top-0 z-40 border-b border-[var(--os-card-border)] bg-[var(--os-bg)]/95 backdrop-blur-md px-3 py-2.5">
@@ -30,7 +33,7 @@ export function DmConversationHeader({ other, onBack, onOpenSearch, onOpenMedia 
         <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={onBack}
-            aria-label="Retour"
+            aria-label={t.common.back}
             className="rounded-full p-2 hover:bg-[var(--os-card-border)] transition-colors shrink-0 active:scale-95"
           >
             <ArrowLeft className="h-5 w-5 text-[var(--os-fg)]" />
@@ -118,7 +121,7 @@ export function DmConversationHeader({ other, onBack, onOpenSearch, onOpenMedia 
                 </button>
               )}
               <button
-                onClick={() => { haptic.light(); setMenuOpen(false); alert("Notifications bientôt disponibles."); }}
+                onClick={() => { haptic.light(); setMenuOpen(false); /* TODO: API route for mute notifications */ }}
                 className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
               >
                 <Bell className="h-4 w-4 text-[var(--os-muted)]" />
@@ -131,14 +134,14 @@ export function DmConversationHeader({ other, onBack, onOpenSearch, onOpenMedia 
               )}
               <div className="my-1 border-t border-[var(--os-card-border)]" />
               <button
-                onClick={() => { haptic.medium(); setMenuOpen(false); alert("Blocage bientôt disponible."); }}
+                onClick={async () => { haptic.medium(); setMenuOpen(false); if (other) { try { await fetch(`/api/users/${other.id}/block`, { method: "POST" }); } catch { /* ignore */ } } }}
                 className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors active:scale-[0.98]"
               >
                 <Ban className="h-4 w-4" />
                 Bloquer
               </button>
               <button
-                onClick={() => { haptic.medium(); setMenuOpen(false); alert("Suppression bientôt disponible."); }}
+                onClick={async () => { haptic.medium(); setMenuOpen(false); try { await fetch(`/api/dm/conversations/${conversationId}`, { method: "DELETE" }); window.location.href = "/dm"; } catch (e) { console.error("Failed to delete conversation", e); } }}
                 className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors active:scale-[0.98]"
               >
                 <Trash2 className="h-4 w-4" />

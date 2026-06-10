@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface Conversation {
   id: string;
@@ -26,6 +27,7 @@ export function ShareMomentSheet({ open, momentId, onClose }: ShareMomentSheetPr
   const [sending, setSending] = useState(false);
   const { addToast } = useToast();
   const haptic = useHaptic();
+  const t = useDictionary();
 
   useEffect(() => {
     if (!open) return;
@@ -34,7 +36,7 @@ export function ShareMomentSheet({ open, momentId, onClose }: ShareMomentSheetPr
       .then((data) => {
         if (data?.conversations) setConversations(data.conversations);
       })
-      .catch(() => {})
+      .catch((err) => { console.error("[DM_ERROR] Failed to fetch conversations:", err); })
       .finally(() => setLoading(false));
   }, [open]);
 
@@ -127,7 +129,7 @@ export function ShareMomentSheet({ open, momentId, onClose }: ShareMomentSheetPr
           </div>
         ) : filtered.length === 0 ? (
           <p className="text-center text-xs text-[var(--os-muted)] py-6">
-            {query ? "Aucune conversation trouvée." : "Aucune conversation."}
+            {query ? t.dm.noConversationFound : t.dm.noConversations}
           </p>
         ) : (
           <div className="space-y-1">

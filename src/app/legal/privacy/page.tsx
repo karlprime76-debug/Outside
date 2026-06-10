@@ -1,5 +1,7 @@
+import { getUserLocale } from "@/lib/locale";
+
 export default function PrivacyPage() {
-  const updated = new Date().toLocaleDateString("fr-FR");
+  const updated = new Date().toLocaleDateString(getUserLocale());
   return (
     <article className="prose prose-sm max-w-none text-[var(--os-fg)]">
       <h1 className="text-2xl font-black">Politique de confidentialité</h1>

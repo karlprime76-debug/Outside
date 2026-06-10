@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { getUserLocale } from "@/lib/locale";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Video, StopCircle, Play, ArrowLeft, Loader2, Radio, CheckCircle } from "lucide-react";
 
@@ -113,7 +114,7 @@ export default function AdminLivesPage() {
                   </div>
                   <h3 className="font-bold text-[var(--os-fg)]">{live.title}</h3>
                   <p className="text-xs text-[var(--os-muted)]">
-                    Par {live.host.name || live.host.email} · {new Date(live.createdAt).toLocaleDateString("fr-FR")}
+                    Par {live.host.name || live.host.email} · {new Date(live.createdAt).toLocaleDateString(getUserLocale())}
                   </p>
                 </div>
                 <span className="text-xs font-bold text-[var(--os-muted)]">

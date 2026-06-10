@@ -9,46 +9,54 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - 7);
+    weekStart.setHours(0, 0, 0, 0);
 
-    // Get moments published this week
-    const momentsPublished = await db.moment.count({
-      where: {
-        authorId: user.id,
-        createdAt: { gte: oneWeekAgo },
-      },
-    });
+    const weekEnd = new Date(now);
+    weekEnd.setHours(23, 59, 59, 999);
 
-    // Get plans joined this week
-    const plansJoined = await db.planParticipant.count({
-      where: {
-        userId: user.id,
-        joinedAt: { gte: oneWeekAgo },
-      },
-    });
-
-    // Get plans created this week
-    const plansCreated = await db.plan.count({
-      where: {
-        creatorId: user.id,
-        createdAt: { gte: oneWeekAgo },
-      },
-    });
-
-    // Get new followers this week
-    const newFollowers = await db.follow.count({
-      where: {
-        followingId: user.id,
-        createdAt: { gte: oneWeekAgo },
-      },
-    });
+    // Get stats for the week
+    const [momentsPublished, plansJoined, plansCreated, newFollowers, badgesEarned] = await Promise.all([
+      db.moment.count({
+        where: {
+          authorId: user.id,
+          createdAt: { gte: weekStart, lte: weekEnd },
+        },
+      }),
+      db.planParticipant.count({
+        where: {
+          userId: user.id,
+          joinedAt: { gte: weekStart, lte: weekEnd },
+          attendance: { in: ["GOING", "MAYBE"] },
+        },
+      }),
+      db.plan.count({
+        where: {
+          creatorId: user.id,
+          createdAt: { gte: weekStart, lte: weekEnd },
+        },
+      }),
+      db.follow.count({
+        where: {
+          followingId: user.id,
+          createdAt: { gte: weekStart, lte: weekEnd },
+        },
+      }),
+      db.userBadge.count({
+        where: {
+          userId: user.id,
+          earnedAt: { gte: weekStart, lte: weekEnd },
+        },
+      }),
+    ]);
 
     // Get badges earned this week
-    const badgesEarned = await db.userBadge.findMany({
+    const badges = await db.userBadge.findMany({
       where: {
         userId: user.id,
-        earnedAt: { gte: oneWeekAgo },
+        earnedAt: { gte: weekStart, lte: weekEnd },
       },
       include: {
         badge: {
@@ -59,77 +67,88 @@ export async function GET() {
           },
         },
       },
+      orderBy: { earnedAt: "desc" },
     });
 
-    // Get most active city
-    const cityActivity = await db.plan.groupBy({
-      by: ["cityId"],
-      where: {
-        participants: {
-          some: {
-            userId: user.id,
-            joinedAt: { gte: oneWeekAgo },
-          },
-        },
-      },
-      _count: {
-        cityId: true,
-      },
-      orderBy: {
-        _count: {
-          cityId: "desc",
-        },
-      },
-      take: 1,
-    });
+    // Get most active city (based on plans joined/created)
+    const cityActivity = await db.$queryRaw<Array<{ city: string; count: bigint }>>`
+      SELECT
+        c.name as city,
+        COUNT(DISTINCT p.id) as count
+      FROM "Plan" p
+      JOIN "City" c ON p."cityId" = c.id
+      WHERE (
+        p."creatorId" = ${user.id}
+        OR EXISTS (
+          SELECT 1 FROM "PlanParticipant" pp
+          WHERE pp."planId" = p.id
+          AND pp."userId" = ${user.id}
+          AND pp.attendance IN ('GOING', 'MAYBE')
+        )
+      )
+      AND p."startDate" >= ${weekStart}
+      AND p."startDate" <= ${weekEnd}
+      GROUP BY c.name
+      ORDER BY count DESC
+      LIMIT 1
+    `;
 
-    let mostActiveCity = null;
-    if (cityActivity.length > 0) {
-      const city = await db.city.findUnique({
-        where: { id: cityActivity[0].cityId },
-      });
-      mostActiveCity = city?.name;
-    }
+    const mostActiveCity = cityActivity.length > 0 ? String(cityActivity[0].city) : null;
 
-    // Get suggestions for next week
-    const suggestions = [];
+    // Generate suggestions based on activity
+    const suggestions: Array<{ type: string; title: string; description: string }> = [];
+
     if (momentsPublished === 0) {
       suggestions.push({
-        type: "publish_moment",
+        type: "moment",
         title: "Publie ton premier Moment",
-        description: "Partage une sortie avec la communauté",
+        description: "Partage un moment de ta journée avec la communauté",
       });
     }
-    if (plansJoined === 0) {
+
+    if (plansJoined === 0 && plansCreated === 0) {
       suggestions.push({
-        type: "join_plan",
-        title: "Rejoins un plan",
-        description: "Trouve une sortie cette semaine",
+        type: "plan",
+        title: "Rejoins un plan ce soir",
+        description: "Trouve une sortie dans ta ville",
       });
     }
+
     if (newFollowers === 0) {
       suggestions.push({
-        type: "discover_users",
-        title: "Découvre des comptes",
-        description: "Suis des personnes intéressantes",
+        type: "social",
+        title: "Découvre de nouveaux comptes",
+        description: "Suis des personnes intéressantes dans ta ville",
+      });
+    }
+
+    if (badgesEarned === 0) {
+      suggestions.push({
+        type: "badge",
+        title: "Complète une mission",
+        description: "Gagne des badges en participant à la communauté",
+      });
+    }
+
+    if (suggestions.length === 0) {
+      suggestions.push({
+        type: "explore",
+        title: "Continue comme ça !",
+        description: "Tu es très actif cette semaine",
       });
     }
 
     return NextResponse.json({
-      weekStart: oneWeekAgo,
-      weekEnd: new Date(),
+      weekStart: weekStart.toISOString(),
+      weekEnd: weekEnd.toISOString(),
       stats: {
         momentsPublished,
         plansJoined,
         plansCreated,
         newFollowers,
-        badgesEarned: badgesEarned.length,
+        badgesEarned,
       },
-      badgesEarned: badgesEarned.map(ub => ({
-        key: ub.badge.key,
-        name: ub.badge.name,
-        icon: ub.badge.icon,
-      })),
+      badgesEarned: badges.map((ub) => ub.badge),
       mostActiveCity,
       suggestions,
     });

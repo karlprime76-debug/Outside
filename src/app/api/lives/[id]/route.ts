@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notifyLiveStarted } from "@/lib/live-notifications";
+import { updateLiveSchema } from "@/lib/validation/schemas";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -69,6 +70,11 @@ export async function PATCH(req: Request, { params }: Params) {
     }
 
     const body = await req.json();
+    const parsed = updateLiveSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
+    }
+
     const { status, title, description, visibility } = body;
 
     const allowedStatuses = isAdmin ? ["LIVE", "ENDED", "CANCELLED", "BLOCKED"] : ["LIVE", "ENDED", "CANCELLED"];

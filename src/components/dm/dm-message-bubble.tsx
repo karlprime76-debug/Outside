@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
-import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download, Heart } from "lucide-react";
+import Image from "next/image";
+import { Trash2, Flag, ImageOff, MapPin, Calendar, ExternalLink, UserPlus, Download, Heart, User, RefreshCw } from "lucide-react";
 import { MediaViewer } from "@/components/media/media-viewer";
+import { useClickOutside } from "@/hooks/use-click-outside";
 
 export interface DmMessage {
   id: string;
@@ -42,6 +44,7 @@ interface DmMessageBubbleProps {
   onDelete?: (id: string) => void;
   onReport?: (id: string) => void;
   onReact?: (messageId: string, emoji: string) => void;
+  onRetry?: (id: string) => void;
 }
 
 function formatTime(iso: string) {
@@ -64,6 +67,8 @@ function MessageReactions({
   isMine: boolean;
 }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  useClickOutside(pickerRef, () => setShowEmojiPicker(false), showEmojiPicker);
 
   // Group reactions by emoji
   const grouped = reactions.reduce((acc, r) => {
@@ -115,7 +120,7 @@ function MessageReactions({
         </button>
       </div>
       {showEmojiPicker && (
-        <div className="flex gap-1 mt-2">
+        <div ref={pickerRef} className="flex gap-1 mt-2">
           {ALLOWED_EMOJIS.map((emoji) => (
             <button
               key={emoji}
@@ -150,11 +155,12 @@ function MomentCardInBubble({ momentId, metadata, isMine }: { momentId: string; 
     >
       {parsed?.mediaUrl ? (
         <div className="relative h-32 w-full bg-black">
-          <img
+          <Image
             src={parsed.mediaUrl}
             alt="Moment partagé"
-            className="h-full w-full object-cover"
-            loading="lazy"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 80vw, 400px"
           />
         </div>
       ) : (
@@ -264,6 +270,48 @@ function PlanInviteCard({ metadata, isMine }: { metadata?: string | null; isMine
   );
 }
 
+function ProfileCard({ metadata, isMine }: { metadata?: string | null; isMine: boolean }) {
+  let parsed: { userId?: string; name?: string | null; username?: string | null; image?: string | null } | null = null;
+  try {
+    if (metadata) parsed = JSON.parse(metadata);
+  } catch {
+    // ignore
+  }
+
+  const name = parsed?.name || "Utilisateur";
+  const username = parsed?.username || "";
+  const image = parsed?.image || null;
+  const userId = parsed?.userId || "";
+
+  return (
+    <Link
+      href={`/u/${username || userId}`}
+      className={`block rounded-xl overflow-hidden border transition-colors ${
+        isMine
+          ? "border-white/20 bg-white/10 hover:bg-white/20"
+          : "border-[var(--os-card-border)] bg-[var(--os-bg)] hover:bg-[var(--os-card)]"
+      }`}
+    >
+      <div className="flex items-center gap-3 p-3">
+        {image ? (
+          <Image src={image} alt={name} width={48} height={48} className="rounded-full object-cover" />
+        ) : (
+          <div className={`h-12 w-12 rounded-full flex items-center justify-center ${isMine ? "bg-white/20" : "bg-[var(--os-card-border)]"}`}>
+            <User className={`h-6 w-6 ${isMine ? "text-white/60" : "text-[var(--os-muted)]"}`} />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className={`text-sm font-bold truncate ${isMine ? "text-white" : "text-[var(--os-fg)]"}`}>{name}</span>
+            {username && <span className={`text-[10px] ${isMine ? "text-outside-300" : "text-outside-500"}`}>@{username}</span>}
+          </div>
+          <span className={`text-xs ${isMine ? "text-white/60" : "text-outside-500"}`}>Voir le profil →</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function MediaMessage({
   url,
   type,
@@ -281,11 +329,12 @@ function MediaMessage({
         className="block p-0 border-0 bg-transparent text-left"
       >
         {type === "image" ? (
-          <img
+          <Image
             src={url}
             alt="Image"
+            width={320}
+            height={240}
             className="max-w-full max-h-64 rounded-lg object-cover"
-            loading="lazy"
           />
         ) : (
           <video className="max-w-full max-h-64 rounded-lg" preload="metadata">
@@ -316,12 +365,14 @@ export function DmMessageBubble({
   onDelete,
   onReport,
   onReact,
+  onRetry,
 }: DmMessageBubbleProps) {
   const isMoment = message.type === "MOMENT" && !message.isDeleted;
   const isImage = message.type === "IMAGE" && message.mediaUrl && !message.isDeleted;
   const isVideo = message.type === "VIDEO" && message.mediaUrl && !message.isDeleted;
   const isAudio = message.type === "AUDIO" && message.mediaUrl && !message.isDeleted;
   const isPlanInvite = message.type === "PLAN_INVITE" && !message.isDeleted;
+  const isProfile = message.type === "PROFILE" && !message.isDeleted;
 
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1`}>
@@ -329,11 +380,12 @@ export function DmMessageBubble({
         {/* Avatar for received messages */}
         {!isMine && showAvatar && (
           <div className="shrink-0 pb-1">
-            <img
-              src={otherImage || undefined}
+            <Image
+              src={otherImage || ""}
               alt={otherName || ""}
-              className="h-6 w-6 rounded-full object-cover bg-[var(--os-card)]"
-              loading="lazy"
+              width={24}
+              height={24}
+              className="rounded-full object-cover bg-[var(--os-card)]"
             />
           </div>
         )}
@@ -352,6 +404,8 @@ export function DmMessageBubble({
             <MomentCardInBubble momentId={message.momentId || ""} metadata={message.metadata} isMine={isMine} />
           ) : isPlanInvite ? (
             <PlanInviteCard metadata={message.metadata} isMine={isMine} />
+          ) : isProfile ? (
+            <ProfileCard metadata={message.metadata} isMine={isMine} />
           ) : isImage ? (
             <MediaMessage url={message.mediaUrl || ""} type="image" messageId={message.id} />
           ) : isVideo ? (
@@ -385,9 +439,21 @@ export function DmMessageBubble({
 
           {/* Time + actions */}
           <div className="flex items-center justify-end gap-2 mt-1">
+            {isMine && message.status === "FAILED" && (
+              <button
+                onClick={() => onRetry?.(message.id)}
+                className="text-[10px] inline-flex items-center gap-0.5 text-red-400 hover:text-red-300"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Réessayer
+              </button>
+            )}
             <span className={`text-[10px] ${isMine ? "text-white/70" : "text-[var(--os-muted)]"}`}>
               {formatTime(message.createdAt)}
             </span>
+            {isMine && message.status === "SENDING" && (
+              <span className="text-[10px] text-white/50">Envoi...</span>
+            )}
             {!message.isDeleted && (
               <div className="hidden group-hover:flex items-center gap-1.5">
                 {isMine && onDelete && (

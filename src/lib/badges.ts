@@ -20,7 +20,7 @@ export async function awardBadge(userId: string, badgeKey: string): Promise<bool
     body: `Tu as débloqué le badge "${badge.name}"`,
     recipientId: userId,
     data: { badgeId: badge.id, badgeKey: badge.key },
-  }).catch(() => {});
+  }).catch((err) => { console.error("[NOTIFICATION_ERROR] Failed to send badge earned notification:", err); });
 
   return true;
 }
@@ -139,7 +139,7 @@ export async function evaluateFounderBadges(userId: string) {
     where: { authorId: userId },
   });
 
-  if (momentsCount === 1) {
+  if (momentsCount >= 1) {
     await awardBadge(userId, "founder_creator");
   }
 
@@ -147,7 +147,7 @@ export async function evaluateFounderBadges(userId: string) {
     where: { creatorId: userId },
   });
 
-  if (plansCount === 1) {
+  if (plansCount >= 1) {
     await awardBadge(userId, "founder_organizer");
   }
 
@@ -158,7 +158,8 @@ export async function evaluateFounderBadges(userId: string) {
 
 export async function evaluateBadgesAfterMomentCreated(userId: string) {
   await evaluateFounderBadges(userId);
-  await evaluateBadgesAfterPlanCreated(userId);
+  const momentsCount = await db.moment.count({ where: { authorId: userId } });
+  if (momentsCount >= 1) await awardBadge(userId, "first_moment");
 }
 
 export async function evaluateCheckinBadge(userId: string) {
@@ -169,4 +170,41 @@ export async function evaluateCheckinBadge(userId: string) {
   if (checkinCount >= 5) {
     await awardBadge(userId, "punctual");
   }
+}
+
+// Contribution badge keys (seeded from seed-contribution-badges.ts)
+const CONTRIBUTION_BADGES = [
+  { key: "active_creator", count: 10, getCount: (u: { _count: { moments: number } }) => u._count.moments },
+  { key: "explorer_plans", count: 5, getCount: async (userId: string) => db.planParticipant.count({ where: { userId } }) },
+  { key: "reliable_organizer", count: 5, getCount: async (userId: string) => db.plan.count({ where: { creatorId: userId } }) },
+  { key: "social_butterfly", count: 10, getCount: (u: { _count: { friendshipsInitiated: number } }) => u._count.friendshipsInitiated },
+  { key: "trending_creator", count: 1, getCount: async (userId: string) => { const ids = (await db.moment.findMany({ where: { authorId: userId }, select: { id: true } })).map(m => m.id); return ids.length ? await db.momentScore.count({ where: { momentId: { in: ids }, views: { gte: 100 } } }) : 0; } },
+];
+
+export async function checkAndAwardContributionBadges(userId: string): Promise<string[]> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      _count: { select: { moments: true, friendshipsInitiated: true } },
+    },
+  });
+  if (!user) return [];
+
+  const awarded: string[] = [];
+
+  for (const badge of CONTRIBUTION_BADGES) {
+    let currentCount: number;
+    if (typeof badge.getCount === "function" && badge.getCount.length === 1) {
+      currentCount = await (badge.getCount as (id: string) => Promise<number>)(userId);
+    } else {
+      currentCount = (badge.getCount as (u: typeof user) => number)(user);
+    }
+
+    if (currentCount >= badge.count) {
+      const ok = await awardBadge(userId, badge.key);
+      if (ok) awarded.push(badge.key);
+    }
+  }
+
+  return awarded;
 }

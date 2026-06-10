@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getUserLocale } from "@/lib/locale";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -112,7 +113,7 @@ export default function CirclesPage() {
                         {circle._count.members} membre{circle._count.members > 1 ? "s" : ""}
                       </Badge>
                       <span className="text-xs text-[var(--os-muted)]">
-                        Créé le {new Date(circle.createdAt).toLocaleDateString("fr-FR")}
+                        Créé le {new Date(circle.createdAt).toLocaleDateString(getUserLocale())}
                       </span>
                     </div>
                   </div>

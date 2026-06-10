@@ -14,7 +14,7 @@ export async function GET(
 
     const { id: planId } = await context.params;
 
-    const options = await getPlanBOptions(planId);
+    const options = await getPlanBOptions(planId, user.id);
 
     return NextResponse.json(options);
   } catch (error) {

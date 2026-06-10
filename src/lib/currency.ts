@@ -44,12 +44,19 @@ export const COUNTRY_CURRENCY_MAP: Record<string, string> = {
   GN: "GNF",
 };
 
+export const SUPPORTED_CURRENCIES = Array.from(new Set(Object.values(COUNTRY_CURRENCY_MAP))).sort();
+
 export function getCurrencyForCountry(countryCode?: string | null): string {
   if (!countryCode) return "XOF";
   return COUNTRY_CURRENCY_MAP[countryCode.toUpperCase()] || "XOF";
 }
 
-export function formatCurrency(amount: number, currency: string, locale = "fr-FR"): string {
+export function getDefaultCurrencyForUser(user?: { countryCode?: string | null } | null): string {
+  if (user?.countryCode) return getCurrencyForCountry(user.countryCode);
+  return "XOF";
+}
+
+export function formatMoney(amount: number, currency: string, locale = "fr-FR"): string {
   try {
     return new Intl.NumberFormat(locale, {
       style: "currency",
@@ -61,14 +68,27 @@ export function formatCurrency(amount: number, currency: string, locale = "fr-FR
   }
 }
 
-export function formatBudget(amount?: unknown, currency?: string | null, isFrom = false): string {
+export { formatMoney as formatCurrency };
+
+export function formatBudget(
+  amount?: unknown,
+  currency?: string | null,
+  isFrom = false,
+  priceType?: string | null
+): string {
+  const effectivePriceType = priceType || (isFrom ? "FROM" : null);
+  if (effectivePriceType === "FREE") {
+    return "Gratuit";
+  }
   if (amount === null || amount === undefined) {
+    if (effectivePriceType === "PAID") return "Payant";
+    if (effectivePriceType === "FROM") return "À partir de";
     return "Gratuit";
   }
   const num = typeof amount === "number" ? amount : Number(amount);
   if (isNaN(num) || num === 0) {
     return "Gratuit";
   }
-  const formatted = formatCurrency(num, currency || "XOF");
-  return isFrom ? `À partir de ${formatted}` : formatted;
+  const formatted = formatMoney(num, currency || "XOF");
+  return effectivePriceType === "FROM" ? `À partir de ${formatted}` : formatted;
 }

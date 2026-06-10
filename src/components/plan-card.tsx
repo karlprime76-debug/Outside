@@ -84,7 +84,7 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
           <Badge variant={MOOD_BADGE[plan.mood] || "default"}>{plan.mood}</Badge>
           <Badge variant="slate">
             <Wallet className="h-3 w-3 mr-1 inline" />
-            {formatBudget(plan.budgetAmount, plan.budgetCurrency, plan.budgetIsFrom)}
+            {formatBudget(plan.budgetAmount, plan.budgetCurrency, plan.budgetIsFrom, plan.priceType)}
           </Badge>
           <SavePlanButton planId={plan.id} />
         </div>

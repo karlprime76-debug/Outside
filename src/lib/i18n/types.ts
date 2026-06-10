@@ -219,4 +219,112 @@ export interface Dictionary {
     confirm: string;
     back: string;
   };
+  friend: {
+    addFirst: string;
+    discover: string;
+    friend: string;
+    requestSent: string;
+    replyRequest: string;
+    blocked: string;
+    add: string;
+  };
+  notification: {
+    noNotifications: string;
+    noActivity: string;
+  };
+  live: {
+    noLive: string;
+    noLiveYet: string;
+  };
+  event: {
+    noEvents: string;
+  };
+  profile: {
+    noBio: string;
+    noFriends: string;
+  };
+  moment: {
+    noMoments: string;
+    sendInDm: string;
+    share: string;
+  };
+  wishlist: {
+    remove: string;
+    add: string;
+    empty: string;
+  };
+  memory: {
+    noMemories: string;
+    title: string;
+  };
+  trending: {
+    noContent: string;
+  };
+  cityMap: {
+    noActivity: string;
+  };
+  planFilters: {
+    findYourMood: string;
+    mood: string;
+    category: string;
+    soon: string;
+    popular: string;
+    recent: string;
+    free: string;
+    paid: string;
+    freeToday: string;
+    nearMe: string;
+    tonight: string;
+    thisWeekend: string;
+    noResults: string;
+    noSuggestions: string;
+    noPlansCreated: string;
+    noPlansInCity: string;
+  };
+  attendance: {
+    going: string;
+    maybe: string;
+    notGoing: string;
+  };
+  planActions: {
+    invite: string;
+    inviteByMessage: string;
+    share: string;
+    qrCode: string;
+    export: string;
+    safetyMode: string;
+    imHere: string;
+    imBack: string;
+    viewMemories: string;
+    planSummary: string;
+  };
+  planChat: {
+    chatTitle: string;
+    archived: string;
+    joinToChat: string;
+    noMessages: string;
+    inviteCircle: string;
+  };
+  tonight: {
+    createFoodPlan: string;
+    shareMoment: string;
+    inviteFriends: string;
+    discoverAccounts: string;
+    create: string;
+    publish: string;
+    invite: string;
+    discover: string;
+  };
+  dm: {
+    inviteToPlan: string;
+    shareMoment: string;
+    noInvitations: string;
+    noConversations: string;
+    noConversationFound: string;
+  };
+  onboarding: {
+    tellUs: string;
+    yourNeighborhood: string;
+    selectOption: string;
+  };
 }

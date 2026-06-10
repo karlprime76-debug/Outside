@@ -38,7 +38,8 @@ export async function GET() {
     const joinedPlans = joined.map((p) => p.plan).filter((p) => p.creatorId !== user.id);
 
     const all = [...created, ...joinedPlans];
-    const unique = Array.from(new Map(all.map((p) => [p.id, p])).values());
+    const unique = Array.from(new Map(all.map((p) => [p.id, p])).values())
+      .map((p) => ({ ...p, latitude: undefined, longitude: undefined }));
 
     return NextResponse.json({ plans: unique });
   } catch (error) {

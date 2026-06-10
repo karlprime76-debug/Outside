@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getUserLocale } from "@/lib/locale";
 import { Sparkles, Coffee, Dumbbell, Music, PartyPopper, BookOpen, Briefcase, Plane, Users, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -188,7 +189,7 @@ export function TonightAssistant() {
                     >
                       <h5 className="font-medium text-sm text-[var(--os-fg)]">{plan.title}</h5>
                       <p className="text-xs text-[var(--os-muted)] mt-1">
-                        par {plan.creator.name} · {new Date(plan.startDate).toLocaleDateString("fr-FR")}
+                        par {plan.creator.name} · {new Date(plan.startDate).toLocaleDateString(getUserLocale())}
                       </p>
                     </div>
                   ))}

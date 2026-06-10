@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET(req: Request) {
   try {
@@ -13,9 +14,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Mood parameter is required" }, { status: 400 });
     }
 
+    // Get blocked user IDs to exclude
+    const blockedIds = user ? await getUserBlockedIds(user.id) : [];
+
     const where: Record<string, unknown> = {
       status: "ACTIVE",
       visibility: "PUBLIC",
+      creatorId: { notIn: blockedIds },
     };
 
     if (mood) {
@@ -44,13 +49,14 @@ export async function GET(req: Request) {
     const plansWithCounts = plans.map((plan) => {
       const going = plan.participants.filter((p) => p.attendance === "GOING").length;
       const maybe = plan.participants.filter((p) => p.attendance === "MAYBE").length;
+      const safePlan = { ...plan, latitude: undefined, longitude: undefined };
       return {
-        ...plan,
+        ...safePlan,
         _count: { participants: going + maybe, going, maybe },
       };
     });
 
-    // Get places in the city (category filter removed for type compatibility)
+    // Get places in the city
     const places = await db.place.findMany({
       where: {
         isVisible: true,
@@ -78,8 +84,10 @@ export async function GET(req: Request) {
           where: {
             type: statusType,
             expiresAt: { gt: new Date() },
+            userId: { notIn: blockedIds },
             ...(city ? { city } : {}),
             ...(user?.activeCityId && !city ? { city: user.activeCity?.name ?? null } : {}),
+            user: { userSettings: { privateDiscoveryMode: false } },
           },
           include: {
             user: {
@@ -99,6 +107,7 @@ export async function GET(req: Request) {
     // Get moments matching the mood
     const moments = await db.moment.findMany({
       where: {
+        authorId: { notIn: blockedIds },
         ...(mood ? { vibe: mood } : {}),
         ...(city ? { city } : {}),
         ...(user?.activeCityId && !city ? { city: user.activeCity?.name ?? null } : {}),

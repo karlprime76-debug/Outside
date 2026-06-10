@@ -36,10 +36,8 @@ export async function GET() {
       id: user.id,
       name: user.name,
       username: user.username,
-      email: user.email,
       image: user.image,
       bio: user.bio,
-      gender: user.gender,
       country: user.country,
       countryCode: user.countryCode,
       homeCity: user.homeCity?.name || null,
@@ -48,7 +46,6 @@ export async function GET() {
       language: user.language,
       preferredBudget: user.preferredBudget,
       isVerified: user.isVerified,
-      birthDate: user.birthDate ? user.birthDate.toISOString() : null,
     });
   } catch (error) {
     logError("[PROFILE_ERROR]", "GET /api/profile failed", { error: String(error) });

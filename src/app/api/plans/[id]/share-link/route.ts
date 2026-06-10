@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
-import { generateReferralCode } from "@/lib/referral";
+import { ensureUserReferralCode, getAppBaseUrl } from "@/lib/referral";
 
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -15,46 +15,23 @@ export async function GET(
 
     const { id } = await params;
 
-    // Get the plan
     const plan = await db.plan.findUnique({
       where: { id },
-      select: {
-        id: true,
-        title: true,
-        cityId: true,
-        creatorId: true,
-      },
+      select: { id: true, title: true },
     });
 
     if (!plan) {
       return NextResponse.json({ error: "Plan non trouvé" }, { status: 404 });
     }
 
-    // Get or create referral code for user
-    let referralCode = await db.referralInvite.findFirst({
-      where: { inviterId: user.id },
-      select: { code: true },
-    });
-
-    if (!referralCode) {
-      const code = generateReferralCode(user.id);
-      referralCode = await db.referralInvite.create({
-        data: {
-          inviterId: user.id,
-          code,
-        },
-        select: { code: true },
-      });
-    }
-
-    // Generate shareable link
-    const shareUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/plans/${id}?ref=${referralCode.code}`;
+    const { code } = await ensureUserReferralCode(user.id);
+    const shareUrl = `${getAppBaseUrl()}/plans/${id}?ref=${code}`;
 
     return NextResponse.json({
       shareUrl,
       planId: plan.id,
       planTitle: plan.title,
-      referralCode: referralCode.code,
+      referralCode: code,
     });
   } catch (error) {
     console.error("Share link error:", error);

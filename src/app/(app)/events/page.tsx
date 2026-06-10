@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { CalendarDays, Sparkles, ArrowLeft, MapPin, Clock } from "lucide-react";
 
 interface EventItem {
@@ -22,6 +23,7 @@ interface EventItem {
 export default function EventsPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useDictionary();
 
   useEffect(() => {
     fetch("/api/events")
@@ -62,7 +64,7 @@ export default function EventsPage() {
       ) : events.length === 0 ? (
         <EmptyState
           icon={Sparkles}
-          title="Aucun événement pro publié"
+          title={t.event.noEvents}
           description="Pour l'instant, aucun événement pro n'est disponible."
         />
       ) : (

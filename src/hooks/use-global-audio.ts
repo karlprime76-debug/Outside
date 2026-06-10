@@ -48,7 +48,7 @@ export function useGlobalAudio() {
       // If same track is already playing, just resume or ensure it's playing
       if (currentAudio && currentAudio.src === src) {
         if (currentAudio.paused) {
-          currentAudio.play().catch(() => {});
+          currentAudio.play().catch((err) => { console.error("[MOMENT_ERROR] Failed to play audio:", err); });
         }
         return;
       }
@@ -87,7 +87,7 @@ export function useGlobalAudio() {
       }, { once: true });
 
       currentAudio = a;
-      a.play().catch(() => {});
+      a.play().catch((err) => { console.error("[MOMENT_ERROR] Failed to play audio:", err); });
       notify();
     },
     []

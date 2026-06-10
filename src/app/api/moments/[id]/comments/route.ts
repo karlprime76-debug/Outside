@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createNotification } from "@/lib/notifications";
+import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import type { NotificationType } from "@prisma/client";
 
 export async function GET(
@@ -68,6 +69,14 @@ export async function POST(
     const moment = await db.moment.findUnique({ where: { id } });
     if (!moment) {
       return NextResponse.json({ error: "Moment introuvable." }, { status: 404 });
+    }
+
+    const commentLimit = await rateLimit(`comment:${user.id}`, 10, 60000);
+    if (!commentLimit.success) {
+      return NextResponse.json(
+        { error: "Trop de commentaires. Réessaie plus tard." },
+        { status: 429, headers: getRateLimitHeaders(commentLimit) }
+      );
     }
 
     const body = await req.json().catch(() => ({}));

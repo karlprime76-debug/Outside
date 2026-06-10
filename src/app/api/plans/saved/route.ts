@@ -23,7 +23,7 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ plans: saved.map((s) => s.plan) });
+    return NextResponse.json({ plans: saved.map((s) => ({ ...s.plan, latitude: undefined, longitude: undefined })) });
   } catch {
     return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
   }

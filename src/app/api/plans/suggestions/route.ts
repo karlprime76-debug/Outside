@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 import { PlanVisibility } from "@prisma/client";
 
 export async function GET() {
@@ -13,6 +14,8 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
+
+    const blockedIds = await getUserBlockedIds(user.id);
 
     const userPrefs = await db.user.findUnique({
       where: { id: user.id },
@@ -75,7 +78,7 @@ export async function GET() {
     const friendPlanIds = [...new Set(friendParticipations.map((p) => p.planId))];
 
     const topCreatorRows = await db.user.findMany({
-      where: { trustScore: { gte: 50 }, id: { not: user.id } },
+      where: { trustScore: { gte: 50 }, id: { not: user.id, notIn: blockedIds } },
       select: { id: true },
     });
     const topCreatorIds = topCreatorRows.map((c) => c.id);
@@ -84,7 +87,7 @@ export async function GET() {
 
     const prefWhere: Record<string, unknown> = {
       status: "ACTIVE",
-      creatorId: { not: user.id },
+      creatorId: { not: user.id, notIn: blockedIds },
       OR: visibilityOr,
     };
     if (activeCityId) prefWhere.cityId = activeCityId;
@@ -96,7 +99,7 @@ export async function GET() {
 
     if (friendPlanIds.length > 0) {
       const friendGoingPlans = await db.plan.findMany({
-        where: { id: { in: friendPlanIds }, status: "ACTIVE", creatorId: { not: user.id }, OR: visibilityOr },
+        where: { id: { in: friendPlanIds }, status: "ACTIVE", creatorId: { not: user.id, notIn: blockedIds }, OR: visibilityOr },
         select: { id: true },
         take: 30,
       });
@@ -105,7 +108,7 @@ export async function GET() {
 
     if (topCreatorIds.length > 0) {
       const creatorPlans = await db.plan.findMany({
-        where: { creatorId: { in: topCreatorIds }, status: "ACTIVE", OR: visibilityOr },
+        where: { creatorId: { in: topCreatorIds.filter((id) => !blockedIds.includes(id)) }, status: "ACTIVE", OR: visibilityOr },
         select: { id: true },
         take: 30,
       });
@@ -119,7 +122,7 @@ export async function GET() {
     }
 
     const plans = await db.plan.findMany({
-      where: { id: { in: candidateIds }, status: "ACTIVE", creatorId: { not: user.id }, OR: visibilityOr },
+      where: { id: { in: candidateIds }, status: "ACTIVE", creatorId: { not: user.id, notIn: blockedIds }, OR: visibilityOr },
       include: {
         creator: { select: { id: true, name: true, image: true } },
         city: { select: { id: true, name: true } },
@@ -147,6 +150,8 @@ export async function GET() {
       const maybe = plan.participants.filter((p) => p.attendance === "MAYBE").length;
       return {
         ...plan,
+        latitude: undefined,
+        longitude: undefined,
         _count: { participants: going + maybe, going, maybe },
       };
     });

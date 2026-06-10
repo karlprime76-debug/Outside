@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getUserLocale } from "@/lib/locale";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Users, CalendarDays, Store, AlertTriangle, Shield, MapPin, ArrowRight, Briefcase, Video, Building2, Music } from "lucide-react";
 
@@ -87,7 +88,7 @@ export default async function AdminPage() {
                   </p>
                 </div>
                 <span className="text-[10px] font-bold text-[var(--os-muted)] whitespace-nowrap ml-2">
-                  {new Date(r.createdAt).toLocaleDateString("fr-FR")}
+                  {new Date(r.createdAt).toLocaleDateString(getUserLocale())}
                 </span>
               </div>
             ))}
@@ -98,6 +99,8 @@ export default async function AdminPage() {
       {/* Quick links */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
+          { label: "Signalements", href: "/admin/reports", icon: AlertTriangle, color: "from-red-500 to-orange-500" },
+          { label: "Confiance", href: "/admin/trust", icon: Shield, color: "from-outside-500 to-accent-500" },
           { label: "Gérer les plans", href: "/plans", icon: CalendarDays, color: "from-outside-500 to-accent-500" },
           { label: "Gérer les lieux", href: "/places", icon: MapPin, color: "from-indigo-500 to-purple-500" },
           { label: "Demandes pro", href: "/admin/pro-requests", icon: Briefcase, color: "from-amber-500 to-orange-500" },

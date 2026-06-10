@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { auth } from "@/lib/auth";
+import { getUserBlockedIds } from "@/lib/blocks";
 import { markNotificationsAsRead } from "@/lib/notifications";
 import { safeJsonParse } from "@/lib/json-parse";
 
@@ -15,6 +16,7 @@ export async function GET() {
     }
 
     const userId = session.user.id;
+    const blockedIds = await getUserBlockedIds(userId);
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -28,7 +30,7 @@ export async function GET() {
         where: {
           cityId: session.user.activeCityId || undefined,
           createdAt: { gte: yesterday },
-          creatorId: { not: userId },
+          creatorId: { not: userId, notIn: blockedIds },
         },
         orderBy: { createdAt: "desc" },
         take: 5,

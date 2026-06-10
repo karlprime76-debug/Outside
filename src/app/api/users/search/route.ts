@@ -31,6 +31,7 @@ export async function GET(req: Request) {
         username: { contains: q, mode: "insensitive" },
         NOT: { id: currentUserId },
         id: { notIn: Array.from(blockedIds) },
+        userSettings: { privateDiscoveryMode: false },
       },
       select: {
         id: true,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
@@ -31,6 +31,13 @@ export function MomentCommentsSheet({ momentId, open, onClose }: MomentCommentsS
   const [sending, setSending] = useState(false);
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleEscape = useCallback((e: KeyboardEvent) => { if (e.key === "Escape") onClose(); }, [onClose]);
+  useEffect(() => {
+    if (!open) return;
+    addEventListener("keydown", handleEscape);
+    return () => removeEventListener("keydown", handleEscape);
+  }, [open, handleEscape]);
 
   useEffect(() => {
     if (!open || !momentId) return;
@@ -88,8 +95,8 @@ export function MomentCommentsSheet({ momentId, open, onClose }: MomentCommentsS
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--os-card-border)]">
           <h3 className="text-sm font-bold text-[var(--os-fg)]">Commentaires</h3>
-          <button onClick={onClose} className="rounded-full p-1.5 hover:bg-[var(--os-bg)] transition-colors">
-            <X className="h-4 w-4 text-[var(--os-muted)]" />
+          <button onClick={onClose} aria-label="Fermer" className="rounded-full p-2.5 hover:bg-[var(--os-bg)] transition-colors">
+            <X className="h-5 w-5 text-[var(--os-muted)]" />
           </button>
         </div>
 
@@ -146,9 +153,9 @@ export function MomentCommentsSheet({ momentId, open, onClose }: MomentCommentsS
             <button
               onClick={submit}
               disabled={sending || !text.trim()}
-              className="rounded-full p-1.5 text-outside-500 hover:bg-outside-50 disabled:opacity-40 transition-colors"
+              className="rounded-full p-2.5 text-outside-500 hover:bg-outside-50 disabled:opacity-40 transition-colors"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             </button>
           </div>
           <p className="text-[10px] text-[var(--os-muted)] text-right mt-1">{text.length}/300</p>

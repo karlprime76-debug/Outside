@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/toast";
 import { X, CheckCircle, UserCheck, MapPin, MessageSquare } from "lucide-react";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface Props {
   reviewedId: string;
@@ -14,12 +15,19 @@ interface Props {
 
 export function TrustReviewModal({ reviewedId, planId, reviewedName, onClose, onSubmitted }: Props) {
   const { addToast } = useToast();
+  const t = useDictionary();
   const [wasPresent, setWasPresent] = useState<boolean | null>(null);
   const [respectful, setRespectful] = useState<boolean | null>(null);
   const [realProfile, setRealProfile] = useState<boolean | null>(null);
   const [realPlan, setRealPlan] = useState<boolean | null>(null);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleEscape = useCallback((e: KeyboardEvent) => { if (e.key === "Escape") onClose(); }, [onClose]);
+  useEffect(() => {
+    addEventListener("keydown", handleEscape);
+    return () => removeEventListener("keydown", handleEscape);
+  }, [handleEscape]);
 
   async function submit() {
     setLoading(true);
@@ -92,8 +100,8 @@ export function TrustReviewModal({ reviewedId, planId, reviewedName, onClose, on
           <h3 className="text-base sm:text-lg font-black text-[var(--os-fg)]">
             Valider {reviewedName || "la confiance"}
           </h3>
-          <button onClick={onClose} aria-label="Fermer" className="rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-            <X className="h-4 w-4 text-[var(--os-muted)]" />
+          <button onClick={onClose} aria-label={t.common.close} className="rounded-lg p-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <X className="h-5 w-5 text-[var(--os-muted)]" />
           </button>
         </div>
 

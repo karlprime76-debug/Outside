@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Users, Award, Flame, Calendar, Sparkles, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Plan } from "@/types/plan";
@@ -98,9 +99,9 @@ export function CityStarterPack({ city }: { city: string }) {
                   href={`/u/${ambassador.username}`}
                   className="flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-accent-300 transition-colors"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden relative">
                     {ambassador.image ? (
-                      <img src={ambassador.image} alt={ambassador.name || ""} className="w-full h-full object-cover" />
+                      <Image src={ambassador.image} alt={ambassador.name || ""} fill className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white font-bold">
                         {ambassador.name?.[0] || "?"}
@@ -130,9 +131,9 @@ export function CityStarterPack({ city }: { city: string }) {
                   href={`/u/${user.username}`}
                   className="flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-accent-300 transition-colors"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden relative">
                     {user.image ? (
-                      <img src={user.image} alt={user.name || ""} className="w-full h-full object-cover" />
+                      <Image src={user.image} alt={user.name || ""} fill className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white font-bold">
                         {user.name?.[0] || "?"}

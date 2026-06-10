@@ -17,7 +17,7 @@ export async function sendPlanReviewNotifications(planId: string, planTitle: str
       body: `Le plan "${planTitle}" est terminé. Partage ton expérience !`,
       recipientId: participant.user.id,
       data: { planId, url: `/plans/${planId}` },
-    }).catch(() => {});
+    }).catch((err) => { console.error("[NOTIFICATION_ERROR] Failed to send review pending notification:", err); });
   }
 }
 
@@ -31,5 +31,5 @@ export async function sendPlanConfirmedNotification(planId: string, planTitle: s
     body: `Ton plan "${planTitle}" a été confirmé par la communauté.`,
     recipientId: creatorId,
     data: { planId, url: `/plans/${planId}` },
-  }).catch(() => {});
+  }).catch((err) => { console.error("[NOTIFICATION_ERROR] Failed to send plan confirmed notification:", err); });
 }

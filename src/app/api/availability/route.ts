@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 function parseDuration(duration: string): number {
   const now = new Date();
@@ -43,11 +44,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ availability: myAvailability });
     }
 
+    const blockedIds = await getUserBlockedIds(user.id);
+
     const availabilities = await db.availability.findMany({
       where: {
         isActive: true,
         expiresAt: { gt: now },
-        userId: { not: user.id },
+        userId: { notIn: [user.id, ...blockedIds] },
         ...(city ? { city } : {}),
       },
       include: {

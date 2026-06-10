@@ -56,6 +56,7 @@ export async function GET(req: Request) {
       users = await db.user.findMany({
         where: {
           id: { notIn: Array.from(excludeIds) },
+          userSettings: { privateDiscoveryMode: false },
           moments: { some: { visibility: "PUBLIC", createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } },
         },
         select: {
@@ -71,6 +72,7 @@ export async function GET(req: Request) {
       users = await db.user.findMany({
         where: {
           id: { notIn: Array.from(excludeIds) },
+          userSettings: { privateDiscoveryMode: false },
           OR: [
             { activeCityId: currentUser.activeCityId },
             { homeCityId: currentUser.homeCityId },

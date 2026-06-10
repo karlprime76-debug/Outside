@@ -89,12 +89,12 @@ export default function OnboardingPage() {
               name="bio"
               maxLength={160}
               rows={3}
-              placeholder="Parle-nous de toi"
+              placeholder={t.onboarding.tellUs}
               className="w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-[var(--os-card)] text-[var(--os-fg)] transition-all resize-none"
             />
           </div>
 
-          <InputField name="neighborhood" type="text" label={t.auth.neighborhood} placeholder="Ton quartier" />
+          <InputField name="neighborhood" type="text" label={t.auth.neighborhood} placeholder={t.onboarding.yourNeighborhood} />
 
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">{t.auth.budget}</label>
@@ -102,7 +102,7 @@ export default function OnboardingPage() {
               name="preferredBudget"
               className="w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 bg-[var(--os-card)] text-[var(--os-fg)] transition-all"
             >
-              <option value="">Sélectionner...</option>
+              <option value="">{t.onboarding.selectOption}</option>
               <option value="FREE">Gratuit</option>
               <option value="LOW">Bas</option>
               <option value="MEDIUM">Moyen</option>

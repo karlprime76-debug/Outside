@@ -70,7 +70,7 @@ export default function NewMomentPage() {
           setCity(fallbackCity);
         }
       })
-      .catch(() => {});
+      .catch((err) => { console.error("[MOMENT_ERROR] Failed to load draft:", err); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -89,7 +89,7 @@ export default function NewMomentPage() {
             });
           }
         })
-        .catch(() => {});
+        .catch((err) => { console.error("[MOMENT_ERROR] Failed to fetch audio track:", err); });
     }
   }, [searchParams]);
 
@@ -134,7 +134,6 @@ export default function NewMomentPage() {
           const vertical = v.videoHeight > v.videoWidth;
           setIsVerticalVideo(vertical);
           setPublishAsClip(vertical);
-          URL.revokeObjectURL(v.src);
           // Open video editor for trimming
           setShowVideoEditor(true);
         };

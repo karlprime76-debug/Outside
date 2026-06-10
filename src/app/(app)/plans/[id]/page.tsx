@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { getUserLocale } from "@/lib/locale";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +14,12 @@ import { ReportButton } from "@/components/report-button";
 import { SavePlanButton } from "@/components/save-plan-button";
 import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download, Bell, ShieldCheck, Home, AlertTriangle, Camera, Trophy } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
+import { AfterPlanSheet } from "@/components/plans/after-plan-sheet";
 import { formatBudget } from "@/lib/currency";
 import { useHaptic } from "@/hooks/use-haptic";
 import { ExpensesSection } from "./expenses-section";
 import PollsSection from "./polls-section";
+import { PlanInviteShare } from "@/components/referrals/plan-invite-share";
 
 interface PlanDetail {
   id: string;
@@ -24,6 +27,7 @@ interface PlanDetail {
   description: string | null;
   mood: string;
   planCategory: string;
+  priceType?: string;
   budgetLevel: string;
   budgetAmount: unknown;
   budgetCurrency: string | null;
@@ -118,6 +122,7 @@ export default function PlanDetailPage() {
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [remindersLoading, setRemindersLoading] = useState(false);
   const [reliabilities, setReliabilities] = useState<Record<string, { level: string; outsideScore: number }>>({});
+  const [afterPlanOpen, setAfterPlanOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/plans/${id}`)
@@ -140,12 +145,12 @@ export default function PlanDetailPage() {
     fetch(`/api/plans/${id}/safety`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => setSafetyShare(data?.share || null))
-      .catch(() => {});
+      .catch((err) => { console.error("[PLAN_ERROR] Failed to fetch safety share:", err); });
 
     fetch("/api/safety/contacts")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => setSafetyContacts(data?.contacts || []))
-      .catch(() => {});
+      .catch((err) => { console.error("[PLAN_ERROR] Failed to fetch safety contacts:", err); });
   }, [id]);
 
   useEffect(() => {
@@ -159,7 +164,7 @@ export default function PlanDetailPage() {
             setReliabilities((prev) => ({ ...prev, [uid]: data.trustProfile }));
           }
         })
-        .catch(() => {});
+        .catch((err) => { console.error("[PLAN_ERROR] Failed to fetch user reliability:", err); });
     });
   }, [plan]);
 
@@ -211,7 +216,7 @@ export default function PlanDetailPage() {
 
   return (
     <div className="p-4 max-w-3xl mx-auto space-y-6">
-      <Link href="/plans" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors">
+      <Link href="/plans" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors">
         <ArrowLeft className="h-4 w-4" />
         {t.planDetail.back}
       </Link>
@@ -226,7 +231,7 @@ export default function PlanDetailPage() {
           </Badge>
           <Badge variant="slate">
             <Wallet className="h-3 w-3 mr-1 inline" />
-            {formatBudget(plan.budgetAmount, plan.budgetCurrency, plan.budgetIsFrom)}
+            {formatBudget(plan.budgetAmount, plan.budgetCurrency, plan.budgetIsFrom, plan.priceType)}
           </Badge>
           <Badge variant={plan.status === "ACTIVE" ? "green" : plan.status === "FULL" ? "orange" : plan.status === "CANCELLED" ? "red" : "default"}>
             {plan.status}
@@ -243,10 +248,10 @@ export default function PlanDetailPage() {
       </div>
 
       {/* Info card */}
-      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-6 space-y-4">
+      <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 sm:p-6 space-y-4">
         <InfoRow icon={MapPin} label={t.planDetail.city} value={plan.city.name} />
         {plan.place && <InfoRow icon={MapPin} label={t.planDetail.place} value={plan.place.name} />}
-        <InfoRow icon={Calendar} label={t.planDetail.when} value={new Date(plan.startDate).toLocaleString("fr-FR")} />
+        <InfoRow icon={Calendar} label={t.planDetail.when} value={new Date(plan.startDate).toLocaleString(getUserLocale())} />
         {plan.rules && <InfoRow icon={Shield} label={t.planDetail.rules} value={plan.rules} />}
         <InfoRow icon={Shield} label={t.planDetail.safety} value={plan.safetyLevel} />
         <InfoRow icon={Users} label={t.planDetail.spots} value={`${plan._count.going} y vont · ${plan._count.maybe} intéressés / ${plan.maxParticipants} max`} />
@@ -285,9 +290,9 @@ export default function PlanDetailPage() {
           style={{ color: remindersEnabled ? "var(--os-green, #059669)" : "var(--os-muted, #a1a1aa)" }}
         >
           <Bell className={`h-3.5 w-3.5 ${remindersLoading ? "animate-pulse" : ""}`} />
-          {remindersEnabled
-            ? `Rappel activé (${myAttendance === "GOING" ? "J'y vais" : "Peut-être"})`
-            : "Rappel désactivé"}
+{remindersEnabled
+    ? `Rappel activé (${myAttendance === "GOING" ? t.attendance.going : t.attendance.maybe})`
+    : "Rappel désactivé"}
         </button>
       )}
 
@@ -300,14 +305,14 @@ export default function PlanDetailPage() {
               disabled={actionLoading || isFull}
               className="rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50"
             >
-              {actionLoading ? t.planDetail.joining : "J&apos;y vais"}
+              {actionLoading ? t.planDetail.joining : t.attendance.going}
             </button>
             <button
               onClick={() => setAttendance("MAYBE")}
               disabled={actionLoading}
-              className="rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
             >
-              Peut-être
+              {t.attendance.maybe}
             </button>
           </>
         ) : isParticipant ? (
@@ -318,28 +323,28 @@ export default function PlanDetailPage() {
               className={`rounded-xl px-6 py-3 text-sm font-bold transition-all disabled:opacity-50 ${
                 myAttendance === "GOING"
                   ? "bg-gradient-to-r from-outside-500 to-accent-500 text-white shadow-glow"
-                  : "border border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              }`}
-            >
-              J&apos;y vais
-            </button>
-            <button
-              onClick={() => setAttendance("MAYBE")}
-              disabled={actionLoading || myAttendance === "MAYBE"}
+                  : "border border-[var(--os-card-border)] text-[var(--os-fg)] hover:bg-[var(--os-bg)]"
+                }`}
+              >
+                {t.attendance.going}
+              </button>
+              <button
+                onClick={() => setAttendance("MAYBE")}
+                disabled={actionLoading || myAttendance === "MAYBE"}
               className={`rounded-xl px-6 py-3 text-sm font-bold transition-all disabled:opacity-50 ${
                 myAttendance === "MAYBE"
                   ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"
-                  : "border border-zinc-300 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              }`}
-            >
-              Peut-être
-            </button>
-            <button
-              onClick={leavePlan}
-              disabled={actionLoading}
-              className="rounded-xl border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Je ne viens plus
+                  : "border border-[var(--os-card-border)] text-[var(--os-fg)] hover:bg-[var(--os-bg)]"
+                }`}
+              >
+                {t.attendance.maybe}
+              </button>
+              <button
+                onClick={leavePlan}
+                disabled={actionLoading}
+                className="rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-semibold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors disabled:opacity-50"
+              >
+                {t.attendance.notGoing}
             </button>
           </>
         ) : null}
@@ -347,7 +352,7 @@ export default function PlanDetailPage() {
           {isParticipant && (
           <Link
             href={`/plans/${plan.id}/chat`}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
           >
             <MessageSquare className="h-4 w-4" />
             Chat
@@ -364,10 +369,10 @@ export default function PlanDetailPage() {
                 .then((r) => r.json())
                 .then((data) => setFriends(data.friends || []));
             }}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
           >
             <UserPlus className="h-4 w-4" />
-            Inviter
+            {t.planActions.invite}
           </button>
         )}
         {isParticipant && (
@@ -378,10 +383,10 @@ export default function PlanDetailPage() {
                 .then((r) => r.json())
                 .then((data) => setConversations(data.conversations || []));
             }}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
           >
             <MessageSquare className="h-4 w-4" />
-            Inviter par message
+            {t.planActions.inviteByMessage}
           </button>
         )}
         <button
@@ -396,11 +401,11 @@ export default function PlanDetailPage() {
               alert("Lien copié !");
             }
           }}
-          className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
         >
-          <Share2 className="h-4 w-4" />
-          Partager
-        </button>
+            <Share2 className="h-4 w-4" />
+            {t.planActions.share}
+          </button>
         <button
           onClick={async () => {
             setQrOpen(true);
@@ -417,19 +422,19 @@ export default function PlanDetailPage() {
               setQrLoading(false);
             }
           }}
-          className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
         >
-          <QrCode className="h-4 w-4" />
-          QR code
-        </button>
+            <QrCode className="h-4 w-4" />
+            {t.planActions.qrCode}
+          </button>
         <a
           href={`/api/plans/${plan.id}/calendar`}
           download
-          className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
         >
-          <Calendar className="h-4 w-4" />
-          Export
-        </a>
+            <Calendar className="h-4 w-4" />
+            {t.planActions.export}
+          </a>
         {isParticipant && (
           <>
             {!safetyShare ? (
@@ -441,10 +446,10 @@ export default function PlanDetailPage() {
                   }
                   setShowSafetySheet(true);
                 }}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-6 py-3 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
               >
                 <ShieldCheck className="h-4 w-4" />
-                Mode sécurité
+                {t.planActions.safetyMode}
               </button>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -470,7 +475,7 @@ export default function PlanDetailPage() {
                     className="inline-flex items-center gap-2 rounded-xl bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-200 transition-colors disabled:opacity-50"
                   >
                     <ShieldCheck className="h-4 w-4" />
-                    Je suis arrivé
+                    {t.planActions.imHere}
                   </button>
                 )}
                 {safetyShare.status === "ARRIVED" && (
@@ -495,11 +500,11 @@ export default function PlanDetailPage() {
                     className="inline-flex items-center gap-2 rounded-xl bg-sky-100 px-4 py-2 text-sm font-bold text-sky-700 hover:bg-sky-200 transition-colors disabled:opacity-50"
                   >
                     <Home className="h-4 w-4" />
-                    Je suis rentré
+                    {t.planActions.imBack}
                   </button>
                 )}
                 {safetyShare.status === "RETURNED" && (
-                  <span className="inline-flex items-center gap-2 rounded-xl bg-zinc-100 px-4 py-2 text-sm font-bold text-[var(--os-fg)]/70 dark:bg-zinc-800">
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-[var(--os-card)] px-4 py-2 text-sm font-bold text-[var(--os-fg)]/70">
                     <Home className="h-4 w-4" />
                     Rentré
                   </span>
@@ -509,13 +514,22 @@ export default function PlanDetailPage() {
           </>
         )}
         {plan.status === "COMPLETED" && isParticipant && (
-          <Link
-            href={`/plans/${plan.id}/memories`}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
-          >
-            <Trophy className="h-4 w-4" />
-            Voir les souvenirs
-          </Link>
+          <>
+            <Link
+              href={`/plans/${plan.id}/memories`}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+            >
+              <Trophy className="h-4 w-4" />
+              {t.planActions.viewMemories}
+            </Link>
+            <button
+              onClick={() => setAfterPlanOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-all"
+            >
+              <Star className="h-4 w-4" />
+              {t.planActions.planSummary}
+            </button>
+          </>
         )}
         {isParticipant && (
           myParticipant?.checkedInAt ? (
@@ -568,7 +582,7 @@ export default function PlanDetailPage() {
       {/* Participants */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-[var(--os-fg)]">{t.planDetail.participantsTitle} ({plan._count.going} y vont · {plan._count.maybe} intéressés)</h3>
+          <h3 className="text-lg font-bold gradient-text">{t.planDetail.participantsTitle} ({plan._count.going} y vont · {plan._count.maybe} intéressés)</h3>
           {plan.status === "COMPLETED" && isParticipant && (
             <span className="text-xs text-[var(--os-muted)]">Clique sur un participant pour lui donner un retour</span>
           )}
@@ -593,7 +607,7 @@ export default function PlanDetailPage() {
               <span className="text-sm font-semibold text-[var(--os-fg)]">{p.user.name || t.plans.anonymous}</span>
               {reliabilities[p.user.id] && (
                 <span className={`text-[10px] font-bold ml-1 ${
-                  reliabilities[p.user.id].level === "Nouveau" ? "text-zinc-400" :
+                  reliabilities[p.user.id].level === "Nouveau" ? "text-[var(--os-muted)]" :
                   reliabilities[p.user.id].level === "Confirmé" ? "text-blue-500" :
                   reliabilities[p.user.id].level === "Fiable" ? "text-emerald-500" :
                   "text-purple-500"
@@ -621,19 +635,19 @@ export default function PlanDetailPage() {
 
       {/* Chat */}
       <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-zinc-100 px-5 py-3 dark:border-zinc-800">
+        <div className="flex items-center gap-2 border-b border-[var(--os-card-border)] px-4 sm:px-5 py-3">
           <MessageSquare className="h-4 w-4 text-outside-500" />
-          <h3 className="text-sm font-bold text-[var(--os-fg)]">Discussion du plan</h3>
+          <h3 className="text-sm font-bold gradient-text">{t.planChat.chatTitle}</h3>
           {(plan.status === "COMPLETED" || plan.status === "CANCELLED") && (
             <span className="ml-auto text-[10px] font-bold uppercase text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
-              Archivée
+              {t.planChat.archived}
             </span>
           )}
         </div>
 
         {!isParticipant && !isCreator ? (
           <div className="p-6 text-center">
-            <p className="text-sm text-[var(--os-muted)]">Rejoins le plan pour accéder à la discussion.</p>
+            <p className="text-sm text-[var(--os-muted)]">{t.planChat.joinToChat}</p>
           </div>
         ) : chatLoading ? (
           <div className="p-6 text-center">
@@ -641,7 +655,7 @@ export default function PlanDetailPage() {
           </div>
         ) : messages.length === 0 ? (
           <div className="p-6 text-center">
-            <p className="text-sm text-[var(--os-muted)]">Aucun message pour le moment.</p>
+            <p className="text-sm text-[var(--os-muted)]">{t.planChat.noMessages}</p>
             <p className="text-xs text-[var(--os-muted)] mt-1">Sois le premier à écrire !</p>
           </div>
         ) : (
@@ -652,7 +666,7 @@ export default function PlanDetailPage() {
                 <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
                   <Avatar src={msg.author.image} name={msg.author.name} size="sm" />
                   <div className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
-                    <div className={`rounded-2xl px-3 py-2 text-sm ${isMe ? "bg-outside-100 text-outside-900" : "bg-zinc-100 text-[var(--os-fg)] dark:bg-zinc-800"}`}>
+                    <div className={`rounded-2xl px-3 py-2 text-sm ${isMe ? "bg-outside-100 text-outside-900" : "bg-[var(--os-card)] text-[var(--os-fg)]"}`}>
                       <p>{msg.content}</p>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
@@ -682,7 +696,7 @@ export default function PlanDetailPage() {
         )}
 
         {(isParticipant || isCreator) && plan.status !== "COMPLETED" && plan.status !== "CANCELLED" && (
-          <div className="border-t border-zinc-100 p-3 dark:border-zinc-800">
+          <div className="border-t border-[var(--os-card-border)] p-3">
             <form
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -710,7 +724,7 @@ export default function PlanDetailPage() {
                 onChange={(e) => setChatInput(e.target.value)}
                 maxLength={500}
                 placeholder="Écris un message..."
-                className="flex-1 rounded-xl border border-zinc-200 bg-[var(--os-bg)] px-3 py-2 text-sm text-[var(--os-fg)] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-outside-500 dark:border-zinc-700"
+                className="flex-1 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] px-3 py-2 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500"
               />
               <button
                 type="submit"
@@ -724,6 +738,23 @@ export default function PlanDetailPage() {
           </div>
         )}
       </div>
+
+      {(isParticipant || isCreator) && (
+        <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 space-y-3">
+          <h3 className="text-sm font-black text-[var(--os-fg)]">{t.planChat.inviteCircle}</h3>
+          <p className="text-xs text-[var(--os-muted)]">Partage ce plan — tu choisis quand et comment envoyer.</p>
+          <PlanInviteShare
+            planId={plan.id}
+            planTitle={plan.title}
+            onInviteByDm={() => {
+              setInviteByMessageOpen(true);
+              fetch("/api/dm/conversations")
+                .then((r) => r.json())
+                .then((data) => setConversations(data.conversations || []));
+            }}
+          />
+        </div>
+      )}
 
       {/* Polls */}
       {(isParticipant || isCreator) && (
@@ -742,7 +773,12 @@ export default function PlanDetailPage() {
         title="Inviter un ami"
       >
         {friends.length === 0 ? (
-          <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis à inviter.</p>
+          <div className="space-y-3 text-center">
+            <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore d&apos;amis sur OUTSIDE.</p>
+            <Link href="/invite" className="inline-flex rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white">
+              Invite ton cercle
+            </Link>
+          </div>
         ) : (
           <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {friends.map((f) => (
@@ -779,7 +815,7 @@ export default function PlanDetailPage() {
                   disabled={inviteLoading}
                   className="rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1.5 text-xs font-bold text-white shadow-glow disabled:opacity-50 active:scale-95"
                 >
-                  Inviter
+                  {t.planActions.invite}
                 </button>
               </div>
             ))}
@@ -848,10 +884,10 @@ export default function PlanDetailPage() {
       >
         <div className="flex flex-col items-center gap-4 p-2">
           {qrLoading ? (
-            <div className="h-48 w-48 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-48 w-48 animate-pulse rounded-xl bg-[var(--os-card)]" />
           ) : qrData ? (
             <>
-              <img src={qrData.qr} alt="QR Code" className="h-48 w-48 rounded-xl border border-zinc-200 dark:border-zinc-700" />
+              <img src={qrData.qr} alt="QR Code" className="h-48 w-48 rounded-xl border border-[var(--os-card-border)]" />
               <div className="text-center">
                 <p className="text-sm font-bold text-[var(--os-fg)]">{qrData.title}</p>
                 <p className="text-xs text-[var(--os-muted)]">{qrData.city}</p>
@@ -876,13 +912,13 @@ export default function PlanDetailPage() {
                   }}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow active:scale-95 transition-all"
                 >
-                  <Share2 className="h-4 w-4" />
-                  Partager
-                </button>
+                    <Share2 className="h-4 w-4" />
+                    {t.planActions.share}
+                  </button>
                 <a
                   href={qrData.qr}
                   download={`outside-plan-${id}.png`}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--os-card-border)] px-4 py-2 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
                 >
                   <Download className="h-4 w-4" />
                   Télécharger
@@ -899,7 +935,7 @@ export default function PlanDetailPage() {
       <BottomSheet
         open={showSafetySheet}
         onClose={() => setShowSafetySheet(false)}
-        title="Mode sécurité"
+        title={t.planActions.safetyMode}
       >
         <div className="space-y-4 p-2">
           <div className="rounded-xl bg-amber-50 p-3 flex items-start gap-2 dark:bg-amber-950/20">
@@ -936,7 +972,7 @@ export default function PlanDetailPage() {
                   }
                 }}
                 disabled={safetyLoading}
-                className="flex w-full items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left hover:bg-zinc-50 transition-colors dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                className="flex w-full items-center gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-3 text-left hover:bg-[var(--os-bg)] transition-colors pressable"
               >
                 <Avatar src={c.trustedUser.image} name={c.trustedUser.name} size="md" />
                 <div className="flex-1">
@@ -953,6 +989,18 @@ export default function PlanDetailPage() {
           )}
         </div>
       </BottomSheet>
+
+      {plan && (
+        <AfterPlanSheet
+          isOpen={afterPlanOpen}
+          onClose={() => setAfterPlanOpen(false)}
+          planId={plan.id}
+          planTitle={plan.title}
+          participants={plan.participants
+            .filter((p) => p.user.id !== session?.user?.id)
+            .map((p) => ({ id: p.user.id, name: p.user.name, image: p.user.image }))}
+        />
+      )}
     </div>
   );
 }
@@ -964,8 +1012,8 @@ function InfoRow({ icon: Icon, label, value }: { icon: typeof MapPin; label: str
         <Icon className="h-4 w-4 text-outside-600 dark:text-outside-400" />
       </div>
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{label}</p>
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">{label}</p>
+        <p className="text-sm font-semibold text-[var(--os-fg)]">{value}</p>
       </div>
     </div>
   );

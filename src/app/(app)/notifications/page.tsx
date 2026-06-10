@@ -2,10 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getUserLocale } from "@/lib/locale";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Bell,
@@ -22,23 +25,25 @@ import {
   Compass,
 } from "lucide-react";
 
-interface Notification {
+interface NotificationItem {
   id: string;
   type: string;
   title: string;
   body: string | null;
   createdAt: string;
   isRead: boolean;
-  link?: string;
-  actorName?: string | null;
-  actorImage?: string | null;
-  data?: Record<string, unknown>;
+  link: string | null;
+  actorName: string | null;
+  actorImage: string | null;
+  data: Record<string, string> | null;
 }
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const { addToast } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useDictionary();
 
   const fetchNotifications = useCallback(() => {
     fetch("/api/notifications")
@@ -64,7 +69,7 @@ export default function NotificationsPage() {
     if (minutes < 1) return "À l'instant";
     if (minutes < 60) return `Il y a ${minutes} min`;
     if (hours < 24) return `Il y a ${hours} h`;
-    return new Date(dateStr).toLocaleDateString("fr-FR");
+    return new Date(dateStr).toLocaleDateString(getUserLocale());
   }
 
   function iconFor(type: string) {
@@ -115,7 +120,7 @@ export default function NotificationsPage() {
       case "badge_earned":
         return "bg-yellow-100 text-yellow-600";
       default:
-        return "bg-zinc-100 text-zinc-600";
+        return "bg-[var(--os-card)] text-[var(--os-muted)]";
     }
   }
 
@@ -137,7 +142,7 @@ export default function NotificationsPage() {
     }
   }
 
-  function getLink(n: Notification): string {
+  function getLink(n: NotificationItem): string {
     if (n.link) return n.link;
     if (n.data?.planId) return `/plans/${n.data.planId}`;
     if (n.data?.liveId) return `/live/${n.data.liveId}`;
@@ -182,7 +187,7 @@ export default function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <EmptyState
           icon={Bell}
-          title="Aucune notification"
+          title={t.notification.noNotifications}
           description="Pour le moment, rien de nouveau."
         />
       ) : (
@@ -198,7 +203,7 @@ export default function NotificationsPage() {
                   if (!n.isRead) {
                     e.preventDefault();
                     markOneRead(n.id).then(() => {
-                      window.location.href = href;
+                      router.push(href);
                     });
                   }
                 }}

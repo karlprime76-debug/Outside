@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET() {
   try {
@@ -19,6 +20,7 @@ export async function GET() {
       ? await db.city.findUnique({ where: { id: dbUser.activeCityId }, select: { id: true, name: true } })
       : null;
 
+    const blockedIds = await getUserBlockedIds(user.id);
     const cityId = activeCity?.id;
     const cityName = activeCity?.name;
 
@@ -30,6 +32,7 @@ export async function GET() {
               cityId,
               status: "ACTIVE",
               visibility: "PUBLIC",
+              creatorId: { notIn: blockedIds },
             },
             orderBy: { startDate: "asc" },
             take: 10,
@@ -46,6 +49,7 @@ export async function GET() {
             where: {
               city: cityName,
               status: { in: ["LIVE", "SCHEDULED"] },
+              hostId: { notIn: blockedIds },
             },
             orderBy: [{ status: "desc" }, { startedAt: "desc" }],
             take: 10,

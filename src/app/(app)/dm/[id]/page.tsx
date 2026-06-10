@@ -1,10 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Loader2, MapPin, Calendar, X } from "lucide-react";
+import { Loader2, MapPin, Calendar, X, RefreshCw, ImageOff } from "lucide-react";
+import { getUserLocale } from "@/lib/locale";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useDictionary } from "@/hooks/use-dictionary";
+import { useHaptic } from "@/hooks/use-haptic";
 import { DmConversationHeader } from "@/components/dm/dm-conversation-header";
+import { DmSearchOverlay } from "@/components/dm/dm-search-overlay";
+import { DmMediaHistory } from "@/components/dm/dm-media-history";
 import { DmMessageBubble, type DmMessage } from "@/components/dm/dm-message-bubble";
 import { DmDateSeparator } from "@/components/dm/dm-date-separator";
 import { DmMessageComposer } from "@/components/dm/dm-message-composer";
@@ -49,7 +55,20 @@ export default function DmConversationPage() {
     _count: { participants: number };
   }>>([]);
   const [plansLoading, setPlansLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [mediaOpen, setMediaOpen] = useState(false);
+  const [momentSelectorOpen, setMomentSelectorOpen] = useState(false);
+  const [momentsList, setMomentsList] = useState<Array<{
+    id: string;
+    mediaUrl: string;
+    caption: string | null;
+    type: string;
+    createdAt: string;
+  }>>([]);
+  const [momentsLoading, setMomentsLoading] = useState(false);
+  const t = useDictionary();
 
+  const haptic = useHaptic();
   const listRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
   const prevMessagesLen = useRef(0);
@@ -66,7 +85,7 @@ export default function DmConversationPage() {
         const conv = data.conversations.find((c: { id: string }) => c.id === id);
         if (conv?.other) setOther(conv.other);
       })
-      .catch(() => {});
+      .catch((err) => { console.error("[DM_ERROR] Failed to fetch conversation:", err); });
   }, [id]);
 
   const fetchMessages = useCallback(async (cursor?: string) => {
@@ -93,7 +112,7 @@ export default function DmConversationPage() {
         setNextCursor(data.nextCursor);
         prevMessagesLen.current = data.messages.length;
         // mark as read
-        fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch(() => {});
+        fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch((err) => { console.error("[DM_ERROR] Failed to mark conversation as read:", err); });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erreur.");
       } finally {
@@ -152,7 +171,7 @@ export default function DmConversationPage() {
         });
         // mark read if near bottom
         if (isNearBottomRef.current) {
-          fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch(() => {});
+          fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch((err) => { console.error("[DM_ERROR] Failed to mark conversation as read:", err); });
         }
       } catch (e) { console.error("[DM_POLL]", e); }
     };
@@ -249,7 +268,11 @@ export default function DmConversationPage() {
       const j = await res.json();
       if (!res.ok) {
         setError(j.error || "Impossible d'envoyer le message.");
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId ? { ...m, status: "FAILED" } : m
+          )
+        );
         return;
       }
       setMessages((prev) =>
@@ -257,7 +280,11 @@ export default function DmConversationPage() {
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur.");
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId ? { ...m, status: "FAILED" } : m
+        )
+      );
     } finally {
       setSending(false);
     }
@@ -317,6 +344,52 @@ export default function DmConversationPage() {
     } catch (e) { console.error("[REACT_MSG]", e); }
   }
 
+  async function onRetryMessage(mid: string) {
+    const msg = messages.find((m) => m.id === mid);
+    if (!msg) return;
+    setMessages((prev) => prev.map((m) => (m.id === mid ? { ...m, status: "SENDING" } : m)));
+    try {
+      const body: Record<string, unknown> = { content: msg.content, type: msg.type || "TEXT" };
+      if (msg.mediaUrl) body.mediaUrl = msg.mediaUrl;
+      if (msg.mediaPath) body.mediaPath = msg.mediaPath;
+      if (msg.mediaName) body.mediaName = msg.mediaName;
+      if (msg.mediaMimeType) body.mediaMimeType = msg.mediaMimeType;
+      if (msg.mediaSize) body.mediaSize = msg.mediaSize;
+      if (msg.momentId) body.momentId = msg.momentId;
+      if (msg.metadata) body.metadata = JSON.parse(msg.metadata);
+      const res = await fetch(`/api/dm/conversations/${id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = await res.json();
+      if (!res.ok) {
+        setMessages((prev) => prev.map((m) => (m.id === mid ? { ...m, status: "FAILED" } : m)));
+        return;
+      }
+      setMessages((prev) =>
+        prev.map((m) => (m.id === mid ? { ...j.message, createdAt: j.message.createdAt } : m))
+      );
+    } catch {
+      setMessages((prev) => prev.map((m) => (m.id === mid ? { ...m, status: "FAILED" } : m)));
+    }
+  }
+
+  const handleRefresh = useCallback(async () => {
+    haptic.medium();
+    const data = await fetchMessages().catch(() => null);
+    if (data) {
+      setMessages(data.messages);
+      setNextCursor(data.nextCursor);
+      fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch((err) => { console.error("[DM_ERROR] Failed to mark conversation as read:", err); });
+    }
+  }, [fetchMessages, id]);
+
+  const { containerRef: pullRefreshRef, isPulling, pullDistance, isRefreshing, progress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    enabled: !loading,
+  });
+
   // Build render items with separators
   const renderItems = useMemo(() => {
     const items: Array<
@@ -345,10 +418,31 @@ export default function DmConversationPage() {
       <DmConversationHeader 
         other={other} 
         onBack={() => router.back()} 
+        onOpenSearch={() => setSearchOpen(true)}
+        onOpenMedia={() => setMediaOpen(true)}
       />
 
       {/* Messages */}
-      <div ref={listRef} className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2">
+      <div
+        ref={(el) => {
+          (listRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+          (pullRefreshRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        }}
+        className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 relative"
+      >
+        {/* Pull to refresh indicator */}
+        <div
+          className="absolute top-0 left-0 right-0 flex items-center justify-center pointer-events-none z-50"
+          style={{
+            transform: `translateY(${isPulling ? Math.min(pullDistance, 80) : -80}px)`,
+            opacity: progress,
+          }}
+        >
+          <RefreshCw
+            className={`h-6 w-6 text-outside-500 transition-transform ${isRefreshing ? "animate-spin" : ""}`}
+            style={{ transform: isRefreshing ? "none" : `rotate(${progress * 360}deg)` }}
+          />
+        </div>
         {loading ? (
           <div className="flex items-center justify-center py-12 text-[var(--os-muted)]">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -376,6 +470,7 @@ export default function DmConversationPage() {
                   onDelete={item.isMine ? onDeleteMessage : undefined}
                   onReport={onReportMessage}
                   onReact={onReactMessage}
+                  onRetry={item.isMine ? onRetryMessage : undefined}
                 />
               );
             })}
@@ -389,27 +484,51 @@ export default function DmConversationPage() {
         </div>
       )}
 
-      <DmMessageComposer onSend={onSend} sending={sending} conversationId={id} onOpenPlanSelector={() => {
-        setPlanSelectorOpen(true);
-        setPlansLoading(true);
-        fetch("/api/plans/my")
-          .then((r) => (r.ok ? r.json() : null))
-          .then((data) => setPlansList(data?.plans || []))
-          .finally(() => setPlansLoading(false));
-      }} />
+      <DmMessageComposer
+        onSend={onSend}
+        sending={sending}
+        conversationId={id}
+        onOpenPlanSelector={() => {
+          setPlanSelectorOpen(true);
+          setPlansLoading(true);
+          fetch("/api/plans/my")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => setPlansList(data?.plans || []))
+            .finally(() => setPlansLoading(false));
+        }}
+        onOpenMomentSelector={() => {
+          setMomentSelectorOpen(true);
+          setMomentsLoading(true);
+          fetch("/api/moments/mine")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => setMomentsList(data?.moments || []))
+            .finally(() => setMomentsLoading(false));
+        }}
+        onShareProfile={() => {
+          onSend("", {
+            type: "PROFILE",
+            metadata: {
+              userId: session?.user?.id,
+              name: session?.user?.name,
+              username: session?.user?.username,
+              image: session?.user?.image,
+            },
+          });
+        }}
+      />
 
       {/* Plan selector modal */}
       {planSelectorOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setPlanSelectorOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-surface-card dark:border dark:border-surface-border">
+            <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">Inviter à un plan</h3>
+              <h3 className="text-lg font-black text-[var(--os-fg)]">{t.dm.inviteToPlan}</h3>
               <button
                 onClick={() => setPlanSelectorOpen(false)}
-                className="rounded-lg p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="rounded-lg p-1 hover:bg-[var(--os-bg)] transition-colors"
               >
-                <X className="h-4 w-4 text-zinc-500" />
+                <X className="h-4 w-4 text-[var(--os-muted)]" />
               </button>
             </div>
             {plansLoading ? (
@@ -417,7 +536,7 @@ export default function DmConversationPage() {
                 <Loader2 className="h-5 w-5 animate-spin" />
               </div>
             ) : plansList.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">Aucun plan disponible.</p>
+              <p className="text-sm text-[var(--os-muted)]">Aucun plan disponible.</p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {plansList.map((p) => (
@@ -438,11 +557,11 @@ export default function DmConversationPage() {
                       });
                       setPlanSelectorOpen(false);
                     }}
-                    className="w-full text-left flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    className="w-full text-left flex items-center gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] px-3 py-2 hover:bg-[var(--os-card)] transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{p.title}</p>
-                      <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      <p className="text-sm font-semibold text-[var(--os-fg)] truncate">{p.title}</p>
+                      <div className="flex items-center gap-2 text-xs text-[var(--os-muted)] mt-0.5">
                         {p.city && (
                           <span className="flex items-center gap-0.5">
                             <MapPin className="h-3 w-3" />
@@ -451,7 +570,7 @@ export default function DmConversationPage() {
                         )}
                         <span className="flex items-center gap-0.5">
                           <Calendar className="h-3 w-3" />
-                          {new Date(p.startDate).toLocaleDateString("fr-FR")}
+                          {new Date(p.startDate).toLocaleDateString(getUserLocale())}
                         </span>
                       </div>
                     </div>
@@ -464,6 +583,82 @@ export default function DmConversationPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Moment selector modal */}
+      {momentSelectorOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMomentSelectorOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-[var(--os-fg)]">{t.dm.shareMoment}</h3>
+              <button
+                onClick={() => setMomentSelectorOpen(false)}
+                className="rounded-lg p-1 hover:bg-[var(--os-bg)] transition-colors"
+              >
+                <X className="h-4 w-4 text-[var(--os-muted)]" />
+              </button>
+            </div>
+            {momentsLoading ? (
+              <div className="flex items-center justify-center py-8 text-[var(--os-muted)]">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : momentsList.length === 0 ? (
+              <p className="text-sm text-[var(--os-muted)]">Aucun moment à partager.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto">
+                {momentsList.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      onSend("", {
+                        type: "MOMENT",
+                        momentId: m.id,
+                        metadata: { mediaUrl: m.mediaUrl, caption: m.caption },
+                      });
+                      setMomentSelectorOpen(false);
+                    }}
+                    className="group relative aspect-square rounded-xl overflow-hidden border border-[var(--os-card-border)] bg-[var(--os-card)] hover:border-outside-400 transition-all"
+                  >
+                    {m.mediaUrl ? (
+                      <img
+                        src={m.mediaUrl}
+                        alt={m.caption || "Moment"}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <ImageOff className="h-6 w-6 text-[var(--os-muted)]" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    {m.caption && (
+                      <p className="absolute bottom-0 left-0 right-0 p-1.5 text-[10px] text-white bg-gradient-to-t from-black/60 to-transparent line-clamp-1">
+                        {m.caption}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {searchOpen && (
+        <DmSearchOverlay
+          conversationId={id}
+          myId={myId}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
+
+      {mediaOpen && (
+        <DmMediaHistory
+          conversationId={id}
+          onClose={() => setMediaOpen(false)}
+        />
       )}
     </OutsidePage>
   );

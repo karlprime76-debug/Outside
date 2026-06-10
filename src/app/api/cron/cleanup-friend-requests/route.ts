@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-const CRON_SECRET = process.env.CRON_SECRET;
-
 export async function POST(req: Request) {
   try {
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
+    }
     const authHeader = req.headers.get("authorization");
-    const expected = CRON_SECRET ? `Bearer ${CRON_SECRET}` : undefined;
-
-    if (expected && authHeader !== expected) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 

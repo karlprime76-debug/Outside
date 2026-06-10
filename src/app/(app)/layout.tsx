@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 export const dynamic = "force-dynamic";
 import { BottomNav } from "@/components/bottom-nav";
@@ -153,7 +154,9 @@ export default async function AppLayout({
 
       {/* Main content */}
       <main className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
-        <UiProviders>{children}</UiProviders>
+        <UiProviders>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </UiProviders>
       </main>
 
       {/* Mobile bottom navigation */}

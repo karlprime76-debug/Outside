@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { X, ZoomIn, ZoomOut, RotateCcw, Download } from "lucide-react";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface MediaViewerProps {
   src: string;
@@ -22,6 +23,7 @@ export function MediaViewer({ src, type, alt, onClose, downloadUrl }: MediaViewe
   const panRef = useRef({ startX: 0, startY: 0, lastX: 0, lastY: 0 });
   const lastTapRef = useRef(0);
   const touchCountRef = useRef(0);
+  const t = useDictionary();
 
   const MIN_SCALE = 1;
   const MAX_SCALE = 4;
@@ -170,18 +172,19 @@ export function MediaViewer({ src, type, alt, onClose, downloadUrl }: MediaViewe
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onDoubleClick={handleDoubleClick}
+      onClick={onClose}
     >
       {/* Close button */}
       <button
-        onClick={onClose}
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
         className="absolute top-4 right-4 z-[101] rounded-full bg-white/10 p-2.5 text-white hover:bg-white/20 transition-colors"
-        aria-label="Fermer"
+        aria-label={t.common.close}
       >
         <X className="h-5 w-5" />
       </button>
 
       {/* Zoom controls */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[101] flex items-center gap-3 rounded-full bg-white/10 px-4 py-2 backdrop-blur-md">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[101] flex items-center gap-3 rounded-full bg-white/10 px-4 py-2 backdrop-blur-md" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={() => applyTransform(scale * 0.8, translate.x, translate.y)}
           disabled={scale <= MIN_SCALE}
@@ -224,6 +227,7 @@ export function MediaViewer({ src, type, alt, onClose, downloadUrl }: MediaViewe
         style={{
           cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "default",
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         {type === "image" ? (
           <img

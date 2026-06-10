@@ -80,11 +80,11 @@ export default function PlacesPage() {
 
       {/* Category pills */}
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => setCategory("")}>
+        <button onClick={() => setCategory("")} aria-label="Toutes les catégories">
           <Badge variant={category === "" ? "orange" : "default"}>{t.home.all}</Badge>
         </button>
         {CATEGORIES.map((c) => (
-          <button key={c} onClick={() => setCategory(c)}>
+          <button key={c} onClick={() => setCategory(c)} aria-label={`Catégorie : ${c.charAt(0) + c.slice(1).toLowerCase()}`}>
             <Badge variant={category === c ? "orange" : "default"}>
               {c.charAt(0) + c.slice(1).toLowerCase()}
             </Badge>
@@ -111,14 +111,14 @@ export default function PlacesPage() {
             <Link
               key={place.id}
               href={`/places/${place.id}`}
-              className="group os-card p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
+              className="group os-card p-5 shadow-card card-hover"
             >
               <div className="flex gap-2 mb-3">
                 <Badge variant="orange">{place.category}</Badge>
                 {place.isPartner && <Badge variant="pink">{t.places.partner}</Badge>}
               </div>
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 mb-1 group-hover:text-outside-600 dark:group-hover:text-outside-400 transition-colors">{place.name}</h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">{place.city.name}{place.neighborhood ? ` · ${place.neighborhood}` : ""}</p>
+              <h3 className="font-bold text-[var(--os-fg)] mb-1 group-hover:text-outside-600 dark:group-hover:text-outside-400 transition-colors">{place.name}</h3>
+              <p className="text-sm text-[var(--os-muted)]">{place.city.name}{place.neighborhood ? ` · ${place.neighborhood}` : ""}</p>
             </Link>
           ))}
         </div>

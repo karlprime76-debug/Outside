@@ -11,6 +11,7 @@ import Link from "next/link";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { useMomentPolling } from "@/hooks/use-moment-polling";
 import { useHaptic } from "@/hooks/use-haptic";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 
 interface Author {
@@ -61,96 +62,98 @@ const SCOPE_LABELS: Record<Scope, string> = {
   following: "Abonnements",
 };
 
-const EMPTY_STATES: Record<Scope, { title: string; description: string; icon: typeof Camera; actions?: React.ReactNode }> = {
-  "for-you": {
-    title: "Découvre ce qui se passe",
-    description: "Publie, suis des comptes et explore ce qui bouge dehors.",
-    icon: Sparkles,
-    actions: (
-      <div className="flex flex-col gap-3">
-        <Link
-          href="/moments/new"
-          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
-        >
-          <Camera className="h-4 w-4" />
-          Ajouter un moment
-        </Link>
-        <Link
-          href="/users/discover"
-          className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all active:scale-95"
-        >
-          <Search className="h-4 w-4" />
-          Découvrir des comptes
-        </Link>
-      </div>
-    ),
-  },
-  city: {
-    title: "Ta ville est calme",
-    description: "Aucun Moment dans ta ville pour le moment. Sois le premier à publier.",
-    icon: MapPin,
-    actions: (
-      <div className="flex flex-col gap-3">
-        <Link
-          href="/moments/new"
-          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
-        >
-          <Camera className="h-4 w-4" />
-          Publier ici
-        </Link>
-        <Link
-          href="/users/discover"
-          className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all active:scale-95"
-        >
-          <UserPlus className="h-4 w-4" />
-          Découvrir des comptes locaux
-        </Link>
-      </div>
-    ),
-  },
-  friends: {
-    title: "Ajoute des amis",
-    description: "Ajoute des amis pour voir leurs Moments ici.",
-    icon: Users,
-    actions: (
-      <div className="flex flex-col gap-3">
-        <Link
-          href="/friends"
-          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-outside-100 px-5 py-2.5 text-sm font-bold text-outside-700 hover:bg-outside-200 transition-colors active:scale-95"
-        >
-          <UserPlus className="h-4 w-4" />
-          Trouver des amis
-        </Link>
-        <Link
-          href="/invite"
-          className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all active:scale-95"
-        >
-          <Users className="h-4 w-4" />
-          Inviter ton cercle
-        </Link>
-      </div>
-    ),
-  },
-  following: {
-    title: "Suis des comptes",
-    description: "Suis des comptes pour remplir cet espace avec leurs Moments.",
-    icon: Search,
-    actions: (
-      <Link
-        href="/u"
-        className="inline-flex items-center gap-1.5 rounded-full bg-outside-100 px-5 py-2.5 text-sm font-bold text-outside-700 hover:bg-outside-200 transition-colors active:scale-95"
-      >
-        <Search className="h-4 w-4" />
-        Découvrir
-      </Link>
-    ),
-  },
-};
-
 export function MomentFeed() {
   const [scope, setScope] = useState<Scope>("for-you");
   const media = "all";
   const haptic = useHaptic();
+  const t = useDictionary();
+
+  const EMPTY_STATES: Record<Scope, { title: string; description: string; icon: typeof Camera; actions?: React.ReactNode }> = {
+    "for-you": {
+      title: "Découvre ce qui se passe",
+      description: "Publie, suis des comptes et explore ce qui bouge dehors.",
+      icon: Sparkles,
+      actions: (
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/moments/new"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
+          >
+            <Camera className="h-4 w-4" />
+            Ajouter un moment
+          </Link>
+          <Link
+            href="/users/discover"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all active:scale-95"
+          >
+            <Search className="h-4 w-4" />
+            Découvrir des comptes
+          </Link>
+        </div>
+      ),
+    },
+    city: {
+      title: "Ta ville est calme",
+      description: t.moment.noMoments,
+      icon: MapPin,
+      actions: (
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/moments/new"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
+          >
+            <Camera className="h-4 w-4" />
+            Publier ici
+          </Link>
+          <Link
+            href="/users/discover"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all active:scale-95"
+          >
+            <UserPlus className="h-4 w-4" />
+            Découvrir des comptes locaux
+          </Link>
+        </div>
+      ),
+    },
+    friends: {
+      title: "Ajoute des amis",
+      description: "Ajoute des amis pour voir leurs Moments ici.",
+      icon: Users,
+      actions: (
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/friends"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-outside-100 px-5 py-2.5 text-sm font-bold text-outside-700 hover:bg-outside-200 transition-colors active:scale-95"
+          >
+            <UserPlus className="h-4 w-4" />
+            Trouver des amis
+          </Link>
+          <Link
+            href="/invite"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--os-card-border)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-all active:scale-95"
+          >
+            <Users className="h-4 w-4" />
+            Inviter ton cercle
+          </Link>
+        </div>
+      ),
+    },
+    following: {
+      title: "Suis des comptes",
+      description: "Suis des comptes pour remplir cet espace avec leurs Moments.",
+      icon: Search,
+      actions: (
+        <Link
+          href="/u"
+          className="inline-flex items-center gap-1.5 rounded-full bg-outside-100 px-5 py-2.5 text-sm font-bold text-outside-700 hover:bg-outside-200 transition-colors active:scale-95"
+        >
+          <Search className="h-4 w-4" />
+          Découvrir
+        </Link>
+      ),
+    },
+  };
+
   const [moments, setMoments] = useState<FeedMoment[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

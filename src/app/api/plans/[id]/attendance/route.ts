@@ -34,7 +34,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         where: { planId_userId: { planId: id, userId: user.id } },
       });
 
-      removePlanReminders(user.id, id).catch(() => {});
+      removePlanReminders(user.id, id).catch((err) => { console.error("[PLAN_ERROR] Failed to remove plan reminders:", err); });
 
       // Recalculate plan status
       const goingCount = await db.planParticipant.count({
@@ -61,7 +61,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       data: { attendance },
     });
 
-    createPlanReminders(user.id, id, participant.plan.startDate).catch(() => {});
+    createPlanReminders(user.id, id, participant.plan.startDate).catch((err) => { console.error("[PLAN_ERROR] Failed to create plan reminders:", err); });
 
     // Recalculate FULL status
     if (attendance === "GOING") {

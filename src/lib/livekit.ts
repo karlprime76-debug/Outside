@@ -46,16 +46,13 @@ export async function createLiveKitToken({ liveId, userId, name, isHost }: Creat
       isHost,
       canPublish: isHost,
       canSubscribe: true,
-      hasLivekitUrl: Boolean(process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL),
-      hasApiKey: Boolean(apiKey),
-      hasApiSecret: Boolean(apiSecret),
     });
   }
 
   const token = new AccessToken(apiKey, apiSecret, {
     identity,
     name: name || identity,
-    ttl: 2 * 60 * 60, // 2 heures
+    ttl: 2 * 60 * 60,
   });
 
   token.addGrant({
@@ -63,7 +60,7 @@ export async function createLiveKitToken({ liveId, userId, name, isHost }: Creat
     room: roomName,
     canPublish: isHost,
     canSubscribe: true,
-    canPublishData: true,
+    canPublishData: isHost,
   });
 
   return await token.toJwt();

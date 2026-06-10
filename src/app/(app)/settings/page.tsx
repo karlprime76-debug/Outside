@@ -408,7 +408,7 @@ export default function SettingsPage() {
                       updateSetting("pushEnabled", true);
                       addToast("Notifications push activées.", "success");
                       // Send test notification
-                      fetch("/api/push/test", { method: "POST" }).catch(() => {});
+                      fetch("/api/push/test", { method: "POST" }).catch((err) => { console.error("[PUSH_ERROR] Failed to send test push:", err); });
                     } else {
                       addToast("Permission refusée ou erreur.", "error");
                     }

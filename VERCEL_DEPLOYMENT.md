@@ -67,8 +67,23 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 Make sure your PostgreSQL database is accessible from Vercel:
 1. Use a managed database (Neon, Supabase, Railway, etc.)
-2. Ensure the DATABASE_URL allows external connections
-3. Run migrations: `npm run db:migrate`
+2. Set **two** connection strings in Vercel env vars:
+   - `DATABASE_URL` — Supabase **Transaction pooler** (port 6543, `?pgbouncer=true`)
+   - `DIRECT_URL` — Supabase **direct** connection (port 5432, `db.<ref>.supabase.co`)
+3. **Do not** run `prisma migrate deploy` during the Vercel build — the build network cannot reach Supabase direct (P1001).
+
+### Applying migrations to production
+
+**Option A — Supabase SQL Editor (recommended):**
+1. Open Supabase Dashboard → SQL → New query
+2. Paste and run `scripts/apply-pending-migrations.sql`
+3. Redeploy on Vercel (build only needs `prisma generate`)
+
+**Option B — From your machine:**
+```bash
+# .env.local must point DATABASE_URL + DIRECT_URL to production
+npm run db:deploy
+```
 
 ## Verification
 

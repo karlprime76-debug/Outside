@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Flame, Users, Calendar, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Plan } from "@/types/plan";
@@ -79,9 +80,9 @@ export function CityHighlights({ city }: { city: string }) {
                   href={`/u/${creator.username}`}
                   className="flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-accent-300 transition-colors"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden relative">
                     {creator.image ? (
-                      <img src={creator.image} alt={creator.name || ""} className="w-full h-full object-cover" />
+                      <Image src={creator.image} alt={creator.name || ""} fill className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white font-bold">
                         {creator.name?.[0] || "?"}
@@ -111,7 +112,7 @@ export function CityHighlights({ city }: { city: string }) {
                   href={`/moments/${moment.id}`}
                   className="aspect-square rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 hover:border-accent-300 transition-colors relative group"
                 >
-                  <img src={moment.mediaUrl} alt={moment.caption || ""} className="w-full h-full object-cover" />
+                  <Image src={moment.mediaUrl} alt={moment.caption || ""} fill className="object-cover" sizes="(max-width: 768px) 33vw, 200px" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               ))}
@@ -157,9 +158,9 @@ export function CityHighlights({ city }: { city: string }) {
                   href={`/u/${user.username}`}
                   className="flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-accent-300 transition-colors"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden relative">
                     {user.image ? (
-                      <img src={user.image} alt={user.name || ""} className="w-full h-full object-cover" />
+                      <Image src={user.image} alt={user.name || ""} fill className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white font-bold">
                         {user.name?.[0] || "?"}

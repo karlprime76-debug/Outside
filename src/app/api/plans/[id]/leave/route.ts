@@ -24,7 +24,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       where: { id: participant.id },
     });
 
-    removePlanReminders(user.id, id).catch(() => {});
+    removePlanReminders(user.id, id).catch((err) => { console.error("[PLAN_ERROR] Failed to remove plan reminders:", err); });
 
     const plan = await db.plan.findUnique({
       where: { id },

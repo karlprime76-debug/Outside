@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
+import { getUserBlockedIds } from "@/lib/blocks";
 import { notifyLiveStarted } from "@/lib/live-notifications";
+import { createLiveSchema } from "@/lib/validation/schemas";
 
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/lives";
@@ -25,6 +27,8 @@ export async function GET(req: Request) {
 
     const city = user?.activeCity?.name ?? null;
 
+    const blockedIds = await getUserBlockedIds(session.user.id);
+
     const DEMO_GLOBAL = process.env.DEMO_GLOBAL_VISIBILITY === "1" || process.env.DEMO_GLOBAL_VISIBILITY === "true";
     const lives = await db.liveSession.findMany({
       where: DEMO_GLOBAL
@@ -33,6 +37,7 @@ export async function GET(req: Request) {
               {
                 status: { in: ["LIVE", "SCHEDULED"] },
                 ...(city ? { city } : {}),
+                hostId: { notIn: blockedIds },
               },
               {
                 isDemo: true,
@@ -43,6 +48,7 @@ export async function GET(req: Request) {
         : {
             status: { in: ["LIVE", "SCHEDULED"] },
             ...(city ? { city } : {}),
+            hostId: { notIn: blockedIds },
           },
       orderBy: [
         { status: "asc" },
@@ -67,6 +73,12 @@ export async function POST(req: Request) {
   const perfLabel = "[PERF] POST /api/lives";
   logPerfStart(perfLabel);
   try {
+    const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
+    if (contentLength > 100000) {
+      logPerfEnd(perfLabel);
+      return NextResponse.json({ error: "Requête trop volumineuse." }, { status: 413 });
+    }
+
     const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Tu dois être connecté." }, { status: 401 });
@@ -82,11 +94,12 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { title, description, visibility, city, country, countryCode, planId, eventId, placeId, status: requestedStatus } = body;
-
-    if (!title || typeof title !== "string" || title.trim().length < 2) {
-      return NextResponse.json({ error: "Le titre est requis." }, { status: 400 });
+    const parsed = createLiveSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
+
+    const { title, description, visibility, city, country, countryCode, planId, eventId, placeId, status: requestedStatus } = body;
 
     const liveCity = city || user.activeCity?.name;
     if (!liveCity) {
@@ -128,7 +141,7 @@ export async function POST(req: Request) {
 
     // Notifier si le live est créé directement en LIVE
     if (live.status === "LIVE") {
-      notifyLiveStarted(live.id).catch(() => {});
+      notifyLiveStarted(live.id).catch((err) => { logError("[LIVE_ERROR]", "Failed to notify live started", { error: String(err) }); });
     }
 
     logPerfEnd(perfLabel);

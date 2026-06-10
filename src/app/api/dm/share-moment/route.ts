@@ -103,8 +103,8 @@ export async function POST(req: Request) {
           city: user.activeCity?.name ?? null,
           countryCode: user.countryCode ?? null,
         },
-      }).catch(() => {});
-      calculateMomentScore(momentId).catch(() => {});
+      }).catch((err) => { console.error("[MOMENT_ERROR] Failed to record moment event:", err); });
+      calculateMomentScore(momentId).catch((err) => { console.error("[MOMENT_ERROR] Failed to calculate moment score:", err); });
     }
 
     return NextResponse.json({ success: true, sentCount: createdMessages.length });

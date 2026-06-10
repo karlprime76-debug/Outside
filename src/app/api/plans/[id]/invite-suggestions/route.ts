@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET(
   req: Request,
@@ -14,7 +15,6 @@ export async function GET(
 
     const { id: planId } = await context.params;
 
-    // Get the plan details
     const plan = await db.plan.findUnique({
       where: { id: planId },
       include: {
@@ -30,6 +30,7 @@ export async function GET(
     const cityId = plan.cityId;
     const mood = plan.mood;
     const planCategory = plan.planCategory;
+    const blockedIds = await getUserBlockedIds(user.id);
 
     // Get friends in the same city
     const friends = await db.friendship.findMany({
@@ -52,14 +53,17 @@ export async function GET(
 
     const friendsInCity = friends
       .map((f) => (f.initiatorId === user.id ? f.receiver : f.initiator))
-      .filter((f) => f.activeCityId === cityId);
+      .filter((f) => f.activeCityId === cityId && !blockedIds.includes(f.id));
 
     // Get users with active outside status in the city
     const availableUsers = await db.userOutsideStatus.findMany({
       where: {
         city: plan.city.name,
         expiresAt: { gt: new Date() },
-        userId: { not: user.id },
+        userId: { notIn: [user.id, ...blockedIds] },
+        user: {
+          userSettings: { privateDiscoveryMode: false },
+        },
       },
       include: {
         user: {
@@ -69,7 +73,6 @@ export async function GET(
             username: true,
             image: true,
             activeCity: { select: { id: true, name: true } },
-            preferredMoods: true,
           },
         },
       },
@@ -80,8 +83,9 @@ export async function GET(
     const moodLovers = await db.user.findMany({
       where: {
         activeCityId: cityId,
-        id: { not: user.id },
+        id: { notIn: [user.id, ...blockedIds] },
         preferredMoods: { has: mood },
+        userSettings: { privateDiscoveryMode: false },
       },
       select: {
         id: true,
@@ -89,7 +93,6 @@ export async function GET(
         username: true,
         image: true,
         activeCity: { select: { id: true, name: true } },
-        preferredMoods: true,
       },
       take: 20,
     });
@@ -97,7 +100,8 @@ export async function GET(
     // Get users who have joined similar plans
     const similarPlanParticipants = await db.planParticipant.findMany({
       where: {
-        userId: { not: user.id },
+        userId: { notIn: [user.id, ...blockedIds] },
+        user: { userSettings: { privateDiscoveryMode: false } },
         plan: {
           cityId,
           OR: [{ mood }, { planCategory }],
@@ -124,6 +128,8 @@ export async function GET(
         followerId: user.id,
         following: {
           activeCityId: cityId,
+          id: { notIn: blockedIds },
+          userSettings: { privateDiscoveryMode: false },
         },
       },
       include: {
@@ -199,7 +205,6 @@ export async function GET(
       }
     });
 
-    // Convert to array and limit
     const suggestionsArray = Array.from(suggestions.values()).slice(0, 20);
 
     return NextResponse.json({ suggestions: suggestionsArray });

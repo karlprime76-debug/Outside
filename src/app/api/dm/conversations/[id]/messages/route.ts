@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canSendDirectMessage } from "@/lib/dm";
 import { createNotification } from "@/lib/notifications";
+import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { NotificationType } from "@prisma/client";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -74,6 +75,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (!otherPart) return NextResponse.json({ error: "Conversation invalide." }, { status: 400 });
     const can = await canSendDirectMessage(user.id, otherPart.userId);
     if (!can) return NextResponse.json({ error: "Cet utilisateur n'accepte pas les messages privés." }, { status: 403 });
+
+    const dmLimit = await rateLimit(`dm:${user.id}`, 30, 60000);
+    if (!dmLimit.success) {
+      return NextResponse.json(
+        { error: "Trop de messages. Réessaie plus tard." },
+        { status: 429, headers: getRateLimitHeaders(dmLimit) }
+      );
+    }
 
     const body = await req.json().catch(() => ({}));
     const content = (body.content || "").toString().trim();

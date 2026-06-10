@@ -1,28 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+
     const { searchParams } = new URL(req.url);
     const city = searchParams.get("city");
     const countryCode = searchParams.get("countryCode");
     const window = searchParams.get("window") || "24h";
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const limit = Math.min(parseInt(searchParams.get("limit") || "10"), 50);
 
-    if (!city && !countryCode) {
-      return NextResponse.json({ error: "city or countryCode required" }, { status: 400 });
-    }
+    const blockedIds = await getUserBlockedIds(user.id);
 
-    // Calculate time window
     const now = new Date();
-    const windowStart = window === "24h" 
-      ? new Date(now.getTime() - 24 * 60 * 60 * 1000)
-      : new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const windowStart = window === "7d"
+      ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      : new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // Fetch moments with engagement data
     const moments = await db.moment.findMany({
       where: {
         visibility: "PUBLIC",
+        authorId: { notIn: blockedIds },
         ...(city && { city }),
         ...(countryCode && { countryCode }),
         createdAt: { gte: windowStart },
@@ -30,108 +32,84 @@ export async function GET(req: NextRequest) {
       include: {
         author: {
           select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-            role: true,
-            isVerified: true,
-          },
-        },
-        _count: {
-          select: {
-            likes: true,
-            comments: true,
+            id: true, name: true, username: true, image: true, role: true, isVerified: true,
           },
         },
       },
       orderBy: { createdAt: "desc" },
-      take: limit * 3, // Fetch more to allow for filtering
+      take: limit * 3,
     });
 
-    // Get moment scores for all moments
+    if (moments.length === 0) {
+      return NextResponse.json({ moments: [] });
+    }
+
     const momentIds = moments.map((m) => m.id);
-    const momentScores = await db.momentScore.findMany({
-      where: { momentId: { in: momentIds } },
-    });
+    const [momentScores, reportedMoments] = await Promise.all([
+      db.momentScore.findMany({ where: { momentId: { in: momentIds } } }),
+      db.report.findMany({
+        where: { targetType: "MOMENT", targetId: { in: momentIds }, status: { in: ["PENDING", "REVIEWED"] } },
+        select: { targetId: true },
+      }),
+    ]);
+
     const scoreMap = new Map(momentScores.map((s) => [s.momentId, s]));
+    const reportedSet = new Set(reportedMoments.map((r) => r.targetId).filter(Boolean));
 
-    // Get reported moment IDs
-    const reportedMomentIds = await db.report.findMany({
-      where: {
-        targetType: "MOMENT",
-        status: { in: ["PENDING", "REVIEWED"] },
-      },
-      select: { targetId: true },
-    }).then((reports) => reports.map((r) => r.targetId).filter(Boolean));
+    const scoredMoments = moments
+      .filter((m) => !reportedSet.has(m.id))
+      .map((moment) => {
+        const s = scoreMap.get(moment.id);
+        const likes = s?.likes ?? 0;
+        const comments = s?.comments ?? 0;
+        const shares = s?.shares ?? 0;
+        const saves = s?.saves ?? 0;
+        const completions = s?.completions ?? 0;
+        const views = s?.views ?? 0;
+        const reports = s?.reports ?? 0;
 
-    // Filter out reported moments
-    const filteredMoments = moments.filter((m) => !reportedMomentIds.includes(m.id));
+        const completionRate = views > 0 ? completions / views : 0;
+        const ageHours = (now.getTime() - moment.createdAt.getTime()) / (1000 * 60 * 60);
+        const freshnessBoost = Math.max(0, 1 - ageHours / 48);
+        const reportPenalty = reports * 20;
 
-    // Calculate trending score for each moment
-    const scoredMoments = filteredMoments.map((moment) => {
-      const likes = moment._count.likes || 0;
-      const comments = moment._count.comments || 0;
-      
-      // Get engagement counts from MomentScore if available
-      const scoreData = scoreMap.get(moment.id);
-      const shares = scoreData?.shares || 0;
-      const saves = scoreData?.saves || 0;
-      const completions = scoreData?.completions || 0;
-      const views = scoreData?.views || 0;
-      
-      // Calculate completion rate
-      const completionRate = views > 0 ? completions / views : 0;
-      
-      // Calculate freshness boost (newer content gets boost)
-      const ageHours = (now.getTime() - moment.createdAt.getTime()) / (1000 * 60 * 60);
-      const freshnessBoost = Math.max(0, 1 - ageHours / 48); // Decays over 48 hours
-      
-      // Calculate trending score
-      const score = 
-        (likes * 1) +
-        (comments * 3) +
-        (shares * 5) +
-        (saves * 4) +
-        (completionRate * 10) +
-        (freshnessBoost * 5);
+        const score =
+          (likes * 1) +
+          (comments * 3) +
+          (shares * 5) +
+          (saves * 4) +
+          (completionRate * 10) +
+          (freshnessBoost * 5) -
+          reportPenalty;
 
-      return {
-        ...moment,
-        trendingScore: score,
-        completionRate,
-        freshnessBoost,
-      };
-    });
+        return { moment, score, completionRate, freshnessBoost, reportPenalty };
+      })
+      .filter((m) => m.score > 0);
 
-    // Sort by trending score
-    scoredMoments.sort((a, b) => b.trendingScore - a.trendingScore);
+    scoredMoments.sort((a, b) => b.score - a.score);
 
-    // Limit same author (max 2 per author)
     const authorCount = new Map<string, number>();
-    const authorFilteredMoments = scoredMoments.filter((moment) => {
-      const count = authorCount.get(moment.author.id) || 0;
+    const deduped = scoredMoments.filter((item) => {
+      const count = authorCount.get(item.moment.author.id) || 0;
       if (count >= 2) return false;
-      authorCount.set(moment.author.id, count + 1);
+      authorCount.set(item.moment.author.id, count + 1);
       return true;
     });
 
-    // Limit to requested number
-    const finalMoments = authorFilteredMoments.slice(0, limit);
+    const finalMoments = deduped.slice(0, limit);
 
-    // Determine badge based on score and freshness
-    const momentsWithBadges = finalMoments.map((moment) => {
+    const momentsWithBadges = finalMoments.map(({ moment, score }) => {
       const ageHours = (now.getTime() - moment.createdAt.getTime()) / (1000 * 60 * 60);
       let badge: "Tendance" | "Monte vite" | "Nouveau" | null = null;
-      
+
       if (ageHours < 6) {
         badge = "Nouveau";
-      } else if (moment.trendingScore > 50) {
+      } else if (score > 50) {
         badge = "Tendance";
-      } else if (moment.trendingScore > 20) {
+      } else if (score > 20) {
         badge = "Monte vite";
       }
-      
+
       return {
         id: moment.id,
         type: moment.type,
@@ -141,15 +119,14 @@ export async function GET(req: NextRequest) {
         countryCode: moment.countryCode,
         createdAt: moment.createdAt,
         author: moment.author,
-        _count: moment._count,
         badge,
-        trendingScore: moment.trendingScore,
+        trendingScore: Math.round(score * 100) / 100,
       };
     });
 
     return NextResponse.json({ moments: momentsWithBadges });
   } catch (error) {
-    console.error("Error fetching trending moments:", error);
-    return NextResponse.json({ error: "Failed to fetch trending moments" }, { status: 500 });
+    console.error("[TRENDING]", error);
+    return NextResponse.json({ error: "Erreur lors du chargement des tendances" }, { status: 500 });
   }
 }

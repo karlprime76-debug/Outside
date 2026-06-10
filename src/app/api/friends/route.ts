@@ -37,41 +37,6 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-    }
-
-    const body = await req.json();
-    const { userId } = body;
-    const currentUserId = session.user.id;
-
-    if (!userId || userId === currentUserId) {
-      return NextResponse.json({ error: "Utilisateur invalide." }, { status: 400 });
-    }
-
-    const existing = await db.friendship.findFirst({
-      where: {
-        OR: [
-          { initiatorId: currentUserId, receiverId: userId },
-          { initiatorId: userId, receiverId: currentUserId },
-        ],
-      },
-    });
-
-    if (existing) {
-      return NextResponse.json({ error: "Déjà amis." }, { status: 409 });
-    }
-
-    const friendship = await db.friendship.create({
-      data: { initiatorId: currentUserId, receiverId: userId },
-    });
-
-    return NextResponse.json({ friendship }, { status: 201 });
-  } catch (error) {
-    console.error("Create friendship error:", error);
-    return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
-  }
+export async function POST() {
+  return NextResponse.json({ error: "Use /api/friends/request to send a friend request." }, { status: 400 });
 }

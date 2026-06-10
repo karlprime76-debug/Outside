@@ -62,7 +62,7 @@ const typeToPushCategory: Record<NotificationType, Parameters<typeof sendPushToU
   FRIEND_ACCEPTED: "friend",
   FOLLOW: "friend",
   PLAN_INVITE: "plan",
-  PLAN_REMINDER: "plan",
+  PLAN_REMINDER: "plan-reminder",
   LIVE_STARTED: "live",
   PRO_EVENT: "pro",
   PRO_APPROVED: "pro",
@@ -113,14 +113,14 @@ export async function createNotification(input: CreateNotificationInput) {
         ? `/plans/${input.data?.planId || ""}`
         : input.type === "MOMENT_LIKE" || input.type === "MOMENT_COMMENT"
         ? `/moments`
-        : "/notifications";
+        : "/activity";
 
     sendPushToUser(input.recipientId, pushCategory, {
       title: input.title,
       body: input.body || "",
       url,
       tag: notification.id,
-    }).catch(() => {});
+    }).catch((err) => { console.error("[PUSH_ERROR] Failed to send push notification:", err); });
   }
 
   return notification;

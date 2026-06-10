@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Badge } from "@/components/ui/badge";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -96,6 +97,7 @@ const MOOD_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]> = {
 export default function CityMapPage() {
   const [data, setData] = useState<CityMapData | null>(null);
   const [loading, setLoading] = useState(true);
+  const t = useDictionary();
 
   useEffect(() => {
     fetch("/api/city-map")
@@ -321,7 +323,7 @@ export default function CityMapPage() {
             <EmptyState
               icon={Moon}
               title="C'est calme ici"
-              description="Aucune activité visible pour le moment dans cette ville."
+              description={t.cityMap.noActivity}
               cta={{ label: "Créer un plan", href: "/plans/new" }}
             />
           )}

@@ -14,10 +14,12 @@ const VALID_EVENT_TYPES: MomentEventType[] = [
   "UNLIKE",
   "COMMENT",
   "SHARE",
+  "SHARE_DM",
   "SAVE",
   "PROFILE_OPEN",
   "FOLLOW_FROM_MOMENT",
   "NOT_INTERESTED",
+  "SEE_MORE_LIKE_THIS",
   "REPORT",
 ];
 
@@ -44,9 +46,14 @@ const SCORE_TRIGGER_EVENTS: MomentEventType[] = [
   "UNLIKE",
   "COMMENT",
   "SHARE",
+  "SHARE_DM",
   "SAVE",
   "COMPLETE_VIEW",
+  "REPLAY",
+  "PROFILE_OPEN",
+  "FOLLOW_FROM_MOMENT",
   "NOT_INTERESTED",
+  "SEE_MORE_LIKE_THIS",
   "REPORT",
 ];
 
@@ -76,7 +83,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (userId) {
       const limitConfig = EVENT_RATE_LIMITS[eventType] || [20, 60000];
       const limitKey = `moment_event:${userId}:${momentId}:${eventType}`;
-      const limit = rateLimit(limitKey, limitConfig[0], limitConfig[1]);
+      const limit = await rateLimit(limitKey, limitConfig[0], limitConfig[1]);
       if (!limit.success) {
         // Silently accept but don't store to avoid spam
         return NextResponse.json({ success: true, throttled: true });
@@ -108,7 +115,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     // Recalculate score for important events (fire-and-forget)
     if (SCORE_TRIGGER_EVENTS.includes(eventType)) {
-      calculateMomentScore(momentId).catch(() => {});
+      calculateMomentScore(momentId).catch((err) => { console.error("[MOMENT_ERROR] Failed to calculate moment score:", err); });
     }
 
     return NextResponse.json({ success: true });

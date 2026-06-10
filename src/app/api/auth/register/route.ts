@@ -6,11 +6,18 @@ import { isAtLeast18 } from "@/lib/age";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { isValidCountryCode, getCountryName } from "@/lib/countries";
 import { normalizeUsername, validateUsername } from "@/lib/username";
+import { evaluateFounderBadges } from "@/lib/badges";
+import { linkNewUserToReferral } from "@/lib/referral";
 
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get("x-forwarded-for") || "anonymous";
-    const limit = rateLimit(`register:${ip}`, 3, 3600000);
+    const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
+    if (contentLength > 100000) {
+      return NextResponse.json({ error: "Requête trop volumineuse." }, { status: 413 });
+    }
+
+    const ip = req.headers.get("x-real-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
+    const limit = await rateLimit(`register:${ip}`, 3, 3600000);
     if (!limit.success) {
       return NextResponse.json(
         { error: "Trop de tentatives d'inscription. Veuillez réessayer plus tard." },
@@ -18,10 +25,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const url = new URL(req.url);
-    const referralCode = url.searchParams.get("referralCode");
-
     const body = await req.json();
+    const url = new URL(req.url);
+    const referralCode =
+      (typeof body.referralCode === "string" ? body.referralCode : null) ||
+      url.searchParams.get("referralCode") ||
+      url.searchParams.get("referral");
 
     const parsed = registerSchema.safeParse(body);
 
@@ -72,9 +81,9 @@ export async function POST(req: Request) {
 
     const countryName = getCountryName(countryCode) || "";
 
-    const existingEmail = await db.user.findUnique({ where: { email } });
+    const existingEmail = await db.user.findUnique({ where: { email }, select: { id: true } });
     if (existingEmail) {
-      return NextResponse.json({ error: "Un compte existe déjà avec cet email." }, { status: 409 });
+      return NextResponse.json({ error: "Vérifie tes informations et réessaie." }, { status: 409 });
     }
 
     let username: string | null = null;
@@ -133,95 +142,25 @@ export async function POST(req: Request) {
         select: { id: true, name: true, email: true },
       });
 
-      // Handle referral code if provided
       if (referralCode) {
-        try {
-          const invite = await db.referralInvite.findUnique({
-            where: { code: referralCode },
-          });
-
-          if (invite && !invite.acceptedAt && invite.inviterId !== newUser.id) {
-            // Link user to referral
-            await db.referralInvite.update({
-              where: { id: invite.id },
-              data: {
-                acceptedUserId: newUser.id,
-                acceptedAt: new Date(),
-              },
-            });
-
-            // Award badges
-            const inviterInviteCount = await db.referralInvite.count({
-              where: {
-                inviterId: invite.inviterId,
-                acceptedAt: { not: null },
-              },
-            });
-
-            if (inviterInviteCount === 1) {
-              const badge = await db.badge.findUnique({
-                where: { key: "FIRST_INVITE" },
-              });
-              if (badge) {
-                await db.userBadge.create({
-                  data: {
-                    userId: invite.inviterId,
-                    badgeId: badge.id,
-                  },
-                }).catch(() => {});
-              }
-            } else if (inviterInviteCount === 5) {
-              const badge = await db.badge.findUnique({
-                where: { key: "CIRCLE_LAUNCHED" },
-              });
-              if (badge) {
-                await db.userBadge.create({
-                  data: {
-                    userId: invite.inviterId,
-                    badgeId: badge.id,
-                  },
-                }).catch(() => {});
-              }
-            } else if (inviterInviteCount === 20) {
-              const badge = await db.badge.findUnique({
-                where: { key: "AMBASSADOR" },
-              });
-              if (badge) {
-                await db.userBadge.create({
-                  data: {
-                    userId: invite.inviterId,
-                    badgeId: badge.id,
-                  },
-                }).catch(() => {});
-              }
-            }
-
-            // Award badge to referred user
-            const refBadge = await db.badge.findUnique({
-              where: { key: "REFERRED_BY_FRIEND" },
-            });
-            if (refBadge) {
-              await db.userBadge.create({
-                data: {
-                  userId: newUser.id,
-                  badgeId: refBadge.id,
-                },
-              }).catch(() => {});
-            }
-          }
-        } catch (err) {
+        linkNewUserToReferral(referralCode, newUser.id).catch((err) => {
           if (process.env.NODE_ENV === "development") {
-            // eslint-disable-next-line no-console
             console.log("[REGISTER] Referral linking error (non-blocking):", err);
           }
-        }
+        });
+      } else {
+        evaluateFounderBadges(newUser.id).catch((err) => {
+          if (process.env.NODE_ENV === "development") {
+            console.error("[REGISTER] Badge evaluation error:", err);
+          }
+        });
       }
     } catch (dbError: unknown) {
       const err = dbError as { code?: string; meta?: { target?: string[] } };
       if (err.code === "P2002") {
         const target = err.meta?.target?.[0] ?? "field";
         if (target === "email") {
-          return NextResponse.json({ error: "Un compte existe déjà avec cet email." }, { status: 409 });
+          return NextResponse.json({ error: "Vérifie tes informations et réessaie." }, { status: 409 });
         }
         if (target === "username") {
           return NextResponse.json({ error: "Ce nom d'utilisateur est déjà utilisé." }, { status: 409 });

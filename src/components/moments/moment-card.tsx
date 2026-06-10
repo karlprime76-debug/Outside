@@ -10,6 +10,7 @@ import { MomentMedia } from "./moment-media";
 import { MomentAudioPlayer } from "@/components/audio/moment-audio-player";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { ReportButton } from "@/components/report-button";
 
@@ -68,6 +69,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [likeLoading, setLikeLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const haptic = useHaptic();
+  const t = useDictionary();
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
@@ -95,7 +97,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type: "IMPRESSION" }),
-    }).catch(() => {});
+    }).catch((err) => { console.error("[MOMENT_ERROR] Failed to track moment impression:", err); });
 
     let timer: ReturnType<typeof setTimeout>;
     const observer = new IntersectionObserver(
@@ -108,7 +110,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ type: "VIEW" }),
-            }).catch(() => {});
+            }).catch((err) => { console.error("[MOMENT_ERROR] Failed to track moment view:", err); });
           }, 2000);
         } else if (!entry.isIntersecting && timer) {
           clearTimeout(timer);
@@ -130,7 +132,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, ...extra }),
-      }).catch(() => {});
+      }).catch((err) => { console.error("[MOMENT_ERROR] Failed to track moment event:", err); });
     },
     [moment.id]
   );
@@ -244,7 +246,14 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
 
   const handleNotInterested = () => {
     trackEvent("NOT_INTERESTED");
-    handleHideLocal();
+    try {
+      const key = "outside_hidden_moments";
+      const raw = localStorage.getItem(key);
+      const set = new Set<string>(raw ? JSON.parse(raw) : []);
+      set.add(moment.id);
+      localStorage.setItem(key, JSON.stringify(Array.from(set)));
+      onHide?.(moment.id);
+    } catch {}
     addToast("Nous afficherons moins de contenus similaires.", "success");
   };
 
@@ -343,9 +352,9 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     <>
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen(true); }}
-              className="rounded-full p-2 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors active:scale-95"
+              className="rounded-full p-2.5 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors active:scale-95"
             >
-        <MoreHorizontal className="h-4 w-4" />
+        <MoreHorizontal className="h-5 w-5" />
       </button>
       <BottomSheet
         open={menuOpen}
@@ -462,7 +471,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               <button
                 onClick={(e) => { e.stopPropagation(); handleFollow(); }}
                 disabled={followLoading}
-                className={`rounded-full px-3 py-[5px] text-[10px] font-bold transition-colors active:scale-95 ${
+                className={`rounded-full px-3 py-2 text-xs font-bold transition-colors active:scale-95 ${
                   following
                     ? "bg-[var(--os-bg)] text-[var(--os-muted)] border border-[var(--os-card-border)]"
                     : "bg-[var(--os-fg)] text-[var(--os-bg)] hover:bg-[var(--os-fg)]/90"
@@ -550,11 +559,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         {/* Actions & info */}
         <div className="px-3 pt-2.5 pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               <button
                 onClick={(e) => { e.stopPropagation(); handleLike(); }}
                 disabled={likeLoading}
-                className={`transition-colors active:scale-90 ${liked ? "text-red-500" : "text-[var(--os-fg)] hover:text-red-500"}`}
+                className={`p-2.5 transition-colors active:scale-90 ${liked ? "text-red-500" : "text-[var(--os-fg)] hover:text-red-500"}`}
                 aria-label={liked ? "Retirer le J'aime" : "J'aime"}
               >
                 <Heart
@@ -565,22 +574,22 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onOpenComments(moment); }}
-                className="text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
+                className="p-2.5 text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
                 aria-label="Commenter"
               >
                 <MessageCircle className="h-6 w-6" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setShowShareSheet(true); }}
-                className="text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
-                aria-label="Envoyer en DM"
+                className="p-2.5 text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
+                aria-label={t.moment.sendInDm}
               >
                 <SendHorizonal className="h-6 w-6" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); handleShare(); }}
-                className="text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
-                aria-label="Partager"
+                className="p-2.5 text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
+                aria-label={t.moment.share}
               >
                 <Share2 className="h-6 w-6" />
               </button>
@@ -591,7 +600,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
                 setSaved(newSaved);
                 trackEvent(newSaved ? "SAVE" : "UNSAVE");
               }}
-              className={`transition-colors active:scale-90 ${saved ? "text-outside-500" : "text-[var(--os-fg)] hover:text-[var(--os-muted)]"}`}
+              className={`p-2.5 transition-colors active:scale-90 ${saved ? "text-outside-500" : "text-[var(--os-fg)] hover:text-[var(--os-muted)]"}`}
               aria-label={saved ? "Retirer des favoris" : "Sauvegarder"}
             >
               {saved ? <BookmarkCheck className="h-6 w-6" /> : <Bookmark className="h-6 w-6" />}

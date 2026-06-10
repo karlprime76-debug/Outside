@@ -4,6 +4,7 @@ export type LogTag =
   | "[DM_ERROR]"
   | "[MOMENT_ERROR]"
   | "[PLAN_ERROR]"
+  | "[PLAN_COMPLETE]"
   | "[LIVE_ERROR]"
   | "[NOTIFICATION_ERROR]"
   | "[SETTINGS_ERROR]"

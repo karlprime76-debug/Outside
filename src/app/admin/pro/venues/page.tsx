@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { getUserLocale } from "@/lib/locale";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import {
   Building2,
@@ -162,7 +164,7 @@ export default function AdminProVenuesPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   {v.logoUrl ? (
-                    <img src={v.logoUrl} alt="" className="h-12 w-12 rounded-xl object-cover shrink-0" />
+                    <Image src={v.logoUrl} alt="" width={48} height={48} className="rounded-xl object-cover shrink-0" />
                   ) : (
                     <div className="h-12 w-12 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0 dark:bg-zinc-800">
                       <Building2 className="h-6 w-6 text-zinc-400" />
@@ -174,7 +176,7 @@ export default function AdminProVenuesPage() {
                       {v.category} · {v.city || v.country || "—"}
                     </p>
                     <p className="text-xs text-[var(--os-muted)] mt-0.5">
-                      Par {v.owner.name || v.owner.email} · {new Date(v.createdAt).toLocaleDateString("fr-FR")}
+                      Par {v.owner.name || v.owner.email} · {new Date(v.createdAt).toLocaleDateString(getUserLocale())}
                     </p>
                   </div>
                 </div>

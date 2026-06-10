@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -68,7 +69,8 @@ async function main() {
     }
 
     // Create a random password
-    const password = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    const rawPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    const password = await bcrypt.hash(rawPassword, 12);
 
     const user = await prisma.user.create({
       data: {
@@ -77,7 +79,7 @@ async function main() {
         name: account.name,
         bio: account.bio,
         isVerified: account.isVerified,
-        password: password,
+        password,
         emailVerified: new Date(),
         termsAcceptedAt: new Date(),
         privacyAcceptedAt: new Date(),

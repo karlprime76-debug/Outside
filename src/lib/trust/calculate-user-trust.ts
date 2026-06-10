@@ -152,6 +152,53 @@ export async function calculateUserTrust(userId: string): Promise<TrustScores> {
     },
   });
 
+  // Auto-assign badges based on level
+  const badgesToAssign: { key: string; name: string }[] = [];
+
+  if (level === "Actif" || outsideScore >= 40) {
+    badgesToAssign.push({ key: "trust_active", name: "Profil actif" });
+  }
+  if (level === "Fiable" || outsideScore >= 60) {
+    badgesToAssign.push({ key: "trust_reliable", name: "Fiable" });
+  }
+  if (level === "Organisateur sérieux" || outsideScore >= 75) {
+    badgesToAssign.push({ key: "trust_organizer", name: "Organisateur sérieux" });
+  }
+  if (level === "Ambassadeur local" || outsideScore >= 90) {
+    badgesToAssign.push({ key: "trust_ambassador", name: "Ambassadeur local" });
+  }
+  if (positivePresenceReviews >= 1) {
+    badgesToAssign.push({ key: "presence_confirmed", name: "Présence confirmée" });
+  }
+  if (plansCreated >= 3 && positivePlanReviews >= 2) {
+    badgesToAssign.push({ key: "organizer_confirmed", name: "Organisateur confirmé" });
+  }
+
+  for (const badge of badgesToAssign) {
+    const existingBadge = await db.badge.findUnique({ where: { key: badge.key } });
+    if (!existingBadge) continue;
+    const alreadyOwned = await db.userBadge.findUnique({
+      where: { userId_badgeId: { userId, badgeId: existingBadge.id } },
+    });
+    if (!alreadyOwned) {
+      await db.userBadge.create({
+        data: { userId, badgeId: existingBadge.id },
+      });
+      try {
+        await db.notification.create({
+          data: {
+            type: "BADGE_EARNED",
+            title: `Nouveau badge : ${badge.name}`,
+            body: `Tu as gagné le badge "${badge.name}" sur OUTSIDE. Continue comme ça !`,
+            recipientId: userId,
+          },
+        });
+      } catch {
+        // Non-blocking
+      }
+    }
+  }
+
   return {
     outsideScore,
     presenceScore,

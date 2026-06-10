@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getUserBlockedIds } from "@/lib/blocks";
 import { createPlanSchema } from "@/lib/validation/schemas";
 import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
 import { createPlanReminders } from "@/lib/plan-reminders";
 import { generateRecurringPlans } from "@/lib/recurring-plans";
 import { recordTripHistory } from "@/lib/passport";
 import { PlanVisibility } from "@prisma/client";
+import { attachHashtagsToPlan } from "@/lib/hashtags/hashtag-service";
 
 // Haversine formula to calculate distance between two points in kilometers
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -33,12 +35,16 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
+    const blockedIds = await getUserBlockedIds(user.id);
+
     const { searchParams } = new URL(req.url);
     const cityId = searchParams.get("cityId");
     const mood = searchParams.get("mood");
     const budgetLevel = searchParams.get("budgetLevel");
     const planCategory = searchParams.get("planCategory");
     const isFree = searchParams.get("isFree");
+    const priceType = searchParams.get("priceType");
+    const filter = searchParams.get("filter");
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
     const travelerFriendly = searchParams.get("travelerFriendly");
@@ -101,17 +107,30 @@ export async function GET(req: Request) {
     }
 
     const baseWhere: Record<string, unknown> = { status: "ACTIVE" };
+    const priceOrConditions: Record<string, unknown>[] = [];
     if (cityId) baseWhere.cityId = cityId;
     if (mood) baseWhere.mood = mood;
     if (budgetLevel) baseWhere.budgetLevel = budgetLevel;
     if (planCategory) baseWhere.planCategory = planCategory;
     if (isFree === "true") {
-      baseWhere.OR = [
+      priceOrConditions.push(
         { budgetAmount: { equals: 0 } },
         { budgetAmount: null, budgetLevel: "FREE" },
-      ];
+      );
     } else if (isFree === "false") {
-      baseWhere.AND = { NOT: { budgetAmount: { equals: 0 } } };
+      baseWhere.NOT = { budgetAmount: { equals: 0 } };
+    }
+    if (priceType) {
+      baseWhere.priceType = priceType;
+    }
+    if (filter === "freeToday") {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      baseWhere.priceType = "FREE";
+      baseWhere.startDate = { gte: todayStart, lte: todayEnd };
+      baseWhere.status = { not: "COMPLETED" };
     }
     if (dateFrom || dateTo) {
       baseWhere.startDate = {};
@@ -119,19 +138,24 @@ export async function GET(req: Request) {
       if (dateTo) (baseWhere.startDate as Record<string, unknown>).lte = new Date(dateTo);
     }
     if (travelerFriendly === "true") baseWhere.isTravelerFriendly = true;
-    if (myPlans === "true") baseWhere.creatorId = user.id;
+    if (myPlans === "true") {
+      baseWhere.creatorId = user.id;
+    } else {
+      baseWhere.creatorId = { notIn: blockedIds };
+    }
 
     // Determine orderBy based on sortBy parameter
-    let orderBy: Record<string, "asc" | "desc"> = { startDate: "asc" };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let orderBy: any = { startDate: "asc" };
     switch (sortBy) {
       case "dateAsc":
         orderBy = { startDate: "asc" };
         break;
       case "priceAsc":
-        orderBy = { budgetAmount: "asc" };
+        orderBy = { budgetAmount: { sort: "asc", nulls: "last" } };
         break;
       case "priceDesc":
-        orderBy = { budgetAmount: "desc" };
+        orderBy = { budgetAmount: { sort: "desc", nulls: "last" } };
         break;
       case "popular":
         orderBy = { createdAt: "desc" }; // Simplified: use createdAt as proxy for popularity
@@ -143,6 +167,16 @@ export async function GET(req: Request) {
         orderBy = { startDate: "asc" };
     }
 
+    function visibilityOr(userId: string) {
+      return [
+        { visibility: PlanVisibility.PUBLIC },
+        { creatorId: userId },
+        { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
+        { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
+        ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
+      ];
+    }
+
     // Near me filter: filter plans within 50km of user's active city location
     if (nearMe === "true" && userCityLocation) {
       const userLat = userCityLocation.latitude;
@@ -151,7 +185,13 @@ export async function GET(req: Request) {
 
       // Get all plans first, then filter by distance
       const allPlans = await db.plan.findMany({
-        where: baseWhere,
+        where: {
+          AND: [
+            baseWhere,
+            ...(priceOrConditions.length > 0 ? [{ OR: priceOrConditions }] : []),
+            { OR: visibilityOr(user.id) },
+          ],
+        },
         orderBy,
         take: limit * 2, // Fetch more to account for distance filtering
         include: {
@@ -172,8 +212,9 @@ export async function GET(req: Request) {
       const plansWithCounts = nearbyPlans.map((plan) => {
         const going = plan.participants.filter((p) => p.attendance === "GOING").length;
         const maybe = plan.participants.filter((p) => p.attendance === "MAYBE").length;
+        const safePlan = { ...plan, latitude: undefined, longitude: undefined };
         return {
-          ...plan,
+          ...safePlan,
           _count: { participants: going + maybe, going, maybe },
         };
       });
@@ -188,13 +229,10 @@ export async function GET(req: Request) {
         ? {
             OR: [
               {
-                ...baseWhere,
-                OR: [
-                  { visibility: PlanVisibility.PUBLIC },
-                  { creatorId: user.id },
-                  { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
-                  { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
-                  ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
+                AND: [
+                  baseWhere,
+                  ...(priceOrConditions.length > 0 ? [{ OR: priceOrConditions }] : []),
+                  { OR: visibilityOr(user.id) },
                 ],
               },
               // Demo plans visible globally
@@ -202,13 +240,10 @@ export async function GET(req: Request) {
             ],
           }
         : {
-            ...baseWhere,
-            OR: [
-              { visibility: PlanVisibility.PUBLIC },
-              { creatorId: user.id },
-              { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
-              { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
-              ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
+            AND: [
+              baseWhere,
+              ...(priceOrConditions.length > 0 ? [{ OR: priceOrConditions }] : []),
+              { OR: visibilityOr(user.id) },
             ],
           },
       orderBy,
@@ -224,8 +259,9 @@ export async function GET(req: Request) {
     const plansWithCounts = plans.map((plan) => {
       const going = plan.participants.filter((p) => p.attendance === "GOING").length;
       const maybe = plan.participants.filter((p) => p.attendance === "MAYBE").length;
+      const safePlan = { ...plan, latitude: undefined, longitude: undefined };
       return {
-        ...plan,
+        ...safePlan,
         _count: { participants: going + maybe, going, maybe },
       };
     });
@@ -241,6 +277,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
+    if (contentLength > 100000) {
+      return NextResponse.json({ error: "Requête trop volumineuse." }, { status: 413 });
+    }
+
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -250,8 +291,9 @@ export async function POST(req: Request) {
     const parsed = createPlanSchema.safeParse(body);
 
     if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
       return NextResponse.json(
-        { error: "Données invalides", details: parsed.error.flatten() },
+        { error: firstIssue?.message || "Données invalides" },
         { status: 400 }
       );
     }
@@ -264,6 +306,7 @@ export async function POST(req: Request) {
         description: data.description,
         planCategory: data.planCategory,
         mood: data.mood,
+        priceType: (data.priceType ?? (data.budgetIsFrom ? "FROM" : data.budgetLevel === "FREE" ? "FREE" : "PAID")) as "FREE" | "PAID" | "FROM",
         budgetLevel: data.budgetLevel || "MEDIUM",
         budgetAmount: data.budgetAmount ?? undefined,
         budgetCurrency: data.budgetCurrency,
@@ -292,16 +335,21 @@ export async function POST(req: Request) {
       },
     });
 
+    // Attach hashtags from description
+    attachHashtagsToPlan(plan.id, data.description ?? null, plan.city?.name ?? null, data.countryCode ?? null).catch((err) => {
+      console.error("[POST /api/plans] Background task error:", err);
+    });
+
     // Auto-join creator as GOING participant
     await db.planParticipant.create({
       data: { planId: plan.id, userId: user.id, status: "CONFIRMED", attendance: "GOING" },
     });
 
-    createPlanReminders(user.id, plan.id, plan.startDate).catch(() => {});
-    evaluateBadgesAfterPlanCreated(user.id).catch(() => {});
+    createPlanReminders(user.id, plan.id, plan.startDate).catch((err) => { logError("[PLAN_ERROR]", "Failed to create plan reminders", { error: String(err) }); });
+    evaluateBadgesAfterPlanCreated(user.id).catch((err) => { logError("[PLAN_ERROR]", "Failed to evaluate badges after plan created", { error: String(err) }); });
 
     if (data.recurrence) {
-      generateRecurringPlans(plan.id, data.recurrence, data.recurrenceEndDate ?? null).catch(() => {});
+      generateRecurringPlans(plan.id, data.recurrence, data.recurrenceEndDate ?? null).catch((err) => { logError("[RECURRING_ERROR]", "Failed to generate recurring plans", { error: String(err) }); });
     }
 
     if (plan.city?.name) {
@@ -311,7 +359,7 @@ export async function POST(req: Request) {
         countryCode: data.countryCode,
         source: "PLAN_CREATED",
         planId: plan.id,
-      }).catch(() => {});
+      }).catch((err) => { logError("[PLAN_ERROR]", "Failed to record trip history", { error: String(err) }); });
     }
 
     return NextResponse.json({ plan }, { status: 201 });
@@ -320,3 +368,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+

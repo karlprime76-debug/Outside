@@ -474,6 +474,33 @@
     opacity: 0.85;
   }
 
+  /* Z-index scale — standardised layers */
+  .z-nav { z-index: 50; }
+  .z-sticky { z-index: 40; }
+  .z-dropdown { z-index: 60; }
+  .z-modal { z-index: 70; }
+  .z-sheet { z-index: 100; }
+  .z-overlay { z-index: 80; }
+  .z-viewer { z-index: 100; }
+  .z-toast { z-index: 60; }
+  .z-splash { z-index: 200; }
+  .z-offline { z-index: 150; }
+
+  /* legacy z-index aliases — migrate to vars above */
+  :root {
+    --os-z-base: 0;
+    --os-z-sticky: 40;
+    --os-z-nav: 50;
+    --os-z-dropdown: 60;
+    --os-z-overlay: 80;
+    --os-z-modal: 70;
+    --os-z-sheet: 100;
+    --os-z-viewer: 100;
+    --os-z-toast: 60;
+    --os-z-offline: 150;
+    --os-z-splash: 200;
+  }
+
   /* Splash loading bar */
   @keyframes loading-bar {
     0% { width: 0%; margin-left: 0; }

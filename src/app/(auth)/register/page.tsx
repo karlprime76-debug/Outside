@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { normalizeUsername, validateUsername } from "@/lib/username";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Shield, Globe, Sparkles } from "lucide-react";
 import { InputField } from "@/components/ui/input-field";
 import { CountrySelect } from "@/components/location/country-select";
@@ -18,8 +18,10 @@ const GENDER_OPTIONS = [
   { value: "PREFER_NOT_TO_SAY", label: "Je préfère ne pas préciser" },
 ];
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const referralCode = searchParams.get("referral") || searchParams.get("ref") || "";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [countryCode, setCountryCode] = useState("");
@@ -105,7 +107,10 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          ...(referralCode ? { referralCode } : {}),
+        }),
       });
 
       const json = await res.json();
@@ -200,6 +205,13 @@ export default function RegisterPage() {
               {error && (
                 <div className="rounded-xl bg-red-500/15 border border-red-500/20 px-4 py-3 text-sm text-red-300 mb-5">
                   {error}
+                </div>
+              )}
+
+              {referralCode && (
+                <div className="mb-4 rounded-xl border border-outside-400/30 bg-outside-500/10 px-4 py-3 text-center">
+                  <p className="text-sm font-bold text-white">Tu as été invité sur OUTSIDE</p>
+                  <p className="text-xs text-white/70 mt-1">Crée ton compte pour rejoindre ton cercle.</p>
                 </div>
               )}
 
@@ -318,5 +330,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </ImmersiveBackground>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
   );
 }

@@ -77,6 +77,22 @@ export default function ClipsPage() {
   const playCountRef = useRef<Record<number, number>>({});
   const isFetchingRef = useRef(false);
 
+  // Close menu on Escape or outside click
+  useEffect(() => {
+    if (!menuOpenId) return;
+    const handleClick = () => setMenuOpenId(null);
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpenId(null);
+    };
+    const timer = setTimeout(() => document.addEventListener("click", handleClick), 0);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [menuOpenId]);
+
   const { newMoments, hasNew, clearNew } = useMomentPolling({
     scope,
     media: "clips",
@@ -139,7 +155,7 @@ export default function ClipsPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type, ...data }),
-    }).catch(() => {});
+    }).catch((err) => { console.error("[MOMENT_ERROR] Failed to track clip event:", err); });
   }, []);
 
   const handleVideoTimeUpdate = useCallback((index: number) => {
@@ -181,6 +197,12 @@ export default function ClipsPage() {
   const handleVideoPlay = useCallback((index: number) => {
     const clip = clips[index];
     if (!clip) return;
+
+    // Track impression on first play
+    if (!sentThresholdsRef.current[index]) {
+      sentThresholdsRef.current[index] = new Set();
+      trackEvent(clip.id, "IMPRESSION");
+    }
 
     if (startTimeRef.current[index] === null) {
       startTimeRef.current[index] = Date.now();
@@ -261,7 +283,7 @@ export default function ClipsPage() {
       if (!video) return;
       const idx = parseInt(idxStr, 10);
       if (idx === activeIndex) {
-        video.play().catch(() => {});
+        video.play().catch((err) => { console.error("[MOMENT_ERROR] Failed to play video:", err); });
       } else {
         video.pause();
         video.currentTime = 0;
@@ -434,7 +456,12 @@ export default function ClipsPage() {
         </button>
         <p className="text-sm font-bold text-white drop-shadow-md">Clips</p>
         <button
-          onClick={() => setMuted((m) => !m)}
+          onClick={() => {
+            const newMuted = !muted;
+            setMuted(newMuted);
+            const clip = clips[activeIndex];
+            if (clip) trackEvent(clip.id, "VIEW", { source: newMuted ? "sound_off" : "sound_on" });
+          }}
           className="rounded-full bg-black/40 p-2.5 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
           aria-label={muted ? "Activer le son" : "Couper le son"}
         >
@@ -480,7 +507,7 @@ export default function ClipsPage() {
                 const v = videoRefs.current[index];
                 if (!v) return;
                 if (v.paused) {
-                  v.play().catch(() => {});
+                  v.play().catch((err) => { console.error("[MOMENT_ERROR] Failed to play video:", err); });
                 } else {
                   v.pause();
                 }
@@ -530,9 +557,10 @@ export default function ClipsPage() {
 
               <div className="relative">
                 <button
-                  onClick={() =>
-                    setMenuOpenId(menuOpenId === clip.id ? null : clip.id)
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpenId(menuOpenId === clip.id ? null : clip.id);
+                  }}
                   className="rounded-full bg-black/30 backdrop-blur-sm p-2.5 hover:bg-black/50 transition-colors"
                 >
                   <MoreHorizontal className="h-6 w-6 text-white" />

@@ -4,6 +4,7 @@ import { logError } from "@/lib/log";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canViewPlan } from "@/lib/plans/permissions";
 import { createPlanReminders, removePlanReminders } from "@/lib/plan-reminders";
+import { updatePlanSchema } from "@/lib/validation/schemas";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -52,8 +53,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       where: { userId: user.id, planId: id, sentAt: null },
     });
 
+    const safePlan = { ...plan, latitude: undefined, longitude: undefined };
     const planWithCounts = {
-      ...plan,
+      ...safePlan,
       _count: {
         participants: going + maybe, going, maybe,
         expenses: plan._count.expenses,
@@ -88,13 +90,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const body = await req.json();
 
+    const parsed = updatePlanSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
+    }
+
     const plan = await db.plan.update({
       where: { id },
-      data: {
-        title: body.title ?? undefined,
-        description: body.description ?? undefined,
-        status: body.status ?? undefined,
-      },
+      data: parsed.data,
     });
 
     return NextResponse.json({ plan });
@@ -152,9 +155,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     if (enabled) {
-      createPlanReminders(user.id, id, participant.plan.startDate).catch(() => {});
+      createPlanReminders(user.id, id, participant.plan.startDate).catch((err) => { logError("[PLAN_ERROR]", "Failed to create plan reminders", { error: String(err) }); });
     } else {
-      removePlanReminders(user.id, id).catch(() => {});
+      removePlanReminders(user.id, id).catch((err) => { logError("[PLAN_ERROR]", "Failed to remove plan reminders", { error: String(err) }); });
     }
 
     return NextResponse.json({ success: true, enabled });

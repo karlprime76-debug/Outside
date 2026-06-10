@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, createContext, useContext } from "react";
+import { useState, useCallback, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/cn";
 import { AlertTriangle } from "lucide-react";
 
@@ -52,6 +52,13 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
     state.onConfirm?.();
     setState((s) => ({ ...s, open: false }));
   }, [state]);
+
+  useEffect(() => {
+    if (!state.open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  }, [state.open, close]);
 
   return (
     <ConfirmContext.Provider value={{ confirm }}>

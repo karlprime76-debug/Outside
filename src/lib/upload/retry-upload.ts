@@ -52,34 +52,43 @@ export async function retryAsync<T>(
   throw lastError;
 }
 
+const PERMANENT_PATTERNS = [
+  // English
+  "format", "invalid", "unauthorized", "forbidden", "not found",
+  "too large", "max size",
+  // French
+  "non autorisé", "accès refusé", "format non accepté",
+  "fichier trop lourd", "introuvable", "trop volumineux",
+];
+
+const RETRYABLE_PATTERNS = [
+  // English
+  "network", "timeout", "fetch", "econnreset", "etimedout", "econnrefused",
+  // French
+  "réseau", "connexion", "délai",
+];
+
 function defaultShouldRetry(error: Error): boolean {
   const message = error.message.toLowerCase();
 
+  // Check for HTTP status codes in the error
+  const statusMatch = message.match(/\b(\d{3})\b/);
+  if (statusMatch) {
+    const status = parseInt(statusMatch[1], 10);
+    // 4xx client errors - don't retry
+    if (status >= 400 && status < 500) return false;
+    // 5xx server errors - retry
+    if (status >= 500) return true;
+  }
+
   // Don't retry on permanent errors
-  if (
-    message.includes("format") ||
-    message.includes("invalid") ||
-    message.includes("unauthorized") ||
-    message.includes("forbidden") ||
-    message.includes("not found") ||
-    message.includes("too large") ||
-    message.includes("max size")
-  ) {
-    return false;
+  for (const pattern of PERMANENT_PATTERNS) {
+    if (message.includes(pattern)) return false;
   }
 
   // Retry on network/temporary errors
-  if (
-    message.includes("network") ||
-    message.includes("timeout") ||
-    message.includes("fetch") ||
-    message.includes("econnreset") ||
-    message.includes("etimedout") ||
-    message.includes("econnrefused") ||
-    message.includes("5") || // 5xx server errors
-    message.includes("supabase") && (message.includes("timeout") || message.includes("network"))
-  ) {
-    return true;
+  for (const pattern of RETRYABLE_PATTERNS) {
+    if (message.includes(pattern)) return true;
   }
 
   // Default to retry for unknown errors (up to max attempts)

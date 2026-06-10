@@ -47,31 +47,40 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       where: { planId_userId: { planId: id, userId: user.id } },
     });
 
-    if (existing) {
-      // Update attendance if already participating
-      await db.planParticipant.update({
-        where: { planId_userId: { planId: id, userId: user.id } },
-        data: { attendance },
-      });
-
-      // Recreate reminders if attending (GOING or MAYBE)
-      if (attendance !== "LEFT") {
-        createPlanReminders(user.id, id, plan.startDate).catch((err) => {
-          console.error("[POST /api/plans/:id/join] Background task error:", err);
+    // Use transaction to prevent race conditions on capacity
+    await db.$transaction(async (tx) => {
+      if (existing) {
+        await tx.planParticipant.update({
+          where: { planId_userId: { planId: id, userId: user.id } },
+          data: { attendance },
         });
+
+        if (attendance !== "LEFT") {
+          createPlanReminders(user.id, id, plan.startDate).catch((err) => {
+            console.error("[POST /api/plans/:id/join] Background task error:", err);
+          });
+        }
+
+        return;
       }
 
-      return NextResponse.json({ success: true, updated: true });
-    }
+      // Re-check capacity inside transaction
+      const freshGoing = await tx.planParticipant.count({
+        where: { planId: id, attendance: "GOING" },
+      });
+      if (attendance === "GOING" && freshGoing >= plan.maxParticipants) {
+        throw new Error("Plan complet");
+      }
 
-    await db.planParticipant.create({
-      data: { planId: id, userId: user.id, status: "CONFIRMED", attendance },
+      await tx.planParticipant.create({
+        data: { planId: id, userId: user.id, status: "CONFIRMED", attendance },
+      });
+
+      const newGoingCount = freshGoing + (attendance === "GOING" ? 1 : 0);
+      if (newGoingCount >= plan.maxParticipants) {
+        await tx.plan.update({ where: { id }, data: { status: "FULL" } });
+      }
     });
-
-    const newGoingCount = goingCount + (attendance === "GOING" ? 1 : 0);
-    if (newGoingCount >= plan.maxParticipants) {
-      await db.plan.update({ where: { id }, data: { status: "FULL" } });
-    }
 
     createPlanReminders(user.id, id, plan.startDate).catch((err) => {
       console.error("[POST /api/plans/:id/join] Background task error:", err);

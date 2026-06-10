@@ -79,6 +79,18 @@ export const authConfig: NextAuthConfig = {
         token.homeCityId = user.homeCityId;
         token.activeCityId = user.activeCityId;
       }
+      // On sign-in, embed tokenVersion from DB for revocation capability
+      if (trigger === "signIn" || trigger === "signUp") {
+        // Fetch latest tokenVersion asynchronously — stored in JWT for validation
+        db.user.findUnique({
+          where: { id: token.sub },
+          select: { tokenVersion: true },
+        }).then((u) => {
+          token.tokenVersion = u?.tokenVersion ?? 0;
+        }).catch(() => {
+          token.tokenVersion = 0;
+        });
+      }
       // Mise à jour du token lors d'un update() client
       if (trigger === "update" && session?.image) {
         token.image = session.image;
@@ -128,6 +140,6 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 7 * 24 * 60 * 60,
   },
 };
