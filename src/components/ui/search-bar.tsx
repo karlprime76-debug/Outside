@@ -43,20 +43,20 @@ export function SearchBar({
 
   return (
     <form onSubmit={handleSubmit} className={cn("relative", className)}>
-      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--os-muted)]" />
       <input
         type="text"
         value={currentValue}
         onChange={handleChange}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className="w-full rounded-xl border border-zinc-300 bg-white py-3 pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 focus:border-transparent dark:bg-surface-card dark:border-surface-border dark:text-zinc-100 transition-all"
+        className="w-full rounded-xl border border-[var(--os-card-border)] bg-surface-card py-3 pl-10 pr-10 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-neon-orange/40 focus:border-neon-orange/50 transition-all"
       />
       {currentValue && (
         <button
           type="button"
           onClick={clear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-[var(--os-muted)] hover:bg-white/10 hover:text-[var(--os-fg)] transition-colors"
         >
           <X className="h-4 w-4" />
         </button>

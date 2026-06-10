@@ -28,7 +28,7 @@ export function OutsideTabs({ items, value, onChange }: OutsideTabsProps) {
         >
           {it.label}
           {value === it.key && (
-            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-outside-500 transition-all" />
+            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-neon-orange shadow-glow transition-all" />
           )}
         </button>
       ))}

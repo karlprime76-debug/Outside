@@ -50,7 +50,7 @@ export default async function AppLayout({
   return (
     <div className="flex flex-col min-h-screen bg-[var(--os-bg)]">
       {/* Top header */}
-      <header className="sticky top-0 z-50 border-b border-[var(--os-card-border)] glass safe-header">
+      <header className="sticky top-0 z-50 border-b border-[var(--os-card-border)] bg-[var(--os-bg)]/80 backdrop-blur-xl safe-header">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link
             href="/home"
@@ -65,7 +65,7 @@ export default async function AppLayout({
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-lg px-3 py-2 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors"
+                className="rounded-lg px-3 py-2 text-[var(--os-muted)] hover:text-[var(--os-fg)] hover:bg-white/5 transition-colors"
               >
                 {link.label}
               </Link>
@@ -75,25 +75,25 @@ export default async function AppLayout({
                 <Link
                   href="/activity"
                   aria-label="Activité"
-                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
+                  className="relative rounded-lg p-2 hover:bg-white/5 transition-colors pressable"
                 >
                   <Bell className="h-5 w-5 text-[var(--os-muted)]" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)] glow-pulse" />
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-neon-orange ring-2 ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
                 <Link
                   href="/dm"
                   aria-label={dmUnread > 0 ? `Messages non lus: ${dmUnread}` : "Messages"}
-                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
+                  className="relative rounded-lg p-2 hover:bg-white/5 transition-colors pressable"
                 >
                   <MessageSquare className="h-5 w-5 text-[var(--os-muted)]" />
                   {dmUnread > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)] glow-pulse" />
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-neon-orange ring-2 ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
                 <ThemeBadge />
-                <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[var(--os-card-border)] transition-colors">
+                <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/5 transition-colors">
                   <Avatar src={session.user.image} name={session.user.name} size="sm" />
                   <span className="text-sm text-[var(--os-fg)]">
                     {session.user.name?.split(" ")[0] || "Profil"}
@@ -104,7 +104,7 @@ export default async function AppLayout({
             ) : (
               <Link
                 href="/login"
-                className="ml-2 rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-semibold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
+                className="ml-2 rounded-lg bg-gradient-to-r from-neon-orange via-accent-500 to-neon-pink px-4 py-2 text-sm font-semibold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
               >
                 Se connecter
               </Link>
@@ -118,21 +118,21 @@ export default async function AppLayout({
                 <Link
                   href="/activity"
                   aria-label="Activité"
-                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
+                  className="relative rounded-lg p-2 hover:bg-white/5 transition-colors pressable"
                 >
                   <Bell className="h-5 w-5 text-[var(--os-muted)]" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)] glow-pulse" />
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-neon-orange ring-2 ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
                 <Link
                   href="/dm"
                   aria-label={dmUnread > 0 ? `Messages non lus: ${dmUnread}` : "Messages"}
-                  className="relative rounded-lg p-2 hover:bg-[var(--os-card-border)] transition-colors pressable"
+                  className="relative rounded-lg p-2 hover:bg-white/5 transition-colors pressable"
                 >
                   <MessageSquare className="h-5 w-5 text-[var(--os-muted)]" />
                   {dmUnread > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-outside-500 ring-2 ring-[var(--os-bg)] glow-pulse" />
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-neon-orange ring-2 ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
                 <ThemeBadge />
@@ -143,7 +143,7 @@ export default async function AppLayout({
             ) : (
               <Link
                 href="/login"
-                className="text-sm font-semibold text-outside-600"
+                className="text-sm font-semibold text-neon-orange"
               >
                 Se connecter
               </Link>

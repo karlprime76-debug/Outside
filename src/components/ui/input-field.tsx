@@ -14,15 +14,15 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
     return (
       <div>
         {label && (
-          <label className={cn("mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400", labelClassName)}>
+          <label className={cn("mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]", labelClassName)}>
             {label}
           </label>
         )}
         <input
           ref={ref}
           className={cn(
-            "w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-outside-500 focus:border-transparent bg-white dark:bg-surface-card dark:border-surface-border dark:text-zinc-100 transition-all",
-            error && "border-red-300 focus:ring-red-500 dark:border-red-700",
+            "w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] bg-surface-card focus:outline-none focus:ring-2 focus:ring-neon-orange/40 focus:border-neon-orange/50 transition-all",
+            error && "border-red-500/50 focus:ring-red-500/40 focus:border-red-500",
             className
           )}
           {...props}

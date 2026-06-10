@@ -29,15 +29,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        "bg-outside-600 text-white hover:bg-outside-700 focus:ring-outside-500 dark:bg-outside-500 dark:hover:bg-outside-400",
+        "bg-gradient-to-r from-neon-orange via-[#FF5A5F] to-neon-pink text-white hover:brightness-110 focus:ring-neon-orange shadow-glow hover:shadow-glow-lg",
       secondary:
-        "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 focus:ring-zinc-400 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700",
+        "bg-surface-card text-[var(--os-fg)] border border-[var(--os-card-border)] hover:border-neon-orange/30 focus:ring-neon-orange hover:text-[var(--os-fg)]",
       ghost:
-        "bg-transparent text-zinc-700 hover:bg-zinc-100 focus:ring-zinc-400 dark:text-zinc-300 dark:hover:bg-zinc-800/50",
+        "bg-transparent text-[var(--os-muted)] hover:text-[var(--os-fg)] hover:bg-white/5 focus:ring-neon-orange",
       danger:
-        "bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-400 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/50",
+        "bg-red-500/10 text-red-400 hover:bg-red-500/20 focus:ring-red-400 border border-red-500/20",
       gradient:
-        "bg-gradient-to-r from-outside-500 to-accent-500 text-white hover:from-outside-600 hover:to-accent-600 focus:ring-outside-500 shadow-glow hover:shadow-glow-lg",
+        "bg-gradient-to-r from-neon-orange via-neon-rose to-neon-magenta text-white hover:brightness-110 focus:ring-neon-orange shadow-glow hover:shadow-glow-lg",
     };
 
     const sizes = {

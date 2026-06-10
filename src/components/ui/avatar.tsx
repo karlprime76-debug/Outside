@@ -46,7 +46,7 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
         width={pixelMap[size]}
         height={pixelMap[size]}
         className={cn(
-          "rounded-full object-cover border border-zinc-200 dark:border-surface-border",
+          "rounded-full object-cover border border-[var(--os-card-border)]",
           sizeMap[size],
           className
         )}
@@ -59,7 +59,7 @@ export function Avatar({ src, name, size = "md", className }: AvatarProps) {
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-full font-semibold text-white bg-gradient-to-br from-outside-500 to-accent-500",
+        "flex items-center justify-center rounded-full font-semibold text-white bg-gradient-to-br from-neon-orange via-neon-rose to-neon-pink",
         sizeMap[size],
         className
       )}

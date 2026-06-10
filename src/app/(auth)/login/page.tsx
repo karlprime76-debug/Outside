@@ -81,7 +81,7 @@ function LoginForm() {
         <div className="hidden lg:flex lg:flex-1 flex-col justify-center px-16 xl:px-24 animate-auth-fade">
           <div className="max-w-lg space-y-8">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center animate-auth-soft">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-neon-orange via-accent-500 to-neon-pink shadow-glow flex items-center justify-center animate-auth-soft">
                 <span className="text-xl font-black text-white">O</span>
               </div>
               <span className="text-2xl font-black text-white tracking-tight">OUTSIDE</span>
@@ -107,7 +107,7 @@ function LoginForm() {
           {/* Mobile marketing compact */}
           <div className="lg:hidden flex-1 flex flex-col justify-end px-6 pb-5 pt-20 animate-auth-fade">
             <div className="flex items-center gap-2 mb-3">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 shadow-glow flex items-center justify-center">
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-neon-orange via-accent-500 to-neon-pink shadow-glow flex items-center justify-center">
                 <span className="text-sm font-black text-white">O</span>
               </div>
               <span className="text-lg font-black text-white">OUTSIDE</span>
@@ -166,7 +166,7 @@ function LoginForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 py-3.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 pressable"
+                  className="w-full rounded-xl bg-gradient-to-r from-neon-orange via-accent-500 to-neon-pink py-3.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 pressable"
                 >
                   {loading ? "Connexion..." : "Se connecter"}
                 </button>

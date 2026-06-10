@@ -20,20 +20,20 @@ export interface BadgeProps {
 }
 
 const variants = {
-  default: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+  default: "bg-zinc-800 text-zinc-200",
   orange:
-    "bg-outside-100 text-outside-700 dark:bg-outside-950/30 dark:text-outside-300",
-  pink: "bg-accent-100 text-accent-700 dark:bg-accent-950/30 dark:text-accent-300",
+    "bg-outside-500/15 text-outside-400 border border-outside-500/20",
+  pink: "bg-accent-500/15 text-accent-400 border border-accent-500/20",
   green:
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
-  blue: "bg-sky-100 text-sky-700 dark:bg-sky-950/30 dark:text-sky-300",
+    "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20",
+  blue: "bg-sky-500/15 text-sky-400 border border-sky-500/20",
   purple:
-    "bg-violet-100 text-violet-700 dark:bg-violet-950/30 dark:text-violet-300",
+    "bg-violet-500/15 text-violet-400 border border-violet-500/20",
   amber:
-    "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
-  slate: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  red: "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-300",
-  outline: "border border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300 bg-transparent",
+    "bg-amber-500/15 text-amber-400 border border-amber-500/20",
+  slate: "bg-zinc-700 text-zinc-300",
+  red: "bg-red-500/15 text-red-400 border border-red-500/20",
+  outline: "border border-[var(--os-card-border)] text-[var(--os-muted)] bg-transparent",
 };
 
 export function Badge({

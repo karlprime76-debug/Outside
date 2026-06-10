@@ -14,7 +14,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="flex rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="flex rounded-xl border border-[var(--os-card-border)] bg-surface-card p-1">
         <div className="h-8 w-8" />
         <div className="h-8 w-8" />
         <div className="h-8 w-8" />
@@ -29,7 +29,7 @@ export function ThemeToggle() {
   ] as const;
 
   return (
-    <div className="inline-flex rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="inline-flex rounded-xl border border-[var(--os-card-border)] bg-surface-card p-1">
       {options.map((opt) => {
         const active = theme === opt.value;
         return (
@@ -39,8 +39,8 @@ export function ThemeToggle() {
             title={opt.label}
             className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${
               active
-                ? "bg-white text-outside-600 shadow-sm dark:bg-zinc-800 dark:text-outside-400"
-                : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+                ? "bg-surface-border text-neon-orange shadow-sm"
+                : "text-[var(--os-muted)] hover:text-[var(--os-fg)]"
             }`}
           >
             <opt.icon className="h-4 w-4" />
@@ -66,7 +66,7 @@ export function ThemeBadge() {
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+      className="rounded-lg p-2 text-[var(--os-muted)] hover:bg-white/5 hover:text-[var(--os-fg)] transition-colors"
       title={isDark ? "Passer en clair" : "Passer en sombre"}
     >
       {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}

@@ -10,7 +10,7 @@ interface OutsideHeaderProps {
 
 export function OutsideHeader({ title, subtitle, right, left, sticky = true }: OutsideHeaderProps) {
   return (
-    <div className={(sticky ? "sticky top-0 z-40 " : "") + "border-b border-[var(--os-card-border)] bg-[var(--os-bg)]/90 backdrop-blur-md px-4 py-3"}>
+    <div className={(sticky ? "sticky top-0 z-40 " : "") + "border-b border-[var(--os-card-border)] bg-[var(--os-bg)]/80 backdrop-blur-xl px-4 py-3"}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {left}

@@ -29,15 +29,15 @@ export const OutsideButton = forwardRef<HTMLButtonElement, OutsideButtonProps>(
 
     const variants = {
       primary:
-        "bg-outside-600 text-white hover:bg-outside-700",
+        "bg-gradient-to-r from-neon-orange via-[#FF5A5F] to-neon-pink text-white hover:brightness-110 shadow-glow hover:shadow-glow-lg",
       secondary:
-        "bg-[var(--os-card)] text-[var(--os-fg)] border border-[var(--os-card-border)] hover:bg-[var(--os-card-border)]",
+        "bg-[var(--os-card)] text-[var(--os-fg)] border border-[var(--os-card-border)] hover:border-neon-orange/30 hover:text-[var(--os-fg)]",
       ghost:
-        "bg-transparent text-[var(--os-muted)] hover:bg-[var(--os-card-border)]",
+        "bg-transparent text-[var(--os-muted)] hover:text-[var(--os-fg)] hover:bg-white/5",
       danger:
-        "bg-red-500/10 text-red-600 hover:bg-red-500/20",
+        "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20",
       gradient:
-        "bg-gradient-to-r from-outside-500 to-accent-500 text-white hover:from-outside-600 hover:to-accent-600 shadow-glow hover:shadow-glow-lg",
+        "bg-gradient-to-r from-neon-orange via-neon-rose to-neon-magenta text-white hover:brightness-110 shadow-glow hover:shadow-glow-lg",
     };
 
     const sizes = {

@@ -49,13 +49,13 @@ export function BottomNav() {
               aria-current={isActive ? "page" : undefined}
             >
               {isActive && (
-                <span className="absolute -top-1 h-1 w-6 rounded-full bg-gradient-to-r from-outside-500 to-accent-500" />
+                <span className="absolute -top-1 h-1 w-6 rounded-full bg-gradient-to-r from-neon-orange via-neon-rose to-neon-pink shadow-glow" />
               )}
               <Icon
                 className={cn(
                   "h-5 w-5 transition-colors",
                   isActive
-                    ? "text-outside-600"
+                    ? "text-neon-orange drop-shadow-[0_0_6px_rgba(255,138,0,0.5)]"
                     : "text-[var(--os-muted)]"
                 )}
                 strokeWidth={isActive ? 2.5 : 1.5}
@@ -64,7 +64,7 @@ export function BottomNav() {
                 className={cn(
                   "text-[10px] font-semibold transition-colors",
                   isActive
-                    ? "text-outside-600"
+                    ? "text-neon-orange"
                     : "text-[var(--os-muted)]"
                 )}
               >

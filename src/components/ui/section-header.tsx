@@ -12,13 +12,13 @@ export function SectionHeader({ title, icon: Icon, action, className = "" }: Sec
   return (
     <div className={`flex items-center justify-between mb-4 animate-fade-in ${className}`}>
       <h2 className="text-lg font-black text-[var(--os-fg)] flex items-center gap-2">
-        {Icon && <Icon className="h-5 w-5 text-outside-500" />}
+        {Icon && <Icon className="h-5 w-5 text-neon-orange" />}
         {title}
       </h2>
       {action && (
         <Link
           href={action.href}
-          className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1 press"
+          className="text-sm font-bold text-neon-orange hover:text-accent-500 transition-colors flex items-center gap-1 press"
         >
           {action.label}
         </Link>
