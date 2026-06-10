@@ -6,6 +6,7 @@ import { AnimatedPage } from "@/components/ui/animated-page";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { Radio, Plus, ArrowLeft, Video } from "lucide-react";
 
@@ -21,6 +22,7 @@ interface LiveItem {
 export default function LivePage() {
   const [lives, setLives] = useState<LiveItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useDictionary();
 
   useEffect(() => {
     fetch("/api/lives")
@@ -69,7 +71,7 @@ export default function LivePage() {
       ) : lives.length === 0 ? (
         <EmptyState
           icon={Video}
-          title="Aucun live en cours"
+          title={t.live.noLive}
           description="L'ambiance commence peut-être avec toi."
           cta={{ label: "Lancer un live", href: "/live/new" }}
         />

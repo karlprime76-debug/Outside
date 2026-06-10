@@ -10,6 +10,7 @@ import { MomentMedia } from "./moment-media";
 import { MomentAudioPlayer } from "@/components/audio/moment-audio-player";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { ReportButton } from "@/components/report-button";
 
@@ -68,6 +69,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [likeLoading, setLikeLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const haptic = useHaptic();
+  const t = useDictionary();
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
@@ -580,14 +582,14 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               <button
                 onClick={(e) => { e.stopPropagation(); setShowShareSheet(true); }}
                 className="p-2.5 text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
-                aria-label="Envoyer en DM"
+                aria-label={t.moment.sendInDm}
               >
                 <SendHorizonal className="h-6 w-6" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); handleShare(); }}
                 className="p-2.5 text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
-                aria-label="Partager"
+                aria-label={t.moment.share}
               >
                 <Share2 className="h-6 w-6" />
               </button>

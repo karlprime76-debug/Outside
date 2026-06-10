@@ -1,13 +1,17 @@
+"use client";
+
+import { useDictionary } from "@/hooks/use-dictionary";
 import { EmptyState } from "@/components/empty-state";
 import { Users } from "lucide-react";
 import Link from "next/link";
 
 export function FriendsEmptyState() {
+  const t = useDictionary();
   return (
     <EmptyState
       icon={Users}
-      title="Ajoute tes premiers amis"
-      description="Découvre des personnes actives dans ta ville et suis des comptes intéressants."
+      title={t.friend.addFirst}
+      description={t.friend.discover}
       actions={
         <>
           <Link

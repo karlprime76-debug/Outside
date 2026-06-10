@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Bell,
@@ -121,6 +122,7 @@ export default function ActivityPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const t = useDictionary();
 
   const fetchActivities = useCallback(
     async (cursor?: string) => {
@@ -277,7 +279,7 @@ export default function ActivityPage() {
       ) : activities.length === 0 ? (
         <EmptyState
           icon={Bell}
-          title="Aucune activité"
+          title={t.notification.noActivity}
           description="Pour le moment, rien de nouveau."
         />
       ) : (

@@ -4,6 +4,7 @@ import { useState, useCallback, createContext, useContext } from "react";
 import { cn } from "@/lib/cn";
 import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { useStandaloneMode } from "@/hooks/use-standalone-mode";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface Toast {
   id: string;
@@ -27,6 +28,7 @@ export function useToast() {
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const mode = useStandaloneMode();
+  const t = useDictionary();
   const isStandalone = mode !== "browser";
 
   const addToast = useCallback((message: string, type: Toast["type"] = "info") => {
@@ -65,7 +67,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             <span>{toast.message}</span>
             <button
               onClick={() => removeToast(toast.id)}
-              aria-label="Fermer"
+              aria-label={t.common.close}
               className="ml-1 rounded-full p-0.5 hover:bg-black/5 dark:hover:bg-white/10 transition-colors active:scale-95"
             >
               <X className="h-3.5 w-3.5" />

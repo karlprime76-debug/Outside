@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { Loader2, MapPin, Calendar, X, RefreshCw, ImageOff } from "lucide-react";
 import { getUserLocale } from "@/lib/locale";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { useHaptic } from "@/hooks/use-haptic";
 import { DmConversationHeader } from "@/components/dm/dm-conversation-header";
 import { DmSearchOverlay } from "@/components/dm/dm-search-overlay";
@@ -65,6 +66,7 @@ export default function DmConversationPage() {
     createdAt: string;
   }>>([]);
   const [momentsLoading, setMomentsLoading] = useState(false);
+  const t = useDictionary();
 
   const haptic = useHaptic();
   const listRef = useRef<HTMLDivElement>(null);
@@ -521,7 +523,7 @@ export default function DmConversationPage() {
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setPlanSelectorOpen(false)} />
             <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-[var(--os-fg)]">Inviter à un plan</h3>
+              <h3 className="text-lg font-black text-[var(--os-fg)]">{t.dm.inviteToPlan}</h3>
               <button
                 onClick={() => setPlanSelectorOpen(false)}
                 className="rounded-lg p-1 hover:bg-[var(--os-bg)] transition-colors"
@@ -589,7 +591,7 @@ export default function DmConversationPage() {
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMomentSelectorOpen(false)} />
           <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-[var(--os-fg)]">Partager un moment</h3>
+              <h3 className="text-lg font-black text-[var(--os-fg)]">{t.dm.shareMoment}</h3>
               <button
                 onClick={() => setMomentSelectorOpen(false)}
                 className="rounded-lg p-1 hover:bg-[var(--os-bg)] transition-colors"

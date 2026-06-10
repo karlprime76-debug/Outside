@@ -14,6 +14,7 @@ import {
   X,
   SendHorizontal,
 } from "lucide-react";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { OutsideHeader } from "@/components/ui/outside-header";
 import { OutsidePage } from "@/components/ui/outside-page";
@@ -65,6 +66,7 @@ export default function DmInboxPage() {
   const [searchUserQuery, setSearchUserQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string | null; username: string | null; image: string | null }>>([]);
   const [searching, setSearching] = useState(false);
+  const t = useDictionary();
 
   const load = useCallback(async (cursor?: string) => {
     if (isFetchingRef.current) return;
@@ -240,7 +242,7 @@ export default function DmInboxPage() {
                 )}
               </div>
               <p className="text-sm font-bold text-[var(--os-fg)]">
-                {activeTab === "requests" ? "Aucune invitation pour le moment." : "Aucune conversation archivée."}
+                {activeTab === "requests" ? t.dm.noInvitations : t.dm.noConversations}
               </p>
               <p className="text-xs text-[var(--os-muted)] mt-1 max-w-xs">
                 {activeTab === "requests"

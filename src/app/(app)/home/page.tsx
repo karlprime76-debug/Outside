@@ -48,6 +48,7 @@ import { MoodRadar } from "@/components/home/mood-radar";
 import { LiveSection } from "@/components/home/live-section";
 import { MomentsSection } from "@/components/home/moments-section";
 import type { Plan } from "@/types/plan";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface Place {
   id: string;
@@ -90,6 +91,7 @@ export default function HomePage() {
   const [loadingMoments, setLoadingMoments] = useState(true);
   useMomentPolling({ scope: "for-you", media: "all", enabled: !loadingMoments });
   const haptic = useHaptic();
+  const t = useDictionary();
   const [trendingMoments, setTrendingMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null }; badge: string | null }[]>([]);
   const [loadingTrending, setLoadingTrending] = useState(true);
 
@@ -312,7 +314,7 @@ export default function HomePage() {
         ) : events.length === 0 ? (
           <OutsideEmptyState
             icon={CalendarDays}
-            title="Aucun événement pro publié"
+            title={t.event.noEvents}
             description="Pour l'instant, aucun événement pro n'est disponible."
           />
         ) : (
@@ -511,7 +513,7 @@ export default function HomePage() {
         ) : todayPlans.length === 0 ? (
           <OutsideEmptyState
             icon={Sparkles}
-            title="Aucun plan pour le moment"
+            title={t.emptyStates.noPlansTitle}
             description="Dans ta ville. Lance le premier."
             actions={(
               <Link href="/plans/new" className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all">
@@ -578,7 +580,7 @@ export default function HomePage() {
         ) : places.length === 0 ? (
           <OutsideEmptyState
             icon={MapPin}
-            title="Aucun lieu enregistré"
+            title={t.emptyStates.noPlacesTitle}
             description="Les lieux apparaîtront bientôt dans ta ville."
           />
         ) : (

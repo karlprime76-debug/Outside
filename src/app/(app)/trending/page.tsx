@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { Flame, Volume2, VolumeX, Play } from "lucide-react";
 import { OutsidePage } from "@/components/ui/outside-page";
 import { OutsideHeader } from "@/components/ui/outside-header";
@@ -171,6 +172,7 @@ export default function TrendingPage() {
   const [userProfile, setUserProfile] = useState<{
     activeCity?: { name: string };
   } | null>(null);
+  const t = useDictionary();
 
   const activeCity = userProfile?.activeCity;
   const activeCountry = (session?.user as Record<string, string>)?.country || "";
@@ -257,7 +259,7 @@ export default function TrendingPage() {
             <p className="text-sm text-[var(--os-muted)] text-center">
               {scope === "city" && !activeCity?.name
                 ? "Définis ta ville pour voir les tendances locales."
-                : "Aucun contenu tendance pour le moment."}
+                : t.trending.noContent}
             </p>
             {scope === "city" && !activeCity?.name && (
               <Link

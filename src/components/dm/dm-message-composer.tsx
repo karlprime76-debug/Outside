@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Camera, ImageIcon, Mic, Plus, SendHorizontal, X, Paperclip, Share2, UserRound, Square, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { compressImage, shouldCompressImage } from "@/lib/media/compress-image";
 import { retryAsync, UploadProgress } from "@/lib/upload/retry-upload";
 import { UploadProgressComponent } from "@/components/upload/upload-progress";
@@ -59,6 +60,7 @@ export function DmMessageComposer({
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { addToast } = useToast();
+  const t = useDictionary();
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -428,7 +430,7 @@ export function DmMessageComposer({
               <button
                 onClick={sendRecording}
                 className="rounded-full bg-gradient-to-r from-outside-500 to-accent-500 p-1.5 text-white shadow-glow hover:shadow-glow-lg transition-all"
-                aria-label="Envoyer"
+                aria-label={t.plans.send}
               >
                 <SendHorizontal className="h-4 w-4" />
               </button>
@@ -483,7 +485,7 @@ export function DmMessageComposer({
               onClick={handleSubmit}
               disabled={sending}
               className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-outside-500 to-accent-500 p-2.5 text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-60"
-              aria-label="Envoyer"
+              aria-label={t.plans.send}
             >
               <SendHorizontal className="h-5 w-5" />
             </button>

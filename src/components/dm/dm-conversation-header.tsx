@@ -7,6 +7,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useState } from "react";
 import { useHaptic } from "@/hooks/use-haptic";
 import { ReportButton } from "@/components/report-button";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface DmConversationHeaderProps {
   other: {
@@ -24,6 +25,7 @@ interface DmConversationHeaderProps {
 export function DmConversationHeader({ other, conversationId, onBack, onOpenSearch, onOpenMedia }: DmConversationHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const haptic = useHaptic();
+  const t = useDictionary();
 
   return (
     <div className="sticky top-0 z-40 border-b border-[var(--os-card-border)] bg-[var(--os-bg)]/95 backdrop-blur-md px-3 py-2.5">
@@ -31,7 +33,7 @@ export function DmConversationHeader({ other, conversationId, onBack, onOpenSear
         <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={onBack}
-            aria-label="Retour"
+            aria-label={t.common.back}
             className="rounded-full p-2 hover:bg-[var(--os-card-border)] transition-colors shrink-0 active:scale-95"
           >
             <ArrowLeft className="h-5 w-5 text-[var(--os-fg)]" />

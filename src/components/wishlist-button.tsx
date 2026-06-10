@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { useHaptic } from "@/hooks/use-haptic";
 import { useToast } from "@/components/ui/toast";
 
@@ -17,6 +18,7 @@ export function WishlistButton({ placeId, className = "", variant = "icon" }: Wi
   const [wishlistId, setWishlistId] = useState<string | null>(null);
   const haptic = useHaptic();
   const { addToast } = useToast();
+  const t = useDictionary();
 
   useEffect(() => {
     const check = async () => {
@@ -84,7 +86,7 @@ export function WishlistButton({ placeId, className = "", variant = "icon" }: Wi
         } ${className}`}
       >
         <Heart className={`h-4 w-4 ${wishlisted ? "fill-current" : ""}`} />
-        {wishlisted ? "Wishlist" : "Ajouter à ma wishlist"}
+        {wishlisted ? "Wishlist" : t.wishlist.add}
       </button>
     );
   }
@@ -98,7 +100,7 @@ export function WishlistButton({ placeId, className = "", variant = "icon" }: Wi
           ? "bg-red-100 text-red-600 dark:bg-red-950/20 dark:text-red-400"
           : "bg-[var(--os-bg)] text-[var(--os-muted)] hover:bg-red-50 hover:text-red-500"
       } ${className}`}
-      aria-label={wishlisted ? "Retirer de ma wishlist" : "Ajouter à ma wishlist"}
+      aria-label={wishlisted ? t.wishlist.remove : t.wishlist.add}
     >
       <Heart className={`h-4 w-4 ${wishlisted ? "fill-current" : ""}`} />
     </button>

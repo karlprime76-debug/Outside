@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { cn } from "@/lib/cn";
 import { X } from "lucide-react";
 import { useHaptic } from "@/hooks/use-haptic";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 interface BottomSheetProps {
   open: boolean;
@@ -23,6 +24,7 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
   const startYRef = useRef(0);
   const currentYRef = useRef(0);
   const haptic = useHaptic();
+  const t = useDictionary();
 
   useEffect(() => {
     if (open) {
@@ -132,7 +134,7 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
             <button
               onClick={onClose}
               className="rounded-full p-1.5 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] transition-colors active:scale-95"
-              aria-label="Fermer"
+              aria-label={t.common.close}
             >
               <X className="h-5 w-5" />
             </button>

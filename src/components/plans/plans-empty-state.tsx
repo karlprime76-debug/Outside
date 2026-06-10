@@ -1,20 +1,24 @@
+"use client";
+
+import { useDictionary } from "@/hooks/use-dictionary";
 import { EmptyState } from "@/components/empty-state";
 import { Calendar } from "lucide-react";
 import Link from "next/link";
 
 export function PlansEmptyState() {
+  const t = useDictionary();
   return (
     <EmptyState
       icon={Calendar}
-      title="Aucun plan actif ici pour le moment"
-      description="Crée un plan ou rejoins-en un pour sortir avec du monde."
+      title={t.emptyStates.noPlansTitle}
+      description={t.emptyStates.noPlansDesc}
       actions={
         <>
           <Link
             href="/plans/new"
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-7 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
           >
-            Créer un plan
+            {t.emptyStates.noPlansCta}
           </Link>
           <Link
             href="/plans?budget=FREE"

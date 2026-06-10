@@ -1,5 +1,6 @@
 "use client";
 
+import { useDictionary } from "@/hooks/use-dictionary";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -21,13 +22,6 @@ import { Avatar } from "@/components/ui/avatar";
 import { OfficialBadge } from "@/components/ui/official-badge";
 import type { TonightData } from "@/types/tonight";
 import type { Plan } from "@/types/plan";
-
-const IDEA_ACTIONS = [
-  { icon: Calendar, label: "Crée un plan Food", href: "/plans/new?mood=FOOD", cta: "Créer", color: "from-orange-500 to-pink-500" },
-  { icon: Camera, label: "Lance un Moment", href: "/moments/new", cta: "Publier", color: "from-purple-500 to-indigo-500" },
-  { icon: UserPlus, label: "Invite 3 amis", href: "/invite", cta: "Inviter", color: "from-blue-500 to-cyan-500" },
-  { icon: Sparkles, label: "Découvre les comptes officiels", href: "/u/outside_guide", cta: "Découvrir", color: "from-outside-500 to-accent-500" },
-];
 
 const EMPTY_PAYLOAD: TonightData = {
   city: null,
@@ -58,7 +52,7 @@ function planTime(plan: Plan) {
   return new Date(plan.startDate).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function buildCards(data: TonightData): HubCard[] {
+function buildCards(data: TonightData, t): HubCard[] {
   const cards: HubCard[] = [];
 
   const plan = data.recommendedPlans[0];
@@ -213,7 +207,7 @@ function buildCards(data: TonightData): HubCard[] {
           key: "live-fallback",
           label: "Live en cours",
           icon: Video,
-          title: "Aucun live pour l'instant",
+          title: t.live.noLiveYet,
           subtitle: "Explore les sessions",
           href: "/live",
           cta: "Découvrir",
@@ -304,6 +298,14 @@ function HubCardTile({ card }: { card: HubCard }) {
 export function TonightSection() {
   const [data, setData] = useState<TonightData | null>(null);
   const [loading, setLoading] = useState(true);
+  const t = useDictionary();
+
+  const IDEA_ACTIONS = [
+    { icon: Calendar, label: t.tonight.createFoodPlan, href: "/plans/new?mood=FOOD", cta: t.tonight.create, color: "from-orange-500 to-pink-500" },
+    { icon: Camera, label: t.tonight.shareMoment, href: "/moments/new", cta: t.tonight.publish, color: "from-purple-500 to-indigo-500" },
+    { icon: UserPlus, label: t.tonight.inviteFriends, href: "/invite", cta: t.tonight.invite, color: "from-blue-500 to-cyan-500" },
+    { icon: Sparkles, label: t.tonight.discoverAccounts, href: "/u/outside_guide", cta: t.tonight.discover, color: "from-outside-500 to-accent-500" },
+  ];
 
   useEffect(() => {
     const controller = new AbortController();
@@ -335,7 +337,7 @@ export function TonightSection() {
   }
 
   const payload = data ?? EMPTY_PAYLOAD;
-  const cards = buildCards(payload);
+  const cards = buildCards(payload, t);
   const hasRealContent =
     payload.recommendedPlans.length > 0 ||
     payload.freePlans.length > 0 ||

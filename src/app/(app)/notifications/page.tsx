@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Bell,
@@ -42,6 +43,7 @@ export default function NotificationsPage() {
   const { addToast } = useToast();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useDictionary();
 
   const fetchNotifications = useCallback(() => {
     fetch("/api/notifications")
@@ -185,7 +187,7 @@ export default function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <EmptyState
           icon={Bell}
-          title="Aucune notification"
+          title={t.notification.noNotifications}
           description="Pour le moment, rien de nouveau."
         />
       ) : (

@@ -164,7 +164,7 @@ export default function PlansPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-black text-white drop-shadow">{t.plans.title}</h1>
-              <p className="text-sm text-white/70">Ce soir, trouve ton mood.</p>
+              <p className="text-sm text-white/70">{t.planFilters.findYourMood}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Link
@@ -215,7 +215,7 @@ export default function PlansPage() {
           onChange={(e) => setMood(e.target.value)}
           className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
         >
-          <option value="">Mood</option>
+          <option value="">{t.planFilters.mood}</option>
           {MOODS.map((m) => <option key={m} value={m}>{m.charAt(0) + m.slice(1).toLowerCase()}</option>)}
         </select>
         <select
@@ -223,7 +223,7 @@ export default function PlansPage() {
           onChange={(e) => setPlanCategory(e.target.value)}
           className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
         >
-          <option value="">Catégorie</option>
+          <option value="">{t.planFilters.category}</option>
           {PLAN_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
         <button
@@ -235,22 +235,22 @@ export default function PlansPage() {
           }`}
         >
           <Calendar className="h-3 w-3" />
-          Gratuit aujourd&apos;hui
+          {t.planFilters.freeToday}
         </button>
         <div ref={priceRef} className="relative">
           <button
             onClick={() => setPriceOpen((o) => !o)}
             className="inline-flex items-center gap-1.5 rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] hover:bg-[var(--os-card-border)] transition-colors"
           >
-            {priceType === "FREE" ? "Gratuit" : priceType === "PAID" ? "Payant" : priceType === "FROM" ? "À partir de" : "Prix"}
+            {priceType === "FREE" ? t.planFilters.free : priceType === "PAID" ? t.planFilters.paid : priceType === "FROM" ? "À partir de" : "Prix"}
             <ChevronDown className={`h-3 w-3 transition-transform ${priceOpen ? "rotate-180" : ""}`} />
           </button>
           {priceOpen && (
             <div className="absolute top-full left-0 mt-1 min-w-[150px] rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-1 shadow-xl z-40">
               {[
                 { value: "", label: "Tous" },
-                { value: "FREE", label: "Gratuit" },
-                { value: "PAID", label: "Payant" },
+                { value: "FREE", label: t.planFilters.free },
+                { value: "PAID", label: t.planFilters.paid },
                 { value: "FROM", label: "À partir de" },
               ].map((opt) => (
                 <button
@@ -277,7 +277,7 @@ export default function PlansPage() {
           } focus:outline-none focus:ring-2 focus:ring-outside-500 transition-colors relative`}
         >
           <MapPin className="h-3 w-3" />
-          Proche de moi
+          {t.planFilters.nearMe}
           {nearMe !== "true" && (
             <span className="absolute -top-1.5 -right-1.5 text-[8px] font-bold bg-amber-100 text-amber-700 rounded-full px-1.5 py-0.5 leading-none border border-white">
               Bientôt
@@ -289,11 +289,11 @@ export default function PlansPage() {
           onChange={(e) => setSortBy(e.target.value)}
           className="rounded-full border border-[var(--os-card-border)] px-4 py-2 text-xs font-semibold bg-[var(--os-card)] text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
         >
-          <option value="dateAsc">Bientôt</option>
+          <option value="dateAsc">{t.planFilters.soon}</option>
           <option value="priceAsc">Moins cher</option>
           <option value="priceDesc">Plus cher</option>
-          <option value="popular">Populaire</option>
-          <option value="recent">Récent</option>
+          <option value="popular">{t.planFilters.popular}</option>
+          <option value="recent">{t.planFilters.recent}</option>
         </select>
         <input
           type="date"
@@ -331,12 +331,12 @@ export default function PlansPage() {
           {planCategory && (
             <Badge variant="slate">{PLAN_CATEGORIES.find(c => c.value === planCategory)?.label || planCategory}</Badge>
           )}
-          {priceType === "FREE" && <Badge variant="slate">Gratuit</Badge>}
-          {priceType === "PAID" && <Badge variant="slate">Payant</Badge>}
+          {priceType === "FREE" && <Badge variant="slate">{t.planFilters.free}</Badge>}
+          {priceType === "PAID" && <Badge variant="slate">{t.planFilters.paid}</Badge>}
           {priceType === "FROM" && <Badge variant="slate">À partir de</Badge>}
-          {filterFreeToday && <Badge variant="green">Gratuit aujourd&apos;hui</Badge>}
+          {filterFreeToday && <Badge variant="green">{t.planFilters.freeToday}</Badge>}
           {nearMe === "true" && (
-            <Badge variant="slate">Proche de moi</Badge>
+            <Badge variant="slate">{t.planFilters.nearMe}</Badge>
           )}
           {(dateFrom || dateTo) && (
             <Badge variant="slate">{dateFrom || "..."} → {dateTo || "..."}</Badge>
@@ -417,7 +417,7 @@ export default function PlansPage() {
         <div className="os-card p-8 text-center">
           <CalendarDays className="h-12 w-12 text-[var(--os-muted)] mx-auto mb-4" />
           <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">
-            {search ? "Aucun résultat" : "Aucun plan dans ta ville pour le moment"}
+            {search ? t.planFilters.noResults : t.planFilters.noPlansInCity}
           </h3>
           <p className="text-sm text-[var(--os-muted)] mb-6">
             {search ? "Essaye un autre mot-clé ou filtre." : "Lance le premier plan pour remplir ton OUTSIDE."}
@@ -521,7 +521,7 @@ export default function PlansPage() {
             if (tonightPlans.length > 0) {
               sections.push(
                 <section key="tonight">
-                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Ce soir</h2>
+                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">{t.planFilters.tonight}</h2>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {tonightPlans.map((plan) => (
                       <PlanCard key={plan.id} plan={plan} showJoin />
@@ -539,7 +539,7 @@ export default function PlansPage() {
             if (weekendPlans.length > 0) {
               sections.push(
                 <section key="weekend">
-                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">Ce week-end</h2>
+                  <h2 className="text-lg font-black text-[var(--os-fg)] mb-3">{t.planFilters.thisWeekend}</h2>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {weekendPlans.map((plan) => (
                       <PlanCard key={plan.id} plan={plan} showJoin />
@@ -600,7 +600,7 @@ export default function PlansPage() {
         ) : suggestions.length === 0 ? (
           <EmptyState
             icon={Sparkles}
-            title="Aucune suggestion"
+            title={t.planFilters.noSuggestions}
             description="Personnalise tes préférences pour recevoir des suggestions personnalisées."
             cta={{ label: "Modifier mes préférences", href: "/settings" }}
           />
@@ -623,7 +623,7 @@ export default function PlansPage() {
         ) : myPlansData.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
-            title="Aucun plan créé"
+            title={t.planFilters.noPlansCreated}
             description="Tu n'as pas encore créé de plan."
             cta={{ label: "Créer un plan", href: "/plans/new" }}
           />

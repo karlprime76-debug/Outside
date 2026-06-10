@@ -290,9 +290,9 @@ export default function PlanDetailPage() {
           style={{ color: remindersEnabled ? "var(--os-green, #059669)" : "var(--os-muted, #a1a1aa)" }}
         >
           <Bell className={`h-3.5 w-3.5 ${remindersLoading ? "animate-pulse" : ""}`} />
-          {remindersEnabled
-            ? `Rappel activé (${myAttendance === "GOING" ? "J'y vais" : "Peut-être"})`
-            : "Rappel désactivé"}
+{remindersEnabled
+    ? `Rappel activé (${myAttendance === "GOING" ? t.attendance.going : t.attendance.maybe})`
+    : "Rappel désactivé"}
         </button>
       )}
 
@@ -305,14 +305,14 @@ export default function PlanDetailPage() {
               disabled={actionLoading || isFull}
               className="rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50"
             >
-              {actionLoading ? t.planDetail.joining : "J&apos;y vais"}
+              {actionLoading ? t.planDetail.joining : t.attendance.going}
             </button>
             <button
               onClick={() => setAttendance("MAYBE")}
               disabled={actionLoading}
               className="rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
             >
-              Peut-être
+              {t.attendance.maybe}
             </button>
           </>
         ) : isParticipant ? (
@@ -324,27 +324,27 @@ export default function PlanDetailPage() {
                 myAttendance === "GOING"
                   ? "bg-gradient-to-r from-outside-500 to-accent-500 text-white shadow-glow"
                   : "border border-[var(--os-card-border)] text-[var(--os-fg)] hover:bg-[var(--os-bg)]"
-              }`}
-            >
-              J&apos;y vais
-            </button>
-            <button
-              onClick={() => setAttendance("MAYBE")}
-              disabled={actionLoading || myAttendance === "MAYBE"}
+                }`}
+              >
+                {t.attendance.going}
+              </button>
+              <button
+                onClick={() => setAttendance("MAYBE")}
+                disabled={actionLoading || myAttendance === "MAYBE"}
               className={`rounded-xl px-6 py-3 text-sm font-bold transition-all disabled:opacity-50 ${
                 myAttendance === "MAYBE"
                   ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"
                   : "border border-[var(--os-card-border)] text-[var(--os-fg)] hover:bg-[var(--os-bg)]"
-              }`}
-            >
-              Peut-être
-            </button>
-            <button
-              onClick={leavePlan}
-              disabled={actionLoading}
-              className="rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-semibold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors disabled:opacity-50"
-            >
-              Je ne viens plus
+                }`}
+              >
+                {t.attendance.maybe}
+              </button>
+              <button
+                onClick={leavePlan}
+                disabled={actionLoading}
+                className="rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-semibold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors disabled:opacity-50"
+              >
+                {t.attendance.notGoing}
             </button>
           </>
         ) : null}
@@ -372,7 +372,7 @@ export default function PlanDetailPage() {
             className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
           >
             <UserPlus className="h-4 w-4" />
-            Inviter
+            {t.planActions.invite}
           </button>
         )}
         {isParticipant && (
@@ -386,7 +386,7 @@ export default function PlanDetailPage() {
             className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
           >
             <MessageSquare className="h-4 w-4" />
-            Inviter par message
+            {t.planActions.inviteByMessage}
           </button>
         )}
         <button
@@ -403,9 +403,9 @@ export default function PlanDetailPage() {
           }}
           className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
         >
-          <Share2 className="h-4 w-4" />
-          Partager
-        </button>
+            <Share2 className="h-4 w-4" />
+            {t.planActions.share}
+          </button>
         <button
           onClick={async () => {
             setQrOpen(true);
@@ -424,17 +424,17 @@ export default function PlanDetailPage() {
           }}
           className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
         >
-          <QrCode className="h-4 w-4" />
-          QR code
-        </button>
+            <QrCode className="h-4 w-4" />
+            {t.planActions.qrCode}
+          </button>
         <a
           href={`/api/plans/${plan.id}/calendar`}
           download
           className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
         >
-          <Calendar className="h-4 w-4" />
-          Export
-        </a>
+            <Calendar className="h-4 w-4" />
+            {t.planActions.export}
+          </a>
         {isParticipant && (
           <>
             {!safetyShare ? (
@@ -449,7 +449,7 @@ export default function PlanDetailPage() {
                 className="inline-flex items-center gap-2 rounded-xl border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
               >
                 <ShieldCheck className="h-4 w-4" />
-                Mode sécurité
+                {t.planActions.safetyMode}
               </button>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -475,7 +475,7 @@ export default function PlanDetailPage() {
                     className="inline-flex items-center gap-2 rounded-xl bg-emerald-100 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-200 transition-colors disabled:opacity-50"
                   >
                     <ShieldCheck className="h-4 w-4" />
-                    Je suis arrivé
+                    {t.planActions.imHere}
                   </button>
                 )}
                 {safetyShare.status === "ARRIVED" && (
@@ -500,7 +500,7 @@ export default function PlanDetailPage() {
                     className="inline-flex items-center gap-2 rounded-xl bg-sky-100 px-4 py-2 text-sm font-bold text-sky-700 hover:bg-sky-200 transition-colors disabled:opacity-50"
                   >
                     <Home className="h-4 w-4" />
-                    Je suis rentré
+                    {t.planActions.imBack}
                   </button>
                 )}
                 {safetyShare.status === "RETURNED" && (
@@ -520,14 +520,14 @@ export default function PlanDetailPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
             >
               <Trophy className="h-4 w-4" />
-              Voir les souvenirs
+              {t.planActions.viewMemories}
             </Link>
             <button
               onClick={() => setAfterPlanOpen(true)}
               className="inline-flex items-center gap-2 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-all"
             >
               <Star className="h-4 w-4" />
-              Bilan du plan
+              {t.planActions.planSummary}
             </button>
           </>
         )}
@@ -637,17 +637,17 @@ export default function PlanDetailPage() {
       <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] overflow-hidden">
         <div className="flex items-center gap-2 border-b border-[var(--os-card-border)] px-4 sm:px-5 py-3">
           <MessageSquare className="h-4 w-4 text-outside-500" />
-          <h3 className="text-sm font-bold gradient-text">Discussion du plan</h3>
+          <h3 className="text-sm font-bold gradient-text">{t.planChat.chatTitle}</h3>
           {(plan.status === "COMPLETED" || plan.status === "CANCELLED") && (
             <span className="ml-auto text-[10px] font-bold uppercase text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
-              Archivée
+              {t.planChat.archived}
             </span>
           )}
         </div>
 
         {!isParticipant && !isCreator ? (
           <div className="p-6 text-center">
-            <p className="text-sm text-[var(--os-muted)]">Rejoins le plan pour accéder à la discussion.</p>
+            <p className="text-sm text-[var(--os-muted)]">{t.planChat.joinToChat}</p>
           </div>
         ) : chatLoading ? (
           <div className="p-6 text-center">
@@ -655,7 +655,7 @@ export default function PlanDetailPage() {
           </div>
         ) : messages.length === 0 ? (
           <div className="p-6 text-center">
-            <p className="text-sm text-[var(--os-muted)]">Aucun message pour le moment.</p>
+            <p className="text-sm text-[var(--os-muted)]">{t.planChat.noMessages}</p>
             <p className="text-xs text-[var(--os-muted)] mt-1">Sois le premier à écrire !</p>
           </div>
         ) : (
@@ -741,7 +741,7 @@ export default function PlanDetailPage() {
 
       {(isParticipant || isCreator) && (
         <div className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 space-y-3">
-          <h3 className="text-sm font-black text-[var(--os-fg)]">Inviter ton cercle</h3>
+          <h3 className="text-sm font-black text-[var(--os-fg)]">{t.planChat.inviteCircle}</h3>
           <p className="text-xs text-[var(--os-muted)]">Partage ce plan — tu choisis quand et comment envoyer.</p>
           <PlanInviteShare
             planId={plan.id}
@@ -815,7 +815,7 @@ export default function PlanDetailPage() {
                   disabled={inviteLoading}
                   className="rounded-lg bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1.5 text-xs font-bold text-white shadow-glow disabled:opacity-50 active:scale-95"
                 >
-                  Inviter
+                  {t.planActions.invite}
                 </button>
               </div>
             ))}
@@ -912,9 +912,9 @@ export default function PlanDetailPage() {
                   }}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2 text-sm font-bold text-white shadow-glow active:scale-95 transition-all"
                 >
-                  <Share2 className="h-4 w-4" />
-                  Partager
-                </button>
+                    <Share2 className="h-4 w-4" />
+                    {t.planActions.share}
+                  </button>
                 <a
                   href={qrData.qr}
                   download={`outside-plan-${id}.png`}
@@ -935,7 +935,7 @@ export default function PlanDetailPage() {
       <BottomSheet
         open={showSafetySheet}
         onClose={() => setShowSafetySheet(false)}
-        title="Mode sécurité"
+        title={t.planActions.safetyMode}
       >
         <div className="space-y-4 p-2">
           <div className="rounded-xl bg-amber-50 p-3 flex items-start gap-2 dark:bg-amber-950/20">

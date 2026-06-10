@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { UserPlus, UserCheck, Clock, UserX } from "lucide-react";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 export function FriendButton({
   userId,
@@ -12,6 +13,7 @@ export function FriendButton({
 }) {
   const [currentRelation, setCurrentRelation] = useState(relation);
   const [loading, setLoading] = useState(false);
+  const t = useDictionary();
 
   async function sendRequest() {
     setLoading(true);
@@ -38,7 +40,7 @@ export function FriendButton({
     return (
       <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-500/10 px-4 py-3 text-sm font-bold text-green-600">
         <UserCheck className="h-4 w-4" />
-        Ami
+        {t.friend.friend}
       </div>
     );
   }
@@ -47,7 +49,7 @@ export function FriendButton({
     return (
       <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--os-card-border)] px-4 py-3 text-sm font-bold text-[var(--os-muted)]">
         <Clock className="h-4 w-4" />
-        Demande envoyée
+        {t.friend.requestSent}
       </div>
     );
   }
@@ -56,7 +58,7 @@ export function FriendButton({
     return (
       <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-outside-500 px-4 py-3 text-sm font-bold text-white shadow-glow">
         <Clock className="h-4 w-4" />
-        Répondre à la demande
+        {t.friend.replyRequest}
       </div>
     );
   }
@@ -65,7 +67,7 @@ export function FriendButton({
     return (
       <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-bold text-red-600">
         <UserX className="h-4 w-4" />
-        Bloqué
+        {t.friend.blocked}
       </div>
     );
   }
@@ -77,7 +79,7 @@ export function FriendButton({
       className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable disabled:opacity-50"
     >
       <UserPlus className="h-4 w-4" />
-      Ajouter
+      {t.friend.add}
     </button>
   );
 }

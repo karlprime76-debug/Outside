@@ -8,6 +8,7 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { PageHeader } from "@/components/ui/page-header";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { WishlistButton } from "@/components/wishlist-button";
 import { Heart, MapPin, Users } from "lucide-react";
 
@@ -35,6 +36,7 @@ export default function WishlistPage() {
   const [loading, setLoading] = useState(true);
   const [friendWishlist, setFriendWishlist] = useState<FriendWishlistItem[]>([]);
   const [friendWishlistLoading, setFriendWishlistLoading] = useState(true);
+  const t = useDictionary();
 
   useEffect(() => {
     fetch("/api/places/wishlist")
@@ -70,7 +72,7 @@ export default function WishlistPage() {
       ) : wishlist.length === 0 ? (
         <EmptyState
           icon={Heart}
-          title="Aucun lieu wishlisté"
+          title={t.wishlist.empty}
           description="Ajoute des lieux à ta wishlist pour les retrouver facilement et proposer des plans avec tes amis."
         />
       ) : (

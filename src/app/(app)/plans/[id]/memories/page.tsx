@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { ArrowLeft, Users, MessageSquare, Wallet, MapPin, Star, Trophy, Camera, CheckCircle2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +31,7 @@ interface MemoriesData {
 
 export default function MemoriesPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useDictionary();
   const [data, setData] = useState<MemoriesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -75,7 +77,7 @@ export default function MemoriesPage() {
   if (!data) {
     return (
       <div className="p-4 max-w-3xl mx-auto">
-        <EmptyState icon={Camera} title="Aucun souvenir" description="Ce plan n'a pas encore de souvenirs à afficher." />
+        <EmptyState icon={Camera} title={t.memory.noMemories} description="Ce plan n'a pas encore de souvenirs à afficher." />
       </div>
     );
   }
@@ -97,7 +99,7 @@ export default function MemoriesPage() {
       <div className="rounded-2xl bg-gradient-to-br from-outside-600 to-accent-600 p-6 text-white shadow-lg">
         <div className="flex items-center gap-2 mb-2">
           <Trophy className="h-5 w-5 text-amber-300" />
-          <span className="text-xs font-bold uppercase tracking-wider text-amber-200">Souvenirs</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-amber-200">{t.memory.title}</span>
         </div>
         <h1 className="text-2xl font-black mb-1">{plan.title}</h1>
         <p className="text-sm text-white/80">{date}</p>
