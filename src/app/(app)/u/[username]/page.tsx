@@ -3,8 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { ProfileAvatarViewer } from "@/components/profile/profile-avatar-viewer";
-import { MapPin, BadgeCheck } from "lucide-react";
+import { BadgeCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { getRelationshipStatus } from "@/lib/social/friendship";
 import { getFriendCount } from "@/lib/social/friendship";
@@ -17,6 +16,9 @@ import { TrustSignals } from "@/components/trust/trust-signals";
 import { TrustReviewButton } from "@/components/trust/trust-review-button";
 import { UserBadges } from "@/components/profile/user-badges";
 import { ReportButton } from "@/components/report-button";
+import { ProfileHeader } from "@/components/profile/profile-header";
+import { ProfileStats } from "@/components/profile/profile-stats";
+import { ProfileSocialLinks } from "@/components/profile/profile-social-links";
 import type { TrustData } from "@/lib/trust";
 import { PublicProfileMoments, type PublicMomentItem } from "@/components/profile/public-profile-moments";
 import { PublicProfileTabs } from "@/components/profile/public-profile-tabs";
@@ -59,18 +61,11 @@ export default async function PublicProfilePage({ params }: Props) {
   const currentUserId = session?.user?.id;
 
   let user: {
-    id: string;
-    name: string | null;
-    username: string | null;
-    image: string | null;
-    bio: string | null;
-    country: string | null;
-    countryCode: string | null;
-    isVerified: boolean;
-    trustScore: number;
-    createdAt: Date;
-    homeCity: { name: string } | null;
-    activeCity: { name: string } | null;
+    id: string; name: string | null; username: string | null;
+    image: string | null; coverImage: string | null; bio: string | null;
+    socialLinks: string | null; country: string | null; countryCode: string | null;
+    isVerified: boolean; trustScore: number; createdAt: Date;
+    homeCity: { name: string } | null; activeCity: { name: string } | null;
     userSettings: { showCityOnProfile: boolean } | null;
     proAccount: { status: string; businessName: string } | null;
   } | null = null;
@@ -79,16 +74,9 @@ export default async function PublicProfilePage({ params }: Props) {
     user = await db.user.findUnique({
       where: { username },
       select: {
-        id: true,
-        name: true,
-        username: true,
-        image: true,
-        bio: true,
-        country: true,
-        countryCode: true,
-        isVerified: true,
-        trustScore: true,
-        createdAt: true,
+        id: true, name: true, username: true, image: true, coverImage: true,
+        bio: true, socialLinks: true, country: true, countryCode: true,
+        isVerified: true, trustScore: true, createdAt: true,
         homeCity: { select: { name: true } },
         activeCity: { select: { name: true } },
         userSettings: { select: { showCityOnProfile: true } },
@@ -97,7 +85,6 @@ export default async function PublicProfilePage({ params }: Props) {
     });
   } catch (err) {
     const e = err as { message?: string; code?: string; name?: string };
-    // eslint-disable-next-line no-console
     console.error("[PUBLIC_PROFILE_ERROR]", { username, message: e?.message, code: e?.code, name: e?.name });
     notFound();
   }
@@ -106,187 +93,155 @@ export default async function PublicProfilePage({ params }: Props) {
 
   const isSelf = currentUserId === user.id;
 
-  // Appels DB secondaires résilients
   let relation: string = "NONE";
-  let friendCount = 0;
   let trust = defaultTrust;
+  let friendCount = 0;
   let followersCount = 0;
   let momentsCount = 0;
-  let publicPlansCount = 0;
-  let recent: Array<{
-    id: string; type: string; mediaUrl: string; caption: string | null;
-    city: string | null; countryCode: string | null; visibility: string;
-    createdAt: Date; author: { id: string; name: string | null; username: string | null; image: string | null; role: string; isVerified: boolean };
-    _count: { likes: number; comments: number };
-  }> = [];
-  let likedSet = new Set<string>();
+  let plansCount = 0;
+  let recent: PublicMomentItem[] = [];
   let recentPlans: unknown[] = [];
+  let friends: { id: string; name: string | null; username: string | null; image: string | null }[] = [];
 
   if (currentUserId) {
-    try {
-      relation = await getRelationshipStatus(currentUserId, user.id);
-    } catch {
-      relation = "NONE";
-    }
+    try { relation = await getRelationshipStatus(currentUserId, user.id); } catch { relation = "NONE"; }
   }
 
-  // Parallelize independent stat lookups
-  const [friendCountRes, trustRes, followersCountRes, momentsCountRes, publicPlansCountRes] = await Promise.allSettled([
+  const [friendCountRes, trustRes, followersCountRes, momentsCountRes, plansCountRes, friendsRes] = await Promise.allSettled([
     getFriendCount(user.id),
     getTrustData(user.id),
     db.follow.count({ where: { followingId: user.id } }),
     db.moment.count({ where: { authorId: user.id, visibility: "PUBLIC" } }),
     db.plan.count({ where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } } }),
+    db.friendship.findMany({
+      where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
+      include: {
+        initiator: { select: { id: true, name: true, username: true, image: true } },
+        receiver: { select: { id: true, name: true, username: true, image: true } },
+      },
+      take: 10,
+    }),
   ]);
 
   friendCount = friendCountRes.status === "fulfilled" ? friendCountRes.value : 0;
   trust = trustRes.status === "fulfilled" ? trustRes.value : defaultTrust;
   followersCount = followersCountRes.status === "fulfilled" ? followersCountRes.value : 0;
   momentsCount = momentsCountRes.status === "fulfilled" ? momentsCountRes.value : 0;
-  publicPlansCount = publicPlansCountRes.status === "fulfilled" ? publicPlansCountRes.value : 0;
+  plansCount = plansCountRes.status === "fulfilled" ? plansCountRes.value : 0;
+  if (friendsRes.status === "fulfilled") {
+    friends = friendsRes.value.map((f) => (f.initiatorId === user.id ? f.receiver : f.initiator));
+  }
 
   try {
-    recent = await db.moment.findMany({
-      where: {
-        authorId: user.id,
-        visibility: "PUBLIC",
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-      },
-      orderBy: { createdAt: "desc" },
-      take: 12,
+    const moments = await db.moment.findMany({
+      where: { authorId: user.id, visibility: "PUBLIC", OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+      orderBy: { createdAt: "desc" }, take: 12,
       include: {
         author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
         _count: { select: { likes: true, comments: true } },
       },
     });
-  } catch {
-    recent = [];
-  }
-
-  if (currentUserId && recent.length > 0) {
-    try {
-      const likes = await db.momentLike.findMany({
-        where: { userId: currentUserId, momentId: { in: recent.map((m) => m.id) } },
-        select: { momentId: true },
-      });
-      likedSet = new Set(likes.map((l) => l.momentId));
-    } catch {
-      likedSet = new Set();
-    }
-  }
+    recent = moments.map((m) => ({
+      id: m.id, type: m.type, mediaUrl: m.mediaUrl, caption: m.caption,
+      city: m.city, countryCode: m.countryCode, visibility: m.visibility,
+      createdAt: m.createdAt.toISOString(), author: m.author,
+      _count: { likes: m._count.likes, comments: m._count.comments },
+      viewerState: { likedByMe: false, canDelete: false, canReport: currentUserId !== user.id },
+    }));
+  } catch { recent = []; }
 
   try {
     recentPlans = await db.plan.findMany({
       where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } },
-      orderBy: { startDate: "asc" },
-      take: 6,
+      orderBy: { startDate: "asc" }, take: 6,
       include: {
         city: { select: { name: true } },
         creator: { select: { name: true, image: true } },
         _count: { select: { participants: true } },
       },
     });
-  } catch {
-    recentPlans = [];
-  }
-
-  const publicMoments: PublicMomentItem[] = recent.map((m) => ({
-    id: m.id,
-    type: m.type,
-    mediaUrl: m.mediaUrl,
-    caption: m.caption,
-    city: m.city,
-    countryCode: m.countryCode,
-    visibility: m.visibility,
-    createdAt: m.createdAt.toISOString(),
-    author: m.author,
-    _count: { likes: m._count.likes, comments: m._count.comments },
-    viewerState: {
-      likedByMe: likedSet.has(m.id),
-      canDelete: currentUserId === m.author.id || session?.user?.role === "ADMIN" || session?.user?.role === "MODERATOR",
-      canReport: currentUserId !== m.author.id,
-    },
-  }));
+  } catch { recentPlans = []; }
 
   if (process.env.NODE_ENV !== "production") console.timeEnd(perfLabel);
 
-  return (
-    <div className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-fade-in">
-      {/* Header card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-6 text-white shadow-glow">
-        <div className="relative z-10 flex items-center gap-4">
-          <ProfileAvatarViewer src={user.image} name={user.name} size="xl" />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-black truncate">{user.name || "Utilisateur OUTSIDE"}</h1>
-            <p className="text-sm text-white/80 truncate">@{user.username || "username non défini"}</p>
-            {(isSelf || user.userSettings?.showCityOnProfile !== false) && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-white/70">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span>{user.activeCity?.name || user.homeCity?.name || "Ville non définie"}</span>
-              </div>
-            )}
-            <div className="mt-3 flex items-center gap-2 flex-wrap">
-              {user.proAccount?.status === "APPROVED" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-900 shadow">
-                  <BadgeCheck className="h-3 w-3" />
-                  Pro vérifié
-                </span>
-              )}
-              <TrustBadge level={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
-              {!isSelf && currentUserId && (
-                <MessageButton username={user.username || ""} />
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="absolute -right-8 -bottom-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-      </div>
+  const showCity = isSelf || user.userSettings?.showCityOnProfile !== false;
 
-      {/* Trust signals */}
-      <div className="os-card p-5 animate-slide-up">
+  const aboutTab = (
+    <div className="space-y-4">
+      <div className="os-card p-5">
         <h3 className="text-sm font-bold text-[var(--os-fg)] mb-3">Signaux de confiance</h3>
         <TrustSignals signals={trust.signals} compact />
       </div>
-
       <UserBadges userId={user.id} />
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-slide-up">
-        <Link href="/moments" className="os-card p-5 text-center block hover:border-outside-300 transition-colors">
-          <p className="text-2xl font-black text-outside-600">{momentsCount}</p>
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Moments</p>
-        </Link>
-        <div className="os-card p-5 text-center">
-          <p className="text-2xl font-black text-outside-600">{friendCount}</p>
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Amis</p>
-        </div>
-        <div className="os-card p-5 text-center">
-          <p className="text-2xl font-black text-outside-600">{followersCount}</p>
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Abonnés</p>
-        </div>
-        <div className="os-card p-5 text-center">
-          <p className="text-2xl font-black text-outside-600">{publicPlansCount}</p>
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--os-muted)]">Plans</p>
+      <div className="os-card p-6 space-y-4">
+        <h2 className="text-lg font-bold text-[var(--os-fg)]">À propos</h2>
+        <div className="text-sm text-[var(--os-fg)] leading-relaxed whitespace-pre-wrap">{user.bio || "Aucune bio pour le moment."}</div>
+        {user.socialLinks && <ProfileSocialLinks socialLinks={user.socialLinks} />}
+        <div className="text-xs text-[var(--os-muted)] space-y-1">
+          {showCity && <p>Ville: {user.activeCity?.name || user.homeCity?.name || "Non définie"}</p>}
+          <p>Pays: {user.country || "Non défini"}</p>
+          <p>Inscrit(e) depuis {user.createdAt?.toLocaleDateString?.("fr-FR") || ""}</p>
         </div>
       </div>
-
-      {/* Tabs: Moments / Plans / À propos */}
-      <PublicProfileTabs
-        moments={<PublicProfileMoments initial={publicMoments} mode="grid" />}
-        plans={<PublicProfilePlans initial={(recentPlans as Array<{ id: string; title: string; mood: string; planCategory: string; budgetLevel: string; budgetAmount: unknown; budgetCurrency: string | null; budgetIsFrom: boolean; startDate: Date; maxParticipants: number; status: string; city: { name: string }; creator: { name: string | null; image: string | null }; _count: { participants: number } }>).map((p) => ({ id: p.id, title: p.title, mood: p.mood, planCategory: p.planCategory, budgetLevel: p.budgetLevel, budgetAmount: p.budgetAmount, budgetCurrency: p.budgetCurrency, budgetIsFrom: p.budgetIsFrom, startDate: p.startDate as unknown as string, maxParticipants: p.maxParticipants, status: p.status, city: { name: p.city.name }, creator: { name: user.name, image: user.image || undefined }, creatorUsername: user.username || null, creatorId: user.id, _count: { participants: p._count.participants } }))} />}
-        about={(
-          <div className="space-y-3">
-            <div className="text-sm text-[var(--os-fg)] leading-relaxed">{user.bio || "Aucune bio pour le moment."}</div>
-            {(isSelf || user.userSettings?.showCityOnProfile !== false) && (
-              <div className="text-xs text-[var(--os-muted)]">Ville: {user.activeCity?.name || user.homeCity?.name || "Non définie"}</div>
-            )}
-            <div className="text-xs text-[var(--os-muted)]">Pays: {user.country || "Non défini"}</div>
-            <div className="text-xs text-[var(--os-muted)]">Inscrit(e) depuis {user.createdAt?.toLocaleDateString?.("fr-FR") || ""}</div>
+      <div className="os-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-outside-500" />
+            <h2 className="text-lg font-bold text-[var(--os-fg)]">Amis ({friendCount})</h2>
+          </div>
+        </div>
+        {friends.length === 0 ? (
+          <p className="text-sm text-[var(--os-muted)]">Aucun ami pour l&rsquo;instant.</p>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {friends.map((friend) => (
+              <Link key={friend.id} href={`/u/${friend.username || ""}`}
+                className="flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-2 hover:border-outside-300 transition-colors"
+              >
+                <img src={friend.image || "/default-avatar.png"} alt="" className="h-7 w-7 rounded-full object-cover" />
+                <span className="text-sm font-semibold text-[var(--os-fg)]">{friend.name || "Anonyme"}</span>
+              </Link>
+            ))}
           </div>
         )}
-      />
+      </div>
+    </div>
+  );
 
-      {/* Actions */}
+  return (
+    <div className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-fade-in">
+      <ProfileHeader
+        user={user}
+        showCity={showCity}
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
+            {user.proAccount?.status === "APPROVED" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-slate-900 shadow">
+                <BadgeCheck className="h-3 w-3" />
+                Pro vérifié
+              </span>
+            )}
+            <TrustBadge level={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />
+            {!isSelf && currentUserId && <MessageButton username={user.username || ""} />}
+          </div>
+        }
+      />
+      <ProfileStats momentsCount={momentsCount} friendsCount={friendCount} followersCount={followersCount} plansCount={plansCount} />
+      <PublicProfileTabs
+        moments={<PublicProfileMoments initial={recent} mode="grid" />}
+        plans={<PublicProfilePlans initial={(recentPlans as Array<Record<string, unknown>>).map((p) => ({
+          id: p.id as string, title: p.title as string, mood: p.mood as string,
+          planCategory: p.planCategory as string, budgetLevel: p.budgetLevel as string,
+          budgetAmount: p.budgetAmount, budgetCurrency: p.budgetCurrency as string | null,
+          budgetIsFrom: p.budgetIsFrom as boolean, startDate: p.startDate as unknown as string,
+          maxParticipants: p.maxParticipants as number, status: p.status as string,
+          city: { name: (p.city as { name: string })?.name || "" },
+          creator: { name: user.name, image: user.image || undefined },
+          creatorUsername: user.username || null, creatorId: user.id,
+          _count: { participants: (p._count as { participants: number })?.participants || 0 },
+        }))} />}
+        about={aboutTab}
+      />
       {!isSelf && currentUserId && (
         <div className="flex flex-col gap-3">
           <FriendButton userId={user.id} relation={relation} />
@@ -297,11 +252,9 @@ export default async function PublicProfilePage({ params }: Props) {
           <ReportButton targetType="USER" targetId={user.id} />
         </div>
       )}
-
       {isSelf && (
         <div className="flex flex-col gap-3">
-          <Link
-            href="/profile/edit"
+          <Link href="/profile/edit"
             className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
           >
             Modifier mon profil

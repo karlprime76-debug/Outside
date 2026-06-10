@@ -393,7 +393,9 @@ model User {
   phone         String?     @unique
   phoneVerified DateTime?
   image         String?
+  coverImage    String?
   bio           String?
+  socialLinks   String?
   gender        Gender?
   role          UserRole    @default(USER)
   accountKind   AccountKind @default(STANDARD)
