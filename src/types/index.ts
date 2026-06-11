@@ -46,6 +46,8 @@ export interface CreatePlanInput {
   isTravelerFriendly?: boolean;
   safetyLevel: SafetyLevel;
   rules?: string;
+  isOfficial?: boolean;
+  bookingUrl?: string;
 }
 
 export interface UpdateProfileInput {

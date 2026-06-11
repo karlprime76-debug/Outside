@@ -75,6 +75,12 @@ export function PlanCard({ plan, showJoin = false }: { plan: Plan; showJoin?: bo
           {timeStr}
         </div>
         <div className="flex items-center gap-1.5">
+          {plan.isOfficial && (
+            <Badge variant="blue" className="text-[10px] shadow-glow border-blue-400 animate-pulse-slow">
+              <ShieldCheck className="h-3 w-3 mr-1 inline" />
+              Officiel
+            </Badge>
+          )}
           {plan.isCommunityConfirmed && (
             <Badge variant="green" className="text-[10px]">
               <ShieldCheck className="h-3 w-3 mr-1 inline" />

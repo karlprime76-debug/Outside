@@ -97,7 +97,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const plan = await db.plan.update({
       where: { id },
-      data: parsed.data,
+      data: {
+        ...parsed.data,
+        isOfficial: (user.role === "PRO" || user.role === "ADMIN") ? parsed.data.isOfficial : undefined,
+        bookingUrl: (user.role === "PRO" || user.role === "ADMIN") ? parsed.data.bookingUrl : undefined,
+      },
     });
 
     return NextResponse.json({ plan });

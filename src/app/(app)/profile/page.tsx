@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
-import { Users, Pencil, Shield, LayoutDashboard } from "lucide-react";
+import { Users, Pencil, Shield, LayoutDashboard, Trophy } from "lucide-react";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { TrustBadge } from "@/components/trust/trust-badge";
@@ -22,6 +22,7 @@ import { ProfilePhotos } from "@/components/profile/profile-photos";
 import { ProfileActivity, type ActivityItem } from "@/components/profile/profile-activity";
 import { getTrustData } from "@/lib/trust";
 import { getFriendCount } from "@/lib/social/friendship";
+import { getUserQualityScore } from "@/lib/algorithm/user-quality-score";
 import type { TrustData } from "@/lib/trust";
 
 const defaultTrust: TrustData = {
@@ -116,12 +117,13 @@ export default async function ProfilePage() {
   let followersCount = 0;
   let momentsCount = 0;
   let plansCount = 0;
+  let qualityScore = 50;
   let recentMoments: PublicMomentItem[] = [];
   let recentPlans: unknown[] = [];
   let recentPhotos: { id: string; mediaUrl: string; caption: string | null; createdAt: string; _count: { likes: number; comments: number } }[] = [];
   let activityItems: ActivityItem[] = [];
 
-  const [friendsRes, trustRes, friendCountRes, followersCountRes, momentsCountRes, plansCountRes] = await Promise.allSettled([
+  const [friendsRes, trustRes, friendCountRes, followersCountRes, momentsCountRes, plansCountRes, qualityScoreRes] = await Promise.allSettled([
     db.friendship.findMany({
       where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
       include: {
@@ -135,6 +137,7 @@ export default async function ProfilePage() {
     db.follow.count({ where: { followingId: user.id } }),
     db.moment.count({ where: { authorId: user.id, visibility: "PUBLIC" } }),
     db.plan.count({ where: { creatorId: user.id, status: { in: ["ACTIVE", "FULL"] } } }),
+    getUserQualityScore(user.id),
   ]);
 
   if (friendsRes.status === "fulfilled") {
@@ -145,6 +148,7 @@ export default async function ProfilePage() {
   if (followersCountRes.status === "fulfilled") followersCount = followersCountRes.value;
   if (momentsCountRes.status === "fulfilled") momentsCount = momentsCountRes.value;
   if (plansCountRes.status === "fulfilled") plansCount = plansCountRes.value;
+  if (qualityScoreRes.status === "fulfilled") qualityScore = qualityScoreRes.value;
 
   try {
     const recent = await db.moment.findMany({
@@ -264,7 +268,13 @@ export default async function ProfilePage() {
             <Users className="h-5 w-5 text-outside-500" />
             <h2 className="text-lg font-bold text-[var(--os-fg)]">{t.profile.friends} ({friendCount})</h2>
           </div>
-          <Link href="/friends" className="text-xs font-bold text-outside-600 hover:text-outside-700 transition-colors">{t.profile.seeAll}</Link>
+          <div className="flex items-center gap-3">
+            <Link href="/leaderboard" className="flex items-center gap-1 text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors">
+              <Trophy className="h-3 w-3" />
+              Classement
+            </Link>
+            <Link href="/friends" className="text-xs font-bold text-outside-600 hover:text-outside-700 transition-colors">{t.profile.seeAll}</Link>
+          </div>
         </div>
         {friends.length === 0 ? (
           <OutsideEmptyState icon={Users} title={t.profile.noFriends} description={t.profile.noFriendsDesc} />
@@ -288,6 +298,7 @@ export default async function ProfilePage() {
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4">
       <ProfileHeader
         user={user}
+        qualityScore={qualityScore}
         isOwn
         actions={<TrustBadge level={trust.badge} label={trust.badgeLabel} size="sm" showScore score={trust.trustScore} />}
       />

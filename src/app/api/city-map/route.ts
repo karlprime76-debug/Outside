@@ -17,7 +17,10 @@ export async function GET() {
     });
 
     const activeCity = dbUser?.activeCityId
-      ? await db.city.findUnique({ where: { id: dbUser.activeCityId }, select: { id: true, name: true } })
+      ? await db.city.findUnique({ 
+          where: { id: dbUser.activeCityId }, 
+          select: { id: true, name: true, latitude: true, longitude: true } 
+        })
       : null;
 
     const blockedIds = await getUserBlockedIds(user.id);
@@ -36,10 +39,25 @@ export async function GET() {
             },
             orderBy: { startDate: "asc" },
             take: 10,
-            include: {
-              creator: { select: { id: true, name: true, image: true } },
+            select: {
+              id: true,
+              title: true,
+              mood: true,
+              planCategory: true,
+              priceType: true,
+              budgetLevel: true,
+              budgetAmount: true,
+              budgetCurrency: true,
+              budgetIsFrom: true,
+              status: true,
+              isCommunityConfirmed: true,
+              neighborhood: true,
+              startDate: true,
+              latitude: true,
+              longitude: true,
+              creator: { select: { id: true, name: true, image: true, username: true } },
               city: { select: { name: true } },
-              place: { select: { name: true } },
+              place: { select: { name: true, latitude: true, longitude: true } },
               _count: { select: { participants: true } },
             },
           })
@@ -91,6 +109,8 @@ export async function GET() {
               neighborhood: true,
               images: true,
               popularityScore: true,
+              latitude: true,
+              longitude: true,
               _count: { select: { plans: true } },
             },
           })
@@ -139,6 +159,7 @@ export async function GET() {
 
     return NextResponse.json({
       cityName: cityName || "Ta ville",
+      cityCoords: activeCity ? { lat: activeCity.latitude, lng: activeCity.longitude } : null,
       activityLabel,
       totalActivity,
       zones: zonesArray,

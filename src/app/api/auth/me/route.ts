@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { recordTripHistory } from "@/lib/passport";
-import bcrypt from "bcryptjs";
+import { getUserGamificationData } from "@/lib/gamification";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function sanitizeUser(user: any) {
@@ -55,9 +55,12 @@ export async function GET() {
       friendsCount: user._count.friendshipsInitiated + user._count.friendshipsReceived,
     };
 
+    const gamification = await getUserGamificationData(user.id);
+
     return NextResponse.json({ 
       user: sanitizeUser(user),
-      stats
+      stats,
+      gamification
     });
   } catch (error) {
     console.error("Get me error:", error);

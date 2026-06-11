@@ -58,6 +58,8 @@ export const createPlanSchema = z.object({
   isTravelerFriendly: z.boolean().default(false),
   safetyLevel: z.nativeEnum(SafetyLevel).default(SafetyLevel.MEDIUM),
   rules: z.string().max(500).optional(),
+  isOfficial: z.boolean().optional(),
+  bookingUrl: z.string().url("URL de réservation invalide").optional().or(z.literal("")),
   recurrence: z.enum(["DAILY", "WEEKLY", "MONTHLY"]).optional(),
   recurrenceEndDate: z.string().datetime().optional(),
 });
@@ -92,6 +94,8 @@ export const updatePlanSchema = z.object({
   visibility: z.nativeEnum(PlanVisibility).optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
+  isOfficial: z.boolean().optional(),
+  bookingUrl: z.string().url("URL de réservation invalide").optional().or(z.literal("")),
 });
 
 export const createLiveSchema = z.object({

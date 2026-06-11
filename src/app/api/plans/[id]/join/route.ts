@@ -5,6 +5,7 @@ import { canJoinPlan } from "@/lib/plans/permissions";
 import { evaluateBadgesAfterPlanJoined } from "@/lib/badges";
 import { createPlanReminders } from "@/lib/plan-reminders";
 import { recordTripHistory } from "@/lib/passport";
+import { createNotification } from "@/lib/notifications";
 
 const VALID_ATTENDANCE = ["GOING", "MAYBE"] as const;
 
@@ -99,6 +100,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }).catch((err) => {
         console.error("[POST /api/plans/:id/join] Background task error:", err);
       });
+    }
+
+    if (attendance === "GOING" && plan.creatorId !== user.id) {
+      createNotification({
+        type: "PLAN_JOINED",
+        title: "Nouveau participant",
+        body: `${user.name || "Quelqu'un"} a rejoint ton plan "${plan.title}"`,
+        recipientId: plan.creatorId,
+        actorId: user.id,
+        actorName: user.name,
+        actorImage: user.image,
+        data: { planId: id },
+      }).catch(err => console.error("[PLAN_JOIN_NOTIFICATION]", err));
     }
 
     return NextResponse.json({ success: true });

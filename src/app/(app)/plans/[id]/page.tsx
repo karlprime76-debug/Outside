@@ -44,6 +44,8 @@ interface PlanDetail {
   parentPlanId: string | null;
   creator: { id: string; name: string | null; image: string | null };
   city: { name: string };
+  isOfficial?: boolean;
+  bookingUrl?: string | null;
   place: { name: string } | null;
   participants: { attendance: string; checkedInAt: string | null; checkinPhotoUrl: string | null; user: { id: string; name: string | null; image: string | null } }[];
   _count: { participants: number; going: number; maybe: number; expenses: number };
@@ -224,6 +226,12 @@ export default function PlanDetailPage() {
       {/* Header */}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
+          {plan.isOfficial && (
+            <Badge variant="blue" className="shadow-glow border-blue-400 animate-pulse-slow">
+              <ShieldCheck className="h-3 w-3 mr-1 inline" />
+              Officiel
+            </Badge>
+          )}
           <Badge variant={MOOD_VARIANTS[plan.mood] || "default"}>{plan.mood}</Badge>
           <Badge variant="outline">
             <Tag className="h-3 w-3 mr-1 inline" />
@@ -256,6 +264,20 @@ export default function PlanDetailPage() {
         <InfoRow icon={Shield} label={t.planDetail.safety} value={plan.safetyLevel} />
         <InfoRow icon={Users} label={t.planDetail.spots} value={`${plan._count.going} y vont · ${plan._count.maybe} intéressés / ${plan.maxParticipants} max`} />
       </div>
+
+      {plan.bookingUrl && (
+        <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 p-0.5 shadow-glow animate-fade-in">
+          <a
+            href={plan.bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-4 bg-[var(--os-card)] rounded-[14px] text-[var(--os-fg)] font-black hover:bg-transparent hover:text-white transition-all group"
+          >
+            <Tag className="h-5 w-5 text-blue-500 group-hover:text-white transition-colors" />
+            Réserver mes places / Billetterie
+          </a>
+        </div>
+      )}
 
       {(plan.recurrence || plan.parentPlanId) && (
         <RecurringSection planId={plan.id} isCreator={isCreator} />

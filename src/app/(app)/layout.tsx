@@ -11,6 +11,7 @@ import { UiProviders } from "@/components/ui/providers-client";
 import { ThemeBadge } from "@/components/theme-toggle";
 import { Bell, MessageSquare } from "lucide-react";
 import { getUnreadDmCount } from "@/lib/dm";
+import { PushPrompt } from "@/components/push-prompt";
 
 export default async function AppLayout({
   children,
@@ -161,6 +162,9 @@ export default async function AppLayout({
 
       {/* Mobile bottom navigation */}
       <BottomNav />
+
+      {/* Push notification prompt */}
+      <PushPrompt />
     </div>
   );
 }

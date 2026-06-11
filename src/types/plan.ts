@@ -12,6 +12,8 @@ export interface Plan {
   maxParticipants: number;
   status: string;
   isCommunityConfirmed?: boolean;
+  isOfficial?: boolean;
+  bookingUrl?: string | null;
   city: { name: string };
   creator: { id?: string; name: string | null; username?: string | null; image?: string | null };
   _count: { participants: number; going?: number; maybe?: number };

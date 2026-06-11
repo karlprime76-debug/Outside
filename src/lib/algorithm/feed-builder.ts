@@ -14,6 +14,8 @@ interface ViewerContext {
   blockedIds: Set<string>;
   blockedByIds: Set<string>;
   role: string;
+  preferredMoods: string[];
+  preferredBudget: string | null;
 }
 
 interface FeedCandidate {
@@ -49,6 +51,10 @@ interface FeedCandidate {
     artistName: string | null;
     audioUrl: string;
     status: string;
+  } | null;
+  plan?: {
+    mood: string;
+    budgetLevel: string;
   } | null;
 }
 
@@ -176,6 +182,7 @@ async function fetchNewCreators(
       },
       _count: { select: { likes: true, comments: true } },
       audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
+      plan: { select: { mood: true, budgetLevel: true } },
     },
   });
 
@@ -198,6 +205,7 @@ async function fetchNewCreators(
     audioStartTime: m.audioStartTime,
     audioVolume: m.audioVolume,
     audioTrack: m.audioTrack,
+    plan: m.plan,
   }));
 }
 
@@ -246,6 +254,7 @@ async function fetchExploration(
       },
       _count: { select: { likes: true, comments: true } },
       audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
+      plan: { select: { mood: true, budgetLevel: true } },
     },
   });
 
@@ -272,6 +281,7 @@ async function fetchExploration(
     audioStartTime: m.audioStartTime,
     audioVolume: m.audioVolume,
     audioTrack: m.audioTrack,
+    plan: m.plan,
   }));
 }
 
@@ -329,6 +339,18 @@ function scoreCandidate(
   if (scoreData) {
     rank += scoreData.viralScore * 0.5;
     rank += scoreData.localScore * 0.8; // Strong local virality boost
+  }
+
+  // Personalization boost based on user preferences
+  if (candidate.plan) {
+    // Mood match
+    if (viewer.preferredMoods.includes(candidate.plan.mood)) {
+      rank += 15;
+    }
+    // Budget match
+    if (viewer.preferredBudget && candidate.plan.budgetLevel === viewer.preferredBudget) {
+      rank += 10;
+    }
   }
 
   return rank;
@@ -443,6 +465,7 @@ async function fetchCandidates(
       },
       _count: { select: { likes: true, comments: true } },
       audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
+      plan: { select: { mood: true, budgetLevel: true } },
     },
   });
 
@@ -483,6 +506,7 @@ async function fetchCandidates(
       audioStartTime: m.audioStartTime,
       audioVolume: m.audioVolume,
       audioTrack: m.audioTrack,
+      plan: m.plan,
     }));
 
   // Fetch scores
@@ -542,9 +566,13 @@ export async function buildFeed(
   since?: Date | null,
   media?: "all" | "posts" | "clips"
 ) {
-  const [blocks, reportedContentIds] = await Promise.all([
+  const [blocks, reportedContentIds, userPrefs] = await Promise.all([
     fetchBlockedIds(viewer.userId),
     fetchReportedContentIds(),
+    db.user.findUnique({
+      where: { id: viewer.userId },
+      select: { preferredMoods: true, preferredBudget: true },
+    }),
   ]);
 
   const context: ViewerContext = {
@@ -556,6 +584,8 @@ export async function buildFeed(
     blockedIds: blocks.blocked,
     blockedByIds: blocks.blockedBy,
     role: viewer.role,
+    preferredMoods: userPrefs?.preferredMoods || [],
+    preferredBudget: userPrefs?.preferredBudget || null,
   };
 
   // For for-you scope, blend pools according to percentages

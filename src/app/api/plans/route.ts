@@ -8,8 +8,9 @@ import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
 import { createPlanReminders } from "@/lib/plan-reminders";
 import { generateRecurringPlans } from "@/lib/recurring-plans";
 import { recordTripHistory } from "@/lib/passport";
-import { PlanVisibility } from "@prisma/client";
+import { PlanVisibility, PlanPriceType } from "@prisma/client";
 import { attachHashtagsToPlan } from "@/lib/hashtags/hashtag-service";
+import { createNotification } from "@/lib/notifications";
 
 // Haversine formula to calculate distance between two points in kilometers
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -56,6 +57,22 @@ export async function GET(req: Request) {
     let limit = parseInt(searchParams.get("limit") || "50", 10);
     if (isNaN(limit) || limit < 1) limit = 50;
     if (limit > 50) limit = 50;
+
+    const [currentUser, joinedPlans] = await Promise.all([
+      db.user.findUnique({
+        where: { id: user.id },
+        select: { activeCityId: true, preferredMoods: true, preferredBudget: true },
+      }),
+      db.planParticipant.findMany({
+        where: { userId: user.id, attendance: "GOING" },
+        select: { plan: { select: { creatorId: true, mood: true } } },
+        take: 20,
+        orderBy: { createdAt: "desc" },
+      })
+    ]);
+
+    const historicCreatorIds = new Set(joinedPlans.map(p => p.plan.creatorId));
+    const historicMoods = new Set(joinedPlans.map(p => p.plan.mood));
 
     const friendRows = await db.friendship.findMany({
       where: { OR: [{ initiatorId: user.id }, { receiverId: user.id }] },
@@ -185,7 +202,12 @@ export async function GET(req: Request) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let orderBy: any = { startDate: "asc" };
     let isPopularSort = false;
+    const isForYouSort = sortBy === "for-you";
+
     switch (sortBy) {
+      case "for-you":
+        orderBy = { startDate: "asc" }; // Initial sort, will be re-ranked in memory
+        break;
       case "dateAsc":
         orderBy = { startDate: "asc" };
         break;
@@ -234,7 +256,7 @@ export async function GET(req: Request) {
         orderBy,
         take: limit * 2, // Fetch more to account for distance filtering
         include: {
-          creator: { select: { id: true, name: true, username: true, image: true } },
+          creator: { select: { id: true, name: true, username: true, image: true, trustScore: true, isVerified: true } },
           city: { select: { id: true, name: true } },
           place: { select: { id: true, name: true } },
           participants: { select: { attendance: true } },
@@ -288,7 +310,7 @@ export async function GET(req: Request) {
       orderBy,
       take: limit,
       include: {
-        creator: { select: { id: true, name: true, username: true, image: true } },
+        creator: { select: { id: true, name: true, username: true, image: true, trustScore: true, isVerified: true } },
         city: { select: { id: true, name: true } },
         place: { select: { id: true, name: true } },
         participants: { select: { attendance: true } },
@@ -304,6 +326,45 @@ export async function GET(req: Request) {
         _count: { participants: going + maybe, going, maybe },
       };
     });
+
+    if (isForYouSort && currentUser) {
+      const { getPlanRankingScore } = await import("@/lib/algorithm/plan-ranking");
+      const rankingContext = {
+        userId: user.id,
+        preferredMoods: currentUser.preferredMoods,
+        preferredBudget: currentUser.preferredBudget,
+        activeCityId: currentUser.activeCityId,
+        friendIds: new Set(friendIds),
+        fofIds: new Set(fofIds),
+        blockedIds: new Set(blockedIds),
+        historicCreatorIds,
+        historicMoods,
+      };
+
+      const plansWithScores = plansWithCounts.map(plan => ({
+        ...plan,
+        score: getPlanRankingScore({
+          id: plan.id,
+          creatorId: plan.creatorId,
+          mood: plan.mood,
+          budgetLevel: plan.budgetLevel,
+          cityId: plan.cityId,
+          isOfficial: plan.isOfficial,
+          startDate: plan.startDate,
+          createdAt: plan.createdAt,
+          creator: {
+            trustScore: plan.creator.trustScore || 0,
+            isVerified: plan.creator.isVerified || false,
+          },
+          participants: plan.participants,
+        }, rankingContext)
+      }));
+
+      plansWithScores.sort((a, b) => b.score - a.score);
+      
+      logPerfEnd(perfLabel);
+      return NextResponse.json({ plans: plansWithScores.slice(0, limit) });
+    }
 
     if (isPopularSort) {
       plansWithCounts.sort((a, b) => {
@@ -354,7 +415,7 @@ export async function POST(req: Request) {
         description: data.description,
         planCategory: data.planCategory,
         mood: data.mood,
-        priceType: (data.priceType ?? (data.budgetIsFrom ? "FROM" : data.budgetLevel === "FREE" ? "FREE" : "PAID")) as "FREE" | "PAID" | "FROM",
+        priceType: (data.priceType ?? (data.bookingUrl ? "TICKETED" : data.budgetIsFrom ? "FROM" : data.budgetLevel === "FREE" ? "FREE" : "PAID")) as PlanPriceType,
         budgetLevel: data.budgetLevel || "MEDIUM",
         budgetAmount: data.budgetAmount ?? undefined,
         budgetCurrency: data.budgetCurrency,
@@ -373,6 +434,8 @@ export async function POST(req: Request) {
         isTravelerFriendly: data.isTravelerFriendly,
         safetyLevel: data.safetyLevel,
         rules: data.rules,
+        isOfficial: (user.role === "PRO" || user.role === "ADMIN") ? (data.isOfficial ?? false) : false,
+        bookingUrl: (user.role === "PRO" || user.role === "ADMIN") ? data.bookingUrl : null,
         recurrence: data.recurrence ?? null,
         recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : null,
         creatorId: user.id,
@@ -408,6 +471,47 @@ export async function POST(req: Request) {
         source: "PLAN_CREATED",
         planId: plan.id,
       }).catch((err) => { logError("[PLAN_ERROR]", "Failed to record trip history", { error: String(err) }); });
+    }
+
+    // Notify friends in the same city
+    if (plan.visibility !== "PRIVATE") {
+      (async () => {
+        try {
+          const friends = await db.friendship.findMany({
+            where: {
+              OR: [{ initiatorId: user.id }, { receiverId: user.id }],
+            },
+            include: {
+              initiator: { select: { id: true, activeCityId: true } },
+              receiver: { select: { id: true, activeCityId: true } },
+            },
+          });
+
+          const friendIdsInCity = friends
+            .map((f) => (f.initiatorId === user.id ? f.receiver : f.initiator))
+            .filter((friend) => friend.activeCityId === plan.cityId)
+            .map((f) => f.id);
+
+          if (friendIdsInCity.length > 0) {
+            await Promise.all(
+              friendIdsInCity.map((friendId) =>
+                createNotification({
+                  type: "NEW_PLAN",
+                  title: "Nouveau plan dans ta ville",
+                  body: `${user.name || "Un ami"} a créé un nouveau plan : "${plan.title}"`,
+                  recipientId: friendId,
+                  actorId: user.id,
+                  actorName: user.name,
+                  actorImage: user.image,
+                  data: { planId: plan.id, cityId: plan.cityId },
+                })
+              )
+            );
+          }
+        } catch (err) {
+          logError("[PLAN_ERROR]", "Failed to notify friends about new plan", { error: String(err) });
+        }
+      })();
     }
 
     return NextResponse.json({ plan }, { status: 201 });

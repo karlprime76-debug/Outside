@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { MapView } from "@/components/city-map/map-view";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { PlanCard } from "@/components/plan-card";
+import type { Plan } from "@/types/plan";
 import {
   MapPin,
   Radio,
@@ -31,16 +35,10 @@ interface Zone {
   places: number;
 }
 
-interface PlanItem {
-  id: string;
-  title: string;
-  mood: string;
+interface PlanItem extends Plan {
   neighborhood: string | null;
-  startDate: string;
-  city: { name: string };
-  place: { name: string } | null;
-  creator: { id: string; name: string | null; image: string | null };
-  _count: { participants: number };
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface LiveItem {
@@ -69,11 +67,14 @@ interface PlaceItem {
   category: string;
   neighborhood: string | null;
   images: string[];
+  latitude: number | null;
+  longitude: number | null;
   _count: { plans: number };
 }
 
 interface CityMapData {
   cityName: string;
+  cityCoords: { lat: number; lng: number } | null;
   activityLabel: string;
   totalActivity: number;
   zones: Zone[];
@@ -99,6 +100,8 @@ export default function CityMapPage() {
   const router = useRouter();
   const [data, setData] = useState<CityMapData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeMood, setActiveMood] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<{ id: string; type: string } | null>(null);
   const t = useDictionary();
 
   useEffect(() => {
@@ -160,6 +163,123 @@ export default function CityMapPage() {
             </div>
             <div className="absolute -right-8 -bottom-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
           </div>
+
+          {/* Mood Filters */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+            <button
+              onClick={() => setActiveMood(null)}
+              className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeMood === null
+                  ? "bg-outside-500 text-white shadow-glow"
+                  : "bg-[var(--os-card)] text-[var(--os-muted)] border border-[var(--os-card-border)] hover:text-[var(--os-fg)]"
+              }`}
+            >
+              Tous
+            </button>
+            {Object.keys(MOOD_VARIANTS).slice(0, 10).map((mood) => (
+              <button
+                key={mood}
+                onClick={() => setActiveMood(mood)}
+                className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeMood === mood
+                    ? "bg-outside-500 text-white shadow-glow"
+                    : "bg-[var(--os-card)] text-[var(--os-muted)] border border-[var(--os-card-border)] hover:text-[var(--os-fg)]"
+                }`}
+              >
+                {mood}
+              </button>
+            ))}
+          </div>
+
+          {/* Interactive Map */}
+          <section className="animate-fade-in">
+            <MapView 
+              cityCoords={data.cityCoords} 
+              plans={data.plans} 
+              places={data.places} 
+              filterMood={activeMood}
+              onMarkerClick={(id, type) => {
+                setSelectedItem({ id, type });
+              }}
+            />
+          </section>
+
+          {/* Item Details BottomSheet */}
+          <BottomSheet
+            open={!!selectedItem}
+            onClose={() => setSelectedItem(null)}
+            title={selectedItem?.type === "plan" ? "Détails du plan" : "Détails du lieu"}
+          >
+            {selectedItem?.type === "plan" && (
+              <div className="pt-2">
+                      {data.plans.find(p => p.id === selectedItem.id) ? (
+                        <PlanCard plan={data.plans.find(p => p.id === selectedItem.id) as Plan} />
+                      ) : (
+                  <p className="text-sm text-[var(--os-muted)]">Plan introuvable</p>
+                )}
+                <div className="mt-6 flex justify-center">
+                  <Link
+                    href={`/plans/${selectedItem.id}`}
+                    className="w-full text-center py-4 bg-outside-500 text-white font-black rounded-2xl shadow-glow active:scale-95 transition-all"
+                  >
+                    Voir le plan complet
+                  </Link>
+                </div>
+              </div>
+            )}
+            {selectedItem?.type === "place" && (
+              <div className="pt-2">
+                {(() => {
+                  const place = data.places.find(p => p.id === selectedItem.id);
+                  if (!place) return <p className="text-sm text-[var(--os-muted)] text-center py-10">Lieu introuvable</p>;
+                  return (
+                    <div className="space-y-6">
+                      {place.images?.[0] && (
+                        <div className="relative aspect-video rounded-3xl overflow-hidden bg-[var(--os-card)] shadow-lg">
+                          <img 
+                            src={place.images[0]} 
+                            alt={place.name} 
+                            className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 duration-500" 
+                          />
+                          <div className="absolute top-4 left-4">
+                            <Badge variant="blue" className="shadow-lg backdrop-blur-md bg-blue-500/80">{place.category}</Badge>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="px-1">
+                        {!place.images?.[0] && (
+                          <Badge variant="blue" className="mb-2">{place.category}</Badge>
+                        )}
+                        <h3 className="text-2xl font-black text-[var(--os-fg)] leading-tight">{place.name}</h3>
+                        <div className="flex items-center gap-1.5 text-sm text-[var(--os-muted)] mt-2">
+                          <MapPin className="h-4 w-4" />
+                          <span>{place.neighborhood || data.cityName}</span>
+                        </div>
+                        
+                        {place._count.plans > 0 && (
+                          <div className="mt-4 flex items-center gap-2 bg-outside-500/10 p-3 rounded-2xl border border-outside-500/20">
+                            <Zap className="h-4 w-4 text-outside-500" />
+                            <p className="text-xs font-bold text-outside-600">
+                              {place._count.plans} plan{place._count.plans > 1 ? "s" : ""} prévu{place._count.plans > 1 ? "s" : ""} ici
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <Link
+                        href={`/places/${place.id}`}
+                        className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black rounded-2xl shadow-glow hover:shadow-glow-lg active:scale-95 transition-all"
+                      >
+                        <Compass className="h-5 w-5" />
+                        Explorer ce lieu
+                      </Link>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </BottomSheet>
 
           {/* Zones */}
           {data.zones.length > 0 && (

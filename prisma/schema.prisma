@@ -60,6 +60,8 @@ enum NotificationType {
   AMBASSADOR_TO_DISCOVER
   PLAN_REVIEW_PENDING
   PLAN_CONFIRMED
+  NEW_PLAN
+  PLAN_JOINED
 }
 
 enum AvailabilityMood {
@@ -257,6 +259,7 @@ enum PlanPriceType {
   FREE
   PAID
   FROM
+  TICKETED
 }
 
 enum SafetyLevel {
@@ -725,6 +728,8 @@ model Plan {
   safetyLevel        SafetyLevel    @default(MEDIUM)
   rules              String?
   isDemo             Boolean        @default(false)
+  isOfficial         Boolean        @default(false)
+  bookingUrl         String?
 
   isCommunityConfirmed Boolean @default(false)
   confirmationScore    Float   @default(0)

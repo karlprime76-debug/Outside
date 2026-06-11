@@ -38,6 +38,7 @@ import { DailyChallenges } from "@/components/challenges/daily-challenges";
 import { TonightSection } from "@/components/home/tonight-section";
 import { HomeHeader } from "@/components/home/home-header";
 import { StarterPack } from "@/components/home/starter-pack";
+import { LeaderboardCard } from "@/components/home/leaderboard-card";
 import type { Plan } from "@/types/plan";
 import { useDictionary } from "@/hooks/use-dictionary";
 
@@ -82,7 +83,7 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    fetch("/api/plans?limit=6")
+    fetch("/api/plans?limit=6&sortBy=for-you")
       .then((r) => r.json())
       .then((data) => {
         setPlans(data.plans?.slice(0, 6) || []);
@@ -342,6 +343,11 @@ export default function HomePage() {
             )}
           </section>
         )}
+
+        {/* Leaderboard Card */}
+        <section className="animate-slide-up">
+          <LeaderboardCard />
+        </section>
 
         {/* Daily Challenges — compact row */}
         <section id="challenges" className="animate-slide-up">

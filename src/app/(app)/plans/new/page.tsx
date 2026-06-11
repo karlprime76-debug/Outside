@@ -7,8 +7,9 @@ import { CitySelect } from "@/components/auth/city-select";
 import { InputField } from "@/components/ui/input-field";
 import { Badge } from "@/components/ui/badge";
 import { useDictionary } from "@/hooks/use-dictionary";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { getCurrencyForCountry, formatBudget, SUPPORTED_CURRENCIES } from "@/lib/currency";
+import { useSession } from "next-auth/react";
 
 const MOODS = [
   "CHILL", "FOOD", "SPORT", "PARTY", "MUSIC", "DATING",
@@ -45,12 +46,14 @@ const MOOD_VARIANTS: Record<string, Parameters<typeof Badge>[0]["variant"]> = {
 
 export default function NewPlanPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const t = useDictionary();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedMood, setSelectedMood] = useState("");
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
-  const [priceType, setPriceType] = useState<"FREE" | "PAID" | "FROM">("FREE");
+  const [priceType, setPriceType] = useState<"FREE" | "PAID" | "FROM" | "TICKETED">("FREE");
+  const isProOrAdmin = session?.user?.role === "PRO" || session?.user?.role === "ADMIN";
   const [budgetAmount, setBudgetAmount] = useState<number | undefined>(undefined);
   const [selectedCurrency, setSelectedCurrency] = useState("XOF");
   // Update currency when country changes, unless user manually changed it
@@ -81,6 +84,8 @@ export default function NewPlanPage() {
       budgetAmount,
       budgetCurrency: selectedCurrency,
       budgetIsFrom: priceType === "FROM",
+      isOfficial: form.get("isOfficial") === "on",
+      bookingUrl: (form.get("bookingUrl") as string) || undefined,
       cityId,
       countryCode: (form.get("countryCode") as string) || undefined,
       placeId: (form.get("placeId") as string) || undefined,
@@ -185,6 +190,19 @@ export default function NewPlanPage() {
               >
                 À partir de
               </button>
+              {isProOrAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setPriceType("TICKETED")}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                    priceType === "TICKETED"
+                      ? "bg-outside-500 text-white border-outside-500"
+                      : "border-[var(--os-card-border)] text-[var(--os-muted)]"
+                  }`}
+                >
+                  Billetterie
+                </button>
+              )}
             </div>
             {priceType !== "FREE" && (
               <div className="space-y-1.5">
@@ -288,6 +306,35 @@ export default function NewPlanPage() {
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Règles</label>
           <textarea name="rules" placeholder={t.newPlan.rulesPlaceholder} rows={2} className={inputBase + " resize-none"} />
         </div>
+
+        {isProOrAdmin && (
+          <div className="os-card p-4 space-y-4 border-blue-100 bg-blue-50/20 dark:border-blue-900/30 dark:bg-blue-950/10 animate-fade-in">
+            <h3 className="text-sm font-black text-blue-600 dark:text-blue-400 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Options Partenaire / PRO
+            </h3>
+            
+            <label className="flex items-center gap-3 text-sm text-[var(--os-fg)] cursor-pointer">
+              <input 
+                name="isOfficial" 
+                type="checkbox" 
+                className="rounded h-5 w-5 accent-blue-500" 
+              />
+              <span className="font-medium">Certifier ce plan comme Officiel</span>
+            </label>
+
+            <div>
+              <InputField 
+                name="bookingUrl" 
+                label="URL de Billetterie / Réservation" 
+                placeholder="https://..." 
+              />
+              <p className="mt-1 text-[10px] text-blue-600/70 dark:text-blue-400/70">
+                Le lien vers ta billetterie externe (DICE, Eventbrite, etc.)
+              </p>
+            </div>
+          </div>
+        )}
 
         <button
           type="submit"
