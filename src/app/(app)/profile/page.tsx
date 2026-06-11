@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
-import { Users, Pencil, Shield } from "lucide-react";
+import { Users, Pencil, Shield, LayoutDashboard } from "lucide-react";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { TrustBadge } from "@/components/trust/trust-badge";
@@ -55,7 +55,7 @@ export default async function ProfilePage() {
     image: string | null; coverImage: string | null; bio: string | null;
     socialLinks: string | null; neighborhood: string | null;
     country: string | null; language: string; preferredBudget: string | null;
-    isVerified: boolean; createdAt: Date;
+    isVerified: boolean; role: string; createdAt: Date;
     homeCity: { name: string } | null; activeCity: { name: string } | null;
     trustProfile: { level: string; outsideScore: number } | null;
   } | null = null;
@@ -68,7 +68,7 @@ export default async function ProfilePage() {
           id: true, name: true, username: true, email: true,
           image: true, coverImage: true, bio: true, socialLinks: true,
           neighborhood: true, country: true, language: true, preferredBudget: true,
-          isVerified: true, createdAt: true,
+          isVerified: true, role: true, createdAt: true,
           homeCity: { select: { name: true } },
           activeCity: { select: { name: true } },
           trustProfile: { select: { level: true, outsideScore: true } },
@@ -82,7 +82,7 @@ export default async function ProfilePage() {
           id: true, name: true, username: true, email: true,
           image: true, coverImage: true, bio: true, socialLinks: true,
           neighborhood: true, country: true, language: true, preferredBudget: true,
-          isVerified: true, createdAt: true,
+          isVerified: true, role: true, createdAt: true,
           homeCity: { select: { name: true } },
           activeCity: { select: { name: true } },
           trustProfile: { select: { level: true, outsideScore: true } },
@@ -315,6 +315,14 @@ export default async function ProfilePage() {
         aboutLabel={t.profile.about}
       />
       <div className="flex flex-col gap-3">
+        {(user.role === "PRO" || user.role === "ADMIN") && (
+          <Link href="/pro/dashboard"
+            className="flex items-center justify-center gap-2 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-4 py-3 text-sm font-bold text-[var(--os-fg)] hover:border-outside-500 transition-all pressable"
+          >
+            <LayoutDashboard className="h-4 w-4 text-outside-500" />
+            Dashboard PRO
+          </Link>
+        )}
         <Link href="/profile/edit"
           className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all pressable"
         >

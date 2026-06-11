@@ -38,7 +38,16 @@ export function AfterPlanSheet({ isOpen, onClose, planId, planTitle, participant
   };
 
   return (
-    <BottomSheet open={isOpen} onClose={onClose} title="Bilan du plan">
+    <BottomSheet 
+      open={isOpen} 
+      onClose={onClose} 
+      title="Bilan du plan"
+      footer={(
+        <Button onClick={onClose} className="w-full">
+          Terminer
+        </Button>
+      )}
+    >
       <div className="space-y-4 p-2">
         <div className="text-center">
           <p className="text-sm font-semibold text-[var(--os-fg)]">{planTitle}</p>

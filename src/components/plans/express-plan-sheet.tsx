@@ -98,7 +98,7 @@ export function ExpressPlanSheet({ onSelectTemplate }: ExpressPlanSheetProps) {
         <Zap className="h-4 w-4" />
         Plan Express
       </Button>
-      <BottomSheet open={open} onClose={() => setOpen(false)} title="Créer un plan express" maxHeight="80vh">
+      <BottomSheet open={open} onClose={() => setOpen(false)} title="Créer un plan express">
         <div className="grid grid-cols-2 gap-3 mt-6">
           {EXPRESS_TEMPLATES.map((template) => {
             const Icon = template.icon;

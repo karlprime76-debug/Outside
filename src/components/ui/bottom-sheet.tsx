@@ -15,7 +15,7 @@ interface BottomSheetProps {
   maxHeight?: string;
 }
 
-export function BottomSheet({ open, onClose, title, children, footer, maxHeight = "calc(100dvh - 4rem)" }: BottomSheetProps) {
+export function BottomSheet({ open, onClose, title, children, footer, maxHeight = "calc(100dvh - 2rem)" }: BottomSheetProps) {
   const [show, setShow] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [dragY, setDragY] = useState(0);
@@ -90,7 +90,7 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
     : `translateY(calc(100% + ${dragY}px))`;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center">
+    <div className="fixed inset-0 z-[1000] flex items-end justify-center">
       {/* Backdrop */}
       <div
         className={cn(
@@ -105,7 +105,7 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
       <div
         ref={sheetRef}
         className={cn(
-          "relative w-full max-w-lg rounded-t-3xl bg-[var(--os-bg)] shadow-[0_-8px_32px_rgba(0,0,0,0.2)] flex flex-col",
+          "relative w-full max-w-lg rounded-t-[2.5rem] bg-[var(--os-bg)] shadow-[0_-12px_48px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden",
           isDragging ? "transition-none" : "transition-transform duration-300 ease-out"
         )}
         style={{ maxHeight, transform }}
@@ -142,13 +142,13 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
         )}
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto overscroll-y-contain px-5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="flex-1 overflow-y-auto overscroll-y-contain px-5 pb-[calc(2rem+env(safe-area-inset-bottom))]">
           {children}
         </div>
 
         {/* Sticky footer */}
         {footer && (
-          <div className="shrink-0 border-t border-[var(--os-card-border)] px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="shrink-0 border-t border-[var(--os-card-border)] bg-[var(--os-bg)] px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-6">
             {footer}
           </div>
         )}

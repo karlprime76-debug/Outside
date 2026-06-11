@@ -23,7 +23,12 @@ export function BottomNav() {
   const haptic = useHaptic();
   const isStandalone = mode !== "browser";
 
-  if (pathname.startsWith("/live/") || pathname.startsWith("/moments/clips")) return null;
+  if (
+    pathname.startsWith("/live/") || 
+    pathname.startsWith("/moments/clips") || 
+    pathname.includes("/chat") || 
+    (pathname.startsWith("/dm/") && pathname !== "/dm")
+  ) return null;
 
   return (
     <nav

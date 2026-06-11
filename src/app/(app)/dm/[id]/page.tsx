@@ -413,13 +413,15 @@ export default function DmConversationPage() {
   }, [ordered, myId]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden">
-      <DmConversationHeader 
-        other={other} 
-        onBack={() => router.back()} 
-        onOpenSearch={() => setSearchOpen(true)}
-        onOpenMedia={() => setMediaOpen(true)}
-      />
+    <div className="fixed inset-0 z-[60] flex flex-col h-[100dvh] bg-[var(--os-bg)] overflow-hidden">
+      <div className="flex-none pt-[env(safe-area-inset-top)] bg-[var(--os-bg)]">
+        <DmConversationHeader 
+          other={other} 
+          onBack={() => router.back()} 
+          onOpenSearch={() => setSearchOpen(true)}
+          onOpenMedia={() => setMediaOpen(true)}
+        />
+      </div>
 
       {/* Messages - seule zone scrollable */}
       <div
@@ -427,7 +429,7 @@ export default function DmConversationPage() {
           (listRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
           (pullRefreshRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
         }}
-        className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 relative min-h-0 pb-2"
+        className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 relative min-h-0"
       >
         {/* Pull to refresh indicator */}
         <div
@@ -483,38 +485,40 @@ export default function DmConversationPage() {
         </div>
       )}
 
-      <DmMessageComposer
-        onSend={onSend}
-        sending={sending}
-        conversationId={id}
-        onOpenPlanSelector={() => {
-          setPlanSelectorOpen(true);
-          setPlansLoading(true);
-          fetch("/api/plans/my")
-            .then((r) => (r.ok ? r.json() : null))
-            .then((data) => setPlansList(data?.plans || []))
-            .finally(() => setPlansLoading(false));
-        }}
-        onOpenMomentSelector={() => {
-          setMomentSelectorOpen(true);
-          setMomentsLoading(true);
-          fetch("/api/moments/mine")
-            .then((r) => (r.ok ? r.json() : null))
-            .then((data) => setMomentsList(data?.moments || []))
-            .finally(() => setMomentsLoading(false));
-        }}
-        onShareProfile={() => {
-          onSend("", {
-            type: "PROFILE",
-            metadata: {
-              userId: session?.user?.id,
-              name: session?.user?.name,
-              username: session?.user?.username,
-              image: session?.user?.image,
-            },
-          });
-        }}
-      />
+      <div className="flex-none pb-[env(safe-area-inset-bottom)] bg-[var(--os-bg)]">
+        <DmMessageComposer
+          onSend={onSend}
+          sending={sending}
+          conversationId={id}
+          onOpenPlanSelector={() => {
+            setPlanSelectorOpen(true);
+            setPlansLoading(true);
+            fetch("/api/plans/my")
+              .then((r) => (r.ok ? r.json() : null))
+              .then((data) => setPlansList(data?.plans || []))
+              .finally(() => setPlansLoading(false));
+          }}
+          onOpenMomentSelector={() => {
+            setMomentSelectorOpen(true);
+            setMomentsLoading(true);
+            fetch("/api/moments/mine")
+              .then((r) => (r.ok ? r.json() : null))
+              .then((data) => setMomentsList(data?.moments || []))
+              .finally(() => setMomentsLoading(false));
+          }}
+          onShareProfile={() => {
+            onSend("", {
+              type: "PROFILE",
+              metadata: {
+                userId: session?.user?.id,
+                name: session?.user?.name,
+                username: session?.user?.username,
+                image: session?.user?.image,
+              },
+            });
+          }}
+        />
+      </div>
 
       {/* Plan selector modal */}
       {planSelectorOpen && (

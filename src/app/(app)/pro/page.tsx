@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatedPage } from "@/components/ui/animated-page";
-import { ArrowLeft, Briefcase, CheckCircle, Globe, CalendarDays, TrendingUp, Star, Building2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { ArrowLeft, Briefcase, CheckCircle, Globe, CalendarDays, TrendingUp, Star, Building2, LayoutDashboard } from "lucide-react";
 
 export default function ProPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isPro = session?.user?.role === "PRO" || session?.user?.role === "ADMIN";
+
   return (
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-8 pb-24 md:pb-4 animate-slide-up">
       <button
@@ -16,6 +20,25 @@ export default function ProPage() {
         <ArrowLeft className="h-4 w-4" />
         Retour
       </button>
+
+      {/* Pro Dashboard Link for existing pros */}
+      {isPro && (
+        <Link
+          href="/pro/dashboard"
+          className="os-card p-6 flex items-center justify-between group hover:border-outside-500 transition-all shadow-glow-sm"
+        >
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-outside-500 flex items-center justify-center text-white shadow-glow group-hover:scale-110 transition-transform">
+              <LayoutDashboard className="h-6 w-6" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-[var(--os-fg)]">Accéder au Dashboard</h2>
+              <p className="text-sm text-[var(--os-muted)]">Gérez vos événements et suivez vos stats.</p>
+            </div>
+          </div>
+          <ArrowLeft className="h-5 w-5 text-outside-500 rotate-180" />
+        </Link>
+      )}
 
       {/* Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-500 via-outside-600 to-accent-600 p-8 text-white shadow-glow animate-fade-in">

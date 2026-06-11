@@ -105,34 +105,37 @@ export default function ChatPage() {
   const currentUserId = session?.user?.id;
 
   return (
-    <AnimatedPage className="flex flex-col h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-3.5rem)]">
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b border-[var(--os-glass-border)] bg-[var(--os-glass)] px-4 py-3 backdrop-blur">
-        <Link
-          href={`/plans/${id}`}
-          className="rounded-lg p-1.5 hover:bg-[var(--os-bg)] transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5 text-[var(--os-fg)]" />
-        </Link>
-        <div className="flex items-center gap-2">
-          <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-1.5 shadow-glow">
-            <MessageSquare className="h-4 w-4 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-bold text-[var(--os-fg)]">Discussion</h1>
-              <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${online ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400"}`}>
-                <Radio className="h-2.5 w-2.5" />
-                {online ? "En ligne" : "Hors ligne"}
-              </span>
+    <div className="fixed inset-0 z-[60] flex flex-col h-[100dvh] bg-[var(--os-bg)] overflow-hidden">
+      <AnimatedPage className="flex flex-col h-full">
+        {/* Header */}
+        <div className="flex-none pt-[env(safe-area-inset-top)] bg-[var(--os-bg)]">
+          <div className="flex items-center gap-3 border-b border-[var(--os-glass-border)] bg-[var(--os-glass)] px-4 py-3 backdrop-blur">
+            <Link
+              href={`/plans/${id}`}
+              className="rounded-lg p-1.5 hover:bg-[var(--os-bg)] transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 text-[var(--os-fg)]" />
+            </Link>
+            <div className="flex items-center gap-2">
+              <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-1.5 shadow-glow">
+                <MessageSquare className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="text-sm font-bold text-[var(--os-fg)]">Discussion</h1>
+                  <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${online ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" : "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400"}`}>
+                    <Radio className="h-2.5 w-2.5" />
+                    {online ? "En ligne" : "Hors ligne"}
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--os-muted)]">{messages.length} messages</p>
+              </div>
             </div>
-            <p className="text-xs text-[var(--os-muted)]">{messages.length} messages</p>
           </div>
         </div>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-3 px-4 py-4">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto space-y-3 px-4 py-4 min-h-0">
         {loading ? (
           <div className="flex h-full items-center justify-center">
             <LoadingScreen size="sm" />
@@ -187,27 +190,30 @@ export default function ChatPage() {
       </div>
 
       {/* Input */}
-      <form
-        onSubmit={sendMessage}
-        className="flex items-center gap-2 border-t border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-3"
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Écrire un message..."
-          maxLength={2000}
-          className="flex-1 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] px-4 py-2.5 text-sm text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
-        />
-        <button
-          type="submit"
-          disabled={sending || !input.trim()}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 text-white shadow-glow transition-all hover:shadow-glow-lg disabled:opacity-40 disabled:shadow-none"
+      <div className="flex-none pb-[env(safe-area-inset-bottom)] bg-[var(--os-card)] border-t border-[var(--os-card-border)]">
+        <form
+          onSubmit={sendMessage}
+          className="flex items-center gap-2 px-4 py-3"
         >
-          <Send className="h-4 w-4" />
-        </button>
-      </form>
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Écrire un message..."
+            maxLength={2000}
+            className="flex-1 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] px-4 py-2.5 text-sm text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
+          />
+          <button
+            type="submit"
+            disabled={sending || !input.trim()}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 text-white shadow-glow transition-all hover:shadow-glow-lg disabled:opacity-40 disabled:shadow-none"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </form>
+      </div>
     </AnimatedPage>
+  </div>
   );
 }
