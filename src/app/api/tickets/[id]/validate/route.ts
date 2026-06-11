@@ -4,16 +4,17 @@ import { db } from "@/lib/db";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
     if (!session?.user?.id) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const ticket = await db.ticket.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         plan: {
           select: {
@@ -52,7 +53,7 @@ export async function POST(
     }
 
     const updatedTicket = await db.ticket.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         scannedAt: new Date(),
         scannedById: session.user.id,

@@ -66,7 +66,7 @@ export async function PUT() {
     // In production, send verification email
     // await sendEmail({ to: user.email, template: "email-verify", data: { token } });
     if (process.env.NODE_ENV === "development") {
-      console.log("[VERIFY_EMAIL] Verification token for", user.email, ":", token);
+      console.log("[VERIFY_EMAIL] Verification email generated for", user.email);
     }
 
     return NextResponse.json({ message: "Email de vérification envoyé." });

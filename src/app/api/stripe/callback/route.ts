@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 
 export async function GET(req: Request) {
   try {
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     const account = await stripe.accounts.retrieve(accountId);
 
     if (account.details_submitted) {
-      await prisma.user.updateMany({
+      await db.user.updateMany({
         where: { stripeConnectId: accountId },
         data: { stripeOnboardingComplete: true }
       });

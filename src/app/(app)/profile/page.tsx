@@ -120,7 +120,7 @@ export default async function ProfilePage() {
   let qualityScore = 50;
   let recentMoments: PublicMomentItem[] = [];
   let recentPlans: unknown[] = [];
-  let recentPhotos: { id: string; mediaUrl: string; caption: string | null; createdAt: string; _count: { likes: number; comments: number } }[] = [];
+  let recentPhotos: { id: string; mediaUrl: string; caption: string | null; createdAt: string; _count: { reactions: number; comments: number } }[] = [];
   let activityItems: ActivityItem[] = [];
 
   const [friendsRes, trustRes, friendCountRes, followersCountRes, momentsCountRes, plansCountRes, qualityScoreRes] = await Promise.allSettled([
@@ -157,15 +157,15 @@ export default async function ProfilePage() {
       take: 12,
       include: {
         author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
-        _count: { select: { likes: true, comments: true } },
+        _count: { select: { reactions: true, comments: true } },
       },
     });
     recentMoments = recent.map((m) => ({
       id: m.id, type: m.type, mediaUrl: m.mediaUrl, caption: m.caption,
       city: m.city, countryCode: m.countryCode, visibility: m.visibility,
       createdAt: m.createdAt.toISOString(),
-      author: m.author, _count: { likes: m._count.likes, comments: m._count.comments },
-      viewerState: { likedByMe: false, canDelete: true, canReport: false },
+      author: m.author,       _count: { reactions: m._count.reactions, comments: m._count.comments },
+      viewerState: { likedByMe: false, myReaction: null, canDelete: true, canReport: false },
     }));
   } catch { recentMoments = []; }
 
@@ -187,12 +187,12 @@ export default async function ProfilePage() {
       where: { authorId: user.id, type: "PHOTO", visibility: "PUBLIC", OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
       orderBy: { createdAt: "desc" },
       take: 30,
-      include: { _count: { select: { likes: true, comments: true } } },
+      include: { _count: { select: { reactions: true, comments: true } } },
     });
     recentPhotos = photos.map((p) => ({
       id: p.id, mediaUrl: p.mediaUrl, caption: p.caption,
       createdAt: p.createdAt.toISOString(),
-      _count: { likes: p._count.likes, comments: p._count.comments },
+      _count: { reactions: p._count.reactions, comments: p._count.comments },
     }));
   } catch { recentPhotos = []; }
 

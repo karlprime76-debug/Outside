@@ -15,6 +15,7 @@ export interface Plan {
   isOfficial?: boolean;
   bookingUrl?: string | null;
   city: { name: string };
+  place?: { name: string } | null;
   creator: { id?: string; name: string | null; username?: string | null; image?: string | null };
   _count: { participants: number; going?: number; maybe?: number };
 }

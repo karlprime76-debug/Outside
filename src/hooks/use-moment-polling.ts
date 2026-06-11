@@ -19,9 +19,10 @@ interface PollingMoment {
     role: string;
     isVerified: boolean;
   };
-  _count: { likes: number; comments: number };
+  _count: { reactions: number; comments: number };
   viewerState: {
     likedByMe: boolean;
+    myReaction: string | null;
     canDelete: boolean;
     canReport: boolean;
   };

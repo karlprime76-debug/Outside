@@ -62,7 +62,7 @@ export function LeaderboardCard() {
             <div className="w-5 flex justify-center text-xs font-black text-[var(--os-muted)]">
               {item.rank === 1 ? <Crown className="h-3.5 w-3.5 text-amber-500" /> : item.rank}
             </div>
-            <Avatar src={item.user.image || ""} fallback={item.user.name?.[0] || "?"} size="xs" />
+            <Avatar src={item.user.image || ""} name={item.user.name} size="xs" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-[var(--os-fg)] truncate">{item.user.name}</p>
               <p className={`text-[9px] font-black uppercase tracking-wider text-${item.level.color}-500`}>

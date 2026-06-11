@@ -34,11 +34,12 @@ interface FeedMoment {
   createdAt: string;
   author: Author;
   _count: {
-    likes: number;
+    reactions: number;
     comments: number;
   };
   viewerState: {
     likedByMe: boolean;
+    myReaction: string | null;
     canDelete: boolean;
     canReport: boolean;
   };
@@ -274,7 +275,7 @@ export function MomentFeed() {
       setMoments((prev) =>
         prev.map((m) =>
           m.id === id
-            ? { ...m, viewerState: { ...m.viewerState, likedByMe: liked }, _count: { ...m._count, likes: liked ? m._count.likes + 1 : Math.max(0, m._count.likes - 1) } }
+            ? { ...m, viewerState: { ...m.viewerState, likedByMe: liked }, _count: { ...m._count, reactions: liked ? m._count.reactions + 1 : Math.max(0, m._count.reactions - 1) } }
             : m
         )
       );

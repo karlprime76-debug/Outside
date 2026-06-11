@@ -48,23 +48,21 @@ export async function getGlobalLeaderboard(limit = 10) {
   const scores = await db.userQualityScore.findMany({
     orderBy: { score: "desc" },
     take: limit,
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          image: true,
-          isVerified: true,
-        },
-      },
-    },
   });
+
+  const userIds = scores.map((s) => s.userId);
+  const users = userIds.length > 0
+    ? await db.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, name: true, username: true, image: true, isVerified: true },
+      })
+    : [];
+  const userMap = new Map(users.map((u) => [u.id, u]));
 
   return scores.map((s, index) => ({
     rank: index + 1,
     score: s.score,
-    user: s.user,
+    user: userMap.get(s.userId) ?? { id: s.userId, name: null, username: null, image: null, isVerified: false },
     level: getLevelFromScore(s.score),
   }));
 }
@@ -93,23 +91,21 @@ export async function getFriendsLeaderboard(userId: string, limit = 10) {
     },
     orderBy: { score: "desc" },
     take: limit,
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          image: true,
-          isVerified: true,
-        },
-      },
-    },
   });
+
+  const userIds = scores.map((s) => s.userId);
+  const users = userIds.length > 0
+    ? await db.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, name: true, username: true, image: true, isVerified: true },
+      })
+    : [];
+  const userMap = new Map(users.map((u) => [u.id, u]));
 
   return scores.map((s, index) => ({
     rank: index + 1,
     score: s.score,
-    user: s.user,
+    user: userMap.get(s.userId) ?? { id: s.userId, name: null, username: null, image: null, isVerified: false },
     level: getLevelFromScore(s.score),
   }));
 }

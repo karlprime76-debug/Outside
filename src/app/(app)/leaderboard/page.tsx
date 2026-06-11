@@ -84,7 +84,7 @@ export default function LeaderboardPage() {
             {/* Rank 2 */}
             <div className="flex flex-col items-center">
               <div className="relative mb-2">
-                <Avatar src={data[1].user.image || ""} fallback={data[1].user.name?.[0] || "?"} size="lg" className="border-2 border-slate-300 shadow-lg" />
+                <Avatar src={data[1].user.image || ""} name={data[1].user.name} size="lg" className="border-2 border-slate-300 shadow-lg" />
                 <div className="absolute -bottom-1 -right-1 bg-slate-300 text-slate-800 rounded-full h-6 w-6 flex items-center justify-center text-xs font-black border-2 border-[var(--os-bg)]">2</div>
               </div>
               <p className="text-[10px] font-bold text-[var(--os-fg)] max-w-[60px] truncate">{data[1].user.name}</p>
@@ -97,7 +97,7 @@ export default function LeaderboardPage() {
             <div className="flex flex-col items-center">
               <Crown className="h-6 w-6 text-amber-500 mb-1 animate-bounce" />
               <div className="relative mb-2">
-                <Avatar src={data[0].user.image || ""} fallback={data[0].user.name?.[0] || "?"} size="xl" className="border-4 border-amber-500 shadow-glow" />
+                <Avatar src={data[0].user.image || ""} name={data[0].user.name} size="xl" className="border-4 border-amber-500 shadow-glow" />
                 <div className="absolute -bottom-1 -right-1 bg-amber-500 text-white rounded-full h-8 w-8 flex items-center justify-center text-sm font-black border-2 border-[var(--os-bg)]">1</div>
               </div>
               <p className="text-xs font-black text-[var(--os-fg)] max-w-[80px] truncate">{data[0].user.name}</p>
@@ -109,7 +109,7 @@ export default function LeaderboardPage() {
             {/* Rank 3 */}
             <div className="flex flex-col items-center">
               <div className="relative mb-2">
-                <Avatar src={data[2].user.image || ""} fallback={data[2].user.name?.[0] || "?"} size="lg" className="border-2 border-amber-700 shadow-lg" />
+                <Avatar src={data[2].user.image || ""} name={data[2].user.name} size="lg" className="border-2 border-amber-700 shadow-lg" />
                 <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-black border-2 border-[var(--os-bg)]">3</div>
               </div>
               <p className="text-[10px] font-bold text-[var(--os-fg)] max-w-[60px] truncate">{data[2].user.name}</p>
@@ -143,7 +143,7 @@ export default function LeaderboardPage() {
                   <div className="w-8 flex justify-center font-black text-lg text-[var(--os-muted)] group-hover:text-outside-500 transition-colors">
                     {item.rank}
                   </div>
-                  <Avatar src={item.user.image || ""} fallback={item.user.name?.[0] || "?"} size="md" />
+                  <Avatar src={item.user.image || ""} name={item.user.name} size="md" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <h3 className="font-bold text-[var(--os-fg)] truncate">{item.user.name}</h3>

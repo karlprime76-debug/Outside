@@ -36,14 +36,16 @@ export async function POST(req: Request) {
     }
 
     try {
+      const amountTotal = session.amount_total;
+      const currency = session.currency;
       await db.$transaction([
         db.ticket.create({
           data: {
             userId,
             planId,
             stripeSessionId: session.id,
-            amount: session.amount_total / 100,
-            currency: session.currency,
+            amount: amountTotal ? amountTotal / 100 : 0,
+            currency: currency ?? "eur",
             status: "COMPLETED",
           }
         }),

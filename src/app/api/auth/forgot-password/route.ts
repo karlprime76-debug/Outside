@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     // In production, send email with reset link
     // await sendEmail({ to: email, template: "password-reset", data: { token } });
     if (process.env.NODE_ENV === "development") {
-      console.log("[RESET_PASSWORD] Reset token for", email, ":", token);
+      console.log("[RESET_PASSWORD] Reset link generated for", email);
     }
 
     return NextResponse.json({ message: "Si cet email existe, un lien de réinitialisation a été envoyé." });

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, ChallengeType } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 
 const db = new PrismaClient();
@@ -93,11 +93,11 @@ async function main() {
 
   // ── Daily Challenges ──
   const CHALLENGES = [
-    { key: "first_moment", title: "Publie ton premier Moment", description: "Partage un moment de ta journée avec la communauté", rewardLabel: "Badge Premier Moment", type: "POST_MOMENT", targetValue: 1, rewardPoints: 20 },
-    { key: "follow_3_users", title: "Suis 3 comptes", description: "Découvre et suis 3 personnes intéressantes", rewardLabel: "+15 points", type: "FOLLOW_FRIEND", targetValue: 3, rewardPoints: 15 },
-    { key: "create_express_plan", title: "Crée un plan ce soir", description: "Lance un plan rapide pour ce soir", rewardLabel: "Badge Premier plan", type: "CREATE_PLAN", targetValue: 1, rewardPoints: 25 },
-    { key: "join_plan_today", title: "Rejoins un plan", description: "Participe à une sortie organisée aujourd'hui", rewardLabel: "+10 points", type: "JOIN_PLAN", targetValue: 1, rewardPoints: 10 },
-    { key: "add_friend_today", title: "Ajoute un ami", description: "Élargis ton cercle sur OUTSIDE", rewardLabel: "+10 points", type: "ADD_FRIEND", targetValue: 1, rewardPoints: 10 },
+    { key: "first_moment", title: "Publie ton premier Moment", description: "Partage un moment de ta journée avec la communauté", rewardLabel: "Badge Premier Moment", type: ChallengeType.POST_MOMENT, targetValue: 1, rewardPoints: 20 },
+    { key: "follow_3_users", title: "Suis 3 comptes", description: "Découvre et suis 3 personnes intéressantes", rewardLabel: "+15 points", type: ChallengeType.FOLLOW_FRIEND, targetValue: 3, rewardPoints: 15 },
+    { key: "create_express_plan", title: "Crée un plan ce soir", description: "Lance un plan rapide pour ce soir", rewardLabel: "Badge Premier plan", type: ChallengeType.CREATE_PLAN, targetValue: 1, rewardPoints: 25 },
+    { key: "join_plan_today", title: "Rejoins un plan", description: "Participe à une sortie organisée aujourd'hui", rewardLabel: "+10 points", type: ChallengeType.JOIN_PLAN, targetValue: 1, rewardPoints: 10 },
+    { key: "add_friend_today", title: "Ajoute un ami", description: "Élargis ton cercle sur OUTSIDE", rewardLabel: "+10 points", type: ChallengeType.ADD_FRIEND, targetValue: 1, rewardPoints: 10 },
   ];
 
   for (const c of CHALLENGES) {
@@ -107,10 +107,10 @@ async function main() {
 
   // ── City Missions ──
   const MISSIONS = [
-    { key: "publish_moment_city", title: "Explorateur urbain", description: "Partage 5 moments depuis ta ville", rewardLabel: "+50 points", type: "POST_MOMENT", targetValue: 5, rewardPoints: 50 },
-    { key: "create_3_plans", title: "Organisateur né", description: "Organise 3 sorties cette semaine", rewardLabel: "+100 points", type: "CREATE_PLAN", targetValue: 3, rewardPoints: 100 },
-    { key: "join_5_plans", title: "Social Butterfly", description: "Participe à 5 plans différents", rewardLabel: "+75 points", type: "JOIN_PLAN", targetValue: 5, rewardPoints: 75 },
-    { key: "add_10_friends", title: "Cercle étendu", description: "Connecte-toi avec 10 nouveaux amis", rewardLabel: "Badge Cercle lancé", type: "ADD_FRIEND", targetValue: 10, rewardPoints: 100 },
+    { key: "publish_moment_city", title: "Explorateur urbain", description: "Partage 5 moments depuis ta ville", rewardLabel: "+50 points", type: ChallengeType.POST_MOMENT, targetValue: 5, rewardPoints: 50 },
+    { key: "create_3_plans", title: "Organisateur né", description: "Organise 3 sorties cette semaine", rewardLabel: "+100 points", type: ChallengeType.CREATE_PLAN, targetValue: 3, rewardPoints: 100 },
+    { key: "join_5_plans", title: "Social Butterfly", description: "Participe à 5 plans différents", rewardLabel: "+75 points", type: ChallengeType.JOIN_PLAN, targetValue: 5, rewardPoints: 75 },
+    { key: "add_10_friends", title: "Cercle étendu", description: "Connecte-toi avec 10 nouveaux amis", rewardLabel: "Badge Cercle lancé", type: ChallengeType.ADD_FRIEND, targetValue: 10, rewardPoints: 100 },
   ];
 
   for (const m of MISSIONS) {

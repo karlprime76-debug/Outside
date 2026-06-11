@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 
 export async function POST() {
   try {
@@ -10,7 +10,7 @@ export async function POST() {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await db.user.findUnique({
       where: { id: session.user.id },
       select: { stripeConnectId: true, email: true }
     });
@@ -40,7 +40,7 @@ export async function POST() {
 
       accountId = account.id;
 
-      await prisma.user.update({
+      await db.user.update({
         where: { id: session.user.id },
         data: { stripeConnectId: accountId }
       });

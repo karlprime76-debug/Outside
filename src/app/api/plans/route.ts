@@ -69,7 +69,7 @@ export async function GET(req: Request) {
         where: { userId: user.id, attendance: "GOING" },
         select: { plan: { select: { creatorId: true, mood: true } } },
         take: 20,
-        orderBy: { createdAt: "desc" },
+        orderBy: { joinedAt: "desc" },
       })
     ]);
 
@@ -115,12 +115,6 @@ export async function GET(req: Request) {
       select: { circleId: true },
     });
     const circleIds = myCircles.map(c => c.circleId);
-
-    // Get user's active city location for "near me" filter
-    const currentUser = await db.user.findUnique({
-      where: { id: user.id },
-      select: { activeCityId: true },
-    });
 
     let userCityLocation: { latitude: number; longitude: number } | null = null;
     if (currentUser?.activeCityId) {
@@ -268,7 +262,7 @@ export async function GET(req: Request) {
           creator: { select: { id: true, name: true, username: true, image: true, trustScore: true, isVerified: true } },
           city: { select: { id: true, name: true } },
           place: { select: { id: true, name: true } },
-          participants: { select: { attendance: true } },
+        participants: { select: { userId: true, attendance: true } },
         },
       });
 
@@ -322,7 +316,7 @@ export async function GET(req: Request) {
         creator: { select: { id: true, name: true, username: true, image: true, trustScore: true, isVerified: true } },
         city: { select: { id: true, name: true } },
         place: { select: { id: true, name: true } },
-        participants: { select: { attendance: true } },
+        participants: { select: { userId: true, attendance: true } },
       },
     });
 

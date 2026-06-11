@@ -57,7 +57,7 @@ function MarkerClusterGroup({ markers, onMarkerClick }: { markers: MarkerData[],
   useEffect(() => {
     if (!map) return;
 
-    // @ts-expect-error - Leaflet markercluster plugin
+
     const clusterGroup = L.markerClusterGroup({
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,

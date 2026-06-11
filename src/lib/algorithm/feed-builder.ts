@@ -182,7 +182,6 @@ async function fetchNewCreators(
       },
       _count: { select: { reactions: true, comments: true } },
       audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
-      plan: { select: { mood: true, budgetLevel: true } },
     },
   });
 
@@ -205,7 +204,6 @@ async function fetchNewCreators(
     audioStartTime: m.audioStartTime,
     audioVolume: m.audioVolume,
     audioTrack: m.audioTrack,
-    plan: m.plan,
   }));
 }
 
@@ -254,7 +252,6 @@ async function fetchExploration(
       },
       _count: { select: { reactions: true, comments: true } },
       audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
-      plan: { select: { mood: true, budgetLevel: true } },
     },
   });
 
@@ -281,7 +278,6 @@ async function fetchExploration(
     audioStartTime: m.audioStartTime,
     audioVolume: m.audioVolume,
     audioTrack: m.audioTrack,
-    plan: m.plan,
   }));
 }
 
@@ -465,7 +461,6 @@ async function fetchCandidates(
       },
       _count: { select: { reactions: true, comments: true } },
       audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
-      plan: { select: { mood: true, budgetLevel: true } },
     },
   });
 
@@ -506,7 +501,6 @@ async function fetchCandidates(
       audioStartTime: m.audioStartTime,
       audioVolume: m.audioVolume,
       audioTrack: m.audioTrack,
-      plan: m.plan,
     }));
 
   // Fetch scores

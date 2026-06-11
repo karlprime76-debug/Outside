@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { recordTripHistory } from "@/lib/passport";
 import { getUserGamificationData } from "@/lib/gamification";
+import * as bcrypt from "bcryptjs";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function sanitizeUser(user: any) {

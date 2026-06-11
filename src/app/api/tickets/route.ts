@@ -20,7 +20,7 @@ export async function GET() {
             id: true,
             title: true,
             startDate: true,
-            locationName: true,
+            place: { select: { name: true } },
             city: { select: { name: true } },
           },
         },
@@ -30,7 +30,16 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(tickets);
+    const mapped = tickets.map((t) => ({
+      ...t,
+      plan: {
+        ...t.plan,
+        locationName: t.plan.place?.name ?? null,
+        place: undefined,
+      },
+    }));
+
+    return NextResponse.json(mapped);
   } catch (error) {
     console.error("[TICKETS_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });

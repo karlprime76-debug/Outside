@@ -9,7 +9,7 @@ interface PhotoItem {
   mediaUrl: string;
   caption: string | null;
   createdAt: string;
-  _count: { likes: number; comments: number };
+  _count: { reactions: number; comments: number };
 }
 
 export function ProfilePhotos({ initial, noPhotos, noPhotosDesc }: { initial: PhotoItem[]; noPhotos: string; noPhotosDesc: string }) {

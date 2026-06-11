@@ -99,11 +99,11 @@ export class GamificationEngine {
     // 2. Envoyer une notification
     await db.notification.create({
       data: {
-        userId,
+        recipientId: userId,
         type: notificationType,
         title: "Défi réussi ! 🎉",
-        content: `Tu as gagné ${points} points de réputation.`,
-        metadata: { referenceKey },
+        body: `Tu as gagné ${points} points de réputation.`,
+        data: JSON.stringify({ referenceKey }),
       },
     });
 

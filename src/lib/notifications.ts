@@ -36,6 +36,7 @@ const notificationTypeToPref: Record<string, string | null> = {
   AMBASSADOR_TO_DISCOVER: "notificationFriendRequests",
   NEW_PLAN: "notificationPlans",
   PLAN_JOINED: "notificationPlans",
+  CHALLENGE_COMPLETED: null,
 };
 
 async function shouldSendNotification(userId: string, notificationType: NotificationType, skipSettingsCheck?: boolean): Promise<boolean> {
@@ -81,6 +82,8 @@ const typeToPushCategory: Record<NotificationType, Parameters<typeof sendPushToU
   PLAN_REVIEW_PENDING: "plan",
   PLAN_CONFIRMED: "plan",
   NEW_PLAN: "plan",
+  CHALLENGE_COMPLETED: "system",
+  PLAN_JOINED: "plan",
 };
 
 export async function createNotification(input: CreateNotificationInput) {

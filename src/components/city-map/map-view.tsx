@@ -41,8 +41,8 @@ export function MapView({ cityCoords, plans, places, onMarkerClick, filterMood }
       .filter(p => !filterMood || p.mood === filterMood)
       .map(p => ({
         id: p.id,
-        lat: p.latitude,
-        lng: p.longitude,
+        lat: p.latitude as number,
+        lng: p.longitude as number,
         title: p.title,
         type: "plan" as const,
         mood: p.mood
@@ -52,8 +52,8 @@ export function MapView({ cityCoords, plans, places, onMarkerClick, filterMood }
       .filter(p => p.latitude && p.longitude)
       .map(p => ({
         id: p.id,
-        lat: p.latitude,
-        lng: p.longitude,
+        lat: p.latitude as number,
+        lng: p.longitude as number,
         title: p.name,
         type: "place" as const,
         category: p.category

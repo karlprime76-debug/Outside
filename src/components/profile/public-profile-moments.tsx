@@ -23,8 +23,8 @@ export interface PublicMomentItem {
   visibility: string;
   createdAt: string;
   author: Author;
-  _count: { likes: number; comments: number };
-  viewerState: { likedByMe: boolean; canDelete: boolean; canReport: boolean };
+  _count: { reactions: number; comments: number };
+  viewerState: { likedByMe: boolean; myReaction: string | null; canDelete: boolean; canReport: boolean };
 }
 
 export function PublicProfileMoments({ initial, mode = "list" }: { initial: PublicMomentItem[]; mode?: "list" | "grid" }) {
@@ -38,7 +38,7 @@ export function PublicProfileMoments({ initial, mode = "list" }: { initial: Publ
           ? {
               ...m,
               viewerState: { ...m.viewerState, likedByMe: liked },
-              _count: { ...m._count, likes: liked ? m._count.likes + 1 : Math.max(0, m._count.likes - 1) },
+              _count: { ...m._count, reactions: liked ? m._count.reactions + 1 : Math.max(0, m._count.reactions - 1) },
             }
           : m
       )
@@ -71,9 +71,9 @@ export function PublicProfileMoments({ initial, mode = "list" }: { initial: Publ
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={m.mediaUrl} alt={m.caption || "Moment"} className="h-full w-full object-cover group-hover:scale-105 transition-transform" />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-              {m._count.likes > 0 || m._count.comments > 0 ? (
+              {m._count.reactions > 0 || m._count.comments > 0 ? (
                 <div className="absolute bottom-1 right-1 rounded-full bg-black/50 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  ♥ {m._count.likes} · 💬 {m._count.comments}
+                  ♥ {m._count.reactions} · 💬 {m._count.comments}
                 </div>
               ) : null}
             </button>
