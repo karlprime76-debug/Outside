@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 
 export async function POST(req: Request) {
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     const amountInCents = Math.round((plan.ticketPrice || 0) * 100);
     const feeAmount = Math.max(50, Math.round(amountInCents * 0.1));
 
+    const stripe = getStripe();
     const checkoutSession = await stripe.checkout.sessions.create({
       success_url: `${appUrl}/plans/${planId}?payment=success`,
       cancel_url: `${appUrl}/plans/${planId}?payment=cancelled`,

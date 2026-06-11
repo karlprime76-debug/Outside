@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 
 export async function POST() {
@@ -22,6 +22,7 @@ export async function POST() {
     let accountId = user.stripeConnectId;
 
     if (!accountId) {
+      const stripe = getStripe();
       const account = await stripe.accounts.create({
         type: 'express',
         email: user.email,
@@ -46,6 +47,7 @@ export async function POST() {
       });
     }
 
+    const stripe = getStripe();
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: `${process.env.APP_URL}/pro/dashboard?stripe=refresh`,

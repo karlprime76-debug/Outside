@@ -12,7 +12,7 @@ import { PlanVisibility, PlanPriceType, ChallengeType } from "@prisma/client";
 import { attachHashtagsToPlan } from "@/lib/hashtags/hashtag-service";
 import { createNotification } from "@/lib/notifications";
 import { GamificationEngine } from "@/lib/gamification-engine";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 // Haversine formula to calculate distance between two points in kilometers
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -423,6 +423,7 @@ export async function POST(req: Request) {
 
       if (dbUser?.stripeConnectId && dbUser.stripeOnboardingComplete) {
         try {
+          const stripe = getStripe();
           const product = await stripe.products.create({
             name: data.title,
             description: data.description,

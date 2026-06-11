@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 
 export async function GET(req: Request) {
@@ -11,6 +11,7 @@ export async function GET(req: Request) {
       return new NextResponse("Account ID missing", { status: 400 });
     }
 
+    const stripe = getStripe();
     const account = await stripe.accounts.retrieve(accountId);
 
     if (account.details_submitted) {
