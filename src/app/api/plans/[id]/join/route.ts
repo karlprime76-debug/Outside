@@ -6,6 +6,8 @@ import { evaluateBadgesAfterPlanJoined } from "@/lib/badges";
 import { createPlanReminders } from "@/lib/plan-reminders";
 import { recordTripHistory } from "@/lib/passport";
 import { createNotification } from "@/lib/notifications";
+import { ChallengeType } from "@prisma/client";
+import { GamificationEngine } from "@/lib/gamification-engine";
 
 const VALID_ATTENDANCE = ["GOING", "MAYBE"] as const;
 
@@ -89,6 +91,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     evaluateBadgesAfterPlanJoined(user.id).catch((err) => {
       console.error("[POST /api/plans/:id/join] Background task error:", err);
     });
+    if (attendance === "GOING") {
+      GamificationEngine.trackAction(user.id, ChallengeType.JOIN_PLAN).catch((err) => {
+        console.error("[GAMIFICATION_ERROR]", err);
+      });
+    }
 
     if (plan.city) {
       recordTripHistory({

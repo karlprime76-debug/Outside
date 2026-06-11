@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
 
     // ——— User interaction data ———
     const [likedMoments, profileOpenEvents] = await Promise.all([
-      db.momentLike.findMany({ where: { userId }, select: { momentId: true } }),
+      db.momentReaction.findMany({ where: { userId }, select: { momentId: true } }),
       db.momentEvent.findMany({ where: { userId, type: "PROFILE_OPEN" }, select: { momentId: true } }),
     ]);
     const [likedMomentAuthors, openedMomentAuthors] = await Promise.all([

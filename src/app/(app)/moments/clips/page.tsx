@@ -21,6 +21,8 @@ import { useToast } from "@/components/ui/toast";
 import { MomentCommentsSheet } from "@/components/moments/moment-comments-sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMomentPolling } from "@/hooks/use-moment-polling";
+import { ReactionPicker } from "@/components/moments/reaction-picker";
+import { LiveComments } from "@/components/moments/live-comments";
 
 interface ClipAuthor {
   id: string;
@@ -41,9 +43,10 @@ interface ClipItem {
   visibility: string;
   createdAt: string;
   author: ClipAuthor;
-  _count: { likes: number; comments: number };
+  _count: { reactions: number; comments: number };
   viewerState: {
     likedByMe: boolean;
+    myReaction: string | null;
     canDelete: boolean;
     canReport: boolean;
   };
@@ -70,6 +73,9 @@ export default function ClipsPage() {
   const [muted, setMuted] = useState(true);
   const [commentMomentId, setCommentMomentId] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [pickerPosition, setPickerPosition] = useState({ x: 0, y: 0 });
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
   const sentThresholdsRef = useRef<Record<number, Set<number>>>({});
@@ -339,30 +345,53 @@ export default function ClipsPage() {
   }, [nextCursor, loading, fetchClips]);
 
 
-  const handleLike = async (clip: ClipItem) => {
-    const newLiked = !clip.viewerState.likedByMe;
-    const newCount = newLiked
-      ? clip._count.likes + 1
-      : Math.max(0, clip._count.likes - 1);
+  const handleReaction = async (clip: ClipItem, emoji: string = "❤️") => {
+    const isRemove = clip.viewerState.likedByMe && clip.viewerState.myReaction === emoji;
+    const newLiked = !isRemove;
+    const newReaction = isRemove ? null : emoji;
+
+    const newCount = isRemove 
+      ? Math.max(0, clip._count.reactions - 1)
+      : (!clip.viewerState.likedByMe ? clip._count.reactions + 1 : clip._count.reactions);
 
     setClips((prev) =>
       prev.map((c) =>
         c.id === clip.id
           ? {
               ...c,
-              viewerState: { ...c.viewerState, likedByMe: newLiked },
-              _count: { ...c._count, likes: newCount },
+              viewerState: { ...c.viewerState, likedByMe: newLiked, myReaction: newReaction },
+              _count: { ...c._count, reactions: newCount },
             }
           : c
       )
     );
 
     try {
-      await fetch(`/api/moments/${clip.id}/like`, {
-        method: newLiked ? "POST" : "DELETE",
+      await fetch(`/api/moments/${clip.id}/reaction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
       });
     } catch {
-      // revert handled by optimistic update
+      // revert handled by optimistic update? Not really, but I could add it
+    } finally {
+      setShowReactionPicker(false);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    const x = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const y = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    
+    longPressTimer.current = setTimeout(() => {
+      setPickerPosition({ x, y });
+      setShowReactionPicker(true);
+    }, 500);
+  };
+
+  const handleMouseUp = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
     }
   };
 
@@ -520,19 +549,40 @@ export default function ClipsPage() {
 
             {/* Right actions */}
             <div className="absolute right-2 bottom-24 sm:bottom-32 flex flex-col items-center gap-5 z-40">
-              <button
-                onClick={() => handleLike(clip)}
-                className="flex flex-col items-center gap-1"
-              >
-                <div className="rounded-full bg-black/30 backdrop-blur-sm p-2.5 hover:bg-black/50 transition-colors">
-                  <Heart
-                    className={`h-6 w-6 ${clip.viewerState.likedByMe ? "fill-red-500 text-red-500" : "text-white"}`}
+              <div className="relative">
+                <button
+                  onClick={() => handleReaction(clip)}
+                  onMouseDown={(e) => handleMouseDown(e)}
+                  onMouseUp={handleMouseUp}
+                  onTouchStart={(e) => handleMouseDown(e)}
+                  onTouchEnd={handleMouseUp}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <div className="rounded-full bg-black/30 backdrop-blur-sm p-2.5 hover:bg-black/50 transition-colors">
+                    {clip.viewerState.likedByMe && clip.viewerState.myReaction !== "❤️" ? (
+                      <span className="text-2xl h-6 w-6 flex items-center justify-center">
+                        {clip.viewerState.myReaction}
+                      </span>
+                    ) : (
+                      <Heart
+                        className={`h-6 w-6 ${clip.viewerState.likedByMe ? "fill-red-500 text-red-500" : "text-white"}`}
+                      />
+                    )}
+                  </div>
+                  <span className="text-[10px] font-bold text-white drop-shadow-md">
+                    {clip._count.reactions}
+                  </span>
+                </button>
+                
+                {showReactionPicker && activeIndex === index && (
+                  <ReactionPicker 
+                    open={showReactionPicker}
+                    onClose={() => setShowReactionPicker(false)}
+                    onSelect={(emoji) => handleReaction(clip, emoji)}
+                    position={pickerPosition}
                   />
-                </div>
-                <span className="text-[10px] font-bold text-white drop-shadow-md">
-                  {clip._count.likes}
-                </span>
-              </button>
+                )}
+              </div>
 
               <button
                 onClick={() => setCommentMomentId(clip.id)}
@@ -608,6 +658,11 @@ export default function ClipsPage() {
 
             {/* Bottom info */}
             <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 sm:pb-12 z-40">
+              {/* Live Comments Overlay */}
+              <div className="mb-4 ml-1">
+                <LiveComments momentId={clip.id} />
+              </div>
+
               {/* Author row */}
               <div className="flex items-center gap-2.5 mb-2">
                 <Link href={`/u/${clip.author.username || clip.author.id}`} onClick={() => handleProfileOpen(clip)}>

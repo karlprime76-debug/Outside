@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { ChallengeType } from "@prisma/client";
+import { GamificationEngine } from "@/lib/gamification-engine";
 import { isBlocked } from "@/lib/social/friendship";
 import { calculateMomentScore } from "@/lib/algorithm/moment-score";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
@@ -96,6 +98,10 @@ export async function POST(req: Request) {
       actorName: session.user.name || null,
       actorImage: session.user.image || null,
       data: { username: typeof session.user?.username === 'string' ? session.user.username : undefined, userId: currentUserId },
+    });
+
+    GamificationEngine.trackAction(currentUserId, ChallengeType.FOLLOW_FRIEND).catch((err) => {
+      console.error("[GAMIFICATION_ERROR]", err);
     });
   }
 

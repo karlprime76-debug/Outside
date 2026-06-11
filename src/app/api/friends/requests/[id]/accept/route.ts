@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { canReceiveMoreFriends } from "@/lib/social/friendship";
 import { createNotification } from "@/lib/notifications";
+import { ChallengeType } from "@prisma/client";
+import { GamificationEngine } from "@/lib/gamification-engine";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -61,6 +63,12 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       actorName: userName,
       actorImage: userImage,
     });
+
+    // Both users get progress for ADD_FRIEND
+    await Promise.all([
+      GamificationEngine.trackAction(userId, ChallengeType.ADD_FRIEND).catch(e => console.error(e)),
+      GamificationEngine.trackAction(request.senderId, ChallengeType.ADD_FRIEND).catch(e => console.error(e)),
+    ]);
 
     return NextResponse.json({ message: "Vous êtes maintenant amis." });
   } catch (error) {

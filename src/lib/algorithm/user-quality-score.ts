@@ -1,4 +1,7 @@
 import { db } from "@/lib/db";
+import { getLevelFromScore } from "@/lib/gamification";
+import { GamificationEngine } from "@/lib/gamification-engine";
+import { ChallengeType } from "@prisma/client";
 
 const DAYS_30 = 30 * 24 * 60 * 60 * 1000;
 
@@ -128,6 +131,13 @@ export async function calculateUserQualityScore(userId: string): Promise<number>
 
   const score = computeUserQualityScore(factors);
 
+  // Get previous score to detect level up
+  const previousScoreData = await db.userQualityScore.findUnique({
+    where: { userId },
+    select: { score: true },
+  });
+  const previousScore = previousScoreData?.score ?? 50;
+
   // Upsert UserQualityScore
   await db.userQualityScore.upsert({
     where: { userId },
@@ -149,6 +159,16 @@ export async function calculateUserQualityScore(userId: string): Promise<number>
       lastCalculatedAt: now,
     },
   });
+
+  // Detect level up
+  const oldLevel = getLevelFromScore(previousScore).level;
+  const newLevel = getLevelFromScore(score).level;
+
+  if (newLevel > oldLevel) {
+    GamificationEngine.trackAction(userId, ChallengeType.REACH_LEVEL, newLevel - oldLevel).catch((err) => {
+      console.error("[GAMIFICATION_LEVEL_UP_ERROR]", err);
+    });
+  }
 
   return score;
 }

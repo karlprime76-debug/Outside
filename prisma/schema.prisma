@@ -55,6 +55,7 @@ enum NotificationType {
   MOMENT_COMMENT
   DROP_AVAILABLE
   MISSION_AVAILABLE
+  CHALLENGE_COMPLETED
   PLAN_GROUP_MESSAGE
   WEEKLY_RECAP_READY
   AMBASSADOR_TO_DISCOVER
@@ -62,6 +63,19 @@ enum NotificationType {
   PLAN_CONFIRMED
   NEW_PLAN
   PLAN_JOINED
+}
+
+enum ChallengeType {
+  CREATE_PLAN
+  JOIN_PLAN
+  POST_MOMENT
+  FOLLOW_FRIEND
+  ADD_FRIEND
+  CHECK_IN
+  VERIFY_PLAN
+  INVITE_REFERRAL
+  REACH_LEVEL
+  COMPLETE_PROFILE
 }
 
 enum AvailabilityMood {
@@ -109,6 +123,7 @@ enum PlanVisibility {
   PUBLIC
   FRIENDS
   FRIENDS_OF_FRIENDS
+  CIRCLE
   INVITE_ONLY
   PRIVATE
 }
@@ -466,8 +481,8 @@ model User {
   userSettings             UserSettings?
   trustProfile             UserTrustProfile?
   pushSubscriptions        PushSubscription[]
-  momentLikes              MomentLike[]
-  momentcomments           MomentComment[]
+  momentReactions          MomentReaction[]
+  momentComments           MomentComment[]
   conversationParticipants ConversationParticipant[]
   directMessagesSent       DirectMessage[]
   directMessageReactions   DirectMessageReaction[]
@@ -493,6 +508,11 @@ model User {
   tokenVersion  Int       @default(0)
   lastActiveDate DateTime?
   currentStreak  Int       @default(0)
+
+  stripeConnectId          String?   @unique
+  stripeOnboardingComplete Boolean   @default(false)
+  ticketsBought           Ticket[]
+  ticketsScanned          Ticket[]  @relation("TicketScanner")
   longestStreak  Int       @default(0)
 
   createdAt DateTime @default(now())
@@ -730,6 +750,13 @@ model Plan {
   isDemo             Boolean        @default(false)
   isOfficial         Boolean        @default(false)
   bookingUrl         String?
+  circleId           String?
+  circle             OutingCircle? @relation(fields: [circleId], references: [id])
+
+  ticketPrice      Float?
+  stripeProductId  String?
+  stripePriceId    String?
+  tickets          Ticket[]
 
   isCommunityConfirmed Boolean @default(false)
   confirmationScore    Float   @default(0)
@@ -946,8 +973,8 @@ model Moment {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  likes    MomentLike[]
-  comments MomentComment[]
+  reactions MomentReaction[]
+  comments  MomentComment[]
   hashtags MomentHashtag[]
 
   @@index([city, createdAt])
@@ -1092,12 +1119,13 @@ model UserTrustProfile {
   updatedAt        DateTime  @updatedAt
 }
 
-model MomentLike {
+model MomentReaction {
   id        String   @id @default(cuid())
   momentId  String
   moment    Moment   @relation(fields: [momentId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String   @default("❤️")
   createdAt DateTime @default(now())
 
   @@unique([momentId, userId])
@@ -1532,6 +1560,7 @@ model OutingCircle {
   updatedAt   DateTime @updatedAt
 
   members OutingCircleMember[]
+  plans   Plan[]
 
   @@index([ownerId])
 }
@@ -1584,14 +1613,17 @@ model PlaceVibeSignal {
 }
 
 model DailyChallenge {
-  id          String   @id @default(cuid())
-  key         String   @unique
+  id          String        @id @default(cuid())
+  key         String        @unique
+  type        ChallengeType @default(CREATE_PLAN)
+  targetValue Int           @default(1)
   title       String
   description String
   rewardLabel String
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  rewardPoints Int           @default(10)
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([key])
   @@index([active])
@@ -1602,8 +1634,10 @@ model UserChallengeProgress {
   userId       String
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   challengeKey String
+  currentValue Int       @default(0)
   completedAt  DateTime?
   createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@unique([userId, challengeKey])
   @@index([userId])
@@ -1611,15 +1645,18 @@ model UserChallengeProgress {
 }
 
 model CityMission {
-  id          String   @id @default(cuid())
-  key         String   @unique
+  id          String        @id @default(cuid())
+  key         String        @unique
+  type        ChallengeType @default(CREATE_PLAN)
+  targetValue Int           @default(5)
   title       String
   description String
   city        String?
   rewardLabel String
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  rewardPoints Int           @default(50)
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([key])
   @@index([city])
@@ -1627,12 +1664,14 @@ model CityMission {
 }
 
 model UserCityMissionProgress {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  missionKey  String
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missionKey   String
+  currentValue Int       @default(0)
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@unique([userId, missionKey])
   @@index([userId])
@@ -1853,4 +1892,26 @@ model PasswordResetToken {
 
   @@index([email])
   @@index([token])
+}
+
+model Ticket {
+  id              String   @id @default(cuid())
+  planId          String
+  plan            Plan     @relation(fields: [planId], references: [id])
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  stripeSessionId String   @unique
+  amount          Float
+  currency        String
+  status          String   @default("PENDING")
+
+  scannedAt       DateTime?
+  scannedById     String?
+  scannedBy       User?     @relation("TicketScanner", fields: [scannedById], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([planId])
+  @@index([userId])
 }

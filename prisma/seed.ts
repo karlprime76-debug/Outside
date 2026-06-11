@@ -93,36 +93,28 @@ async function main() {
 
   // ── Daily Challenges ──
   const CHALLENGES = [
-    { key: "first_moment", title: "Publie ton premier Moment", description: "Partage un moment de ta journée avec la communauté", rewardLabel: "Badge Premier Moment" },
-    { key: "follow_3_users", title: "Suis 3 comptes", description: "Découvre et suis 3 personnes intéressantes", rewardLabel: "+5 points" },
-    { key: "save_plan", title: "Sauvegarde un plan", description: "Sauvegarde un plan qui t'intéresse", rewardLabel: "+5 points" },
-    { key: "create_express_plan", title: "Crée un plan express", description: "Lance un plan rapide pour ce soir", rewardLabel: "Badge Premier plan" },
-    { key: "activate_status", title: "Active ton statut", description: "Montre que tu es disponible pour sortir", rewardLabel: "+5 points" },
-    { key: "add_profile_photo", title: "Ajoute une photo de profil", description: "Rends ton profil plus personnel", rewardLabel: "+5 points" },
-    { key: "discover_account", title: "Découvre un compte", description: "Trouve un compte intéressant dans ta ville", rewardLabel: "+5 points" },
-    { key: "respond_invitation", title: "Réponds à une invitation", description: "Accepte ou décline une invitation en attente", rewardLabel: "+10 points" },
-    { key: "checkin_plan", title: "Check-in à un plan", description: "Confirme ta présence à un plan", rewardLabel: "Badge Ponctuel" },
-    { key: "share_moment", title: "Partage un Moment", description: "Partage un Moment avec tes amis", rewardLabel: "+10 points" },
+    { key: "first_moment", title: "Publie ton premier Moment", description: "Partage un moment de ta journée avec la communauté", rewardLabel: "Badge Premier Moment", type: "POST_MOMENT", targetValue: 1, rewardPoints: 20 },
+    { key: "follow_3_users", title: "Suis 3 comptes", description: "Découvre et suis 3 personnes intéressantes", rewardLabel: "+15 points", type: "FOLLOW_FRIEND", targetValue: 3, rewardPoints: 15 },
+    { key: "create_express_plan", title: "Crée un plan ce soir", description: "Lance un plan rapide pour ce soir", rewardLabel: "Badge Premier plan", type: "CREATE_PLAN", targetValue: 1, rewardPoints: 25 },
+    { key: "join_plan_today", title: "Rejoins un plan", description: "Participe à une sortie organisée aujourd'hui", rewardLabel: "+10 points", type: "JOIN_PLAN", targetValue: 1, rewardPoints: 10 },
+    { key: "add_friend_today", title: "Ajoute un ami", description: "Élargis ton cercle sur OUTSIDE", rewardLabel: "+10 points", type: "ADD_FRIEND", targetValue: 1, rewardPoints: 10 },
   ];
 
   for (const c of CHALLENGES) {
-    await db.dailyChallenge.upsert({ where: { key: c.key }, update: {}, create: c });
+    await db.dailyChallenge.upsert({ where: { key: c.key }, update: c, create: c });
   }
   console.log(`Seeded ${CHALLENGES.length} Daily Challenges`);
 
   // ── City Missions ──
   const MISSIONS = [
-    { key: "publish_moment_city", title: "Publie un Moment dans ta ville", description: "Partage un moment depuis ta ville active", rewardLabel: "Badge Premier créateur" },
-    { key: "create_free_plan", title: "Crée un plan gratuit", description: "Organise une sortie gratuite pour ta ville", rewardLabel: "+20 points" },
-    { key: "discover_3_local", title: "Découvre 3 comptes locaux", description: "Suis 3 personnes actives dans ta ville", rewardLabel: "+10 points" },
-    { key: "join_plan_week", title: "Rejoins un plan cette semaine", description: "Participe à un plan organisé dans ta ville", rewardLabel: "+15 points" },
-    { key: "invite_circle", title: "Invite ton cercle", description: "Ramène tes amis sur OUTSIDE", rewardLabel: "Badge Cercle lancé" },
-    { key: "vibe_place", title: "Donne l'ambiance d'un lieu", description: "Signale l'ambiance d'un lieu que tu as visité", rewardLabel: "+5 points" },
-    { key: "create_food_plan", title: "Crée un plan Food", description: "Organise un plan autour de la nourriture", rewardLabel: "+15 points" },
+    { key: "publish_moment_city", title: "Explorateur urbain", description: "Partage 5 moments depuis ta ville", rewardLabel: "+50 points", type: "POST_MOMENT", targetValue: 5, rewardPoints: 50 },
+    { key: "create_3_plans", title: "Organisateur né", description: "Organise 3 sorties cette semaine", rewardLabel: "+100 points", type: "CREATE_PLAN", targetValue: 3, rewardPoints: 100 },
+    { key: "join_5_plans", title: "Social Butterfly", description: "Participe à 5 plans différents", rewardLabel: "+75 points", type: "JOIN_PLAN", targetValue: 5, rewardPoints: 75 },
+    { key: "add_10_friends", title: "Cercle étendu", description: "Connecte-toi avec 10 nouveaux amis", rewardLabel: "Badge Cercle lancé", type: "ADD_FRIEND", targetValue: 10, rewardPoints: 100 },
   ];
 
   for (const m of MISSIONS) {
-    await db.cityMission.upsert({ where: { key: m.key }, update: {}, create: m });
+    await db.cityMission.upsert({ where: { key: m.key }, update: m, create: m });
   }
   console.log(`Seeded ${MISSIONS.length} City Missions`);
 

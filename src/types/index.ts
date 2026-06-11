@@ -47,6 +47,7 @@ export interface CreatePlanInput {
   safetyLevel: SafetyLevel;
   rules?: string;
   isOfficial?: boolean;
+  ticketPrice?: number;
   bookingUrl?: string;
 }
 

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
+import { ChallengeType } from "@prisma/client";
+import { GamificationEngine } from "@/lib/gamification-engine";
 
 export async function GET() {
   try {
@@ -95,6 +97,11 @@ export async function PATCH(req: Request) {
         where: { userId: user.id },
         data: { completedAt: new Date() },
       });
+
+      GamificationEngine.trackAction(user.id, ChallengeType.COMPLETE_PROFILE).catch((err) => {
+        console.error("[GAMIFICATION_ERROR]", err);
+      });
+
       return NextResponse.json({ progress: updatedProgress, completed: true });
     }
 

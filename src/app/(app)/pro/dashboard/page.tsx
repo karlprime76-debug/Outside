@@ -12,7 +12,9 @@ import {
   Check, 
   ArrowLeft,
   LayoutDashboard,
-  Zap
+  Zap,
+  CreditCard,
+  Camera
 } from "lucide-react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
@@ -32,6 +34,8 @@ export default function ProDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [referralCode, setReferralCode] = useState("");
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeOnboarded, setStripeOnboarded] = useState(false);
 
   useEffect(() => {
     fetch("/api/pro/stats")
@@ -46,8 +50,24 @@ export default function ProDashboardPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.user?.referralCode) setReferralCode(data.user.referralCode);
+        if (data.user?.stripeOnboardingComplete) setStripeOnboarded(true);
       });
   }, []);
+
+  const handleConnectStripe = async () => {
+    setStripeLoading(true);
+    try {
+      const r = await fetch("/api/stripe/connect", { method: "POST" });
+      const data = await r.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setStripeLoading(false);
+    }
+  };
 
   const copyCode = () => {
     navigator.clipboard.writeText(referralCode);
@@ -138,6 +158,49 @@ export default function ProDashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Stripe Payment Section */}
+      <section className="space-y-4">
+        <SectionTitle title="Billetterie & Paiements" subtitle="Monétisez vos événements et recevez vos fonds directement." />
+        <div className="os-card p-6 border-outside-500/20 bg-outside-500/5">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex-1 space-y-2">
+              <h3 className="font-bold text-[var(--os-fg)] flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-outside-500" />
+                Vendre des billets sur OUTSIDE
+              </h3>
+              <p className="text-sm text-[var(--os-muted)]">
+                {stripeOnboarded 
+                  ? "Votre compte Stripe est configuré. Vous pouvez désormais vendre des billets pour vos plans officiels." 
+                  : "Configurez votre compte Stripe pour commencer à vendre des billets pour vos plans officiels."}
+              </p>
+            </div>
+            {stripeOnboarded ? (
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <button
+                  onClick={() => router.push("/pro/scanner")}
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-bold hover:bg-gray-100 transition-colors shadow-glow"
+                >
+                  <Camera className="h-4 w-4" />
+                  Scanner billets
+                </button>
+                <div className="flex items-center justify-center gap-2 px-4 py-3 bg-green-500/10 text-green-500 border border-green-500/20 rounded-xl font-bold text-sm">
+                  <Check className="h-4 w-4" />
+                  Compte lié
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={handleConnectStripe}
+                disabled={stripeLoading}
+                className="w-full md:w-auto px-6 py-3 bg-outside-500 text-white rounded-xl font-bold hover:bg-outside-600 transition-colors shadow-glow active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {stripeLoading ? "Chargement..." : "Lier mon compte Stripe"}
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Referral Section */}
       <section className="space-y-4">

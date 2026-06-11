@@ -19,14 +19,21 @@ export async function GET() {
     });
 
     const progressMap = new Map(
-      userProgress.map((p) => [p.challengeKey, p.completedAt])
+      userProgress.map((p) => [p.challengeKey, {
+        currentValue: p.currentValue,
+        completedAt: p.completedAt
+      }])
     );
 
-    const challengesWithProgress = challenges.map((challenge) => ({
-      ...challenge,
-      completed: progressMap.has(challenge.key),
-      completedAt: progressMap.get(challenge.key) || null,
-    }));
+    const challengesWithProgress = challenges.map((challenge) => {
+      const progress = progressMap.get(challenge.key);
+      return {
+        ...challenge,
+        currentValue: progress?.currentValue || 0,
+        completed: !!progress?.completedAt,
+        completedAt: progress?.completedAt || null,
+      };
+    });
 
     return NextResponse.json({ challenges: challengesWithProgress });
   } catch (error) {

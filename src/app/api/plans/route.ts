@@ -8,9 +8,11 @@ import { evaluateBadgesAfterPlanCreated } from "@/lib/badges";
 import { createPlanReminders } from "@/lib/plan-reminders";
 import { generateRecurringPlans } from "@/lib/recurring-plans";
 import { recordTripHistory } from "@/lib/passport";
-import { PlanVisibility, PlanPriceType } from "@prisma/client";
+import { PlanVisibility, PlanPriceType, ChallengeType } from "@prisma/client";
 import { attachHashtagsToPlan } from "@/lib/hashtags/hashtag-service";
 import { createNotification } from "@/lib/notifications";
+import { GamificationEngine } from "@/lib/gamification-engine";
+import { stripe } from "@/lib/stripe";
 
 // Haversine formula to calculate distance between two points in kilometers
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -107,6 +109,12 @@ export async function GET(req: Request) {
       select: { planId: true },
     });
     const invitedIds = invitedPlanIds.map((i) => i.planId);
+    
+    const myCircles = await db.outingCircleMember.findMany({
+      where: { userId: user.id },
+      select: { circleId: true },
+    });
+    const circleIds = myCircles.map(c => c.circleId);
 
     // Get user's active city location for "near me" filter
     const currentUser = await db.user.findUnique({
@@ -234,6 +242,7 @@ export async function GET(req: Request) {
         { creatorId: userId },
         { visibility: PlanVisibility.FRIENDS, creatorId: { in: friendIds } },
         { visibility: PlanVisibility.FRIENDS_OF_FRIENDS, creatorId: { in: fofIds } },
+        { visibility: PlanVisibility.CIRCLE, circleId: { in: circleIds } },
         ...(invitedIds.length > 0 ? [{ id: { in: invitedIds } }] : []),
       ];
     }
@@ -409,6 +418,36 @@ export async function POST(req: Request) {
 
     const data = parsed.data;
 
+    let stripeProductId = null;
+    let stripePriceId = null;
+
+    if (data.ticketPrice && data.ticketPrice > 0 && (user.role === "PRO" || user.role === "ADMIN")) {
+      const dbUser = await db.user.findUnique({
+        where: { id: user.id },
+        select: { stripeConnectId: true, stripeOnboardingComplete: true }
+      });
+
+      if (dbUser?.stripeConnectId && dbUser.stripeOnboardingComplete) {
+        try {
+          const product = await stripe.products.create({
+            name: data.title,
+            description: data.description,
+          }, { stripeAccount: dbUser.stripeConnectId });
+
+          const price = await stripe.prices.create({
+            product: product.id,
+            unit_amount: Math.round(data.ticketPrice * 100),
+            currency: data.budgetCurrency?.toLowerCase() || 'eur',
+          }, { stripeAccount: dbUser.stripeConnectId });
+
+          stripeProductId = product.id;
+          stripePriceId = price.id;
+        } catch (err) {
+          console.error("[STRIPE_ERROR] Failed to create product/price", err);
+        }
+      }
+    }
+
     const plan = await db.plan.create({
       data: {
         title: data.title,
@@ -435,7 +474,11 @@ export async function POST(req: Request) {
         safetyLevel: data.safetyLevel,
         rules: data.rules,
         isOfficial: (user.role === "PRO" || user.role === "ADMIN") ? (data.isOfficial ?? false) : false,
+        ticketPrice: data.ticketPrice,
+        stripeProductId,
+        stripePriceId,
         bookingUrl: (user.role === "PRO" || user.role === "ADMIN") ? data.bookingUrl : null,
+        circleId: data.circleId || null,
         recurrence: data.recurrence ?? null,
         recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : null,
         creatorId: user.id,
@@ -458,6 +501,7 @@ export async function POST(req: Request) {
 
     createPlanReminders(user.id, plan.id, plan.startDate).catch((err) => { logError("[PLAN_ERROR]", "Failed to create plan reminders", { error: String(err) }); });
     evaluateBadgesAfterPlanCreated(user.id).catch((err) => { logError("[PLAN_ERROR]", "Failed to evaluate badges after plan created", { error: String(err) }); });
+    GamificationEngine.trackAction(user.id, ChallengeType.CREATE_PLAN).catch((err) => { logError("[GAMIFICATION_ERROR]", "Failed to track action", { error: String(err) }); });
 
     if (data.recurrence) {
       generateRecurringPlans(plan.id, data.recurrence, data.recurrenceEndDate ?? null).catch((err) => { logError("[RECURRING_ERROR]", "Failed to generate recurring plans", { error: String(err) }); });

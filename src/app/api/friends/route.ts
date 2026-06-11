@@ -3,18 +3,26 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getFriendCount } from "@/lib/social/friendship";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search");
     const userId = session.user.id;
 
     const friendships = await db.friendship.findMany({
       where: {
         OR: [{ initiatorId: userId }, { receiverId: userId }],
+        ...(search ? {
+          OR: [
+            { initiatorId: userId, receiver: { OR: [{ name: { contains: search, mode: "insensitive" } }, { username: { contains: search, mode: "insensitive" } }] } },
+            { receiverId: userId, initiator: { OR: [{ name: { contains: search, mode: "insensitive" } }, { username: { contains: search, mode: "insensitive" } }] } },
+          ]
+        } : {})
       },
       include: {
         initiator: { select: { id: true, name: true, username: true, image: true, activeCity: { select: { name: true } } } },

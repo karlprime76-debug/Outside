@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { ChallengeType } from "@prisma/client";
+import { GamificationEngine } from "@/lib/gamification-engine";
 import {
   CHECKIN_BUCKET,
   CHECKIN_MAX_SIZE,
@@ -90,6 +92,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     evaluateCheckinBadge(user.id).catch((err: unknown) => {
       console.error("[CHECKIN]", "Badge error:", err);
+    });
+
+    GamificationEngine.trackAction(user.id, ChallengeType.CHECK_IN).catch((err) => {
+      console.error("[GAMIFICATION_ERROR]", err);
     });
 
     return NextResponse.json({

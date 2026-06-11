@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canReviewUser, recalculateAndUpdateTrustScore } from "@/lib/trust";
+import { ChallengeType } from "@prisma/client";
+import { GamificationEngine } from "@/lib/gamification-engine";
 
 export async function POST(req: Request) {
   try {
@@ -58,6 +60,10 @@ export async function POST(req: Request) {
     }
 
     await recalculateAndUpdateTrustScore(reviewedId);
+
+    GamificationEngine.trackAction(user.id, ChallengeType.VERIFY_PLAN).catch((err) => {
+      console.error("[GAMIFICATION_ERROR]", err);
+    });
 
     return NextResponse.json({ message: "Merci, ton retour aide à rendre OUTSIDE plus sûr." });
   } catch (error) {

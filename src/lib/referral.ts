@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
 import { awardBadge, evaluateFounderBadges } from "@/lib/badges";
+import { ChallengeType } from "@prisma/client";
+import { GamificationEngine } from "@/lib/gamification-engine";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -139,6 +141,9 @@ export async function linkNewUserToReferral(
   }
 
   await awardReferralBadges(inviter.id);
+  GamificationEngine.trackAction(inviter.id, ChallengeType.INVITE_REFERRAL).catch((err) => {
+    console.error("[GAMIFICATION_ERROR]", err);
+  });
   const referredBadge = await awardBadge(newUserId, "REFERRED_BY_FRIEND");
   if (!referredBadge) await awardBadge(newUserId, "new_outside");
   evaluateFounderBadges(newUserId).catch((err) => { console.error("[MOMENT_ERROR] Failed to evaluate founder badges:", err); });

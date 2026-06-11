@@ -28,11 +28,12 @@ const PLAN_CATEGORIES = [
   { value: "ETUDES", label: "Études" },
   { value: "AUTRE", label: "Autre" },
 ];
-const VISIBILITY = ["PUBLIC", "FRIENDS", "FRIENDS_OF_FRIENDS", "INVITE_ONLY", "PRIVATE"];
+const VISIBILITY = ["PUBLIC", "FRIENDS", "FRIENDS_OF_FRIENDS", "CIRCLE", "INVITE_ONLY", "PRIVATE"];
 const VISIBILITY_LABELS: Record<string, string> = {
   PUBLIC: "Public",
   FRIENDS: "Amis uniquement",
   FRIENDS_OF_FRIENDS: "Amis d'amis",
+  CIRCLE: "Cercle privé",
   INVITE_ONLY: "Sur invitation",
   PRIVATE: "Privé",
 };
@@ -56,6 +57,9 @@ export default function NewPlanPage() {
   const isProOrAdmin = session?.user?.role === "PRO" || session?.user?.role === "ADMIN";
   const [budgetAmount, setBudgetAmount] = useState<number | undefined>(undefined);
   const [selectedCurrency, setSelectedCurrency] = useState("XOF");
+  const [circles, setCircles] = useState<{ id: string, name: string }[]>([]);
+  const [selectedCircleId, setSelectedCircleId] = useState("");
+  const [visibility, setVisibility] = useState("PUBLIC");
   // Update currency when country changes, unless user manually changed it
   const [currencyManuallySet, setCurrencyManuallySet] = useState(false);
   useEffect(() => {
@@ -63,6 +67,12 @@ export default function NewPlanPage() {
       setSelectedCurrency(getCurrencyForCountry(selectedCountryCode));
     }
   }, [selectedCountryCode, currencyManuallySet]);
+
+  useEffect(() => {
+    fetch("/api/circles").then(res => res.json()).then(data => {
+      setCircles(data.circles || []);
+    }).catch(() => {});
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -93,7 +103,8 @@ export default function NewPlanPage() {
       startDate: new Date(form.get("startDate") as string).toISOString(),
       endDate: form.get("endDate") ? new Date(form.get("endDate") as string).toISOString() : undefined,
       maxParticipants: parseInt(form.get("maxParticipants") as string) || 10,
-      visibility: form.get("visibility") as string,
+      visibility,
+      circleId: visibility === "CIRCLE" ? selectedCircleId : undefined,
       isTravelerFriendly: form.get("isTravelerFriendly") === "on",
       safetyLevel: form.get("safetyLevel") as string,
       rules: (form.get("rules") as string) || undefined,
@@ -283,11 +294,41 @@ export default function NewPlanPage() {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Visibilité</label>
-            <select name="visibility" required className={inputBase}>
+            <select
+              name="visibility"
+              required
+              className={inputBase}
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value)}
+            >
               {VISIBILITY.map((v) => <option key={v} value={v}>{VISIBILITY_LABELS[v]}</option>)}
             </select>
           </div>
         </div>
+
+        {visibility === "CIRCLE" && (
+          <div className="animate-fade-in">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--os-muted)]">Choisir un cercle</label>
+            {circles.length > 0 ? (
+              <select
+                value={selectedCircleId}
+                onChange={(e) => setSelectedCircleId(e.target.value)}
+                required
+                className={inputBase}
+              >
+                <option value="">Sélectionner un cercle</option>
+                {circles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            ) : (
+              <div className="p-3 bg-[var(--os-card)] rounded-xl border border-dashed border-[var(--os-card-border)] text-center">
+                <p className="text-sm text-[var(--os-muted)]">Tu n&apos;as pas encore de cercle.</p>
+                <Link href="/circles" className="text-sm text-outside-500 font-bold hover:underline">
+                  Créer un cercle
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="animate-stagger-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

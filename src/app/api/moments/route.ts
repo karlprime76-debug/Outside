@@ -7,10 +7,11 @@ import { recordTripHistory } from "@/lib/passport";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateMomentFile, buildMomentPath, ensureMomentsBucket, MOMENTS_BUCKET, ALLOWED_MOMENT_TYPES } from "@/lib/supabase/moments-storage";
 import { validateFileByMagicBytes } from "@/lib/files/magic-bytes";
-import { MomentVisibility } from "@prisma/client";
+import { MomentVisibility, ChallengeType } from "@prisma/client";
 import { buildFeed } from "@/lib/algorithm/feed-builder";
 import { createMomentSchema } from "@/lib/validation/schemas";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import { GamificationEngine } from "@/lib/gamification-engine";
 
 
 export async function GET(req: Request) {
@@ -37,7 +38,7 @@ export async function GET(req: Request) {
           cursor: cursor ? { id: cursor } : undefined,
           include: {
             author: { select: { id: true, name: true, username: true, image: true, role: true, isVerified: true } },
-            _count: { select: { likes: true, comments: true } },
+            _count: { select: { reactions: true, comments: true } },
           },
         });
 
@@ -53,8 +54,8 @@ export async function GET(req: Request) {
             visibility: m.visibility,
             createdAt: m.createdAt.toISOString(),
             author: m.author,
-            _count: m._count,
-            viewerState: { likedByMe: false, canDelete: false, canReport: true },
+            _count: { reactions: m._count.reactions, comments: m._count.comments },
+            viewerState: { likedByMe: false, myReaction: null, canDelete: false, canReport: true },
           })),
           nextCursor: moments.length === limit ? moments[moments.length - 1].id : null,
         });
@@ -268,6 +269,10 @@ export async function POST(req: Request) {
         console.error("[POST /api/moments] Background task error:", err);
       });
     }
+
+    GamificationEngine.trackAction(user.id, ChallengeType.POST_MOMENT).catch((err) => {
+      console.error("[GAMIFICATION_ERROR]", err);
+    });
 
     if (city) {
       recordTripHistory({

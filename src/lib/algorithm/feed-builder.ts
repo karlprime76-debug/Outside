@@ -41,7 +41,7 @@ interface FeedCandidate {
     isDemoAccount: boolean;
     trustScore: number;
   };
-  _count: { likes: number; comments: number };
+  _count: { reactions: number; comments: number };
   audioTrackId: string | null;
   audioStartTime: number | null;
   audioVolume: number | null;
@@ -180,7 +180,7 @@ async function fetchNewCreators(
           trustScore: true,
         },
       },
-      _count: { select: { likes: true, comments: true } },
+      _count: { select: { reactions: true, comments: true } },
       audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
       plan: { select: { mood: true, budgetLevel: true } },
     },
@@ -252,7 +252,7 @@ async function fetchExploration(
           trustScore: true,
         },
       },
-      _count: { select: { likes: true, comments: true } },
+      _count: { select: { reactions: true, comments: true } },
       audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
       plan: { select: { mood: true, budgetLevel: true } },
     },
@@ -463,7 +463,7 @@ async function fetchCandidates(
           trustScore: true,
         },
       },
-      _count: { select: { likes: true, comments: true } },
+      _count: { select: { reactions: true, comments: true } },
       audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
       plan: { select: { mood: true, budgetLevel: true } },
     },
@@ -732,15 +732,17 @@ export async function buildFeed(
     return !reportedContentIds.has(c.id);
   });
 
-  // Get liked state
+  // Get reacted state
   const momentIds = visibleCandidates.map((c) => c.id);
-  let likedSet = new Set<string>();
+  const userReactionMap = new Map<string, string>();
   if (momentIds.length > 0) {
-    const userLikes = await db.momentLike.findMany({
+    const userReactions = await db.momentReaction.findMany({
       where: { momentId: { in: momentIds }, userId: viewer.userId },
-      select: { momentId: true },
+      select: { momentId: true, emoji: true },
     });
-    likedSet = new Set(userLikes.map((l) => l.momentId));
+    for (const r of userReactions) {
+      userReactionMap.set(r.momentId, r.emoji);
+    }
   }
 
   // Build result
@@ -772,9 +774,10 @@ export async function buildFeed(
       role: c.author.role,
       isVerified: c.author.isVerified,
     },
-    _count: { likes: c._count.likes, comments: c._count.comments },
+    _count: { reactions: c._count.reactions, comments: c._count.comments },
     viewerState: {
-      likedByMe: likedSet.has(c.id),
+      likedByMe: userReactionMap.has(c.id),
+      myReaction: userReactionMap.get(c.id) || null,
       canDelete: c.authorId === viewer.userId || viewer.role === "ADMIN" || viewer.role === "MODERATOR",
       canReport: c.authorId !== viewer.userId,
     },

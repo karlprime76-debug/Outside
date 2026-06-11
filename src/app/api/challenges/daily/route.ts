@@ -16,18 +16,26 @@ export async function GET() {
       take: 10,
     });
 
-    // Get user's progress
     const userProgress = await db.userChallengeProgress.findMany({
       where: { userId: user.id },
     });
 
-    const completedKeys = new Set(userProgress.map((p) => p.challengeKey));
+    const progressMap = new Map(
+      userProgress.map((p) => [p.challengeKey, {
+        currentValue: p.currentValue,
+        completedAt: p.completedAt
+      }])
+    );
 
-    const challengesWithProgress = challenges.map((challenge) => ({
-      ...challenge,
-      completed: completedKeys.has(challenge.key),
-      completedAt: userProgress.find((p) => p.challengeKey === challenge.key)?.completedAt,
-    }));
+    const challengesWithProgress = challenges.map((challenge) => {
+      const progress = progressMap.get(challenge.key);
+      return {
+        ...challenge,
+        currentValue: progress?.currentValue || 0,
+        completed: !!progress?.completedAt,
+        completedAt: progress?.completedAt || null,
+      };
+    });
 
     return NextResponse.json({ challenges: challengesWithProgress });
   } catch (error) {

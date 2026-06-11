@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createPlanReminders } from "@/lib/plan-reminders";
 import { recordTripHistory } from "@/lib/passport";
+import { ChallengeType } from "@prisma/client";
+import { GamificationEngine } from "@/lib/gamification-engine";
 
 const VALID_ATTENDANCE = ["GOING", "MAYBE"] as const;
 
@@ -78,6 +80,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     createPlanReminders(user.id, invitation.planId, invitation.plan.startDate).catch((err) => { console.error("[PLAN_ERROR] Failed to create plan reminders:", err); });
+
+    if (attendance === "GOING") {
+      GamificationEngine.trackAction(user.id, ChallengeType.JOIN_PLAN).catch((err) => {
+        console.error("[GAMIFICATION_ERROR]", err);
+      });
+    }
 
     db.plan.findUnique({
       where: { id: invitation.planId },

@@ -12,6 +12,8 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useClickOutside } from "@/hooks/use-click-outside";
+import { ReactionPicker } from "./reaction-picker";
+import { LiveComments } from "./live-comments";
 import { ReportButton } from "@/components/report-button";
 
 interface Author {
@@ -34,11 +36,12 @@ interface MomentItem {
   createdAt: string;
   author: Author;
   _count: {
-    likes: number;
+    reactions: number;
     comments: number;
   };
   viewerState: {
     likedByMe: boolean;
+    myReaction: string | null;
     canDelete: boolean;
     canReport: boolean;
   };
@@ -65,9 +68,13 @@ interface MomentCardProps {
 export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onHide, onHideAccount }: MomentCardProps) {
   const { addToast } = useToast();
   const [liked, setLiked] = useState(moment.viewerState.likedByMe);
-  const [likesCount, setLikesCount] = useState(moment._count.likes);
+  const [myReaction, setMyReaction] = useState(moment.viewerState.myReaction);
+  const [reactionsCount, setReactionsCount] = useState(moment._count.reactions);
   const [likeLoading, setLikeLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [pickerPosition, setPickerPosition] = useState({ x: 0, y: 0 });
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const haptic = useHaptic();
   const t = useDictionary();
   const [showShareSheet, setShowShareSheet] = useState(false);
@@ -172,37 +179,70 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     };
   }, [moment.id, handleVideoProgress, handleQuickSkip]);
 
-  const handleLike = useCallback(async () => {
+  const handleReaction = useCallback(async (emoji: string = "❤️") => {
     if (likeLoading) return;
     setLikeLoading(true);
-    const newLiked = !liked;
+    
+    const isRemove = liked && myReaction === emoji;
+    const newLiked = !isRemove;
+    const newReaction = isRemove ? null : emoji;
+    
     setLiked(newLiked);
-    setLikesCount((c) => (newLiked ? c + 1 : Math.max(0, c - 1)));
+    setMyReaction(newReaction);
+    setReactionsCount((c) => {
+      if (isRemove) return Math.max(0, c - 1);
+      if (!liked) return c + 1;
+      return c; // Switching emoji, count stays same
+    });
+
     if (newLiked) {
       setLikeAnim(true);
       haptic.light();
       setTimeout(() => setLikeAnim(false), 300);
     }
+
     try {
-      const res = await fetch(`/api/moments/${moment.id}/like`, {
-        method: newLiked ? "POST" : "DELETE",
+      const res = await fetch(`/api/moments/${moment.id}/reaction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setLikesCount(data.likesCount ?? likesCount);
+        setReactionsCount(data.reactions?.length ?? reactionsCount);
         onLikeToggle(moment.id, newLiked);
         trackEvent(newLiked ? "LIKE" : "UNLIKE");
       } else {
         setLiked(liked);
-        setLikesCount(likesCount);
+        setMyReaction(myReaction);
+        setReactionsCount(reactionsCount);
       }
     } catch {
       setLiked(liked);
-      setLikesCount(likesCount);
+      setMyReaction(myReaction);
+      setReactionsCount(reactionsCount);
     } finally {
       setLikeLoading(false);
+      setShowReactionPicker(false);
     }
-  }, [liked, likeLoading, likesCount, moment.id, onLikeToggle, trackEvent, haptic]);
+  }, [liked, myReaction, likeLoading, reactionsCount, moment.id, onLikeToggle, trackEvent, haptic]);
+
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    const x = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const y = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    
+    longPressTimer.current = setTimeout(() => {
+      setPickerPosition({ x, y });
+      setShowReactionPicker(true);
+      haptic.medium();
+    }, 500);
+  };
+
+  const handleMouseUp = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
 
   const handlePhotoDoubleTap = useCallback(() => {
     const now = Date.now();
@@ -210,11 +250,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     lastTapRef.current = now;
 
     if (isDoubleTap && !liked) {
-      handleLike();
+      handleReaction("❤️");
       setShowHeartAnim(true);
       setTimeout(() => setShowHeartAnim(false), 700);
     }
-  }, [liked, handleLike]);
+  }, [liked, handleReaction]);
 
   const handleShare = async () => {
     const url = `${window.location.origin}/moments?highlight=${moment.id}`;
@@ -512,6 +552,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
             <div className="absolute top-2.5 left-2.5 rounded-full bg-black/50 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-white border border-white/10">
               Clip
             </div>
+            {/* Live Comments Overlay */}
+            <div className="absolute bottom-12 left-2.5 z-20 max-w-[80%]">
+              <LiveComments momentId={moment.id} />
+            </div>
+
             {moment.audioTrack && (
               <div className="absolute bottom-2.5 left-2.5 z-10">
                 <MomentAudioPlayer
@@ -541,6 +586,11 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
                 <Heart className="h-20 w-20 text-white fill-white drop-shadow-lg" />
               </div>
             )}
+            {/* Live Comments Overlay */}
+            <div className="absolute bottom-12 left-2.5 z-20 max-w-[80%]">
+              <LiveComments momentId={moment.id} />
+            </div>
+
             {moment.audioTrack && (
               <div className="absolute bottom-2.5 left-2.5 z-10">
                 <MomentAudioPlayer
@@ -559,19 +609,37 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         {/* Actions & info */}
         <div className="px-3 pt-2.5 pb-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 relative">
               <button
-                onClick={(e) => { e.stopPropagation(); handleLike(); }}
+                onClick={(e) => { e.stopPropagation(); handleReaction(); }}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onTouchStart={handleMouseDown}
+                onTouchEnd={handleMouseUp}
                 disabled={likeLoading}
                 className={`p-2.5 transition-colors active:scale-90 ${liked ? "text-red-500" : "text-[var(--os-fg)] hover:text-red-500"}`}
-                aria-label={liked ? "Retirer le J'aime" : "J'aime"}
+                aria-label={liked ? "Retirer la réaction" : "Réagir"}
               >
-                <Heart
-                  className={`h-6 w-6 transition-transform duration-200 ${
-                    likeAnim ? "scale-125" : "scale-100"
-                  } ${liked ? "fill-red-500" : ""}`}
-                />
+                {liked && myReaction !== "❤️" ? (
+                  <span className="text-2xl h-6 w-6 flex items-center justify-center animate-heart-pop">
+                    {myReaction}
+                  </span>
+                ) : (
+                  <Heart
+                    className={`h-6 w-6 transition-transform duration-200 ${
+                      likeAnim ? "scale-125" : "scale-100"
+                    } ${liked ? "fill-red-500" : ""}`}
+                  />
+                )}
               </button>
+              
+              <ReactionPicker 
+                open={showReactionPicker}
+                onClose={() => setShowReactionPicker(false)}
+                onSelect={handleReaction}
+                position={pickerPosition}
+              />
+
               <button
                 onClick={(e) => { e.stopPropagation(); onOpenComments(moment); }}
                 className="p-2.5 text-[var(--os-fg)] hover:text-outside-500 transition-colors active:scale-90"
@@ -608,8 +676,10 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
           </div>
 
           <div className="mt-2 space-y-1">
-            {likesCount > 0 && (
-              <p className="text-[13px] font-bold text-[var(--os-fg)]">{likesCount} J&apos;aime</p>
+            {reactionsCount > 0 && (
+              <p className="text-[13px] font-bold text-[var(--os-fg)]">
+                {reactionsCount} réaction{reactionsCount > 1 ? "s" : ""}
+              </p>
             )}
             {moment.caption && (
               <p className="text-[13px] text-[var(--os-fg)] leading-relaxed">

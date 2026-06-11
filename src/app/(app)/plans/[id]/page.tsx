@@ -12,7 +12,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { RecurringSection } from "./recurring-section";
 import { ReportButton } from "@/components/report-button";
 import { SavePlanButton } from "@/components/save-plan-button";
-import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download, Bell, ShieldCheck, Home, AlertTriangle, Camera, Trophy } from "lucide-react";
+import { MapPin, Calendar, Shield, Users, ArrowLeft, MessageSquare, Share2, UserPlus, Star, Send, Flag, Tag, Wallet, QrCode, Download, Bell, ShieldCheck, Home, AlertTriangle, Camera, Trophy, CreditCard } from "lucide-react";
 import { TrustReviewDialog } from "@/components/trust/trust-review-dialog";
 import { AfterPlanSheet } from "@/components/plans/after-plan-sheet";
 import { formatBudget } from "@/lib/currency";
@@ -45,6 +45,8 @@ interface PlanDetail {
   creator: { id: string; name: string | null; image: string | null };
   city: { name: string };
   isOfficial?: boolean;
+  ticketPrice?: number;
+  stripePriceId?: string;
   bookingUrl?: string | null;
   place: { name: string } | null;
   participants: { attendance: string; checkedInAt: string | null; checkinPhotoUrl: string | null; user: { id: string; name: string | null; image: string | null } }[];
@@ -125,6 +127,7 @@ export default function PlanDetailPage() {
   const [remindersLoading, setRemindersLoading] = useState(false);
   const [reliabilities, setReliabilities] = useState<Record<string, { level: string; outsideScore: number }>>({});
   const [afterPlanOpen, setAfterPlanOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {
     fetch(`/api/plans/${id}`)
@@ -213,6 +216,29 @@ export default function PlanDetailPage() {
     }
   }
 
+  const buyTicket = async () => {
+    haptic.medium();
+    setCheckoutLoading(true);
+    try {
+      const r = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId: id }),
+      });
+      const data = await r.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Erreur lors de la création de la session de paiement.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erreur réseau");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   if (loading) return <div className="p-6 text-[var(--os-muted)]">{t.common.loading}</div>;
   if (!plan) return <div className="p-6 text-[var(--os-muted)]">{t.planDetail.notFound}</div>;
 
@@ -264,6 +290,19 @@ export default function PlanDetailPage() {
         <InfoRow icon={Shield} label={t.planDetail.safety} value={plan.safetyLevel} />
         <InfoRow icon={Users} label={t.planDetail.spots} value={`${plan._count.going} y vont · ${plan._count.maybe} intéressés / ${plan.maxParticipants} max`} />
       </div>
+
+      {plan.stripePriceId && !isParticipant && !isCreator && (
+        <div className="rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 p-0.5 shadow-glow animate-fade-in">
+          <button
+            onClick={buyTicket}
+            disabled={checkoutLoading || isFull}
+            className="flex items-center justify-center gap-2 w-full py-4 bg-[var(--os-card)] rounded-[14px] text-[var(--os-fg)] font-black hover:bg-transparent hover:text-white transition-all group disabled:opacity-50"
+          >
+            <CreditCard className="h-5 w-5 text-emerald-500 group-hover:text-white transition-colors" />
+            {checkoutLoading ? "Chargement..." : `Prendre mon billet (${plan.ticketPrice}€)`}
+          </button>
+        </div>
+      )}
 
       {plan.bookingUrl && (
         <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 p-0.5 shadow-glow animate-fade-in">

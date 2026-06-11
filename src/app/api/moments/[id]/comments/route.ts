@@ -19,6 +19,8 @@ export async function GET(
     }
 
     const { id } = await params;
+    const { searchParams } = new URL(_req.url);
+    const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
 
     const moment = await db.moment.findUnique({ where: { id } });
     if (!moment) {
@@ -28,7 +30,7 @@ export async function GET(
     const comments = await db.momentComment.findMany({
       where: { momentId: id, isDeleted: false },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: limit,
       include: {
         user: {
           select: { id: true, name: true, username: true, image: true },
