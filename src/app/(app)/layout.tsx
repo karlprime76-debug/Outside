@@ -157,14 +157,12 @@ export default async function AppLayout({
       <main className="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
         <UiProviders>
           <ErrorBoundary>{children}</ErrorBoundary>
+          <PushPrompt />
         </UiProviders>
       </main>
 
       {/* Mobile bottom navigation */}
       <BottomNav />
-
-      {/* Push notification prompt */}
-      <PushPrompt />
     </div>
   );
 }
