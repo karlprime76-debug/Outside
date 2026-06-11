@@ -2,16 +2,26 @@ import webPush from "web-push";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/log";
 
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
 const vapidSubject = process.env.VAPID_SUBJECT || "mailto:contact@outside.app";
 
-if (vapidPublicKey && vapidPrivateKey) {
-  webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+function getKeys(): { publicKey: string; privateKey: string } {
+  const envPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const envPrivate = process.env.VAPID_PRIVATE_KEY;
+  if (envPublic && envPrivate) {
+    return { publicKey: envPublic, privateKey: envPrivate };
+  }
+  const generated = webPush.generateVAPIDKeys();
+  return { publicKey: generated.publicKey, privateKey: generated.privateKey };
+}
+
+const _keys = getKeys();
+
+if (_keys.publicKey && _keys.privateKey) {
+  webPush.setVapidDetails(vapidSubject, _keys.publicKey, _keys.privateKey);
 }
 
 export function getVapidPublicKey(): string {
-  return vapidPublicKey;
+  return _keys.publicKey;
 }
 
 export interface PushPayload {
@@ -25,7 +35,7 @@ export interface PushPayload {
 
 export async function sendPushNotification(userId: string, payload: PushPayload) {
   try {
-    if (!vapidPublicKey || !vapidPrivateKey) {
+    if (!_keys.publicKey || !_keys.privateKey) {
       return;
     }
 
@@ -76,7 +86,7 @@ export async function sendPushToUser(
   payload: PushPayload
 ) {
   try {
-    if (!vapidPublicKey || !vapidPrivateKey) return;
+    if (!_keys.publicKey || !_keys.privateKey) return;
 
     const settings = await db.userSettings.findUnique({
       where: { userId },
