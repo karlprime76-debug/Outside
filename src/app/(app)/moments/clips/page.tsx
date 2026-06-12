@@ -15,6 +15,7 @@ import {
   Trash2,
   Sparkles,
   Music,
+  Loader2,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
@@ -47,6 +48,7 @@ interface ClipItem {
   viewerState: {
     likedByMe: boolean;
     myReaction: string | null;
+    savedByMe?: boolean;
     canDelete: boolean;
     canReport: boolean;
   };
@@ -118,35 +120,45 @@ export default function ClipsPage() {
   }, [newMoments, clips, clearNew]);
 
   const fetchClips = useCallback(
-    async (cursor?: string) => {
+    async (cursor?: string, retries = 2) => {
       if (isFetchingRef.current) return;
       isFetchingRef.current = true;
-      setLoading(true);
-      try {
-        const url = new URL("/api/moments", window.location.origin);
-        url.searchParams.set("media", "clips");
-        url.searchParams.set("scope", scope);
-        url.searchParams.set("limit", "10");
-        if (cursor) url.searchParams.set("cursor", cursor);
+      if (!cursor) setLoading(true);
 
-        const res = await fetch(url.toString());
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Erreur");
+      let lastError: Error | null = null;
 
-        const items: ClipItem[] = data.moments || [];
-        setClips((prev) => (cursor ? [...prev, ...items] : items));
-        setNextCursor(data.nextCursor || null);
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const url = new URL("/api/moments", window.location.origin);
+          url.searchParams.set("media", "clips");
+          url.searchParams.set("scope", scope);
+          url.searchParams.set("limit", "10");
+          if (cursor) url.searchParams.set("cursor", cursor);
 
-        if (!cursor && startId && items.length > 0) {
-          const idx = items.findIndex((i) => i.id === startId);
-          if (idx >= 0) setActiveIndex(idx);
+          const res = await fetch(url.toString());
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Erreur");
+
+          const items: ClipItem[] = data.moments || [];
+          setClips((prev) => (cursor ? [...prev, ...items] : items));
+          setNextCursor(data.nextCursor || null);
+
+          if (!cursor && startId && items.length > 0) {
+            const idx = items.findIndex((i) => i.id === startId);
+            if (idx >= 0) setActiveIndex(idx);
+          }
+          return;
+        } catch (e) {
+          lastError = e instanceof Error ? e : new Error("Erreur");
+          if (attempt < retries) {
+            await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+          }
         }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erreur");
-      } finally {
-        setLoading(false);
-        isFetchingRef.current = false;
       }
+
+      setError(lastError?.message || "Erreur");
+      setLoading(false);
+      isFetchingRef.current = false;
     },
     [scope, startId]
   );
@@ -258,30 +270,50 @@ export default function ClipsPage() {
     }
   }, [clips, trackEvent]);
 
-  // Attach video event listeners
+  // Attach video event listeners via stable refs for proper cleanup
+  const listenerRefs = useRef<Record<number, {
+    timeupdate: (e: Event) => void;
+    play: (e: Event) => void;
+    pause: (e: Event) => void;
+    ended: (e: Event) => void;
+  }>>({});
+
   useEffect(() => {
     const currentRefs = videoRefs.current;
     Object.entries(currentRefs).forEach(([idxStr, video]) => {
       if (!video) return;
       const idx = parseInt(idxStr, 10);
 
-      video.addEventListener("timeupdate", () => handleVideoTimeUpdate(idx));
-      video.addEventListener("play", () => handleVideoPlay(idx));
-      video.addEventListener("pause", () => handleVideoPause(idx));
-      video.addEventListener("ended", () => handleVideoEnded(idx));
+      const handlers = {
+        timeupdate: () => handleVideoTimeUpdate(idx),
+        play: () => handleVideoPlay(idx),
+        pause: () => handleVideoPause(idx),
+        ended: () => handleVideoEnded(idx),
+      };
+
+      video.addEventListener("timeupdate", handlers.timeupdate);
+      video.addEventListener("play", handlers.play);
+      video.addEventListener("pause", handlers.pause);
+      video.addEventListener("ended", handlers.ended);
+
+      listenerRefs.current[idx] = handlers;
     });
 
     return () => {
       const currentRefs = videoRefs.current;
-      Object.values(currentRefs).forEach((video) => {
+      Object.entries(currentRefs).forEach(([idxStr, video]) => {
         if (!video) return;
-        video.removeEventListener("timeupdate", () => {});
-        video.removeEventListener("play", () => {});
-        video.removeEventListener("pause", () => {});
-        video.removeEventListener("ended", () => {});
+        const idx = parseInt(idxStr, 10);
+        const handlers = listenerRefs.current[idx];
+        if (!handlers) return;
+        video.removeEventListener("timeupdate", handlers.timeupdate);
+        video.removeEventListener("play", handlers.play);
+        video.removeEventListener("pause", handlers.pause);
+        video.removeEventListener("ended", handlers.ended);
+        delete listenerRefs.current[idx];
       });
     };
-  }, [videoRefs, handleVideoTimeUpdate, handleVideoPlay, handleVideoPause, handleVideoEnded]);
+  }, [handleVideoTimeUpdate, handleVideoPlay, handleVideoPause, handleVideoEnded]);
 
   // Pause/play videos based on active index
   useEffect(() => {
@@ -326,22 +358,22 @@ export default function ClipsPage() {
     return () => observer.disconnect();
   }, [clips.length]);
 
-  // Infinite scroll
+  // Infinite scroll with IntersectionObserver
+  const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const el = sentinelRef.current;
+    if (!el || !nextCursor) return;
 
-    const onScroll = () => {
-      const last = container.querySelector("[data-clip-last]");
-      if (!last) return;
-      const rect = last.getBoundingClientRect();
-      if (rect.top < window.innerHeight * 1.5 && nextCursor && !loading) {
-        fetchClips(nextCursor);
-      }
-    };
-
-    container.addEventListener("scroll", onScroll);
-    return () => container.removeEventListener("scroll", onScroll);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && nextCursor && !loading && !isFetchingRef.current) {
+          fetchClips(nextCursor);
+        }
+      },
+      { rootMargin: "300px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [nextCursor, loading, fetchClips]);
 
 
@@ -720,11 +752,11 @@ export default function ClipsPage() {
         ))}
 
         {/* Loading sentinel */}
-        {nextCursor && (
-          <div className="h-[100dvh] flex items-center justify-center snap-start">
-            <Skeleton className="h-12 w-12 rounded-full" />
-          </div>
-        )}
+        <div ref={sentinelRef} className="h-20 flex items-center justify-center snap-start">
+          {loading && nextCursor && (
+            <Loader2 className="h-5 w-5 animate-spin text-white/50" />
+          )}
+        </div>
       </div>
 
       {/* Comments sheet */}

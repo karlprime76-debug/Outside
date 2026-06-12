@@ -726,16 +726,26 @@ export async function buildFeed(
     return !reportedContentIds.has(c.id);
   });
 
-  // Get reacted state
+  // Get reacted state and saved state
   const momentIds = visibleCandidates.map((c) => c.id);
   const userReactionMap = new Map<string, string>();
+  const savedSet = new Set<string>();
   if (momentIds.length > 0) {
-    const userReactions = await db.momentReaction.findMany({
-      where: { momentId: { in: momentIds }, userId: viewer.userId },
-      select: { momentId: true, emoji: true },
-    });
+    const [userReactions, savedMoments] = await Promise.all([
+      db.momentReaction.findMany({
+        where: { momentId: { in: momentIds }, userId: viewer.userId },
+        select: { momentId: true, emoji: true },
+      }),
+      db.savedMoment.findMany({
+        where: { momentId: { in: momentIds }, userId: viewer.userId },
+        select: { momentId: true },
+      }),
+    ]);
     for (const r of userReactions) {
       userReactionMap.set(r.momentId, r.emoji);
+    }
+    for (const s of savedMoments) {
+      savedSet.add(s.momentId);
     }
   }
 
@@ -772,6 +782,7 @@ export async function buildFeed(
     viewerState: {
       likedByMe: userReactionMap.has(c.id),
       myReaction: userReactionMap.get(c.id) || null,
+      savedByMe: savedSet.has(c.id),
       canDelete: c.authorId === viewer.userId || viewer.role === "ADMIN" || viewer.role === "MODERATOR",
       canReport: c.authorId !== viewer.userId,
     },

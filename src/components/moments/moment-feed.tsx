@@ -40,6 +40,7 @@ interface FeedMoment {
   viewerState: {
     likedByMe: boolean;
     myReaction: string | null;
+    savedByMe?: boolean;
     canDelete: boolean;
     canReport: boolean;
   };
@@ -204,44 +205,51 @@ export function MomentFeed() {
   });
 
   const fetchMoments = useCallback(
-    async (cursor?: string) => {
+    async (cursor?: string, retries = 2) => {
       if (isFetchingRef.current) return;
       isFetchingRef.current = true;
-      setLoading(true);
+      if (!cursor) setLoading(true);
       setError(null);
 
       if (abortRef.current) abortRef.current.abort();
       abortRef.current = new AbortController();
 
-      try {
-        const url = new URL("/api/moments", window.location.origin);
-        url.searchParams.set("scope", scope);
-        url.searchParams.set("limit", "10");
-        url.searchParams.set("media", media);
-        if (cursor) url.searchParams.set("cursor", cursor);
+      let lastError: Error | null = null;
 
-        const res = await fetch(url.toString(), { signal: abortRef.current.signal });
-        const data = await res.json();
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const url = new URL("/api/moments", window.location.origin);
+          url.searchParams.set("scope", scope);
+          url.searchParams.set("limit", "10");
+          url.searchParams.set("media", media);
+          if (cursor) url.searchParams.set("cursor", cursor);
 
-        if (!res.ok) {
-          throw new Error(data.error || "Erreur de chargement");
+          const res = await fetch(url.toString(), { signal: abortRef.current.signal });
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error || "Erreur de chargement");
+          }
+
+          const all: FeedMoment[] = data.moments || [];
+          const filtered = all.filter(
+            (m) => !hiddenSet.has(m.id) && !hiddenAccounts.has(m.author.id)
+          );
+          setMoments((prev) => (cursor ? [...prev, ...filtered] : filtered));
+          setNextCursor(data.nextCursor || null);
+          return;
+        } catch (err) {
+          lastError = err as Error;
+          if ((err as Error).name === "AbortError") return;
+          if (attempt < retries) {
+            await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+          }
         }
+      }
 
-        const all: FeedMoment[] = data.moments || [];
-        const filtered = all.filter(
-          (m) => !hiddenSet.has(m.id) && !hiddenAccounts.has(m.author.id)
-        );
-        setMoments((prev) => (cursor ? [...prev, ...filtered] : filtered));
-        setNextCursor(data.nextCursor || null);
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          setError("Impossible de charger les moments.");
-          console.error(err);
-        }
-      } finally {
-        setLoading(false);
-        setInitialLoading(false);
-        isFetchingRef.current = false;
+      if (lastError) {
+        setError("Impossible de charger les moments.");
+        console.error(lastError);
       }
     },
     [scope, hiddenSet, hiddenAccounts, media]

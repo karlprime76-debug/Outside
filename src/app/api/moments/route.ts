@@ -55,7 +55,7 @@ export async function GET(req: Request) {
             createdAt: m.createdAt.toISOString(),
             author: m.author,
             _count: { reactions: m._count.reactions, comments: m._count.comments },
-            viewerState: { likedByMe: false, myReaction: null, canDelete: false, canReport: true },
+            viewerState: { likedByMe: false, myReaction: null, savedByMe: false, canDelete: false, canReport: true },
           })),
           nextCursor: moments.length === limit ? moments[moments.length - 1].id : null,
         });
@@ -113,8 +113,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
-    if (contentLength > 100000) {
-      return NextResponse.json({ error: "Requête trop volumineuse." }, { status: 413 });
+    if (contentLength > 104_857_600) {
+      return NextResponse.json({ error: "Fichier trop volumineux (max 100 Mo)." }, { status: 413 });
     }
 
     const user = await getCurrentUser();
@@ -152,7 +152,7 @@ export async function POST(req: Request) {
     const momentLimit = await rateLimit(`moment:${user.id}`, 20, 3600000);
     if (!momentLimit.success) {
       return NextResponse.json(
-        { error: "Trop de moments pubiliés. Réessaie plus tard." },
+        { error: "Trop de moments publiés. Réessaie plus tard." },
         { status: 429, headers: getRateLimitHeaders(momentLimit) }
       );
     }

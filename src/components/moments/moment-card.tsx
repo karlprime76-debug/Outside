@@ -42,6 +42,7 @@ interface MomentItem {
   viewerState: {
     likedByMe: boolean;
     myReaction: string | null;
+    savedByMe?: boolean;
     canDelete: boolean;
     canReport: boolean;
   };
@@ -80,7 +81,13 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(moment.viewerState.savedByMe ?? (() => {
+    try {
+      const raw = localStorage.getItem("outside_saved_moments");
+      if (!raw) return false;
+      return JSON.parse(raw).includes(moment.id);
+    } catch { return false; }
+  })());
   const [likeAnim, setLikeAnim] = useState(false);
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -663,10 +670,31 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               </button>
             </div>
             <button
-              onClick={() => {
+              onClick={async () => {
                 const newSaved = !saved;
                 setSaved(newSaved);
-                trackEvent(newSaved ? "SAVE" : "UNSAVE");
+                try {
+                  const res = await fetch(`/api/moments/${moment.id}/save`, { method: "POST" });
+                  const data = await res.json().catch(() => ({}));
+                  if (res.ok) {
+                    const savedState = data.saved;
+                    setSaved(savedState);
+                    trackEvent(savedState ? "SAVE" : "UNSAVE");
+                    // Sync to localStorage
+                    try {
+                      const raw = localStorage.getItem("outside_saved_moments");
+                      const ids: string[] = raw ? JSON.parse(raw) : [];
+                      const updated = savedState
+                        ? [...new Set([...ids, moment.id])]
+                        : ids.filter((id: string) => id !== moment.id);
+                      localStorage.setItem("outside_saved_moments", JSON.stringify(updated));
+                    } catch {}
+                  } else {
+                    setSaved(!newSaved);
+                  }
+                } catch {
+                  setSaved(!newSaved);
+                }
               }}
               className={`p-2.5 transition-colors active:scale-90 ${saved ? "text-outside-500" : "text-[var(--os-fg)] hover:text-[var(--os-muted)]"}`}
               aria-label={saved ? "Retirer des favoris" : "Sauvegarder"}

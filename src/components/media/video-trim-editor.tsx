@@ -1,17 +1,27 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X, Check, RefreshCw, Scissors } from "lucide-react";
+import { X, Check, RefreshCw, Scissors, Film, Loader2, AlertTriangle } from "lucide-react";
+import { processVideo, formatDuration, getFileSizeLabel } from "@/lib/media/process-video";
 
 interface VideoTrimEditorProps {
   videoFile: File;
-  onConfirm: (_metadata: { startTime: number; endTime: number; duration: number }) => void;
+  onConfirm: (_result: { processedFile: File; startTime: number; endTime: number; duration: number; width: number; height: number }) => void;
   onCancel: () => void;
-  maxDuration?: number; // en secondes, défaut 60
+  maxDuration?: number;
 }
 
+type QualityPreset = "high" | "medium" | "low";
+type EditorStep = "trim" | "processing";
+
+const QUALITY_OPTIONS: { key: QualityPreset; label: string; desc: string }[] = [
+  { key: "high", label: "Haute", desc: "1080p max" },
+  { key: "medium", label: "Moyenne", desc: "720p" },
+  { key: "low", label: "Basse", desc: "480p" },
+];
+
 export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 60 }: VideoTrimEditorProps) {
-  const [videoSrc, setVideoSrc] = useState<string>("");
+  const [videoSrc, setVideoSrc] = useState("");
   const [duration, setDuration] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
@@ -19,11 +29,15 @@ export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDraggingStart, setIsDraggingStart] = useState(false);
   const [isDraggingEnd, setIsDraggingEnd] = useState(false);
+  const [quality, setQuality] = useState<QualityPreset>("medium");
+  const [step, setStep] = useState<EditorStep>("trim");
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingMessage, setProcessingMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
 
-  // Charger la vidéo
   useEffect(() => {
     const url = URL.createObjectURL(videoFile);
     setVideoSrc(url);
@@ -33,16 +47,12 @@ export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 
     video.src = url;
     video.onloadedmetadata = () => {
       setDuration(video.duration);
-      const initialEndTime = Math.min(video.duration, maxDuration);
-      setEndTime(initialEndTime);
+      setEndTime(Math.min(video.duration, maxDuration));
     };
 
-    return () => {
-      URL.revokeObjectURL(url);
-    };
+    return () => URL.revokeObjectURL(url);
   }, [videoFile, maxDuration]);
 
-  // Mettre à jour le temps actuel pendant la lecture
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -80,11 +90,9 @@ export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 
     const x = e.clientX - rect.left;
     const percentage = x / rect.width;
     const time = percentage * duration;
-    
+
     setCurrentTime(time);
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-    }
+    if (videoRef.current) videoRef.current.currentTime = time;
   };
 
   const handleDragStart = (e: React.MouseEvent) => {
@@ -99,20 +107,18 @@ export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!timelineRef.current || (!isDraggingStart && !isDraggingEnd)) return;
-    
+
     const rect = timelineRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percentage = Math.max(0, Math.min(1, x / rect.width));
     const time = percentage * duration;
 
     if (isDraggingStart) {
-      const newStartTime = Math.min(time, endTime - 1);
+      const newStartTime = Math.min(time, endTime - 0.5);
       setStartTime(newStartTime);
-      if (videoRef.current) {
-        videoRef.current.currentTime = newStartTime;
-      }
+      if (videoRef.current) videoRef.current.currentTime = newStartTime;
     } else if (isDraggingEnd) {
-      const newEndTime = Math.max(time, startTime + 1);
+      const newEndTime = Math.max(time, startTime + 0.5);
       setEndTime(newEndTime);
     }
   };
@@ -126,36 +132,57 @@ export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 
     setStartTime(0);
     setEndTime(Math.min(duration, maxDuration));
     setCurrentTime(0);
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
+    if (videoRef.current) videoRef.current.currentTime = 0;
+    setError(null);
+  };
+
+  const handleProcess = async () => {
+    setError(null);
+    setStep("processing");
+    setProcessingProgress(0);
+    setProcessingMessage("Préparation...");
+
+    try {
+      setProcessingMessage("Rognage et compression en cours...");
+
+      const result = await processVideo(videoFile, {
+        startTime,
+        endTime,
+        quality,
+      });
+
+      setProcessingProgress(80);
+      setProcessingMessage("Finalisation...");
+
+      setProcessingProgress(100);
+      setProcessingMessage("Terminé !");
+
+      setTimeout(() => {
+        onConfirm({
+          processedFile: result.file,
+          startTime,
+          endTime: startTime + result.duration,
+          duration: result.duration,
+          width: result.width,
+          height: result.height,
+        });
+      }, 300);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur lors du traitement vidéo";
+      setError(msg);
+      setStep("trim");
     }
   };
 
-  const handleConfirm = () => {
-    const selectedDuration = endTime - startTime;
-    onConfirm({
-      startTime,
-      endTime,
-      duration: selectedDuration,
-    });
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const selectedDuration = endTime - startTime;
+  const selectedDuration = Math.max(0.5, endTime - startTime);
   const isTooLong = selectedDuration > maxDuration;
 
-  const startPercentage = (startTime / duration) * 100;
-  const endPercentage = (endTime / duration) * 100;
-  const currentPercentage = (currentTime / duration) * 100;
+  const startPercentage = (startTime / duration) * 100 || 0;
+  const endPercentage = (endTime / duration) * 100 || 100;
+  const currentPercentage = (currentTime / duration) * 100 || 0;
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col" onMouseUp={handleMouseUp} onMouseMove={handleMouseMove}>
-      {/* Header */}
       <div className="flex items-center justify-between p-4 bg-black/50 backdrop-blur-sm border-b border-white/10">
         <button
           onClick={onCancel}
@@ -165,12 +192,18 @@ export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 
           <X className="h-5 w-5" />
         </button>
         <div className="flex items-center gap-2">
-          <Scissors className="h-4 w-4 text-outside-400" />
-          <span className="text-sm font-bold text-white">Rogner la vidéo</span>
+          {step === "processing" ? (
+            <Loader2 className="h-4 w-4 text-outside-400 animate-spin" />
+          ) : (
+            <Scissors className="h-4 w-4 text-outside-400" />
+          )}
+          <span className="text-sm font-bold text-white">
+            {step === "processing" ? "Traitement..." : "Rogner la vidéo"}
+          </span>
         </div>
         <button
-          onClick={handleConfirm}
-          disabled={isTooLong}
+          onClick={handleProcess}
+          disabled={isTooLong || step === "processing"}
           className="p-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 text-white hover:shadow-glow transition-all disabled:opacity-50"
           aria-label="Valider"
         >
@@ -178,113 +211,178 @@ export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 
         </button>
       </div>
 
-      {/* Video Preview */}
       <div className="flex-1 relative bg-black flex items-center justify-center">
-        <video
-          ref={videoRef}
-          src={videoSrc}
-          className="max-w-full max-h-full object-contain"
-          onClick={handlePlayPause}
-        />
-        
-        {/* Play/Pause overlay */}
-        <button
-          onClick={handlePlayPause}
-          className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
-        >
-          <div className="rounded-full bg-white/20 backdrop-blur-sm p-4">
-            {isPlaying ? (
-              <div className="w-0 h-0 border-l-[20px] border-l-white border-y-[12px] border-y-transparent ml-1" />
-            ) : (
-              <div className="w-0 h-0 border-l-[0px] border-l-transparent border-r-[20px] border-r-white border-y-[12px] border-y-transparent" />
-            )}
-          </div>
-        </button>
-      </div>
-
-      {/* Timeline */}
-      <div className="bg-black/90 backdrop-blur-sm border-t border-white/10 p-4 space-y-4">
-        {/* Duration info */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-white/70">Durée sélectionnée:</span>
-            <span className={`font-bold ${isTooLong ? "text-red-400" : "text-white"}`}>
-              {formatTime(selectedDuration)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-white/70">Max:</span>
-            <span className="font-bold text-white">{formatTime(maxDuration)}</span>
-          </div>
-        </div>
-
-        {/* Timeline bar */}
-        <div
-          ref={timelineRef}
-          className="relative h-12 bg-white/10 rounded-lg cursor-pointer"
-          onClick={handleTimelineClick}
-        >
-          {/* Timeline track */}
-          <div className="absolute inset-0 flex items-center px-2">
-            {/* Selected region */}
-            <div
-              className="absolute h-8 bg-outside-500/50 rounded"
-              style={{
-                left: `${startPercentage}%`,
-                width: `${endPercentage - startPercentage}%`,
-              }}
-            />
-            
-            {/* Current time indicator */}
-            <div
-              className="absolute h-full w-0.5 bg-white z-10"
-              style={{ left: `${currentPercentage}%` }}
-            />
-            
-            {/* Start handle */}
-            <div
-              className="absolute h-10 w-4 bg-white rounded cursor-ew-resize z-20 flex items-center justify-center"
-              style={{ left: `${startPercentage}%` }}
-              onMouseDown={handleDragStart}
-            >
-              <div className="w-1 h-6 bg-outside-500 rounded" />
+        {error && (
+          <div className="absolute top-4 left-4 right-4 z-10 rounded-xl bg-red-500/20 border border-red-500/30 p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-300">{error}</p>
             </div>
-            
-            {/* End handle */}
-            <div
-              className="absolute h-10 w-4 bg-white rounded cursor-ew-resize z-20 flex items-center justify-center"
-              style={{ left: `${endPercentage}%` }}
-              onMouseDown={handleDragEnd}
-            >
-              <div className="w-1 h-6 bg-outside-500 rounded" />
-            </div>
-          </div>
-        </div>
-
-        {/* Time labels */}
-        <div className="flex items-center justify-between text-xs text-white/70">
-          <span>{formatTime(startTime)}</span>
-          <span>{formatTime(endTime)}</span>
-        </div>
-
-        {/* Warning if too long */}
-        {isTooLong && (
-          <div className="rounded-lg bg-red-500/20 border border-red-500/30 p-3 text-center">
-            <p className="text-xs font-bold text-red-400">
-              La vidéo sélectionnée est trop longue. Réduis-la à {formatTime(maxDuration)} maximum.
-            </p>
           </div>
         )}
 
-        {/* Reset button */}
-        <button
-          onClick={handleReset}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
-        >
-          <RefreshCw className="h-4 w-4" />
-          <span className="text-xs font-bold">Réinitialiser</span>
-        </button>
+        {step === "processing" ? (
+          <div className="flex flex-col items-center gap-6">
+            <div className="relative">
+              <div className="h-24 w-24 rounded-full bg-outside-500/20 flex items-center justify-center">
+                <Loader2 className="h-12 w-12 text-outside-400 animate-spin" />
+              </div>
+              <div className="absolute -top-1 -right-1 rounded-full bg-black/80 px-2 py-0.5 text-[10px] text-white font-bold border border-white/10">
+                {processingProgress}%
+              </div>
+            </div>
+            <p className="text-sm text-white/70">{processingMessage}</p>
+            <div className="w-64 h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-outside-500 to-accent-500 transition-all duration-300 ease-out rounded-full"
+                style={{ width: `${processingProgress}%` }}
+              />
+            </div>
+            <div className="text-xs text-white/50 text-center max-w-xs">
+              <p>La vidéo est rognée et compressée directement dans ton navigateur.</p>
+              <p className="mt-1">Aucune donnée n&apos;est envoyée à un serveur.</p>
+            </div>
+          </div>
+        ) : (
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            className="max-w-full max-h-full object-contain"
+            onClick={handlePlayPause}
+          />
+        )}
+
+        {step === "trim" && (
+          <button
+            onClick={handlePlayPause}
+            className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
+          >
+            <div className="rounded-full bg-white/20 backdrop-blur-sm p-4">
+              {isPlaying ? (
+                <div className="w-0 h-0 border-l-[20px] border-l-white border-y-[12px] border-y-transparent ml-1" />
+              ) : (
+                <svg className="h-10 w-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              )}
+            </div>
+          </button>
+        )}
       </div>
+
+      {step === "trim" && (
+        <div className="bg-black/90 backdrop-blur-sm border-t border-white/10 p-4 space-y-4">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-white/70">Sélection:</span>
+              <span className={`font-bold ${isTooLong ? "text-red-400" : "text-white"}`}>
+                {formatDuration(selectedDuration)}
+              </span>
+              <span className="text-white/40 text-xs">
+                / {formatDuration(duration)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-white/70">Max:</span>
+              <span className="font-bold text-white">{formatDuration(maxDuration)}</span>
+            </div>
+          </div>
+
+          <div
+            ref={timelineRef}
+            className="relative h-14 bg-white/10 rounded-lg cursor-pointer"
+            onClick={handleTimelineClick}
+          >
+            <div className="absolute inset-0 flex items-center px-2">
+              <div
+                className="absolute h-10 bg-outside-500/40 rounded"
+                style={{
+                  left: `${startPercentage}%`,
+                  width: `${endPercentage - startPercentage}%`,
+                }}
+              />
+
+              <div
+                className="absolute h-full w-0.5 bg-white z-10 shadow-lg"
+                style={{ left: `${currentPercentage}%` }}
+              />
+
+              <div
+                className="absolute h-12 w-5 bg-white rounded cursor-ew-resize z-20 flex items-center justify-center shadow-lg"
+                style={{ left: `${startPercentage}%`, transform: "translateX(-2px)" }}
+                onMouseDown={handleDragStart}
+              >
+                <div className="w-0.5 h-7 bg-outside-500 rounded mx-0.5" />
+              </div>
+
+              <div
+                className="absolute h-12 w-5 bg-white rounded cursor-ew-resize z-20 flex items-center justify-center shadow-lg"
+                style={{ left: `${endPercentage}%`, transform: "translateX(-2px)" }}
+                onMouseDown={handleDragEnd}
+              >
+                <div className="w-0.5 h-7 bg-outside-500 rounded mx-0.5" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-white/70">
+            <span>{formatDuration(startTime)}</span>
+            <span>{formatDuration(endTime)}</span>
+          </div>
+
+          {isTooLong && (
+            <div className="rounded-lg bg-red-500/20 border border-red-500/30 p-3 text-center">
+              <p className="text-xs font-bold text-red-400">
+                Réduis la sélection à {formatDuration(maxDuration)} maximum.
+              </p>
+            </div>
+          )}
+
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Film className="h-3.5 w-3.5 text-outside-400" />
+              <span className="text-xs font-bold text-white/70">Qualité vidéo</span>
+              <span className="text-[10px] text-white/40">
+                (original: {getFileSizeLabel(videoFile.size)})
+              </span>
+            </div>
+            <div className="flex gap-2">
+              {QUALITY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setQuality(opt.key)}
+                  className={`flex-1 rounded-xl px-3 py-2.5 text-center transition-all ${
+                    quality === opt.key
+                      ? "bg-gradient-to-r from-outside-500 to-accent-500 text-white shadow-glow"
+                      : "bg-white/10 text-white/60 hover:bg-white/20"
+                  }`}
+                >
+                  <p className="text-xs font-bold">{opt.label}</p>
+                  <p className="text-[9px] opacity-70">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleReset}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span className="text-xs font-bold">Réinitialiser</span>
+            </button>
+            <button
+              onClick={handleProcess}
+              disabled={isTooLong}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 text-white font-bold text-xs hover:shadow-glow transition-all disabled:opacity-50"
+            >
+              <Scissors className="h-4 w-4" />
+              Rogner & compresser
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

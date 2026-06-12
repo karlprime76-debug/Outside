@@ -487,6 +487,7 @@ model User {
   directMessagesSent       DirectMessage[]
   directMessageReactions   DirectMessageReaction[]
   savedPlans               SavedPlan[]
+  savedMoments             SavedMoment[]
   planReminders            PlanReminder[]
   expensesPaid             PlanExpense[]
   expenseShares            PlanExpenseShare[]
@@ -813,6 +814,19 @@ model PlanInvitation {
   @@index([planId])
 }
 
+model SavedMoment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  momentId  String
+  moment    Moment   @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, momentId])
+  @@index([userId])
+  @@index([momentId])
+}
+
 model SavedPlan {
   id        String   @id @default(cuid())
   userId    String
@@ -975,7 +989,8 @@ model Moment {
 
   reactions MomentReaction[]
   comments  MomentComment[]
-  hashtags MomentHashtag[]
+  hashtags    MomentHashtag[]
+  savedBy     SavedMoment[]
 
   @@index([city, createdAt])
   @@index([authorId])
@@ -1389,10 +1404,11 @@ model LiveSession {
   playbackUrl     String?
   livekitRoomName String?
 
-  viewerCount Int       @default(0)
-  startedAt   DateTime?
-  endedAt     DateTime?
-  isDemo      Boolean   @default(false)
+  viewerCount     Int       @default(0)
+  startedAt       DateTime?
+  endedAt         DateTime?
+  lastHeartbeatAt DateTime?
+  isDemo          Boolean   @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

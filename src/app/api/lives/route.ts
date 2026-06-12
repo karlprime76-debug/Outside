@@ -5,6 +5,31 @@ import { logError, logPerfEnd, logPerfStart } from "@/lib/log";
 import { getUserBlockedIds } from "@/lib/blocks";
 import { notifyLiveStarted } from "@/lib/live-notifications";
 import { createLiveSchema } from "@/lib/validation/schemas";
+import { createLiveKitRoom, getLiveKitParticipantCount } from "@/lib/livekit";
+
+const HEARTBEAT_TIMEOUT_MS = 60_000;
+
+async function autoEndStaleLives() {
+  const cutoff = new Date(Date.now() - HEARTBEAT_TIMEOUT_MS);
+  const stale = await db.liveSession.findMany({
+    where: {
+      status: "LIVE",
+      lastHeartbeatAt: { lt: cutoff },
+    },
+    select: { id: true, livekitRoomName: true },
+  });
+
+  for (const live of stale) {
+    const roomName = live.livekitRoomName || `outside-live-${live.id}`;
+    const count = await getLiveKitParticipantCount(live.id);
+    if (count === 0) {
+      db.liveSession.update({
+        where: { id: live.id },
+        data: { status: "ENDED", endedAt: new Date() },
+      }).catch((err) => console.error("[AUTO_END]", err));
+    }
+  }
+}
 
 export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/lives";
@@ -14,6 +39,9 @@ export async function GET(req: Request) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Tu dois être connecté." }, { status: 401 });
     }
+
+    // Auto-cleanup stale lives (fire-and-forget, non-blocking)
+    autoEndStaleLives().catch((err) => console.error("[AUTO_END]", err));
 
     const { searchParams } = new URL(req.url);
     let limit = parseInt(searchParams.get("limit") || "50", 10);
@@ -57,8 +85,17 @@ export async function GET(req: Request) {
       take: limit,
     });
 
+    // Enrich with real-time viewer count from LiveKit
+    const enriched = await Promise.all(
+      lives.map(async (l) => {
+        const roomName = l.livekitRoomName || `outside-live-${l.id}`;
+        const viewerCount = await getLiveKitParticipantCount(l.id);
+        return { ...l, viewerCount };
+      })
+    );
+
     logPerfEnd(perfLabel);
-    return NextResponse.json({ lives });
+    return NextResponse.json({ lives: enriched });
   } catch (error) {
     logPerfEnd(perfLabel);
     logError("[LIVE_ERROR]", "GET /api/lives failed", { error: String(error) });
@@ -123,18 +160,16 @@ export async function POST(req: Request) {
       },
     });
 
-    // Générer le nom de room LiveKit stable
+    // Set room name and pre-create LiveKit room
+    const roomName = `outside-live-${live.id}`;
     await db.liveSession.update({
       where: { id: live.id },
-      data: { livekitRoomName: `outside-live-${live.id}` },
+      data: { livekitRoomName: roomName },
     });
 
-    const liveWithRoom = await db.liveSession.findUnique({
-      where: { id: live.id },
-      include: {
-        host: { select: { id: true, name: true, image: true } },
-      },
-    });
+    if (requestedStatus === "LIVE") {
+      createLiveKitRoom(live.id).catch((err) => { console.error("[LIVEKIT_CREATE_ROOM]", err); });
+    }
 
     // Notifier si le live est créé directement en LIVE
     if (live.status === "LIVE") {
@@ -142,7 +177,7 @@ export async function POST(req: Request) {
     }
 
     logPerfEnd(perfLabel);
-    return NextResponse.json({ live: liveWithRoom, message: "Live créé." }, { status: 201 });
+    return NextResponse.json({ live, message: "Live créé." }, { status: 201 });
   } catch (error) {
     logPerfEnd(perfLabel);
     logError("[LIVE_ERROR]", "POST /api/lives failed", { error: String(error) });

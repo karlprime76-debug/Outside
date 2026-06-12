@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { deleteLiveKitRoom } from "@/lib/livekit";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -66,6 +67,9 @@ export async function POST(_req: Request, { params }: Params) {
         host: { select: { id: true, name: true, image: true } },
       },
     });
+
+    // Supprimer la room LiveKit (fire-and-forget)
+    deleteLiveKitRoom(id).catch((err) => { console.error("[LIVEKIT_DELETE_ROOM]", err); });
 
     return NextResponse.json({
       live: updated,

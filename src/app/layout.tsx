@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+// Leaflet CSS must be loaded globally — client-component imports fail in Turbopack
+import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+
 import { Providers } from "@/components/providers";
 import { ThemeMeta } from "@/components/theme-meta";
 import { PwaRegister } from "@/components/pwa-register";

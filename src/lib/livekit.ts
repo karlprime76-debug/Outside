@@ -17,12 +17,76 @@ export function getLiveKitEnv() {
   return { apiKey: apiKey!, apiSecret: apiSecret!, url: url! };
 }
 
+function getRoomService(): RoomServiceClient {
+  const { apiKey, apiSecret, url } = getLiveKitEnv();
+  const apiUrl = url.replace(/^wss:\/\//, "https://");
+  return new RoomServiceClient(apiUrl, apiKey, apiSecret);
+}
+
 export function createLiveKitRoomName(liveId: string): string {
   return `outside-live-${liveId}`;
 }
 
 export function createLiveKitParticipantIdentity(userId: string): string {
   return `user-${userId}`;
+}
+
+export async function createLiveKitRoom(liveId: string): Promise<void> {
+  try {
+    const room = getRoomService();
+    const roomName = createLiveKitRoomName(liveId);
+    await room.createRoom({ name: roomName });
+  } catch (err: unknown) {
+    // Room may already exist — that's fine
+    if (err instanceof Error && !err.message?.includes("already exists")) {
+      console.error("[LIVEKIT_CREATE_ROOM]", err);
+    }
+  }
+}
+
+export async function deleteLiveKitRoom(liveId: string): Promise<void> {
+  try {
+    const room = getRoomService();
+    const roomName = createLiveKitRoomName(liveId);
+    await room.deleteRoom(roomName);
+  } catch (err: unknown) {
+    if (err instanceof Error && !err.message?.includes("does not exist")) {
+      console.error("[LIVEKIT_DELETE_ROOM]", err);
+    }
+  }
+}
+
+export async function roomHasParticipants(liveId: string): Promise<boolean> {
+  try {
+    const room = getRoomService();
+    const roomName = createLiveKitRoomName(liveId);
+    const participants = await room.listParticipants(roomName);
+    return participants.length > 0;
+  } catch {
+    // Room doesn't exist or can't reach LiveKit
+    return false;
+  }
+}
+
+export async function getLiveKitParticipantCount(liveId: string): Promise<number> {
+  try {
+    const room = getRoomService();
+    const roomName = createLiveKitRoomName(liveId);
+    const participants = await room.listParticipants(roomName);
+    return participants.length;
+  } catch {
+    return 0;
+  }
+}
+
+export async function getLiveKitParticipantCountByRoomName(roomName: string): Promise<number> {
+  try {
+    const room = getRoomService();
+    const participants = await room.listParticipants(roomName);
+    return participants.length;
+  } catch {
+    return 0;
+  }
 }
 
 interface CreateTokenOptions {
@@ -64,15 +128,4 @@ export async function createLiveKitToken({ liveId, userId, name, isHost }: Creat
   });
 
   return await token.toJwt();
-}
-
-export async function getLiveKitParticipantCount(roomName: string): Promise<number> {
-  const { apiKey, apiSecret, url } = getLiveKitEnv();
-
-  // Convertir wss:// en https:// pour l'API RoomService
-  const apiUrl = url.replace(/^wss:\/\//, "https://");
-
-  const roomService = new RoomServiceClient(apiUrl, apiKey, apiSecret);
-  const participants = await roomService.listParticipants(roomName);
-  return participants.length;
 }

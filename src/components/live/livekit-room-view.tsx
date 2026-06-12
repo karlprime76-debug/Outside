@@ -18,6 +18,7 @@ interface LiveKitRoomViewProps {
   serverUrl: string;
   roomName: string;
   isHost: boolean;
+  liveId?: string;
   onDisconnected?: () => void;
 }
 
@@ -146,6 +147,7 @@ export default function LiveKitRoomView({
   serverUrl,
   roomName,
   isHost,
+  liveId,
   onDisconnected,
 }: LiveKitRoomViewProps) {
   const [fatalError, setFatalError] = useState("");
