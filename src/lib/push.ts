@@ -10,6 +10,7 @@ function getKeys(): { publicKey: string; privateKey: string } {
   if (envPublic && envPrivate) {
     return { publicKey: envPublic, privateKey: envPrivate };
   }
+  console.warn("[PUSH] VAPID keys not found in env, generating ephemeral keys. Push will break on server restart.");
   const generated = webPush.generateVAPIDKeys();
   return { publicKey: generated.publicKey, privateKey: generated.privateKey };
 }

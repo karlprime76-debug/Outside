@@ -26,11 +26,22 @@ interface ProStats {
   totalParticipants: number;
   totalSaves: number;
   engagementRate: number | string;
+  score: number;
+}
+
+interface RecentPlan {
+  id: string;
+  title: string;
+  city: string | null;
+  createdAt: string;
+  participantsCount: number;
+  savesCount: number;
 }
 
 export default function ProDashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<ProStats | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RecentPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [referralCode, setReferralCode] = useState("");
@@ -42,6 +53,7 @@ export default function ProDashboardPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.stats) setStats(data.stats);
+        if (data.recentActivity) setRecentActivity(data.recentActivity);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -149,7 +161,7 @@ export default function ProDashboardPage() {
           { icon: Calendar, label: "Plans", value: stats?.plansCount || 0 },
           { icon: Share2, label: "Moments", value: stats?.momentsCount || 0 },
           { icon: Users, label: "Filleuls", value: stats?.referralsCount || 0 },
-          { icon: Zap, label: "Score", value: 92 }, // Mock score for now
+          { icon: Zap, label: "Score", value: stats?.score || 0 },
         ].map((s, i) => (
           <div key={i} className="os-card p-4 flex flex-col items-center text-center">
             <s.icon className="h-5 w-5 text-[var(--os-muted)] mb-2" />
@@ -228,26 +240,37 @@ export default function ProDashboardPage() {
         </div>
       </section>
 
-      {/* Recent Activity Mock */}
+      {/* Recent Activity */}
       <section className="space-y-4">
-        <SectionTitle title="Dernières performances" />
-        <div className="os-card divide-y divide-[var(--os-card-border)]">
-          {[1, 2, 3].map((item) => (
-            <div key={item} className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-                <div>
-                  <div className="text-sm font-bold text-[var(--os-fg)]">Afterwork Neon #{item}</div>
-                  <div className="text-xs text-[var(--os-muted)]">Il y a {item * 2} jours</div>
+        <SectionTitle title="Derniers plans" subtitle="Vos plans les plus récents" />
+        {recentActivity.length === 0 ? (
+          <div className="os-card p-8 text-center">
+            <p className="text-sm text-[var(--os-muted)]">Aucun plan créé pour le moment.</p>
+          </div>
+        ) : (
+          <div className="os-card divide-y divide-[var(--os-card-border)]">
+            {recentActivity.map((plan) => (
+              <div key={plan.id} className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-outside-500/20 to-accent-500/20 flex items-center justify-center shrink-0">
+                    <Calendar className="h-5 w-5 text-outside-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-[var(--os-fg)] truncate">{plan.title}</div>
+                    <div className="text-xs text-[var(--os-muted)]">
+                      {new Date(plan.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                      {plan.city && ` · ${plan.city}`}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right shrink-0 ml-3">
+                  <div className="text-sm font-bold text-green-500">+{plan.participantsCount} participant{plan.participantsCount > 1 ? "s" : ""}</div>
+                  <div className="text-[10px] text-[var(--os-muted)] uppercase font-black">{plan.savesCount} save{plan.savesCount > 1 ? "s" : ""}</div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-sm font-bold text-green-500">+{item * 12} participations</div>
-                <div className="text-[10px] text-[var(--os-muted)] uppercase font-black">Performance stable</div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
     </AnimatedPage>
   );
