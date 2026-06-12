@@ -147,7 +147,6 @@ export default function LiveKitRoomView({
   serverUrl,
   roomName,
   isHost,
-  liveId,
   onDisconnected,
 }: LiveKitRoomViewProps) {
   const [fatalError, setFatalError] = useState("");

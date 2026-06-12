@@ -20,7 +20,6 @@ async function autoEndStaleLives() {
   });
 
   for (const live of stale) {
-    const roomName = live.livekitRoomName || `outside-live-${live.id}`;
     const count = await getLiveKitParticipantCount(live.id);
     if (count === 0) {
       db.liveSession.update({
@@ -88,7 +87,6 @@ export async function GET(req: Request) {
     // Enrich with real-time viewer count from LiveKit
     const enriched = await Promise.all(
       lives.map(async (l) => {
-        const roomName = l.livekitRoomName || `outside-live-${l.id}`;
         const viewerCount = await getLiveKitParticipantCount(l.id);
         return { ...l, viewerCount };
       })
