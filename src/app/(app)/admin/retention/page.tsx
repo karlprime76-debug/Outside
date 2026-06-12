@@ -7,7 +7,7 @@ import { Sparkles, Target, Crown, MapPin, TrendingUp, Lightbulb, ArrowRight } fr
 
 export default async function AdminRetentionPage() {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
+  if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
     redirect("/");
   }
 

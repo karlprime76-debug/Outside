@@ -56,6 +56,7 @@ export function AdminSidebar({ role }: { role?: string }) {
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="rounded-lg p-1.5 text-[var(--os-muted)] hover:bg-[var(--os-bg)] transition-colors"
+          title={collapsed ? "Déplier" : "Replier"}
         >
           <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
         </button>
@@ -64,7 +65,7 @@ export function AdminSidebar({ role }: { role?: string }) {
       <nav className="flex-1 space-y-1 px-2 py-2">
         {NAV_ITEMS.filter((item) => !(isModerator && item.adminOnly)).map((item) => {
           const isActive = item.href === "/admin"
-            ? pathname === "/admin"
+            ? pathname === "/admin" || pathname === "/admin/"
             : pathname.startsWith(item.href);
 
           return (
