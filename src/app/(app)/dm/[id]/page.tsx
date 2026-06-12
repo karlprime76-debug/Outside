@@ -166,7 +166,7 @@ export default function DmConversationPage() {
           const existingIds = new Set(prev.map((m) => m.id));
           const newOnes = data.messages.filter((m) => !existingIds.has(m.id));
           if (newOnes.length === 0) return prev;
-          return [...prev, ...newOnes];
+          return [...newOnes, ...prev];
         });
         // mark read if near bottom
         if (isNearBottomRef.current) {

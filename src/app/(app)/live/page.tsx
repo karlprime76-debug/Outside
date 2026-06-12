@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatedPage } from "@/components/ui/animated-page";
@@ -25,8 +25,9 @@ export default function LivePage() {
   const [lives, setLives] = useState<LiveItem[]>([]);
   const [loading, setLoading] = useState(true);
   const t = useDictionary();
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
+  const fetchLives = () => {
     fetch("/api/lives")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -34,6 +35,14 @@ export default function LivePage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchLives();
+    pollingRef.current = setInterval(fetchLives, 15000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
   }, []);
 
   return (
@@ -93,15 +102,7 @@ export default function LivePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  {live.status === "LIVE" && (
-                    <StatusBadge status="live" text="En direct" />
-                  )}
-                  {live.status === "SCHEDULED" && (
-                    <StatusBadge status="soon" text="Prévu" />
-                  )}
-                  {live.status === "ENDED" && (
-                    <StatusBadge status="ended" text="Terminé" />
-                  )}
+                  <StatusBadge status="live" text="En direct" />
                 </div>
                 <p className="text-sm font-bold text-[var(--os-fg)] truncate">{live.title}</p>
                 <p className="text-xs text-[var(--os-muted)] mt-1">

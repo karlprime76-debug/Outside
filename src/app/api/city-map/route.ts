@@ -66,10 +66,10 @@ export async function GET() {
         ? db.liveSession.findMany({
             where: {
               city: cityName,
-              status: { in: ["LIVE", "SCHEDULED"] },
+              status: "LIVE",
               hostId: { notIn: blockedIds },
             },
-            orderBy: [{ status: "desc" }, { startedAt: "desc" }],
+            orderBy: { startedAt: "desc" },
             take: 10,
             include: {
               host: { select: { id: true, name: true, image: true } },

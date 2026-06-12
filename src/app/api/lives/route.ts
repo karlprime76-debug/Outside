@@ -35,25 +35,22 @@ export async function GET(req: Request) {
         ? {
             OR: [
               {
-                status: { in: ["LIVE", "SCHEDULED"] },
+                status: "LIVE",
                 ...(city ? { city } : {}),
                 hostId: { notIn: blockedIds },
               },
               {
                 isDemo: true,
-                status: { in: ["LIVE", "SCHEDULED"] },
+                status: "LIVE",
               },
             ],
           }
         : {
-            status: { in: ["LIVE", "SCHEDULED"] },
+            status: "LIVE",
             ...(city ? { city } : {}),
             hostId: { notIn: blockedIds },
           },
-      orderBy: [
-        { status: "asc" },
-        { createdAt: "desc" },
-      ],
+      orderBy: { createdAt: "desc" },
       include: {
         host: { select: { id: true, name: true, image: true } },
       },

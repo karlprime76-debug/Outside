@@ -31,45 +31,62 @@ export default function LiveDetailPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(`/api/lives/${id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.live) {
-          setLive(data.live);
-        } else {
+    let cancelled = false;
+    (async () => {
+      try {
+        const liveRes = await fetch(`/api/lives/${id}`);
+        if (cancelled) return;
+        if (!liveRes.ok) {
           setError("Live introuvable.");
+          setLoading(false);
+          return;
         }
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Erreur de chargement.");
-        setLoading(false);
-      });
-  }, [id]);
+        const liveData = await liveRes.json();
+        if (cancelled) return;
+        if (!liveData?.live) {
+          setError("Live introuvable.");
+          setLoading(false);
+          return;
+        }
 
-  useEffect(() => {
-    if (!live || !session?.user?.email) return;
-    const isHost = live.hostId === session.user.id;
-    fetch(`/api/lives/${id}/token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: isHost ? "host" : "viewer" }),
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.token && data?.url && data?.roomName) {
-          setTokenData({
-            token: data.token,
-            url: data.url,
-            roomName: data.roomName,
-            isHost: data.isHost ?? false,
-          });
-        } else {
-          setError(data?.message || "Impossible de rejoindre ce live.");
+        setLive(liveData.live);
+
+        if (!session?.user?.email) {
+          setLoading(false);
+          return;
         }
-      })
-      .catch(() => setError("Erreur réseau."));
-  }, [live, id, session]);
+
+        const isHost = liveData.live.hostId === session.user.id;
+        const tokenRes = await fetch(`/api/lives/${id}/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: isHost ? "host" : "viewer" }),
+        });
+        if (cancelled) return;
+
+        if (!tokenRes.ok) {
+          const errData = await tokenRes.json().catch(() => ({}));
+          setError(errData?.message || "Impossible de rejoindre ce live.");
+        } else {
+          const data = await tokenRes.json();
+          if (data?.token && data?.url && data?.roomName) {
+            setTokenData({
+              token: data.token,
+              url: data.url,
+              roomName: data.roomName,
+              isHost: data.isHost ?? false,
+            });
+          } else {
+            setError(data?.message || "Impossible de rejoindre ce live.");
+          }
+        }
+      } catch {
+        setError("Erreur réseau.");
+      }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [id, session?.user?.email]);
 
   if (loading) {
     return (

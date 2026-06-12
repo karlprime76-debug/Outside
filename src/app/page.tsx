@@ -417,7 +417,7 @@ export default function LandingPage() {
                 Les organisateurs, lieux et marques peuvent publier leurs événements et toucher les personnes qui veulent vraiment sortir.
               </p>
               <Link
-                href={isLoggedIn ? "/pro/apply" : "/register"}
+                href={isLoggedIn ? "/pro/apply" : "/signup/pro"}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-outside-700 shadow-glow hover:shadow-glow-lg transition-all pressable"
               >
                 <ArrowRight className="h-4 w-4" />
