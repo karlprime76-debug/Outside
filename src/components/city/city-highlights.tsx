@@ -82,7 +82,7 @@ export function CityHighlights({ city }: { city: string }) {
                 >
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden relative">
                     {creator.image ? (
-                      <Image src={creator.image} alt={creator.name || ""} fill className="object-cover" />
+                      <Image src={creator.image} alt={creator.name || ""} fill className="object-cover" sizes="48px" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white font-bold">
                         {creator.name?.[0] || "?"}
@@ -160,7 +160,7 @@ export function CityHighlights({ city }: { city: string }) {
                 >
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden relative">
                     {user.image ? (
-                      <Image src={user.image} alt={user.name || ""} fill className="object-cover" />
+                      <Image src={user.image} alt={user.name || ""} fill className="object-cover" sizes="48px" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white font-bold">
                         {user.name?.[0] || "?"}

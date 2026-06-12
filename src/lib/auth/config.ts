@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validation/schemas";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -11,8 +12,17 @@ export const authConfig: NextAuthConfig = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      authorize: async (credentials, request) => {
         try {
+          // Rate-limit brute-force par IP
+          const ip = request?.headers?.get("x-forwarded-for")?.split(",")[0]?.trim()
+            || request?.headers?.get("x-real-ip")
+            || "unknown";
+          const limit = await rateLimit(`login:${ip}`, 5, 300_000);
+          if (!limit.success) {
+            throw new Error("RATE_LIMITED");
+          }
+
           const parsed = loginSchema.safeParse(credentials);
           if (!parsed.success) {
             throw new Error("MISSING_FIELDS");

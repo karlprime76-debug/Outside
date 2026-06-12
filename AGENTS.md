@@ -8,6 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Stripping sensitive fields from API responses**: Use `{ ...obj, field: undefined }` spread with `undefined` override — `JSON.stringify` drops `undefined` keys, and it avoids `@typescript-eslint/no-unused-vars` lint errors.
 - **Blocked user filtering**: Use `getUserBlockedIds(user.id)` from `src/lib/blocks.ts`.
 - **Touch targets**: Icon-only buttons must use `p-2.5` minimum (10px padding + ~24px icon = 44px min per Apple HIG). Button variants: `sm: py-2.5`, `md: py-3`.
-- **Mobile modals**: Every BottomSheet must support Escape key dismissal, backdrop tap, and swipe-down.
+- **Mobile modals**: Every BottomSheet must support Escape key dismissal, backdrop tap, swipe-down, and focus trapping (useFocusTrap).
 - **Lint pre-existing warnings** (6 total, do not touch): missing deps in useEffect/useCallback (haptic, loadVenues, stopMedia) and missing alt-text on DM media image.
+- **Tests**: Run `npm test` (vitest) for unit tests, `npm run lint` for lint checks before commits.
 <!-- END:nextjs-agent-rules -->

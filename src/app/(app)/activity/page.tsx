@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   CheckCheck,
   Clock,
+  X,
 } from "lucide-react";
 
 interface ActivityItem {
@@ -36,6 +37,18 @@ interface ActivityItem {
   actorId?: string | null;
   data?: Record<string, unknown>;
 }
+
+const TYPE_FILTERS = [
+  { key: "", label: "Tout", icon: Bell },
+  { key: "MOMENT_LIKE", label: "J'aime", icon: Heart },
+  { key: "MOMENT_COMMENT", label: "Commentaires", icon: MessageCircle },
+  { key: "FOLLOW", label: "Abonnements", icon: Users },
+  { key: "FRIEND_REQUEST", label: "Amis", icon: UserPlus },
+  { key: "PLAN_INVITE", label: "Plans", icon: Compass },
+  { key: "LIVE_STARTED", label: "Lives", icon: Radio },
+  { key: "DM_MESSAGE", label: "Messages", icon: MessageCircle },
+  { key: "BADGE_EARNED", label: "Badges", icon: Award },
+];
 
 function formatRelative(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -124,20 +137,28 @@ export default function ActivityPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState("");
   const t = useDictionary();
+  const sseRef = useRef<EventSource | null>(null);
 
   const fetchActivities = useCallback(
     async (cursor?: string) => {
-      const qs = cursor ? `?cursor=${cursor}` : "";
+      const params = new URLSearchParams();
+      if (cursor) params.set("cursor", cursor);
+      if (typeFilter) params.set("type", typeFilter);
+      const qs = params.toString() ? `?${params.toString()}` : "";
       const res = await fetch(`/api/activity${qs}`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       return data;
     },
-    []
+    [typeFilter]
   );
 
   useEffect(() => {
+    setLoading(true);
+    setActivities([]);
+    setNextCursor(null);
     fetchActivities()
       .then((data) => {
         setActivities(data.activities || []);
@@ -150,6 +171,38 @@ export default function ActivityPage() {
         addToast("Impossible de charger l'activité", "error");
       });
   }, [fetchActivities, addToast]);
+
+  // SSE for real-time updates
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (typeFilter) params.set("type", typeFilter);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    const es = new EventSource(`/api/activity/stream${qs}`);
+    sseRef.current = es;
+
+    es.onmessage = (event) => {
+      try {
+        const item = JSON.parse(event.data);
+        setActivities((prev) => {
+          if (prev.some((a) => a.id === item.id)) return prev;
+          return [item, ...prev];
+        });
+        if (!item.isRead) {
+          setUnreadCount((c) => c + 1);
+        }
+      } catch {
+        // skip malformed
+      }
+    };
+
+    es.onerror = () => {
+      es.close();
+    };
+
+    return () => {
+      es.close();
+    };
+  }, [typeFilter]);
 
   async function loadMore() {
     if (!nextCursor || loadingMore) return;
@@ -273,6 +326,31 @@ export default function ActivityPage() {
             Tout lire
           </button>
         )}
+      </div>
+
+      {/* Type filters */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {TYPE_FILTERS.map((f) => {
+          const Icon = f.icon;
+          const isActive = typeFilter === f.key;
+          return (
+            <button
+              key={f.key || "all"}
+              onClick={() => setTypeFilter(f.key)}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                isActive
+                  ? "bg-[var(--os-fg)] text-[var(--os-bg)]"
+                  : "bg-[var(--os-card)] text-[var(--os-muted)] hover:text-[var(--os-fg)]"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {f.label}
+              {isActive && typeFilter && (
+                <X className="h-3 w-3" onClick={(e) => { e.stopPropagation(); setTypeFilter(""); }} />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {loading ? (

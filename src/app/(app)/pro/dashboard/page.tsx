@@ -16,7 +16,6 @@ import {
   CreditCard,
   Camera,
   BadgeCheck,
-  Loader2,
 } from "lucide-react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";

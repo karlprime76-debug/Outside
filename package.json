@@ -14,6 +14,8 @@
     "db:studio": "dotenv -e .env.local -- prisma studio",
     "db:seed": "dotenv -e .env.local -- tsx prisma/seed.ts",
     "db:seed:demo": "dotenv -e .env.local -- tsx prisma/seed-demo.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "auth:check": "tsx scripts/check-user-auth.ts"
@@ -51,6 +53,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",
@@ -61,11 +66,13 @@
     "dotenv-cli": "^11.0.0",
     "eslint": "^8",
     "eslint-config-next": "15.2.4",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.3",
     "prisma": "6.6.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   }
 }

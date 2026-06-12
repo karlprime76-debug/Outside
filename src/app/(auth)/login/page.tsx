@@ -38,6 +38,8 @@ function LoginForm() {
       // Map NextAuth errors for better UX
       if (res.error === "CredentialsSignin") {
         setError("Email ou mot de passe incorrect.");
+      } else if (res.error === "RATE_LIMITED") {
+        setError("Trop de tentatives. Réessaie dans quelques minutes.");
       } else if (res.error === "AUTH_SERVER_ERROR") {
         setError("Connexion temporairement indisponible. Réessaie dans quelques instants.");
       } else if (res.error === "NO_PASSWORD") {

@@ -15,11 +15,15 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const cursor = searchParams.get("cursor");
+    const typeFilter = searchParams.get("type");
     const limit = 30;
+
+    const where: Record<string, unknown> = { recipientId: session.user.id };
+    if (typeFilter) where.type = typeFilter;
 
     const [activities, unreadCount] = await Promise.all([
       db.notification.findMany({
-        where: { recipientId: session.user.id },
+        where,
         orderBy: { createdAt: "desc" },
         take: limit + 1,
         skip: cursor ? 1 : 0,

@@ -101,7 +101,7 @@ export function CityStarterPack({ city }: { city: string }) {
                 >
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden relative">
                     {ambassador.image ? (
-                      <Image src={ambassador.image} alt={ambassador.name || ""} fill className="object-cover" />
+                      <Image src={ambassador.image} alt={ambassador.name || ""} fill className="object-cover" sizes="64px" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white font-bold">
                         {ambassador.name?.[0] || "?"}
@@ -133,7 +133,7 @@ export function CityStarterPack({ city }: { city: string }) {
                 >
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-outside-500 to-accent-500 overflow-hidden relative">
                     {user.image ? (
-                      <Image src={user.image} alt={user.name || ""} fill className="object-cover" />
+                      <Image src={user.image} alt={user.name || ""} fill className="object-cover" sizes="64px" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white font-bold">
                         {user.name?.[0] || "?"}

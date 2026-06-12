@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { X } from "lucide-react";
 import { useHaptic } from "@/hooks/use-haptic";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface BottomSheetProps {
   open: boolean;
@@ -25,6 +26,7 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
   const currentYRef = useRef(0);
   const haptic = useHaptic();
   const t = useDictionary();
+  const focusTrapRef = useFocusTrap(show && animating);
 
   useEffect(() => {
     if (open) {
@@ -103,7 +105,10 @@ export function BottomSheet({ open, onClose, title, children, footer, maxHeight 
 
       {/* Sheet */}
       <div
-        ref={sheetRef}
+        ref={(node) => {
+          (sheetRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          (focusTrapRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        }}
         className={cn(
           "relative w-full max-w-lg rounded-t-[2.5rem] bg-[var(--os-bg)] shadow-[0_-12px_48px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden",
           isDragging ? "transition-none" : "transition-transform duration-300 ease-out"
