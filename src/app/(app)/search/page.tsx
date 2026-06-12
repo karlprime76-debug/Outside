@@ -37,9 +37,8 @@ interface SearchPlace {
   id: string;
   name: string;
   category: string | null;
-  city: string | null;
-  country: string | null;
-  image: string | null;
+  city: { name: string } | null;
+  images: string[];
   _type: "place";
 }
 
@@ -105,7 +104,7 @@ function ResultRow({ item, onClose }: { item: SearchItem; onClose: () => void })
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-[var(--os-fg)] truncate">{item.name}</p>
-            <p className="text-xs text-[var(--os-muted)]">{item.city || ""}{item.country ? `, ${item.country}` : ""}</p>
+            <p className="text-xs text-[var(--os-muted)]">{item.city?.name || ""}</p>
           </div>
         </>
       )}

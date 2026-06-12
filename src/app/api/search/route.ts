@@ -80,7 +80,7 @@ export async function GET(req: Request) {
     if (type === "all" || type === "places") {
       const places = await db.place.findMany({
         where: { name: { contains: q, mode: "insensitive" } },
-        select: { id: true, name: true, category: true, city: true, country: true, image: true },
+        select: { id: true, name: true, category: true, images: true, city: { select: { name: true } } },
         take: 5,
       });
       results.places = places.map((p) => ({ ...p, _type: "place" }));
