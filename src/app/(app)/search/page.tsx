@@ -48,7 +48,7 @@ interface SearchMoment {
   mediaUrl: string | null;
   type: string;
   createdAt: string;
-  user: { id: string; name: string | null; username: string | null; image: string | null };
+  author: { id: string; name: string | null; username: string | null; image: string | null };
   _type: "moment";
 }
 
@@ -115,7 +115,7 @@ function ResultRow({ item, onClose }: { item: SearchItem; onClose: () => void })
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-[var(--os-fg)] truncate">{item.caption || "Sans légende"}</p>
-            <p className="text-xs text-[var(--os-muted)]">par {item.user.name || item.user.username}</p>
+            <p className="text-xs text-[var(--os-muted)]">par {item.author.name || item.author.username}</p>
           </div>
         </>
       )}

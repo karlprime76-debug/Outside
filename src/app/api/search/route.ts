@@ -101,7 +101,7 @@ export async function GET(req: Request) {
           mediaUrl: true,
           type: true,
           createdAt: true,
-          user: { select: { id: true, name: true, username: true, image: true } },
+          author: { select: { id: true, name: true, username: true, image: true } },
         },
         take: 5,
       });
