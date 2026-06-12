@@ -146,7 +146,7 @@ export async function POST(req: Request) {
       if (referralCode) {
         linkNewUserToReferral(referralCode, newUser.id).catch((err) => {
           if (process.env.NODE_ENV === "development") {
-            console.log("[REGISTER] Referral linking error (non-blocking):", err);
+            console.error("[REGISTER] Referral linking error (non-blocking):", err);
           }
         });
       } else {

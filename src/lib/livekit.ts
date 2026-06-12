@@ -103,14 +103,7 @@ export async function createLiveKitToken({ liveId, userId, name, isHost }: Creat
   const identity = createLiveKitParticipantIdentity(userId);
 
   if (process.env.NODE_ENV === "development") {
-    console.log("[LIVEKIT_TOKEN]", {
-      liveId,
-      roomName,
-      userId,
-      isHost,
-      canPublish: isHost,
-      canSubscribe: true,
-    });
+    console.log("[LIVEKIT_TOKEN]", { liveId, roomName, userId, isHost });
   }
 
   const token = new AccessToken(apiKey, apiSecret, {

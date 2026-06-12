@@ -46,23 +46,24 @@ export async function GET(req: Request) {
       paginatedConversations = conversations.slice(0, limit);
     }
 
-    const items = await Promise.all(paginatedConversations.map(async (c) => {
+    // Batch unread counts in a single transaction (avoids N+1)
+    const unreadCounts = await db.$transaction(
+      paginatedConversations.map((c) => {
+        const selfPart = c.participants.find((p) => p.userId === user.id);
+        return db.directMessage.count({
+          where: {
+            conversationId: c.id,
+            senderId: { not: user.id },
+            isDeleted: false,
+            ...(selfPart?.lastReadAt && { createdAt: { gt: selfPart.lastReadAt } }),
+          },
+        });
+      })
+    );
+
+    const items = paginatedConversations.map((c, i) => {
       const other = c.participants.find((p) => p.userId !== user.id)?.user;
       const lastMessage = c.messages[0] || null;
-      const selfPart = c.participants.find((p) => p.userId === user.id);
-      
-      // Guard against invalid lastReadAt
-      const lastReadAt = selfPart?.lastReadAt;
-      
-      const unread = await db.directMessage.count({
-        where: {
-          conversationId: c.id,
-          senderId: { not: user.id },
-          isDeleted: false,
-          ...(lastReadAt && { createdAt: { gt: lastReadAt } }),
-        },
-      });
-      
       return {
         id: c.id,
         other,
@@ -71,12 +72,12 @@ export async function GET(req: Request) {
           content: lastMessage.content,
           createdAt: lastMessage.createdAt.toISOString(),
           senderId: lastMessage.senderId,
-          type: lastMessage.type
+          type: lastMessage.type,
         } : null,
-        unread,
+        unread: unreadCounts[i],
         updatedAt: c.updatedAt.toISOString(),
       };
-    }));
+    });
 
     const nextCursor = hasNextPage ? paginatedConversations[paginatedConversations.length - 1].id : null;
 

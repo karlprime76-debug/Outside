@@ -7,6 +7,7 @@ import { GamificationEngine } from "@/lib/gamification-engine";
 import { isBlocked } from "@/lib/social/friendship";
 import { calculateMomentScore } from "@/lib/algorithm/moment-score";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import { followSchema } from "@/lib/validation/schemas";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -22,25 +23,25 @@ export async function POST(req: Request) {
     );
   }
 
+  const contentType = req.headers.get("content-type") || "";
   let targetId: string | null = null;
   let momentId: string | null = null;
-  try {
-    const contentType = req.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const body = await req.json().catch(() => ({}));
-      targetId = body.userId || null;
-      momentId = body.momentId || null;
+
+  if (contentType.includes("application/json")) {
+    const body = await req.json().catch(() => ({}));
+    const parsed = followSchema.safeParse(body);
+    if (parsed.success) {
+      targetId = parsed.data.userId;
+      momentId = parsed.data.momentId ?? null;
     }
-    if (!targetId) {
-      const { searchParams } = new URL(req.url);
-      targetId = searchParams.get("userId");
-      momentId = searchParams.get("momentId");
-    }
-  } catch (e) {
-    console.error("[FOLLOW_PARSE]", e);
+  }
+  if (!targetId) {
+    const { searchParams } = new URL(req.url);
+    targetId = searchParams.get("userId");
+    momentId = searchParams.get("momentId");
   }
 
-  if (!targetId) {
+  if (!targetId || !targetId.trim()) {
     return NextResponse.json({ error: "Paramètre manquant." }, { status: 400 });
   }
 

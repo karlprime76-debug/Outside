@@ -16,6 +16,7 @@ import {
   Sparkles,
   Music,
   Loader2,
+  Video,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
@@ -299,18 +300,20 @@ export default function ClipsPage() {
       listenerRefs.current[idx] = handlers;
     });
 
+    const videoRefsAtStart = videoRefs.current;
+    const listenerRefsAtStart = listenerRefs.current;
+
     return () => {
-      const currentRefs = videoRefs.current;
-      Object.entries(currentRefs).forEach(([idxStr, video]) => {
+      Object.entries(videoRefsAtStart).forEach(([idxStr, video]) => {
         if (!video) return;
         const idx = parseInt(idxStr, 10);
-        const handlers = listenerRefs.current[idx];
+        const handlers = listenerRefsAtStart[idx];
         if (!handlers) return;
         video.removeEventListener("timeupdate", handlers.timeupdate);
         video.removeEventListener("play", handlers.play);
         video.removeEventListener("pause", handlers.pause);
         video.removeEventListener("ended", handlers.ended);
-        delete listenerRefs.current[idx];
+        delete listenerRefsAtStart[idx];
       });
     };
   }, [handleVideoTimeUpdate, handleVideoPlay, handleVideoPause, handleVideoEnded]);
@@ -499,6 +502,28 @@ export default function ClipsPage() {
           >
             Réessayer
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && clips.length === 0) {
+    return (
+      <div className="fixed inset-0 z-[60] bg-black flex items-center justify-center">
+        <div className="text-center p-6">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
+            <Video className="h-7 w-7 text-white/60" />
+          </div>
+          <h3 className="text-base font-bold text-white">Aucun clip disponible</h3>
+          <p className="mt-1.5 text-sm text-white/60">
+            Les clips apparaîtront ici quand tes amis et les comptes que tu suis publieront des Moments vidéo.
+          </p>
+          <Link
+            href="/moments"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-5 py-2.5 text-xs font-bold text-white hover:bg-white/20 transition-colors"
+          >
+            Voir les Moments
+          </Link>
         </div>
       </div>
     );

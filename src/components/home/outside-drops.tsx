@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Sparkles, Flame, MapPin, Calendar, Clock, ArrowRight, Compass, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -51,15 +51,18 @@ const DROP_CTA_LABELS: Record<string, string> = {
 export function OutsideDrops() {
   const [dropsData, setDropsData] = useState<DropsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    fetch("/api/home/drops")
+    abortRef.current = new AbortController();
+    fetch("/api/home/drops", { signal: abortRef.current.signal })
       .then((r) => r.json())
       .then((data) => {
         setDropsData(data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
+    return () => abortRef.current?.abort();
   }, []);
 
   if (loading) {

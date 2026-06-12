@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useSession } from "next-auth/react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Badge } from "@/components/ui/badge";
@@ -161,6 +162,7 @@ export default function PassportPage() {
   }
 
   return (
+    <ErrorBoundary>
     <AnimatedPage className="p-4 max-w-3xl mx-auto space-y-8 pb-24 md:pb-4 animate-slide-up">
       {/* Hero immersif voyage */}
       <ImmersiveBackground
@@ -596,5 +598,6 @@ export default function PassportPage() {
         </ul>
       </section>
     </AnimatedPage>
+    </ErrorBoundary>
   );
 }

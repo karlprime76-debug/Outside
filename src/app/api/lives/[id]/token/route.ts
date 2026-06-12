@@ -131,7 +131,7 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     if (process.env.NODE_ENV === "development") {
-      console.log("[LIVEKIT_API_TOKEN]", { liveId: live.id, mode, isHost: mode === "host", roomName });
+      console.log("[LIVEKIT_API_TOKEN]", { liveId: live.id });
     }
 
     return NextResponse.json({

@@ -69,7 +69,7 @@ export async function POST(req: Request) {
           }
         })
       ]);
-      console.log(`[STRIPE_WEBHOOK] Ticket created and participant confirmed for user ${userId} on plan ${planId}`);
+      console.log("[STRIPE_WEBHOOK] Ticket confirmed", { userId, planId });
     } catch (error) {
       console.error("[STRIPE_WEBHOOK_DB_ERROR]", error);
       return new NextResponse("Internal DB Error", { status: 500 });

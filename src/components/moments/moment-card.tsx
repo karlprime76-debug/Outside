@@ -4,17 +4,15 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
-import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play, Send, SendHorizonal, Bookmark, BookmarkCheck, EyeOff, UserX, User, Sparkles } from "lucide-react";
-import { ShareMomentSheet } from "./share-moment-sheet";
+import { Heart, MessageCircle, Share2, Play, SendHorizonal, Bookmark, BookmarkCheck } from "lucide-react";
 import { MomentMedia } from "./moment-media";
 import { MomentAudioPlayer } from "@/components/audio/moment-audio-player";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { MomentOverflowMenu } from "./moment-overflow-menu";
+import { ShareMomentSheet } from "./share-moment-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
 import { useDictionary } from "@/hooks/use-dictionary";
-import { useClickOutside } from "@/hooks/use-click-outside";
 import { ReactionPicker } from "./reaction-picker";
 import { LiveComments } from "./live-comments";
-import { ReportButton } from "@/components/report-button";
 
 interface Author {
   id: string;
@@ -34,6 +32,7 @@ interface MomentItem {
   countryCode: string | null;
   visibility: string;
   createdAt: string;
+  expiresAt?: string | null;
   author: Author;
   _count: {
     reactions: number;
@@ -72,7 +71,6 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [myReaction, setMyReaction] = useState(moment.viewerState.myReaction);
   const [reactionsCount, setReactionsCount] = useState(moment._count.reactions);
   const [likeLoading, setLikeLoading] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [pickerPosition, setPickerPosition] = useState({ x: 0, y: 0 });
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -97,9 +95,6 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const viewTrackedRef = useRef(false);
   const trackedThresholdsRef = useRef<Set<number>>(new Set());
   const watchStartTimeRef = useRef<number | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
 
   // Track impression and view
   useEffect(() => {
@@ -395,100 +390,22 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
     </span>
   ) : null;
 
-  const OverflowMenu = () => (
-    <>
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(true); }}
-              className="rounded-full p-2.5 text-[var(--os-muted)] hover:bg-[var(--os-card-border)] hover:text-[var(--os-fg)] transition-colors active:scale-95"
-            >
-        <MoreHorizontal className="h-5 w-5" />
-      </button>
-      <BottomSheet
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        title="Options"
-      >
-        <div className="space-y-1">
-          {!isMe && moment.author.username && (
-            <button
-              onClick={() => { haptic.medium(); setMenuOpen(false); handleMessage(); }}
-              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-            >
-              <Send className="h-4 w-4 text-[var(--os-muted)]" />
-              Message
-            </button>
-          )}
-          <button
-            onClick={() => { haptic.medium(); setMenuOpen(false); setShowShareSheet(true); }}
-            className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-          >
-            <SendHorizonal className="h-4 w-4 text-[var(--os-muted)]" />
-            Envoyer en DM
-          </button>
-          <button
-            onClick={() => { haptic.medium(); setMenuOpen(false); handleShare(); }}
-            className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-          >
-            <Share2 className="h-4 w-4 text-[var(--os-muted)]" />
-            Partager
-          </button>
-          <div className="my-1 border-t border-[var(--os-card-border)]" />
-          <button
-            onClick={() => { haptic.medium(); setMenuOpen(false); handleSeeMoreLikeThis(); }}
-            className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-          >
-            <Sparkles className="h-4 w-4 text-outside-500" />
-            Voir plus comme ça
-          </button>
-          <Link
-            href={authorLink}
-            onClick={() => { haptic.light(); setMenuOpen(false); }}
-            className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-          >
-            <User className="h-4 w-4 text-[var(--os-muted)]" />
-            Voir plus de ce compte
-          </Link>
-          {!isMe && (
-            <button
-              onClick={() => { haptic.medium(); setMenuOpen(false); handleNotInterested(); }}
-              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-            >
-              <EyeOff className="h-4 w-4 text-[var(--os-muted)]" />
-              Pas intéressé
-            </button>
-          )}
-          {!isMe && (
-            <button
-              onClick={() => { haptic.medium(); setMenuOpen(false); handleHideAccount(); }}
-              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-            >
-              <UserX className="h-4 w-4 text-[var(--os-muted)]" />
-              Masquer ce compte
-            </button>
-          )}
-          <button
-            onClick={() => { haptic.medium(); setMenuOpen(false); handleHideLocal(); }}
-            className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-          >
-            Masquer
-          </button>
-          {moment.viewerState.canReport && (
-            <div className="px-3 py-1">
-              <ReportButton targetType="MOMENT" targetId={moment.id} />
-            </div>
-          )}
-          {moment.viewerState.canDelete && (
-            <button
-              onClick={() => { haptic.medium(); setMenuOpen(false); handleDelete(); }}
-              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors active:scale-[0.98]"
-            >
-              <Trash2 className="h-4 w-4" />
-              Supprimer
-            </button>
-          )}
-        </div>
-      </BottomSheet>
-    </>
+  const overflowMenu = (
+    <MomentOverflowMenu
+      isMe={isMe}
+      momentId={moment.id}
+      authorId={moment.author.id}
+      authorUsername={moment.author.username}
+      canReport={moment.viewerState.canReport}
+      canDelete={moment.viewerState.canDelete}
+      onDelete={handleDelete}
+      onHide={handleHideLocal}
+      onHideAccount={handleHideAccount}
+      onNotInterested={handleNotInterested}
+      onSeeMoreLikeThis={handleSeeMoreLikeThis}
+      onMessage={handleMessage}
+      onShare={handleShare}
+    />
   );
 
   return (
@@ -527,7 +444,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
                 {following ? "Abonné" : "Suivre"}
               </button>
             )}
-            <OverflowMenu />
+            {overflowMenu}
           </div>
         </div>
 
@@ -732,6 +649,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
               </button>
             )}
             <p className="text-[11px] text-[var(--os-muted)]">{timeAgo(moment.createdAt)}</p>
+            {moment.expiresAt && <ExpiryBadge expiresAt={moment.expiresAt} />}
           </div>
         </div>
       </div>
@@ -742,5 +660,29 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
         onClose={() => setShowShareSheet(false)}
       />
     </div>
+  );
+}
+
+function ExpiryBadge({ expiresAt }: { expiresAt: string }) {
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    const tick = () => {
+      const diff = new Date(expiresAt).getTime() - Date.now();
+      if (diff <= 0) { setText("Expiré"); return; }
+      const hours = Math.floor(diff / 3_600_000);
+      const minutes = Math.floor((diff % 3_600_000) / 60_000);
+      setText(hours > 0 ? `Expire dans ${hours}h` : `Expire dans ${minutes}min`);
+    };
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, [expiresAt]);
+
+  if (!text) return <span className="ml-2 text-[11px] text-amber-400 animate-pulse">...</span>;
+  return (
+    <span className={`ml-2 text-[11px] ${text === "Expiré" ? "text-red-400" : "text-amber-400"}`}>
+      {text}
+    </span>
   );
 }

@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast";
 import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AnimatedPage } from "@/components/ui/animated-page";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import {
   ArrowLeft,
@@ -221,6 +222,7 @@ export default function SettingsPage() {
   }
 
   return (
+    <ErrorBoundary>
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4">
       {/* Back link */}
       <Link
@@ -591,5 +593,6 @@ export default function SettingsPage() {
         </button>
       </Section>
     </AnimatedPage>
+    </ErrorBoundary>
   );
 }

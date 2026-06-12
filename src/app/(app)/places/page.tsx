@@ -10,6 +10,7 @@ import { AnimatedPage } from "@/components/ui/animated-page";
 import { PageHeader } from "@/components/ui/page-header";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { MapPin, Store, Heart } from "lucide-react";
 
 interface Place {
@@ -55,6 +56,7 @@ export default function PlacesPage() {
   }, [category]);
 
   return (
+    <ErrorBoundary>
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6">
       <PageHeader
         title={t.places.title}
@@ -124,5 +126,6 @@ export default function PlacesPage() {
         </div>
       )}
     </AnimatedPage>
+    </ErrorBoundary>
   );
 }

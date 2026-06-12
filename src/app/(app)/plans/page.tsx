@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SearchBar } from "@/components/ui/search-bar";
 import { useDebounce } from "@/hooks/use-debounce";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { CalendarDays, Plus, SlidersHorizontal, X, Mail, Check, XCircle, Bookmark, Sparkles, List, Calendar, Sun, Moon, Clock } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
@@ -172,6 +173,7 @@ export default function PlansPage() {
   }
 
   return (
+    <ErrorBoundary>
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6 pb-24 md:pb-4 animate-slide-up">
       <ImmersiveBackground
         daySrc={backgrounds.plans.day}
@@ -466,5 +468,6 @@ export default function PlansPage() {
         </>
       )}
     </AnimatedPage>
+    </ErrorBoundary>
   );
 }

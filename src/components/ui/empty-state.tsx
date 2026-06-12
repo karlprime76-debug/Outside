@@ -1,14 +1,16 @@
 import { type LucideIcon } from "lucide-react";
 import Link from "next/link";
+import React from "react";
 
 interface EmptyStateProps {
   icon?: LucideIcon;
   title: string;
   description?: string;
   cta?: { label: string; href: string };
+  actions?: React.ReactNode;
 }
 
-export function EmptyState({ icon: Icon, title, description, cta }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, cta, actions }: EmptyStateProps) {
   return (
     <div className="os-card p-10 text-center animate-fade-in">
       {Icon && (
@@ -20,14 +22,16 @@ export function EmptyState({ icon: Icon, title, description, cta }: EmptyStatePr
       {description && (
         <p className="mt-1 text-xs text-[var(--os-muted)]">{description}</p>
       )}
-      {cta && (
+      {actions ? (
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3">{actions}</div>
+      ) : cta ? (
         <Link
           href={cta.href}
           className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-2.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all press"
         >
           {cta.label}
         </Link>
-      )}
+      ) : null}
     </div>
   );
 }

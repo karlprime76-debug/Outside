@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
       static: 180,
     },
   },
+  modularizeImports: {
+    "lucide-react": {
+      transform: "lucide-react/dist/esm/icons/{{ kebabCase member }}",
+    },
+  },
   logging: {
     fetches: { fullUrl: process.env.NODE_ENV === "development" },
   },

@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { InputField } from "@/components/ui/input-field";
 import { InviteCircle } from "@/components/referrals/invite-circle";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Search, UserPlus, UserCheck, UserX, Users, Loader2, UserCircle, UserSearch, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -190,6 +191,7 @@ export default function FriendsPage() {
   const hasRequests = receivedRequests.length > 0 || sentRequests.length > 0;
 
   return (
+    <ErrorBoundary>
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-4 animate-slide-up">
       <h1 className="text-2xl font-black text-[var(--os-fg)] flex items-center gap-3">
         <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
@@ -459,6 +461,7 @@ export default function FriendsPage() {
         </div>
       )}
     </AnimatedPage>
+    </ErrorBoundary>
   );
 }
 

@@ -128,6 +128,7 @@ export const createMomentSchema = z.object({
   placeId: z.string().optional(),
   eventId: z.string().optional(),
   liveId: z.string().optional(),
+  expiresIn: z.enum(["1h", "3h", "24h", "7d"]).optional(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -140,3 +141,23 @@ export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;
 export type CreateLiveInput = z.infer<typeof createLiveSchema>;
 export type UpdateLiveInput = z.infer<typeof updateLiveSchema>;
 export type CreateMomentInput = z.infer<typeof createMomentSchema>;
+
+export const stripeCheckoutSchema = z.object({
+  planId: z.string().min(1, "Plan ID requis"),
+});
+
+export const followSchema = z.object({
+  userId: z.string().min(1, "userId requis"),
+  momentId: z.string().optional(),
+});
+
+export const markNotificationsReadSchema = z.object({
+  ids: z.array(z.string()).optional(),
+});
+
+export const createReportSchema = z.object({
+  targetType: z.enum(["USER", "MOMENT", "DIRECT_MESSAGE", "PLAN", "LIVE", "COMMENT", "AUDIO_TRACK"]),
+  targetId: z.string().min(1, "targetId requis"),
+  reason: z.enum(["INAPPROPRIATE_CONTENT", "HARASSMENT", "SPAM", "FAKE_PROFILE", "DANGEROUS_PLAN", "UNDERAGE", "OTHER"]),
+  description: z.string().max(1000).optional(),
+});

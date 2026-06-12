@@ -12,6 +12,8 @@ import { buildFeed } from "@/lib/algorithm/feed-builder";
 import { createMomentSchema } from "@/lib/validation/schemas";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { GamificationEngine } from "@/lib/gamification-engine";
+import { optimizeImage } from "@/lib/media/optimize-image";
+import { cacheClear } from "@/lib/cache";
 
 
 export async function GET(req: Request) {
@@ -167,10 +169,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Le fichier ne correspond pas au format déclaré." }, { status: 400 });
     }
 
-    const momentFields = { caption, visibility, city, countryCode, planId, placeId, eventId, liveId };
+    const expiresIn = formData.get("expiresIn") as string | null;
+    const momentFields = { caption, visibility, city, countryCode, planId, placeId, eventId, liveId, expiresIn };
     const parsed = createMomentSchema.safeParse(momentFields);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
+    }
+
+    // Compute expiresAt from expiresIn duration string
+    let expiresAt: Date | undefined;
+    if (expiresIn) {
+      const match = expiresIn.match(/^(\d+)([hd])$/);
+      if (match) {
+        const value = parseInt(match[1], 10);
+        const unit = match[2];
+        const ms = unit === "h" ? value * 3_600_000 : value * 86_400_000;
+        expiresAt = new Date(Date.now() + ms);
+      }
     }
 
     if (!city && !planId && !placeId && !eventId && !liveId) {
@@ -198,12 +213,24 @@ export async function POST(req: Request) {
 
     const filePath = buildMomentPath(user.id, file.type);
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    let buffer: Buffer = Buffer.from(arrayBuffer as ArrayBuffer);
+    let contentType = file.type;
+
+    // Optimize images (resize + convert to WebP)
+    if (file.type.startsWith("image/") && file.type !== "image/gif") {
+      try {
+        const optimized = await optimizeImage(buffer, file.type);
+        buffer = optimized.buffer;
+        contentType = optimized.mimeType;
+      } catch (err) {
+        console.error("[MOMENT_OPTIMIZE_IMAGE]", err);
+      }
+    }
 
     const { error: uploadError } = await supabase.storage
       .from(MOMENTS_BUCKET)
       .upload(filePath, buffer, {
-        contentType: file.type,
+        contentType,
         upsert: false,
       });
 
@@ -224,12 +251,14 @@ export async function POST(req: Request) {
       }
     })() : null;
 
+    const momentType = file.type.startsWith("video/") ? "VIDEO" : "PHOTO";
     const moment = await db.moment.create({
       data: {
         authorId: user.id,
-        type: file.type.startsWith("video/") ? "VIDEO" : "PHOTO",
+        type: momentType,
         mediaUrl,
         caption,
+        expiresAt,
         visibility: visibility as MomentVisibility,
         city,
         countryCode,
@@ -273,6 +302,9 @@ export async function POST(req: Request) {
     GamificationEngine.trackAction(user.id, ChallengeType.POST_MOMENT).catch((err) => {
       console.error("[GAMIFICATION_ERROR]", err);
     });
+
+    // Invalidate feed cache so new moments appear immediately
+    cacheClear("feed:");
 
     if (city) {
       recordTripHistory({

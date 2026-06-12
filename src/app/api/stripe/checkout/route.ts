@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getStripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
+import { stripeCheckoutSchema } from "@/lib/validation/schemas";
 
 export async function POST(req: Request) {
   try {
@@ -11,11 +12,11 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { planId } = body;
-
-    if (!planId) {
-      return new NextResponse("Plan ID missing", { status: 400 });
+    const parsed = stripeCheckoutSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
+    const { planId } = parsed.data;
 
     const plan = await db.plan.findUnique({
       where: { id: planId },

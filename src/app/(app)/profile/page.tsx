@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
@@ -295,6 +296,7 @@ export default async function ProfilePage() {
   );
 
   return (
+    <ErrorBoundary>
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4">
       <ProfileHeader
         user={user}
@@ -355,5 +357,6 @@ export default async function ProfilePage() {
         <LogoutButton />
       </div>
     </AnimatedPage>
+    </ErrorBoundary>
   );
 }

@@ -1,16 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 interface EmptyStateProps {
   icon: LucideIcon;
   title: string;
   description: string;
-  cta?: {
-    label: string;
-    href: string;
-  };
+  cta?: { label: string; href: string };
   actions?: React.ReactNode;
 }
 

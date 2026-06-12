@@ -2,17 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
-import { ReportReason } from "@prisma/client";
-
-const VALID_TARGET_TYPES = [
-  "USER",
-  "MOMENT",
-  "DIRECT_MESSAGE",
-  "PLAN",
-  "LIVE",
-  "COMMENT",
-  "AUDIO_TRACK",
-] as const;
+import { createReportSchema } from "@/lib/validation/schemas";
 
 export async function POST(req: Request) {
   try {
@@ -30,19 +20,11 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { targetType, targetId, reason, description } = body;
-
-    if (!targetType || !VALID_TARGET_TYPES.includes(targetType)) {
-      return NextResponse.json({ error: "Type de cible invalide" }, { status: 400 });
+    const parsed = createReportSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
-
-    if (!targetId || typeof targetId !== "string") {
-      return NextResponse.json({ error: "ID de cible requis" }, { status: 400 });
-    }
-
-    if (!reason || !Object.values(ReportReason).includes(reason)) {
-      return NextResponse.json({ error: "Raison requise" }, { status: 400 });
-    }
+    const { targetType, targetId, reason, description } = parsed.data;
 
     // Anti auto-signalement
     if (targetType === "USER" && targetId === user.id) {

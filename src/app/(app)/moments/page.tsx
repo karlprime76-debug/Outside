@@ -6,6 +6,7 @@ import { MomentFeed } from "@/components/moments/moment-feed";
 import { AccountSuggestions } from "@/components/users/account-suggestions";
 import { OutsidePage } from "@/components/ui/outside-page";
 import { OutsideHeader } from "@/components/ui/outside-header";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function MomentsPage() {
   return (
@@ -28,7 +29,9 @@ export default function MomentsPage() {
           <AccountSuggestions title="Comptes à découvrir" limit={5} />
         </div>
         <div className="flex-1 overflow-hidden">
-          <MomentFeed />
+          <ErrorBoundary>
+            <MomentFeed />
+          </ErrorBoundary>
         </div>
       </div>
     </OutsidePage>

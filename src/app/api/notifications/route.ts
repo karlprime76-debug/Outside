@@ -5,8 +5,9 @@ import { auth } from "@/lib/auth";
 import { getUserBlockedIds } from "@/lib/blocks";
 import { markNotificationsAsRead } from "@/lib/notifications";
 import { safeJsonParse } from "@/lib/json-parse";
+import { markNotificationsReadSchema } from "@/lib/validation/schemas";
 
-export async function GET() {
+export async function GET(req: Request) {
   const perfLabel = "[PERF] GET /api/notifications";
   logPerfStart(perfLabel);
   try {
@@ -14,6 +15,10 @@ export async function GET() {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
     }
+
+    const { searchParams } = new URL(req.url);
+    const cursor = searchParams.get("cursor");
+    const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "25", 10), 1), 50);
 
     const userId = session.user.id;
     const blockedIds = await getUserBlockedIds(userId);
@@ -24,7 +29,8 @@ export async function GET() {
       db.notification.findMany({
         where: { recipientId: userId },
         orderBy: { createdAt: "desc" },
-        take: 20,
+        take: limit + 1,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       }),
       db.plan.findMany({
         where: {
@@ -57,7 +63,14 @@ export async function GET() {
       }),
     ]);
 
-    const socialItems = socialNotifications.map((n) => ({
+    let hasMoreSocial = false;
+    let paginatedSocial = socialNotifications;
+    if (socialNotifications.length > limit) {
+      hasMoreSocial = true;
+      paginatedSocial = socialNotifications.slice(0, limit);
+    }
+
+    const socialItems = paginatedSocial.map((n) => ({
       id: n.id,
       type: n.type.toLowerCase(),
       title: n.title,
@@ -101,12 +114,16 @@ export async function GET() {
         })),
     ];
 
-    const notifications = [...socialItems, ...virtualItems]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 25);
+    // Virtual items only appear on first page (no cursor)
+    const notifications = cursor
+      ? socialItems
+      : [...socialItems, ...virtualItems]
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const nextCursor = hasMoreSocial ? paginatedSocial[paginatedSocial.length - 1].id : null;
 
     logPerfEnd(perfLabel);
-    return NextResponse.json({ notifications });
+    return NextResponse.json({ notifications, nextCursor });
   } catch (error) {
     logPerfEnd(perfLabel);
     logError("[NOTIFICATION_ERROR]", "GET /api/notifications failed", { error: String(error) });
@@ -124,9 +141,12 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const ids = body.ids as string[] | undefined;
+    const parsed = markNotificationsReadSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
+    }
 
-    await markNotificationsAsRead(session.user.id, ids);
+    await markNotificationsAsRead(session.user.id, parsed.data.ids);
 
     logPerfEnd(perfLabel);
     return NextResponse.json({ message: "Notifications marquées comme lues." });

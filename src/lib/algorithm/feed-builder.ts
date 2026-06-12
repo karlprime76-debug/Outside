@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { getMomentRankingScore } from "./moment-score";
+import { cacheGet, cacheSet } from "@/lib/cache";
 
 const MAX_AGE_DAYS = 30;
 const CANDIDATE_MULTIPLIER = 3;
@@ -560,6 +561,11 @@ export async function buildFeed(
   since?: Date | null,
   media?: "all" | "posts" | "clips"
 ) {
+  // Check cache for non-cursor, non-since requests
+  const cacheKey = !cursor && !since ? `feed:${viewer.userId}:${scope}:${media || "all"}` : null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (cacheKey) { const cached = cacheGet<any>(cacheKey); if (cached) return cached; }
+
   const [blocks, reportedContentIds, userPrefs] = await Promise.all([
     fetchBlockedIds(viewer.userId),
     fetchReportedContentIds(),
@@ -787,6 +793,11 @@ export async function buildFeed(
       canReport: c.authorId !== viewer.userId,
     },
   }));
+
+  // Cache the result for non-cursor requests
+  if (cacheKey) {
+    cacheSet(cacheKey, { moments, nextCursor });
+  }
 
   return { moments, nextCursor };
 }

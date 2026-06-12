@@ -14,6 +14,7 @@ import {
   X,
   SendHorizontal,
 } from "lucide-react";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
 import { OutsideHeader } from "@/components/ui/outside-header";
@@ -161,6 +162,7 @@ export default function DmInboxPage() {
   const unreadTotal = items.reduce((sum, c) => sum + c.unread, 0);
 
   return (
+    <ErrorBoundary>
     <OutsidePage className="flex flex-col h-[100dvh] sm:h-auto sm:min-h-[100dvh] pb-24 md:pb-4">
       <OutsideHeader
         title={unreadTotal > 0 ? `Messages (${unreadTotal})` : "Messages"}
@@ -415,5 +417,6 @@ export default function DmInboxPage() {
         </div>
       )}
     </OutsidePage>
+    </ErrorBoundary>
   );
 }

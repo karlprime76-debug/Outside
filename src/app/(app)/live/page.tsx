@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { LoadingScreen } from "@/components/ui/loading-screen";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar } from "@/components/ui/avatar";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Radio, Plus, ArrowLeft, Video } from "lucide-react";
 
 interface LiveItem {
@@ -46,6 +47,7 @@ export default function LivePage() {
   }, []);
 
   return (
+    <ErrorBoundary>
     <AnimatedPage className="p-4 max-w-2xl mx-auto space-y-6 pb-24 md:pb-4 animate-slide-up">
       <button
         onClick={() => router.back()}
@@ -116,5 +118,6 @@ export default function LivePage() {
         </div>
       )}
     </AnimatedPage>
+    </ErrorBoundary>
   );
 }
