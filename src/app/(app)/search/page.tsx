@@ -210,7 +210,7 @@ export default function SearchPage() {
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
-          const count = tab.key === "all" ? totalCount : (results[tab.key === "all" ? "users" : tab.key]?.length || 0);
+          const count = tab.key === "all" ? totalCount : (results[tab.key]?.length || 0);
           return (
             <button
               key={tab.key}
