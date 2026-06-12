@@ -6,9 +6,10 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { getUserLocale } from "@/lib/locale";
 import { AnimatedPage } from "@/components/ui/animated-page";
-import { Briefcase, CheckCircle, XCircle, ArrowLeft, Loader2, Ban, ExternalLink, AlertTriangle } from "lucide-react";
+import { Briefcase, CheckCircle, XCircle, ArrowLeft, Loader2, Ban, ExternalLink, AlertTriangle, BadgeCheck } from "lucide-react";
 
 type ProStatus = "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
+type CertifStatus = "NOT_REQUESTED" | "PENDING" | "APPROVED" | "REJECTED";
 
 interface SocialMedia {
   instagram?: string;
@@ -34,6 +35,8 @@ interface ProRequest {
   description?: string;
   socialMedia?: SocialMedia;
   status: ProStatus;
+  certificationStatus?: CertifStatus;
+  certificationRequestedAt?: string | null;
   rejectedReason?: string | null;
   createdAt: string;
   user: { id: string; name: string | null; email: string; image: string | null };
@@ -180,6 +183,18 @@ export default function AdminProRequestsPage() {
                         {ACCOUNT_KIND_LABELS[req.requestedAccountKind] || req.requestedAccountKind}
                       </span>
                     )}
+                    {req.certificationStatus === "PENDING" && (
+                      <span className="rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                        <BadgeCheck className="inline h-3 w-3 -mt-0.5 mr-0.5" />
+                        Certif. en attente
+                      </span>
+                    )}
+                    {req.certificationStatus === "APPROVED" && (
+                      <span className="rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                        <BadgeCheck className="inline h-3 w-3 -mt-0.5 mr-0.5" />
+                        Certifié
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-[var(--os-muted)]">
                     {req.businessType} {req.category ? `· ${req.category}` : ""} · {req.city}{req.country ? `, ${req.country}` : ""}
@@ -307,6 +322,58 @@ export default function AdminProRequestsPage() {
                     <AlertTriangle className="h-3.5 w-3.5" />
                     Remettre en attente
                   </button>
+                )}
+                {req.status === "APPROVED" && req.certificationStatus === "PENDING" && (
+                  <span className="flex items-center gap-2 ml-auto">
+                    <button
+                      onClick={async () => {
+                        setActionId("cert-" + req.id);
+                        try {
+                          const res = await fetch("/api/admin/pro-requests/certification", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id: req.id, certificationStatus: "APPROVED" }),
+                          });
+                          if (res.ok) {
+                            setRequests((prev) =>
+                              prev.map((r) => r.id === req.id ? { ...r, certificationStatus: "APPROVED" } : r)
+                            );
+                          }
+                        } finally {
+                          setActionId(null);
+                        }
+                      }}
+                      disabled={actionId === ("cert-" + req.id)}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-blue-500 px-4 py-2 text-xs font-bold text-white hover:bg-blue-600 transition-colors disabled:opacity-60"
+                    >
+                      <BadgeCheck className="h-3.5 w-3.5" />
+                      Certifier
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setActionId("cert-rej-" + req.id);
+                        try {
+                          const res = await fetch("/api/admin/pro-requests/certification", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id: req.id, certificationStatus: "REJECTED" }),
+                          });
+                          if (res.ok) {
+                            setRequests((prev) =>
+                              prev.map((r) => r.id === req.id ? { ...r, certificationStatus: "REJECTED" } : r)
+                            );
+                          }
+                        } finally {
+                          setActionId(null);
+                        }
+                      }}
+                      disabled={actionId === ("cert-rej-" + req.id)}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-slate-400 px-4 py-2 text-xs font-bold text-white hover:bg-slate-500 transition-colors disabled:opacity-60"
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                      Refuser certif.
+                    </button>
+                  </span>
                 )}
               </div>
             </div>

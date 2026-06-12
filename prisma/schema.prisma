@@ -345,6 +345,13 @@ enum ProAccountStatus {
   SUSPENDED
 }
 
+enum ProCertificationStatus {
+  NOT_REQUESTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum ProBusinessType {
   ORGANIZER
   VENUE
@@ -1444,6 +1451,9 @@ model ProAccount {
   requestedAccountKind  AccountKind?
   verifiedAt            DateTime?
   rejectedReason        String?
+  certificationStatus   ProCertificationStatus @default(NOT_REQUESTED)
+  certificationRequestedAt DateTime?
+  certificationReviewedAt DateTime?
 
   events ProEvent[]
 

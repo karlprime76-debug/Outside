@@ -14,7 +14,9 @@ import {
   LayoutDashboard,
   Zap,
   CreditCard,
-  Camera
+  Camera,
+  BadgeCheck,
+  Loader2,
 } from "lucide-react";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
@@ -47,6 +49,8 @@ export default function ProDashboardPage() {
   const [referralCode, setReferralCode] = useState("");
   const [stripeLoading, setStripeLoading] = useState(false);
   const [stripeOnboarded, setStripeOnboarded] = useState(false);
+  const [certificationStatus, setCertificationStatus] = useState<string | null>(null);
+  const [certifLoading, setCertifLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/pro/stats")
@@ -64,7 +68,30 @@ export default function ProDashboardPage() {
         if (data.user?.referralCode) setReferralCode(data.user.referralCode);
         if (data.user?.stripeOnboardingComplete) setStripeOnboarded(true);
       });
+
+    fetch("/api/pro/certification")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.proAccount?.certificationStatus) {
+          setCertificationStatus(data.proAccount.certificationStatus);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  const handleRequestCertification = async () => {
+    setCertifLoading(true);
+    try {
+      const res = await fetch("/api/pro/certification", { method: "POST" });
+      if (res.ok) {
+        setCertificationStatus("PENDING");
+      }
+    } catch {
+      // ignore
+    } finally {
+      setCertifLoading(false);
+    }
+  };
 
   const handleConnectStripe = async () => {
     setStripeLoading(true);
@@ -213,6 +240,45 @@ export default function ProDashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* Certification Section */}
+      {certificationStatus && (
+        <section className="space-y-4">
+          <SectionTitle title="Certification" subtitle="Obtenez la coche bleue officielle sur OUTSIDE." />
+          <div className={`os-card p-6 border-2 ${certificationStatus === "APPROVED" ? "border-blue-500/30 bg-blue-500/5" : certificationStatus === "PENDING" ? "border-amber-500/30 bg-amber-500/5" : "border-dashed border-[var(--os-card-border)]"}`}>
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className={`rounded-xl p-3 ${certificationStatus === "APPROVED" ? "bg-blue-500" : certificationStatus === "PENDING" ? "bg-amber-500" : "bg-[var(--os-bg)]"}`}>
+                <BadgeCheck className={`h-8 w-8 ${certificationStatus === "APPROVED" ? "text-white" : certificationStatus === "PENDING" ? "text-white" : "text-[var(--os-muted)]"}`} />
+              </div>
+              <div className="flex-1 space-y-1">
+                <h3 className="font-bold text-[var(--os-fg)]">
+                  {certificationStatus === "APPROVED"
+                    ? "Compte certifié ✓"
+                    : certificationStatus === "PENDING"
+                    ? "Demande en cours d'examen"
+                    : "Certifiez votre compte"}
+                </h3>
+                <p className="text-sm text-[var(--os-muted)]">
+                  {certificationStatus === "APPROVED"
+                    ? "Votre compte est certifié. La coche bleue s'affiche sur votre profil."
+                    : certificationStatus === "PENDING"
+                    ? "Notre équipe examine votre demande. Vous recevrez une notification sous 48h."
+                    : "La certification officielle permet à votre compte d'être vérifié avec la coche bleue."}
+                </p>
+              </div>
+              {certificationStatus === "NOT_REQUESTED" && (
+                <button
+                  onClick={handleRequestCertification}
+                  disabled={certifLoading}
+                  className="w-full md:w-auto px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-colors shadow-glow active:scale-95 disabled:opacity-50"
+                >
+                  {certifLoading ? "Envoi..." : "Demander la certification"}
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Referral Section */}
       <section className="space-y-4">

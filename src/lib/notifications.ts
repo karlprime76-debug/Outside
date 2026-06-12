@@ -115,10 +115,22 @@ export async function createNotification(input: CreateNotificationInput) {
         ? input.data.url
         : input.type === "DM_MESSAGE"
         ? `/dm/${input.data?.conversationId || ""}`
-        : input.type === "PLAN_INVITE"
+        : input.type === "PLAN_INVITE" || input.type === "PLAN_REMINDER" || input.type === "PLAN_JOINED" || input.type === "PLAN_REVIEW_PENDING" || input.type === "PLAN_CONFIRMED"
         ? `/plans/${input.data?.planId || ""}`
         : input.type === "MOMENT_LIKE" || input.type === "MOMENT_COMMENT"
         ? `/moments`
+        : input.type === "FOLLOW"
+        ? `/u/${input.data?.username || input.data?.actorName || ""}`
+        : input.type === "LIVE_STARTED"
+        ? `/live/${input.data?.liveId || ""}`
+        : input.type === "FRIEND_REQUEST" || input.type === "FRIEND_ACCEPTED"
+        ? "/friends"
+        : input.type === "PRO_APPROVED"
+        ? "/pro/dashboard"
+        : input.type === "DROP_AVAILABLE"
+        ? `/drops/${input.data?.dropId || ""}`
+        : input.type === "BADGE_EARNED" || input.type === "CHALLENGE_COMPLETED"
+        ? "/profile"
         : "/activity";
 
     sendPushToUser(input.recipientId, pushCategory, {
