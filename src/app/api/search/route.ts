@@ -99,7 +99,7 @@ export async function GET(req: Request) {
           id: true,
           caption: true,
           mediaUrl: true,
-          mediaType: true,
+          type: true,
           createdAt: true,
           user: { select: { id: true, name: true, username: true, image: true } },
         },

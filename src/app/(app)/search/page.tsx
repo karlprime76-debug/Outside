@@ -46,7 +46,7 @@ interface SearchMoment {
   id: string;
   caption: string | null;
   mediaUrl: string | null;
-  mediaType: string | null;
+  type: string;
   createdAt: string;
   user: { id: string; name: string | null; username: string | null; image: string | null };
   _type: "moment";
