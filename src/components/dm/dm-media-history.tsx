@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Image, Film, Music, Sparkles, Calendar, ChevronLeft, Download, Loader2, Play } from "lucide-react";
+import { Film, Music, Sparkles, Calendar, ChevronLeft, Download, Loader2, Play } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import { MediaViewer } from "@/components/media/media-viewer";
 import { Avatar } from "@/components/ui/avatar";
 import { useHaptic } from "@/hooks/use-haptic";
@@ -27,8 +28,8 @@ interface MediaItem {
 }
 
 const TABS = [
-  { id: "all", label: "Tous", icon: Image },
-  { id: "images", label: "Images", icon: Image },
+  { id: "all", label: "Tous", icon: ImageIcon },
+  { id: "images", label: "Images", icon: ImageIcon },
   { id: "videos", label: "Vidéos", icon: Film },
   { id: "audio", label: "Audio", icon: Music },
   { id: "moments", label: "Moments", icon: Sparkles },
@@ -143,7 +144,7 @@ export function DmMediaHistory({ conversationId, onClose }: DmMediaHistoryProps)
 
         {!loading && items.length === 0 && (
           <div className="text-center py-16">
-            <Image className="h-10 w-10 text-[var(--os-muted)] mx-auto mb-3" />
+            <ImageIcon className="h-10 w-10 text-[var(--os-muted)] mx-auto mb-3" />
             <p className="text-sm text-[var(--os-muted)]">Aucun média partagé.</p>
           </div>
         )}
