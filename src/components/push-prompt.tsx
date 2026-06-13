@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { Bell, X } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
 export function PushPrompt() {
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
   const { permission, subscribe, loading } = usePushNotifications();
   const [visible, setVisible] = useState(false);
   const { addToast } = useToast();
@@ -16,18 +19,18 @@ export function PushPrompt() {
 
     // Ne pas afficher tout de suite, attendre 2 secondes
     const timer = setTimeout(() => {
-      const dismissed = localStorage.getItem("outside_push_prompt_dismissed");
+      const dismissed = localStorage.getItem(`outside_push_prompt_dismissed_${userId || "anonymous"}`);
       if (!dismissed) {
         setVisible(true);
       }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [permission]);
+  }, [permission, userId]);
 
   const handleDismiss = () => {
     setVisible(false);
-    localStorage.setItem("outside_push_prompt_dismissed", "true");
+    localStorage.setItem(`outside_push_prompt_dismissed_${userId || "anonymous"}`, "true");
   };
 
   const handleSubscribe = async () => {
