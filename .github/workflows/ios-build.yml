@@ -1,0 +1,114 @@
+name: "iOS: Build IPA (Capacitor)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Build configuration"
+        required: true
+        default: "Debug"
+        type: choice
+        options: ["Debug", "Release"]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      NODE_VERSION: "22"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+        timeout-minutes: 10
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        timeout-minutes: 3
+
+      - name: Install CocoaPods
+        run: |
+          gem install cocoapods -v '~> 1.15'
+          pod --version
+
+      - name: Add iOS platform (Capacitor)
+        run: npx cap add ios
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Build iOS app
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" = "Release" ]; then
+            xcodebuild -workspace ios/App/App.xcworkspace \
+              -scheme App \
+              -sdk iphoneos \
+              -configuration Release \
+              archive -archivePath ${{ runner.temp }}/App.xcarchive \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO
+            xcodebuild -exportArchive \
+              -archivePath ${{ runner.temp }}/App.xcarchive \
+              -exportPath ${{ runner.temp }}/ipa \
+              -exportOptionsPlist ios/App/exportOptions.plist 2>/dev/null || \
+            echo "Signing skipped — create exportOptions.plist for signed build"
+          else
+            xcodebuild -workspace ios/App/App.xcworkspace \
+              -scheme App \
+              -sdk iphonesimulator \
+              -configuration Debug \
+              -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=latest' \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              build
+          fi
+
+      - name: Export IPA (if archive exists)
+        if: ${{ github.event.inputs.build_type == 'Release' }}
+        run: |
+          if [ -d "${{ runner.temp }}/App.xcarchive" ]; then
+            mkdir -p ${{ runner.temp }}/ipa
+            cat > /tmp/exportOptions.plist << EOF
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>teamID</key>
+              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+            </dict>
+            </plist>
+            EOF
+            xcodebuild -exportArchive \
+              -archivePath ${{ runner.temp }}/App.xcarchive \
+              -exportPath ${{ runner.temp }}/ipa \
+              -exportOptionsPlist /tmp/exportOptions.plist || \
+            echo "Export failed — verify certificates and provisioning profiles"
+          fi
+
+      - name: Upload IPA artifact
+        if: ${{ github.event.inputs.build_type == 'Release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Outside-iOS-${{ github.event.inputs.build_type }}
+          path: ${{ runner.temp }}/ipa/*.ipa
+          if-no-files-found: warn
+
+      - name: Upload .app artifact (Debug)
+        if: ${{ github.event.inputs.build_type == 'Debug' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Outside-iOS-Debug
+          path: |
+            ios/App/build/Debug-iphonesimulator/*.app
+          if-no-files-found: warn
