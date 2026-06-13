@@ -5,30 +5,34 @@ import { db } from "@/lib/db";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { TrendingUp, ArrowLeft } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminHighlightsPage() {
   const session = await auth();
   if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
     redirect("/home");
   }
 
-  const cities = await db.city.findMany({
-    select: {
-      id: true,
-      name: true,
-      country: true,
-      _count: {
-        select: {
-          usersByActiveCity: true,
-          moments: true,
+  const [cities, totalMoments] = await Promise.all([
+    db.city.findMany({
+      select: {
+        id: true,
+        name: true,
+        country: true,
+        _count: {
+          select: {
+            activeUsers: true,
+            plans: true,
+          },
         },
       },
-    },
-    orderBy: { moments: { _count: "desc" } },
-    take: 50,
-  });
+      orderBy: { plans: { _count: "desc" } },
+      take: 50,
+    }),
+    db.moment.count(),
+  ]);
 
-  const totalMoments = cities.reduce((sum, c) => sum + c._count.moments, 0);
-  const totalUsers = cities.reduce((sum, c) => sum + c._count.usersByActiveCity, 0);
+  const totalUsers = cities.reduce((sum, c) => sum + c._count.activeUsers, 0);
 
   return (
     <AnimatedPage className="p-4 max-w-5xl mx-auto space-y-6">
@@ -62,8 +66,8 @@ export default async function AdminHighlightsPage() {
               <p className="text-xs text-[var(--os-muted)]">{city.country || "N/A"}</p>
             </div>
             <div className="flex gap-4 text-sm">
-              <span className="text-[var(--os-muted)]">{city._count.moments} moments</span>
-              <span className="text-[var(--os-muted)]">{city._count.usersByActiveCity} users</span>
+              <span className="text-[var(--os-muted)]">{city._count.plans} plans</span>
+              <span className="text-[var(--os-muted)]">{city._count.activeUsers} users</span>
             </div>
           </div>
         ))}

@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { Crown, ArrowLeft } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminAmbassadorsPage() {
   const session = await auth();
   if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {

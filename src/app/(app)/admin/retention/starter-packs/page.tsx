@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { MapPin, ArrowLeft } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminStarterPacksPage() {
   const session = await auth();
   if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
