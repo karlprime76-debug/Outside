@@ -11,6 +11,8 @@ export type LogTag =
   | "[PUSH_ERROR]"
   | "[ADMIN_PRO]"
   | "[ADMIN_PRO_ERROR]"
+  | "[ADMIN_PRO_REQUESTS_ERROR]"
+  | "[ADMIN_PRO_VENUES_ERROR]"
   | "[RECURRING_ERROR]"
   | "[REGISTER_PRO]"
   | "[GAMIFICATION_ERROR]"
