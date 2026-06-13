@@ -18,20 +18,17 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npx prisma generate
 
-      - name: Extract DB password from DIRECT_URL
-        shell: bash
-        run: |
-          PASS=$(echo "${{ secrets.DIRECT_URL }}" | sed 's|.*://||' | sed 's/.*://' | sed 's/@.*//')
-          echo "PGPASSWORD=$PASS" >> $GITHUB_ENV
-          echo "PGSSLMODE=require" >> $GITHUB_ENV
-
       - name: Install psql
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
 
       - name: Apply pending migrations via psql + Prisma resolve
         shell: bash
         run: |
-          APPLIED=$(psql -t -A "${{ secrets.DIRECT_URL }}" -c "SELECT migration_name FROM _prisma_migrations ORDER BY started_at" 2>/dev/null || echo "")
+          # psql doesn't support pgbouncer param — strip it
+          PGURL=$(echo "${{ secrets.DIRECT_URL }}" | sed 's/[?&]pgbouncer=true//')
+          echo "Using: $PGURL"
+          
+          APPLIED=$(psql -t -A "$PGURL" -c "SELECT migration_name FROM _prisma_migrations ORDER BY started_at" 2>/dev/null || echo "")
           
           for dir in prisma/migrations/*/; do
             name=$(basename "$dir")
@@ -41,7 +38,7 @@ jobs:
               echo "✓ $name"
             else
               echo "→ Applying $name..."
-              psql "${{ secrets.DIRECT_URL }}" -f "$sql" -v ON_ERROR_STOP=1
+              psql "$PGURL" -f "$sql" -v ON_ERROR_STOP=1
               echo "→ Resolving $name with Prisma..."
               npx prisma migrate resolve --applied "$name"
               echo "✓ $name done"
