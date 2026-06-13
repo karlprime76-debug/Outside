@@ -1,182 +1,184 @@
-#!/usr/bin/env node
-/**
- * Script de génération des icônes OUTSIDE.
- * Génère les icônes officielles jour/nuit en SVG puis les rasterise en PNG.
- *
- * Dépendance : sharp (déjà installé via Next.js)
- * Usage : node scripts/generate-icons.js
- */
+// Generates app icons and splash screen using sharp
+// Run: node scripts/generate-icons.js
 
+const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
-const sharp = require("sharp");
 
-const ROOT = path.resolve(__dirname, "..");
-const BRAND_DIR = path.join(ROOT, "public", "brand");
-const OUT_DIR = path.join(ROOT, "public", "icons");
-const PUBLIC_DIR = path.join(ROOT, "public");
-const APP_DIR = path.join(ROOT, "src", "app");
+const ANDROID_ICON_DIR = path.resolve("android/app/src/main/res");
+const PUBLIC_DIR = path.resolve("public");
 
-function ensureDir(dir) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+// Android mipmap densities and their sizes
+const ICON_SIZES = {
+  "mipmap-mdpi": 48,
+  "mipmap-hdpi": 72,
+  "mipmap-xhdpi": 96,
+  "mipmap-xxhdpi": 144,
+  "mipmap-xxxhdpi": 192,
+};
+
+const FOREGROUND_SIZES = {
+  "mipmap-hdpi": 162,
+  "mipmap-xhdpi": 216,
+  "mipmap-xxhdpi": 324,
+  "mipmap-xxxhdpi": 432,
+};
+
+async function generateIcon(size, outputPath, isForeground = false) {
+  const s = size;
+  const pad = Math.round(s * 0.18);
+  const inner = s - pad * 2;
+  const r = Math.round(inner * 0.22);
+
+  // Create a gradient icon: rounded rect with gradient background
+  // and a centered stylized "O" letter
+  const svg = `
+    <svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#F97316"/>
+          <stop offset="50%" stop-color="#F43F5E"/>
+          <stop offset="100%" stop-color="#8B5CF6"/>
+        </linearGradient>
+        <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.25)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </linearGradient>
+      </defs>
+      <!-- Background gradient circle -->
+      <rect x="${pad}" y="${pad}" width="${inner}" height="${inner}" rx="${r}" ry="${r}" fill="url(#bg)"/>
+      <!-- Shine overlay -->
+      <rect x="${pad}" y="${pad}" width="${inner}" height="${inner}" rx="${r}" ry="${r}" fill="url(#shine)"/>
+      <!-- Stylized "O" letter -->
+      <text x="${s / 2}" y="${s / 2 + Math.round(s * 0.28)}" 
+            text-anchor="middle" 
+            font-family="system-ui, -apple-system, sans-serif" 
+            font-weight="800" 
+            font-size="${Math.round(inner * 0.65)}" 
+            fill="white"
+            letter-spacing="-4">O</text>
+    </svg>`;
+
+  await sharp(Buffer.from(svg))
+    .resize(size, size)
+    .png()
+    .toFile(outputPath);
+}
+
+async function generateSplash(size, outputPath) {
+  const s = size;
+  const logoSize = Math.round(s * 0.2);
+  const logoPad = Math.round(logoSize * 0.18);
+  const logoInner = logoSize - logoPad * 2;
+  const logoR = Math.round(logoInner * 0.22);
+  const logoX = Math.round((s - logoSize) / 2);
+  const logoY = Math.round((s - logoSize) / 2);
+
+  const svg = `
+    <svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${s}" height="${s}" fill="#08080C"/>
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#F97316"/>
+          <stop offset="50%" stop-color="#F43F5E"/>
+          <stop offset="100%" stop-color="#8B5CF6"/>
+        </linearGradient>
+      </defs>
+      <!-- Ambient glow -->
+      <circle cx="${s / 2}" cy="${s / 2}" r="${Math.round(s * 0.35)}" fill="rgba(249,115,22,0.08)" filter="blur(40px)"/>
+      <circle cx="${s / 2}" cy="${s / 2}" r="${Math.round(s * 0.25)}" fill="rgba(139,92,246,0.06)" filter="blur(30px)"/>
+      <!-- Logo -->
+      <rect x="${logoX}" y="${logoY}" width="${logoSize}" height="${logoSize}" rx="${logoR}" ry="${logoR}" fill="url(#bg)"/>
+      <text x="${s / 2}" y="${s / 2 + Math.round(logoSize * 0.42)}" 
+            text-anchor="middle" 
+            font-family="system-ui, -apple-system, sans-serif" 
+            font-weight="800" 
+            font-size="${Math.round(logoInner * 0.65)}" 
+            fill="white"
+            letter-spacing="-2">O</text>
+    </svg>`;
+
+  await sharp(Buffer.from(svg))
+    .resize(size, size)
+    .png()
+    .toFile(outputPath);
+}
+
+async function main() {
+  console.log("Generating app icons...");
+
+  // Generate adaptive icon backgrounds and foregrounds
+  for (const [density, size] of Object.entries(ICON_SIZES)) {
+    const bgPath = path.join(ANDROID_ICON_DIR, density, "ic_launcher_background.png");
+    const fgPath = path.join(ANDROID_ICON_DIR, density, "ic_launcher_foreground.png");
+    const roundPath = path.join(ANDROID_ICON_DIR, density, "ic_launcher_round.png");
+
+    await generateIcon(size, fgPath, true);
+    console.log(`  ✓ ${density}/ic_launcher_foreground.png (${size}x${size})`);
+
+    // Round icon = same as regular
+    await fs.promises.copyFile(fgPath, roundPath);
+    console.log(`  ✓ ${density}/ic_launcher_round.png`);
+
+    // Generate solid background
+    const bgSize = FOREGROUND_SIZES[density] || size * 3;
+    const bgSvg = `<svg width="${bgSize}" height="${bgSize}" viewBox="0 0 ${bgSize} ${bgSize}" xmlns="http://www.w3.org/2000/svg"><rect width="${bgSize}" height="${bgSize}" fill="#08080C"/></svg>`;
+    await sharp(Buffer.from(bgSvg)).resize(size, size).png().toFile(bgPath);
+    console.log(`  ✓ ${density}/ic_launcher_background.png (${size}x${size})`);
   }
-}
 
-// --- SVG inline pour l'icône OUTSIDE ---
-// Cercle avec flèche de sortie stylisée
+  // Generate legacy launcher icons (for older Android)
+  const legacySizes = {
+    "mipmap-mdpi": 48,
+    "mipmap-hdpi": 72,
+    "mipmap-xhdpi": 96,
+    "mipmap-xxhdpi": 144,
+    "mipmap-xxxhdpi": 192,
+  };
 
-function dayIconSvg(size = 512) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = size * 0.38;
-  const arrowW = size * 0.14;
-  const arrowLen = size * 0.28;
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <defs>
-    <linearGradient id="dayGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF6B35"/>
-      <stop offset="100%" stop-color="#FF006E"/>
-    </linearGradient>
-  </defs>
-  <rect width="${size}" height="${size}" rx="${size * 0.22}" fill="#FAFAFA"/>
-  <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#dayGrad)"/>
-  <g transform="translate(${cx},${cy}) rotate(-45)">
-    <rect x="-${arrowW/2}" y="-${arrowLen/2}" width="${arrowW}" height="${arrowLen}" rx="${arrowW/2}" fill="white"/>
-    <polygon points="0,-${arrowLen*0.75} ${arrowLen*0.35},-${arrowLen*0.35} -${arrowLen*0.35},-${arrowLen*0.35}" fill="white"/>
-  </g>
-  <circle cx="${cx + r * 0.55}" cy="${cy - r * 0.55}" r="${size * 0.06}" fill="white" opacity="0.9"/>
-</svg>`;
-}
-
-function nightIconSvg(size = 512) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = size * 0.38;
-  const arrowW = size * 0.14;
-  const arrowLen = size * 0.28;
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <defs>
-    <linearGradient id="nightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF9500"/>
-      <stop offset="100%" stop-color="#FF2D7D"/>
-    </linearGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="12" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-  <rect width="${size}" height="${size}" rx="${size * 0.22}" fill="#0A0A0F"/>
-  <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#nightGrad)" filter="url(#glow)"/>
-  <g transform="translate(${cx},${cy}) rotate(-45)">
-    <rect x="-${arrowW/2}" y="-${arrowLen/2}" width="${arrowW}" height="${arrowLen}" rx="${arrowW/2}" fill="white"/>
-    <polygon points="0,-${arrowLen*0.75} ${arrowLen*0.35},-${arrowLen*0.35} -${arrowLen*0.35},-${arrowLen*0.35}" fill="white"/>
-  </g>
-  <circle cx="${cx + r * 0.55}" cy="${cy - r * 0.55}" r="${size * 0.06}" fill="white" opacity="0.9" filter="url(#glow)"/>
-</svg>`;
-}
-
-async function svgToPng(svgString, outPath, size = 512, bg = null) {
-  let img = sharp(Buffer.from(svgString)).resize(size, size, { fit: "fill" });
-  if (bg) {
-    img = img.flatten({ background: bg });
+  for (const [density, size] of Object.entries(legacySizes)) {
+    const iconPath = path.join(ANDROID_ICON_DIR, density, "ic_launcher.png");
+    await generateIcon(size, iconPath);
+    console.log(`  ✓ ${density}/ic_launcher.png (legacy)`);
   }
-  await img.png().toFile(outPath);
+
+  // Generate splash screen (1080x1920 for typical phone)
+  const splashSizes = [
+    { dir: "drawable-land-hdpi", w: 800, h: 480 },
+    { dir: "drawable-land-mdpi", w: 480, h: 320 },
+    { dir: "drawable-land-xhdpi", w: 1280, h: 720 },
+    { dir: "drawable-land-xxhdpi", w: 1600, h: 960 },
+    { dir: "drawable-land-xxxhdpi", w: 1920, h: 1280 },
+    { dir: "drawable-port-hdpi", w: 480, h: 800 },
+    { dir: "drawable-port-mdpi", w: 320, h: 480 },
+    { dir: "drawable-port-xhdpi", w: 720, h: 1280 },
+    { dir: "drawable-port-xxhdpi", w: 960, h: 1600 },
+    { dir: "drawable-port-xxxhdpi", w: 1280, h: 1920 },
+  ];
+
+  for (const { dir, w, h } of splashSizes) {
+    const splashPath = path.join(ANDROID_ICON_DIR, dir, "splash.png");
+    // Create splash at the larger dimension
+    const size = Math.max(w, h);
+    const square = Math.max(size, 720);
+    await generateSplash(square, splashPath);
+    console.log(`  ✓ ${dir}/splash.png (${w}x${h})`);
+  }
+
+  // Also generate the default splash in drawable
+  const defaultSplash = path.join(ANDROID_ICON_DIR, "drawable", "splash.png");
+  await generateSplash(720, defaultSplash);
+  console.log(`  ✓ drawable/splash.png`);
+
+  // Generate PWA icons in public/
+  const pwaSizes = [192, 512];
+  for (const size of pwaSizes) {
+    const pwaPath = path.join(PUBLIC_DIR, `icon-${size}.png`);
+    await generateIcon(size, pwaPath);
+    console.log(`  ✓ public/icon-${size}.png`);
+  }
+
+  console.log("\n✅ All icons generated!");
 }
 
-async function generate() {
-  console.log("OUTSIDE Icon Generator");
-  console.log("======================");
-
-  ensureDir(BRAND_DIR);
-  ensureDir(OUT_DIR);
-
-  const day512 = dayIconSvg(512);
-  const night512 = nightIconSvg(512);
-
-  // --- Brand icons ---
-  console.log("→ public/brand/outside-icon-day.png");
-  await svgToPng(day512, path.join(BRAND_DIR, "outside-icon-day.png"), 512);
-
-  console.log("→ public/brand/outside-icon-night.png");
-  await svgToPng(night512, path.join(BRAND_DIR, "outside-icon-night.png"), 512);
-
-  // --- Next.js metadata icons ---
-  console.log("→ src/app/icon.png (512x512 light)");
-  await svgToPng(day512, path.join(APP_DIR, "icon.png"), 512);
-
-  console.log("→ src/app/apple-icon.png (180x180 light)");
-  await svgToPng(day512, path.join(APP_DIR, "apple-icon.png"), 180);
-
-  // --- Favicon ---
-  console.log("→ public/favicon-32x32.png");
-  await svgToPng(day512, path.join(PUBLIC_DIR, "favicon-32x32.png"), 32);
-
-  console.log("→ public/favicon-16x16.png");
-  await svgToPng(day512, path.join(PUBLIC_DIR, "favicon-16x16.png"), 16);
-
-  console.log("→ public/favicon-dark.png (32x32 dark)");
-  await svgToPng(night512, path.join(PUBLIC_DIR, "favicon-dark.png"), 32);
-
-  // --- ICO favicon (fallback PNG car sharp ne supporte pas ICO ici) ---
-  console.log("→ src/app/favicon.ico.png (fallback PNG)");
-  await svgToPng(day512, path.join(APP_DIR, "favicon.png"), 48);
-
-  // --- Manifest / PWA icons ---
-  console.log("→ public/icons/icon-192.png");
-  await svgToPng(day512, path.join(OUT_DIR, "icon-192.png"), 192);
-
-  console.log("→ public/icons/icon-512.png");
-  await svgToPng(day512, path.join(OUT_DIR, "icon-512.png"), 512);
-
-  // --- Maskable (avec padding blanc) ---
-  console.log("→ public/icons/maskable-192.png");
-  const mask192 = await sharp(Buffer.from(day512))
-    .resize(154, 154, { fit: "fill" })
-    .extend({ top: 19, bottom: 19, left: 19, right: 19, background: { r: 250, g: 250, b: 250, alpha: 1 } })
-    .png()
-    .toBuffer();
-  fs.writeFileSync(path.join(OUT_DIR, "maskable-192.png"), mask192);
-
-  console.log("→ public/icons/maskable-512.png");
-  const mask512 = await sharp(Buffer.from(day512))
-    .resize(410, 410, { fit: "fill" })
-    .extend({ top: 51, bottom: 51, left: 51, right: 51, background: { r: 250, g: 250, b: 250, alpha: 1 } })
-    .png()
-    .toBuffer();
-  fs.writeFileSync(path.join(OUT_DIR, "maskable-512.png"), mask512);
-
-  // --- Monochrome ---
-  console.log("→ public/icons/monochrome-192.png");
-  await sharp(Buffer.from(day512))
-    .resize(192, 192, { fit: "fill" })
-    .greyscale()
-    .png()
-    .toFile(path.join(OUT_DIR, "monochrome-192.png"));
-
-  console.log("→ public/icons/monochrome-512.png");
-  await sharp(Buffer.from(day512))
-    .resize(512, 512, { fit: "fill" })
-    .greyscale()
-    .png()
-    .toFile(path.join(OUT_DIR, "monochrome-512.png"));
-
-  // --- Shortcut icons ---
-  console.log("→ public/icons/shortcut-create.png");
-  await svgToPng(day512, path.join(OUT_DIR, "shortcut-create.png"), 96);
-
-  console.log("→ public/icons/shortcut-explore.png");
-  await svgToPng(day512, path.join(OUT_DIR, "shortcut-explore.png"), 96);
-
-  console.log("\n✅ Toutes les icônes ont été générées.");
-}
-
-generate().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main().catch(console.error);
