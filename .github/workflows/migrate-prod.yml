@@ -54,7 +54,7 @@ jobs:
               echo "resolving: $name..."
               psql "$PGURL" -v ON_ERROR_STOP=1 -c "INSERT INTO _prisma_migrations(id,checksum,finished_at,migration_name,started_at,applied_steps_count) SELECT gen_random_uuid(),'$CHKSUM',NOW(),'$name',NOW(),1 WHERE NOT EXISTS(SELECT 1 FROM _prisma_migrations WHERE migration_name='$name')"
               echo "done: $name"
-              ((COUNT++))
+              COUNT=$((COUNT + 1))
             fi
           done
           echo "APPLIED=$COUNT" >> $GITHUB_ENV
