@@ -11,7 +11,7 @@ export function Skeleton({ className, circle = false }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "shimmer rounded-xl",
+        "shimmer-neon rounded-xl",
         circle && "rounded-full",
         className
       )}

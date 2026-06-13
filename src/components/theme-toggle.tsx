@@ -66,7 +66,7 @@ export function ThemeBadge() {
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="rounded-lg p-2 text-[var(--os-muted)] hover:bg-white/5 hover:text-[var(--os-fg)] transition-colors"
+      className="rounded-lg p-2 text-[var(--os-muted)] hover:bg-white/[0.04] hover:text-[var(--os-fg)] transition-all duration-200 pressable"
       title={isDark ? "Passer en clair" : "Passer en sombre"}
     >
       {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
