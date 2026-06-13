@@ -176,10 +176,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
+    const { caption: parsedCaption, visibility: parsedVisibility, city: parsedCity, countryCode: parsedCountryCode, planId: parsedPlanId, placeId: parsedPlaceId, eventId: parsedEventId, liveId: parsedLiveId, expiresIn: parsedExpiresIn } = parsed.data;
+
     // Compute expiresAt from expiresIn duration string
     let expiresAt: Date | undefined;
-    if (expiresIn) {
-      const match = expiresIn.match(/^(\d+)([hd])$/);
+    const expiresInValue = parsedExpiresIn ?? expiresIn;
+    if (expiresInValue) {
+      const match = expiresInValue.match(/^(\d+)([hd])$/);
       if (match) {
         const value = parseInt(match[1], 10);
         const unit = match[2];
@@ -257,15 +260,15 @@ export async function POST(req: Request) {
         authorId: user.id,
         type: momentType,
         mediaUrl,
-        caption,
+        caption: parsedCaption,
         expiresAt,
-        visibility: visibility as MomentVisibility,
-        city,
-        countryCode,
-        planId,
-        placeId,
-        eventId,
-        liveId,
+        visibility: (parsedVisibility ?? "PUBLIC") as MomentVisibility,
+        city: parsedCity,
+        countryCode: parsedCountryCode,
+        planId: parsedPlanId,
+        placeId: parsedPlaceId,
+        eventId: parsedEventId,
+        liveId: parsedLiveId,
         audioTrackId,
         audioStartTime: isNaN(audioStartTime) ? 0 : audioStartTime,
         audioVolume: isNaN(audioVolume) ? 1 : Math.min(1, Math.max(0, audioVolume)),
@@ -285,7 +288,7 @@ export async function POST(req: Request) {
 
     // Attach hashtags from caption (deferred, non-blocking)
     import("@/lib/hashtags/hashtag-service").then(({ attachHashtagsToMoment }) => {
-      attachHashtagsToMoment(moment.id, caption, city, countryCode).catch((err) => {
+      attachHashtagsToMoment(moment.id, parsedCaption ?? null, parsedCity ?? null, parsedCountryCode ?? null).catch((err) => {
         console.error("[POST /api/moments] Background hashtag error:", err);
       });
     });
@@ -306,11 +309,11 @@ export async function POST(req: Request) {
     // Invalidate feed cache so new moments appear immediately
     cacheClear("feed:");
 
-    if (city) {
+    if (parsedCity) {
       recordTripHistory({
         userId: user.id,
-        city,
-        countryCode,
+        city: parsedCity,
+        countryCode: parsedCountryCode,
         source: "MOMENT_PUBLISHED",
         momentId: moment.id,
       }).catch((err) => {

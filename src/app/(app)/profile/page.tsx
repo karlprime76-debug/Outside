@@ -282,7 +282,7 @@ export default async function ProfilePage() {
         ) : (
           <div className="flex flex-wrap gap-3">
             {friends.map((friend) => (
-              <Link key={friend.id} href={`/u/${friend.username || ""}`}
+              <Link key={friend.id} href={`/u/${friend.username || friend.id}`}
                 className="flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-3 py-2 hover:border-outside-300 transition-colors"
               >
                 <img src={friend.image || "/default-avatar.png"} alt="" className="h-7 w-7 rounded-full object-cover" />

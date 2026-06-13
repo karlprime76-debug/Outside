@@ -7,14 +7,14 @@ import { isValidCountryCode, getCountryName } from "@/lib/countries";
 import { logError } from "@/lib/log";
 
 const profileUpdateSchema = z.object({
-  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(80, "Le nom est trop long").optional(),
-  username: z.string().min(3, "Le username doit contenir au moins 3 caractères").max(30, "Le username est trop long").optional(),
-  bio: z.string().max(500, "La bio est trop longue (500 caractères max)").optional(),
-  gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(),
-  countryCode: z.string().length(2, "Code pays invalide").optional(),
-  homeCity: z.string().min(2, "La ville doit contenir au moins 2 caractères").max(120, "La ville est trop longue").optional(),
-  birthDate: z.string().optional(),
-  socialLinks: z.string().max(2000, "Les liens sont trop longs").optional(),
+  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(80, "Le nom est trop long").nullish(),
+  username: z.string().min(3, "Le username doit contenir au moins 3 caractères").max(30, "Le username est trop long").nullish(),
+  bio: z.string().max(500, "La bio est trop longue (500 caractères max)").nullish(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).nullish(),
+  countryCode: z.string().length(2, "Code pays invalide").nullish(),
+  homeCity: z.string().min(2, "La ville doit contenir au moins 2 caractères").max(120, "La ville est trop longue").nullish(),
+  birthDate: z.string().nullish(),
+  socialLinks: z.string().max(2000, "Les liens sont trop longs").nullish(),
 });
 
 export async function GET() {

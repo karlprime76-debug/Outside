@@ -146,7 +146,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    await markNotificationsAsRead(session.user.id, parsed.data.ids);
+    await markNotificationsAsRead(session.user.id, parsed.data.ids ?? undefined);
 
     logPerfEnd(perfLabel);
     return NextResponse.json({ message: "Notifications marquées comme lues." });

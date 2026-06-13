@@ -131,7 +131,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const { title, description, visibility, city, country, countryCode, planId, eventId, placeId, status: requestedStatus } = body;
+    const { title, description, visibility, city, country, countryCode, planId, eventId, placeId, status: requestedStatus } = parsed.data;
 
     const liveCity = city || user.activeCity?.name;
     if (!liveCity) {

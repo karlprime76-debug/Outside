@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminAlgorithmMomentsPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "ADMIN") {
-    redirect("/");
+    redirect("/home");
   }
 
   const moments = await db.moment.findMany({

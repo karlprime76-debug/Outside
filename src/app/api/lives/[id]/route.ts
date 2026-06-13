@@ -75,7 +75,7 @@ export async function PATCH(req: Request, { params }: Params) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const { status, title, description, visibility } = body;
+    const { status, title, description, visibility } = parsed.data;
 
     const allowedStatuses = isAdmin ? ["LIVE", "ENDED", "CANCELLED", "BLOCKED"] : ["LIVE", "ENDED", "CANCELLED"];
 

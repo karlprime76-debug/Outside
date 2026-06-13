@@ -426,7 +426,7 @@ export async function POST(req: Request) {
           const stripe = getStripe();
           const product = await stripe.products.create({
             name: data.title,
-            description: data.description,
+            description: data.description ?? undefined,
           }, { stripeAccount: dbUser.stripeConnectId });
 
           const price = await stripe.prices.create({

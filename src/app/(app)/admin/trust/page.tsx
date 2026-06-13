@@ -16,7 +16,7 @@ const LEVEL_COLORS: Record<string, string> = {
 export default async function AdminTrustPage() {
   const session = await auth();
   if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
-    redirect("/");
+    redirect("/home");
   }
 
   const profiles = await db.userTrustProfile.findMany({

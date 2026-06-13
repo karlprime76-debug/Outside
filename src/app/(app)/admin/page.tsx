@@ -9,7 +9,7 @@ import { Users, CalendarDays, Store, AlertTriangle, Shield, MapPin, ArrowRight, 
 export default async function AdminPage() {
   const session = await auth();
   if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MODERATOR") {
-    redirect("/");
+    redirect("/home");
   }
 
   const now = new Date();

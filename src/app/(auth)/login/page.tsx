@@ -54,7 +54,6 @@ function LoginForm() {
     }
 
     router.push(callbackUrl);
-    router.refresh();
   }
 
   if (!mounted) {

@@ -60,7 +60,6 @@ export default function OnboardingPage() {
       }
 
       router.push("/home");
-      router.refresh();
     } catch {
       setError(t.common.error);
       setLoading(false);

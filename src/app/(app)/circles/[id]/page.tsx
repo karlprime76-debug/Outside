@@ -201,7 +201,7 @@ export default function CircleDetailsPage({ params }: { params: Promise<{ id: st
                 <div className="flex items-center gap-3">
                   <div className="relative h-10 w-10 rounded-full overflow-hidden bg-[var(--os-bg)]">
                     {member.user.image ? (
-                      <Image src={member.user.image} alt={member.user.name || ""} fill className="object-cover" />
+                      <Image src={member.user.image} alt={member.user.name || ""} fill className="object-cover" sizes="40px" />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center">
                         <UserIcon className="h-5 w-5 text-[var(--os-muted)]" />
@@ -264,7 +264,7 @@ export default function CircleDetailsPage({ params }: { params: Promise<{ id: st
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full overflow-hidden bg-[var(--os-bg)] relative">
                       {user.image ? (
-                        <Image src={user.image} alt={user.name || ""} fill className="object-cover" />
+                        <Image src={user.image} alt={user.name || ""} fill className="object-cover" sizes="32px" />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-xs text-[var(--os-muted)] uppercase">
                           {user.name?.[0] || user.username?.[0] || "?"}

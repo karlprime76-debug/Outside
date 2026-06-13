@@ -115,7 +115,7 @@ export default function WishlistPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-6 w-6 rounded-full bg-[var(--os-card)] overflow-hidden relative">
                     {item.user.image && (
-                      <Image src={item.user.image} alt="" fill className="object-cover" />
+                      <Image src={item.user.image} alt={item.user.name || item.user.username || ""} fill className="object-cover" sizes="24px" />
                     )}
                   </div>
                   <span className="text-xs font-semibold text-[var(--os-muted)]">

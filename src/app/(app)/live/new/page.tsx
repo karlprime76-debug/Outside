@@ -26,7 +26,7 @@ export default function NewLivePage() {
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || undefined,
-          requestedStatus: "LIVE",
+          status: "LIVE",
         }),
       });
       const data = await res.json().catch(() => ({}));

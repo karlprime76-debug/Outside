@@ -95,12 +95,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
+    const updateData = Object.fromEntries(
+      Object.entries(parsed.data).filter(([, v]) => v != null)
+    );
+
     const plan = await db.plan.update({
       where: { id },
       data: {
-        ...parsed.data,
-        isOfficial: (user.role === "PRO" || user.role === "ADMIN") ? parsed.data.isOfficial : undefined,
-        bookingUrl: (user.role === "PRO" || user.role === "ADMIN") ? parsed.data.bookingUrl : undefined,
+        ...updateData,
+        isOfficial: (user.role === "PRO" || user.role === "ADMIN") ? (parsed.data.isOfficial ?? undefined) : undefined,
+        bookingUrl: (user.role === "PRO" || user.role === "ADMIN") ? (parsed.data.bookingUrl ?? undefined) : undefined,
       },
     });
 

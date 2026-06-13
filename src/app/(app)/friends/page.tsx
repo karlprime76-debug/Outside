@@ -278,7 +278,7 @@ export default function FriendsPage() {
               <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)]">Demandes reçues</h2>
               {receivedRequests.map((r) => (
                 <div key={r.id} className="os-card p-4 flex items-center justify-between">
-                  <Link href={`/u/${r.sender?.username}`} className="flex items-center gap-3">
+                  <Link href={`/u/${r.sender?.username || r.sender?.id || ""}`} className="flex items-center gap-3">
                     <Avatar src={r.sender?.image} name={r.sender?.name} size="md" />
                     <div>
                       <p className="text-sm font-bold text-[var(--os-fg)]">{r.sender?.name || "Anonyme"}</p>
@@ -313,7 +313,7 @@ export default function FriendsPage() {
               <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--os-muted)]">Demandes envoyées</h2>
               {sentRequests.map((r) => (
                 <div key={r.id} className="os-card p-4 flex items-center justify-between">
-                  <Link href={`/u/${r.receiver?.username}`} className="flex items-center gap-3">
+                  <Link href={`/u/${r.receiver?.username || r.receiver?.id || ""}`} className="flex items-center gap-3">
                     <Avatar src={r.receiver?.image} name={r.receiver?.name} size="md" />
                     <div>
                       <p className="text-sm font-bold text-[var(--os-fg)]">{r.receiver?.name || "Anonyme"}</p>
