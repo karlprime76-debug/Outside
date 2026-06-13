@@ -1,4 +1,4 @@
-name: DB - Apply migrations
+name: DB: Apply migrations
 
 on:
   push:
