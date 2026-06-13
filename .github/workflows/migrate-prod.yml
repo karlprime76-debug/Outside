@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           PGURL=$(python3 -c "import re,os;u=os.environ['DIRECT_URL'];u=re.sub(r'[?&]pgbouncer=true','',u);u=re.sub(r'^(.+?://[^/]+/[^?&]+)&',r'\1?',u);print(u)")
-          APPLIED_NAMES=$(psql -t -A "$PGURL" -c "SELECT migration_name FROM _prisma_migrations ORDER BY started_at" 2>/dev/null || echo "")
+          APPLIED_NAMES=$(psql -t -A "$PGURL" -c "SELECT migration_name FROM _prisma_migrations" 2>/dev/null || echo "")
           COUNT=0
           for dir in prisma/migrations/*/; do
             name=$(basename "$dir")
@@ -50,7 +50,9 @@ jobs:
             else
               echo "applying: $name..."
               psql "$PGURL" -f "$sql" -v ON_ERROR_STOP=1
-              npx prisma migrate resolve --applied "$name"
+              CHKSUM=$(python3 -c "import hashlib; print(hashlib.sha256(open('$sql','rb').read()).hexdigest())")
+              echo "resolving: $name..."
+              psql "$PGURL" -v ON_ERROR_STOP=1 -c "INSERT INTO _prisma_migrations(id,checksum,finished_at,migration_name,started_at,applied_steps_count) SELECT gen_random_uuid(),'$CHKSUM',NOW(),'$name',NOW(),1 WHERE NOT EXISTS(SELECT 1 FROM _prisma_migrations WHERE migration_name='$name')"
               echo "done: $name"
               ((COUNT++))
             fi
