@@ -1,6 +1,9 @@
 name: DB: Apply migration
 
 on:
+  push:
+    branches: [main]
+    paths: ["prisma/migrations/**"]
   workflow_dispatch:
 
 env:
