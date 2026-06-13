@@ -58,6 +58,7 @@ interface MomentItem {
 
 interface MomentCardProps {
   moment: MomentItem;
+  userId?: string;
   onLikeToggle: (_id: string, _liked: boolean) => void;
   onOpenComments: (_moment: MomentItem) => void;
   onDelete?: (_id: string) => void;
@@ -65,7 +66,7 @@ interface MomentCardProps {
   onHideAccount?: (_authorId: string) => void;
 }
 
-export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onHide, onHideAccount }: MomentCardProps) {
+export function MomentCard({ moment, userId, onLikeToggle, onOpenComments, onDelete, onHide, onHideAccount }: MomentCardProps) {
   const { addToast } = useToast();
   const [liked, setLiked] = useState(moment.viewerState.likedByMe);
   const [myReaction, setMyReaction] = useState(moment.viewerState.myReaction);
@@ -81,7 +82,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const [followLoading, setFollowLoading] = useState(false);
   const [saved, setSaved] = useState(moment.viewerState.savedByMe ?? (() => {
     try {
-      const raw = localStorage.getItem("outside_saved_moments");
+      const raw = localStorage.getItem(`outside_saved_moments_${userId || "anonymous"}`);
       if (!raw) return false;
       return JSON.parse(raw).includes(moment.id);
     } catch { return false; }
@@ -274,7 +275,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
 
   const handleHideLocal = () => {
     try {
-      const key = "outside_hidden_moments";
+      const key = `outside_hidden_moments_${userId || "anonymous"}`;
       const raw = localStorage.getItem(key);
       const set = new Set<string>(raw ? JSON.parse(raw) : []);
       set.add(moment.id);
@@ -289,7 +290,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
   const handleNotInterested = () => {
     trackEvent("NOT_INTERESTED");
     try {
-      const key = "outside_hidden_moments";
+      const key = `outside_hidden_moments_${userId || "anonymous"}`;
       const raw = localStorage.getItem(key);
       const set = new Set<string>(raw ? JSON.parse(raw) : []);
       set.add(moment.id);
@@ -306,7 +307,7 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
 
   const handleHideAccount = () => {
     try {
-      const key = "outside_hidden_accounts";
+      const key = `outside_hidden_accounts_${userId || "anonymous"}`;
       const raw = localStorage.getItem(key);
       const set = new Set<string>(raw ? JSON.parse(raw) : []);
       set.add(moment.author.id);
@@ -599,12 +600,12 @@ export function MomentCard({ moment, onLikeToggle, onOpenComments, onDelete, onH
                     trackEvent(savedState ? "SAVE" : "UNSAVE");
                     // Sync to localStorage
                     try {
-                      const raw = localStorage.getItem("outside_saved_moments");
+                      const raw = localStorage.getItem(`outside_saved_moments_${userId || "anonymous"}`);
                       const ids: string[] = raw ? JSON.parse(raw) : [];
                       const updated = savedState
                         ? [...new Set([...ids, moment.id])]
                         : ids.filter((id: string) => id !== moment.id);
-                      localStorage.setItem("outside_saved_moments", JSON.stringify(updated));
+                      localStorage.setItem(`outside_saved_moments_${userId || "anonymous"}`, JSON.stringify(updated));
                     } catch {}
                   } else {
                     setSaved(!newSaved);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { MomentCard } from "./moment-card";
 import { MomentCommentsSheet } from "./moment-comments-sheet";
 import { AccountDiscovery } from "./account-discovery";
@@ -65,6 +66,8 @@ const SCOPE_LABELS: Record<Scope, string> = {
 };
 
 export function MomentFeed() {
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
   const [scope, setScope] = useState<Scope>("for-you");
   const media = "all";
   const haptic = useHaptic();
@@ -188,7 +191,7 @@ export function MomentFeed() {
   const [hiddenSet, setHiddenSet] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();
     try {
-      const raw = localStorage.getItem("outside_hidden_moments");
+      const raw = localStorage.getItem(`outside_hidden_moments_${userId || "anonymous"}`);
       return new Set<string>(raw ? JSON.parse(raw) : []);
     } catch {
       return new Set();
@@ -197,12 +200,25 @@ export function MomentFeed() {
   const [hiddenAccounts, setHiddenAccounts] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();
     try {
-      const raw = localStorage.getItem("outside_hidden_accounts");
+      const raw = localStorage.getItem(`outside_hidden_accounts_${userId || "anonymous"}`);
       return new Set<string>(raw ? JSON.parse(raw) : []);
     } catch {
       return new Set();
     }
   });
+
+  // Re-sync hidden sets when userId settles (e.g. session loads after mount)
+  useEffect(() => {
+    if (!userId) return;
+    try {
+      const raw = localStorage.getItem(`outside_hidden_moments_${userId}`);
+      setHiddenSet(new Set<string>(raw ? JSON.parse(raw) : []));
+    } catch { /* ignore */ }
+    try {
+      const raw = localStorage.getItem(`outside_hidden_accounts_${userId}`);
+      setHiddenAccounts(new Set<string>(raw ? JSON.parse(raw) : []));
+    } catch { /* ignore */ }
+  }, [userId]);
 
   const fetchMoments = useCallback(
     async (cursor?: string, retries = 2) => {
@@ -425,6 +441,7 @@ export function MomentFeed() {
                 <MomentCard
                   key={moment.id}
                   moment={moment}
+                  userId={userId}
                   onLikeToggle={handleLikeToggle}
                   onOpenComments={setCommentMoment}
                   onDelete={handleDelete}
