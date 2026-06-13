@@ -23,6 +23,7 @@ export interface Dictionary {
     places: string;
     friends: string;
     profile: string;
+    search: string;
   };
   landing: {
     heroTitle: string;

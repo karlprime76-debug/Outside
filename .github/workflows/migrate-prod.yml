@@ -1,57 +1,68 @@
-name: DB: Apply migration
+name: "DB: Apply migrations"
 
 on:
   push:
     branches: [main]
     paths: ["prisma/migrations/**"]
   workflow_dispatch:
-
-env:
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  DIRECT_URL: ${{ secrets.DIRECT_URL }}
+    inputs:
+      run_seed:
+        description: "Run demo seed after migration"
+        required: true
+        default: "false"
+        type: choice
+        options: ["true", "false"]
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci --ignore-scripts
-      - run: npx prisma generate
+          cache: "npm"
 
-      - name: Install psql
+      - run: npm ci
+        timeout-minutes: 10
+
+      - run: npx prisma generate
+        timeout-minutes: 5
+
+      - name: "Install psql"
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
 
-      - name: Apply pending migrations via psql + Prisma resolve
+      - name: "Apply pending migrations"
         shell: bash
         run: |
-          # psql doesn't support pgbouncer param — strip it
-          PGURL=$(python3 -c "
-import re, os
-url = os.environ['DIRECT_URL']
-# remove pgbouncer param
-url = re.sub(r'[?&]pgbouncer=true', '', url)
-# ensure valid: first param after host/db needs ? not &
-url = re.sub(r'^(.+?://[^/]+/[^?&]+)&', r'\1?', url)
-print(url)
-")
-          echo "Using: $PGURL"
-          
-          APPLIED=$(psql -t -A "$PGURL" -c "SELECT migration_name FROM _prisma_migrations ORDER BY started_at" 2>/dev/null || echo "")
-          
+          PGURL=$(python3 -c "import re,os;u=os.environ['DIRECT_URL'];u=re.sub(r'[?&]pgbouncer=true','',u);u=re.sub(r'^(.+?://[^/]+/[^?&]+)&',r'\1?',u);print(u)")
+          APPLIED_NAMES=$(psql -t -A "$PGURL" -c "SELECT migration_name FROM _prisma_migrations" 2>/dev/null || echo "")
+          COUNT=0
           for dir in prisma/migrations/*/; do
             name=$(basename "$dir")
             sql="$dir/migration.sql"
             [ ! -f "$sql" ] && continue
-            if echo "$APPLIED" | grep -qx "$name"; then
-              echo "✓ $name"
+            if echo "$APPLIED_NAMES" | grep -qx "$name"; then
+              echo "applied: $name"
             else
-              echo "→ Applying $name..."
+              echo "applying: $name..."
               psql "$PGURL" -f "$sql" -v ON_ERROR_STOP=1
-              echo "→ Resolving $name with Prisma..."
-              npx prisma migrate resolve --applied "$name"
-              echo "✓ $name done"
+              CHKSUM=$(python3 -c "import hashlib; print(hashlib.sha256(open('$sql','rb').read()).hexdigest())")
+              echo "resolving: $name..."
+              psql "$PGURL" -v ON_ERROR_STOP=1 -c "INSERT INTO _prisma_migrations(id,checksum,finished_at,migration_name,started_at,applied_steps_count) SELECT gen_random_uuid(),'$CHKSUM',NOW(),'$name',NOW(),1 WHERE NOT EXISTS(SELECT 1 FROM _prisma_migrations WHERE migration_name='$name')"
+              echo "done: $name"
+              COUNT=$((COUNT + 1))
             fi
           done
+          echo "APPLIED=$COUNT" >> $GITHUB_ENV
+          echo "Total applied: $COUNT"
+
+      - name: "Seed demo data (optional)"
+        if: ${{ github.event.inputs.run_seed == 'true' }}
+        env:
+          DEMO_MODE: "1"
+        run: npm run db:seed:demo
+        timeout-minutes: 15

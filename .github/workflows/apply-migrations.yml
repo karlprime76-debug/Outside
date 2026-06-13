@@ -1,66 +1,72 @@
-name: Apply Prisma Migrations
+name: DB: Apply migrations
 
 on:
+  push:
+    branches: [main]
+    paths: ["prisma/migrations/**"]
   workflow_dispatch:
     inputs:
       run_seed:
-        description: 'Run demo seed after migration'
+        description: "Run demo seed after migration"
         required: true
-        default: 'false'
+        default: "false"
         type: choice
-        options: ['true', 'false']
+        options: ["true", "false"]
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      DIRECT_URL: ${{ secrets.CI_DIRECT_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: 22
+          cache: "npm"
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
         timeout-minutes: 10
 
-      - name: Generate Prisma client
-        run: npx prisma generate
+      - run: npx prisma generate
         timeout-minutes: 5
 
-      - name: Step 1 — Apply pending migrations normally
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          echo "=== Apply any pending migrations ==="
-          npx prisma migrate deploy
-          echo "✓ migrate deploy done."
+      - name: Install psql
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
 
-      - name: Step 2 — Sync ALL remaining schema differences (safe, additive only)
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Apply pending migrations
+        shell: bash
         run: |
-          echo "=== Sync all remaining tables, columns, enums ==="
-          echo "Adds whatever is missing, never drops anything."
-          echo "y" | npx prisma db push --skip-generate 2>&1 || echo "⚠ db push had issues (may need manual review). Continuing..."
-          echo "✓ db push sync done."
+          PGURL=$(python3 -c "
+import re, os
+url = os.environ['DIRECT_URL']
+url = re.sub(r'[?&]pgbouncer=true', '', url)
+url = re.sub(r'^(.+?://[^/]+/[^?&]+)&', r'\1?', url)
+print(url)
+")
+          APPLIED_NAMES=$(psql -t -A "$PGURL" -c "SELECT migration_name FROM _prisma_migrations ORDER BY started_at" 2>/dev/null || echo "")
+          COUNT=0
+          for dir in prisma/migrations/*/; do
+            name=$(basename "$dir")
+            sql="$dir/migration.sql"
+            [ ! -f "$sql" ] && continue
+            if echo "$APPLIED_NAMES" | grep -qx "$name"; then
+              echo "✓ $name"
+            else
+              echo "→ Applying $name..."
+              psql "$PGURL" -f "$sql" -v ON_ERROR_STOP=1
+              npx prisma migrate resolve --applied "$name"
+              echo "✓ $name done"
+              ((COUNT++))
+            fi
+          done
+          echo "APPLIED=$COUNT" >> $GITHUB_ENV
+          echo "Total applied: $COUNT"
 
-      - name: Step 3 — Report final migration status
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          echo "=== Final migration status ==="
-          npx prisma migrate status
-
-      - name: Seed demo data (conditional)
+      - name: Seed demo data (optional)
         if: ${{ github.event.inputs.run_seed == 'true' }}
         env:
-          DEMO_MODE: '1'
+          DEMO_MODE: "1"
         run: npm run db:seed:demo
         timeout-minutes: 15
