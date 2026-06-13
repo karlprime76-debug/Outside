@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const DRAFT_KEY = "outside_moment_draft";
+function getDraftKey(userId?: string) {
+  return `outside_moment_draft_${userId || "anonymous"}`;
+}
 
 interface MomentDraft {
   caption: string;
@@ -19,16 +21,22 @@ interface MomentDraft {
   updatedAt: string;
 }
 
-export function useMomentDraft() {
+export function useMomentDraft(userId?: string) {
   const [draft, setDraft] = useState<MomentDraft | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [hasMedia, setHasMedia] = useState(false);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevUserId = useRef(userId);
 
-  // Load draft on mount
+  // Load draft on mount or when userId changes
   useEffect(() => {
+    if (prevUserId.current !== userId) {
+      setDraft(null);
+      setSavedAt(null);
+      prevUserId.current = userId;
+    }
     try {
-      const raw = localStorage.getItem(DRAFT_KEY);
+      const raw = localStorage.getItem(getDraftKey(userId));
       if (raw) {
         const parsed = JSON.parse(raw) as MomentDraft;
         setDraft(parsed);
@@ -36,7 +44,7 @@ export function useMomentDraft() {
     } catch {
       setDraft(null);
     }
-  }, []);
+  }, [userId]);
 
   const saveDraft = useCallback(
     (data: Partial<MomentDraft>) => {
@@ -46,7 +54,7 @@ export function useMomentDraft() {
         try {
           const existing = (() => {
             try {
-              const raw = localStorage.getItem(DRAFT_KEY);
+              const raw = localStorage.getItem(getDraftKey(userId));
               return raw ? (JSON.parse(raw) as MomentDraft) : null;
             } catch {
               return null;
@@ -68,7 +76,7 @@ export function useMomentDraft() {
             updatedAt: new Date().toISOString(),
           };
 
-          localStorage.setItem(DRAFT_KEY, JSON.stringify(next));
+          localStorage.setItem(getDraftKey(userId), JSON.stringify(next));
           setDraft(next);
           setSavedAt(new Date());
         } catch {
@@ -76,22 +84,22 @@ export function useMomentDraft() {
         }
       }, 600); // debounce 600ms
     },
-    []
+    [userId]
   );
 
   const clearDraft = useCallback(() => {
     try {
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(getDraftKey(userId));
     } catch {
       // ignore
     }
     setDraft(null);
     setSavedAt(null);
-  }, []);
+  }, [userId]);
 
   const restoreDraft = useCallback(() => {
     try {
-      const raw = localStorage.getItem(DRAFT_KEY);
+      const raw = localStorage.getItem(getDraftKey(userId));
       if (raw) {
         const parsed = JSON.parse(raw) as MomentDraft;
         setDraft(parsed);
@@ -101,7 +109,7 @@ export function useMomentDraft() {
       // ignore
     }
     return null;
-  }, []);
+  }, [userId]);
 
   const dismissSaved = useCallback(() => {
     setSavedAt(null);

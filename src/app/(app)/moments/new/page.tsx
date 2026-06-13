@@ -3,6 +3,7 @@
 import { useState, useRef, ChangeEvent, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { useMomentDraft } from "@/hooks/use-moment-draft";
@@ -64,7 +65,8 @@ export default function NewMomentPage() {
     mediaAspectRatio?: string;
   }>({});
 
-  const draft = useMomentDraft();
+  const { data: session } = useSession();
+  const draft = useMomentDraft(session?.user?.id);
 
   useEffect(() => {
     fetch("/api/auth/me")
