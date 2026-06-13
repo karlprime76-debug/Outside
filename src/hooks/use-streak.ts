@@ -28,14 +28,20 @@ export function useStreak() {
 
   useEffect(() => {
     if (!session?.user?.id) return;
+    let cancelled = false;
     // Update streak on mount (daily visit)
     fetch("/api/user/streak", { method: "POST" })
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
-        if (data) setStreak(data);
+        if (data && !cancelled) setStreak(data);
       })
-      .catch((err) => { console.error("[SETTINGS_ERROR] Failed to update streak:", err); })
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!cancelled) console.error("[SETTINGS_ERROR] Failed to update streak:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [session?.user?.id]);
 
   return { streak, loading, refresh };

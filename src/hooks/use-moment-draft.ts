@@ -46,6 +46,13 @@ export function useMomentDraft(userId?: string) {
     }
   }, [userId]);
 
+  // Clear pending auto-save on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, []);
+
   const saveDraft = useCallback(
     (data: Partial<MomentDraft>) => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);

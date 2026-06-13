@@ -15,16 +15,21 @@ export async function GET(req: Request) {
     ? { status: statusFilter as "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED" }
     : {};
 
-  const requests = await db.proAccount.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: { select: { id: true, name: true, email: true, image: true } },
-    },
-    take: 200,
-  });
+  try {
+    const requests = await db.proAccount.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, name: true, email: true, image: true } },
+      },
+      take: 200,
+    });
 
-  return NextResponse.json({ requests });
+    return NextResponse.json({ requests });
+  } catch (err) {
+    logError("[ADMIN_PRO_REQUESTS_ERROR]", "Failed to fetch pro requests", { error: String(err) });
+    return NextResponse.json({ error: "Erreur lors du chargement." }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: Request) {

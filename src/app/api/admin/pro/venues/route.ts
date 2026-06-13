@@ -15,16 +15,21 @@ export async function GET(req: Request) {
     ? { status: statusFilter as "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED" }
     : {};
 
-  const venues = await db.proVenue.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    include: {
-      owner: { select: { id: true, name: true, email: true, image: true } },
-    },
-    take: 200,
-  });
+  try {
+    const venues = await db.proVenue.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        owner: { select: { id: true, name: true, email: true, image: true } },
+      },
+      take: 200,
+    });
 
-  return NextResponse.json({ venues });
+    return NextResponse.json({ venues });
+  } catch (err) {
+    logError("[ADMIN_PRO_VENUES_ERROR]", "Failed to fetch pro venues", { error: String(err) });
+    return NextResponse.json({ error: "Erreur lors du chargement." }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: Request) {
