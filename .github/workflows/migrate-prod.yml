@@ -1,4 +1,4 @@
-name: DB: Apply migrations
+name: "DB: Apply migrations"
 
 on:
   push:
@@ -32,19 +32,13 @@ jobs:
       - run: npx prisma generate
         timeout-minutes: 5
 
-      - name: Install psql
+      - name: "Install psql"
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
 
-      - name: Apply pending migrations
+      - name: "Apply pending migrations"
         shell: bash
         run: |
-          PGURL=$(python3 -c "
-import re, os
-url = os.environ['DIRECT_URL']
-url = re.sub(r'[?&]pgbouncer=true', '', url)
-url = re.sub(r'^(.+?://[^/]+/[^?&]+)&', r'\1?', url)
-print(url)
-")
+          PGURL=$(python3 -c "import re,os;u=os.environ['DIRECT_URL'];u=re.sub(r'[?&]pgbouncer=true','',u);u=re.sub(r'^(.+?://[^/]+/[^?&]+)&',r'\1?',u);print(u)")
           APPLIED_NAMES=$(psql -t -A "$PGURL" -c "SELECT migration_name FROM _prisma_migrations ORDER BY started_at" 2>/dev/null || echo "")
           COUNT=0
           for dir in prisma/migrations/*/; do
@@ -52,19 +46,19 @@ print(url)
             sql="$dir/migration.sql"
             [ ! -f "$sql" ] && continue
             if echo "$APPLIED_NAMES" | grep -qx "$name"; then
-              echo "✓ $name"
+              echo "applied: $name"
             else
-              echo "→ Applying $name..."
+              echo "applying: $name..."
               psql "$PGURL" -f "$sql" -v ON_ERROR_STOP=1
               npx prisma migrate resolve --applied "$name"
-              echo "✓ $name done"
+              echo "done: $name"
               ((COUNT++))
             fi
           done
           echo "APPLIED=$COUNT" >> $GITHUB_ENV
           echo "Total applied: $COUNT"
 
-      - name: Seed demo data (optional)
+      - name: "Seed demo data (optional)"
         if: ${{ github.event.inputs.run_seed == 'true' }}
         env:
           DEMO_MODE: "1"
