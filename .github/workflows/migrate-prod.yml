@@ -25,7 +25,15 @@ jobs:
         shell: bash
         run: |
           # psql doesn't support pgbouncer param — strip it
-          PGURL=$(echo "${{ secrets.DIRECT_URL }}" | sed 's/[?&]pgbouncer=true//')
+          PGURL=$(python3 -c "
+import re, os
+url = os.environ['DIRECT_URL']
+# remove pgbouncer param
+url = re.sub(r'[?&]pgbouncer=true', '', url)
+# ensure valid: first param after host/db needs ? not &
+url = re.sub(r'^(.+?://[^/]+/[^?&]+)&', r'\1?', url)
+print(url)
+")
           echo "Using: $PGURL"
           
           APPLIED=$(psql -t -A "$PGURL" -c "SELECT migration_name FROM _prisma_migrations ORDER BY started_at" 2>/dev/null || echo "")
