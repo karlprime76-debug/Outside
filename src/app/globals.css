@@ -1046,6 +1046,55 @@
   }
 
   /* ================================================
+     --- tailwindcss-animate plugin replacements ---
+     Classes: animate-in, fade-in, zoom-in, zoom-in-95,
+     slide-in-from-bottom, slide-in-from-bottom-4,
+     slide-in-from-left-2
+     ================================================ */
+
+  .animate-in {
+    animation: os-enter 0.2s ease-out both;
+  }
+
+  .fade-in {
+    --os-enter-opacity: 0;
+  }
+  .zoom-in-95 {
+    --os-enter-scale: 0.95;
+  }
+  .zoom-in {
+    --os-enter-scale: 0;
+  }
+  .slide-in-from-bottom-4 {
+    --os-enter-translate-y: 1rem;
+  }
+  .slide-in-from-bottom {
+    --os-enter-translate-y: 100%;
+  }
+  .slide-in-from-left-2 {
+    --os-enter-translate-x: -0.5rem;
+  }
+
+  @keyframes os-enter {
+    from {
+      opacity: var(--os-enter-opacity, 1);
+      transform:
+        translateX(var(--os-enter-translate-x, 0))
+        translateY(var(--os-enter-translate-y, 0))
+        scale(var(--os-enter-scale, 1));
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) translateY(0) scale(1);
+    }
+  }
+
+  /* Override duration-* for animate-in */
+  .animate-in.duration-200 { animation-duration: 0.2s; }
+  .animate-in.duration-300 { animation-duration: 0.3s; }
+  .animate-in.duration-500 { animation-duration: 0.5s; }
+
+  /* ================================================
      --- Reduced motion ---
      ================================================ */
 
