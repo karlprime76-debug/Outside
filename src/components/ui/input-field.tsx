@@ -21,7 +21,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
         <input
           ref={ref}
           className={cn(
-            "w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] bg-surface-card focus:outline-none focus:ring-2 focus:ring-neon-orange/40 focus:border-neon-orange/50 transition-all",
+            "w-full rounded-xl border border-[var(--os-card-border)] px-4 py-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] bg-surface-card focus:outline-none transition-all focus-glow",
             error && "border-red-500/50 focus:ring-red-500/40 focus:border-red-500",
             className
           )}

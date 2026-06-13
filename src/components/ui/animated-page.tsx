@@ -13,7 +13,7 @@ export function AnimatedPage({ children, className, delay = 0 }: AnimatedPagePro
   return (
     <div
       className={cn(
-        "animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "fade-in-up",
         className
       )}
       style={{ animationDelay: `${delay}ms` }}
@@ -38,7 +38,7 @@ export function StaggerContainer({
         ? children.map((child, i) => (
             <div
               key={i}
-              className="animate-in fade-in slide-in-from-bottom-3 fill-mode-backwards duration-400"
+              className="fade-in-up"
               style={{ animationDelay: `${i * stagger}ms` }}
             >
               {child}

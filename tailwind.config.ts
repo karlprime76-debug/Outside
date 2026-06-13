@@ -73,6 +73,7 @@ const config: Config = {
         "gradient-premium": "linear-gradient(135deg, rgba(249,115,22,0.04) 0%, rgba(244,63,94,0.03) 50%, rgba(139,92,246,0.04) 100%)",
         "gradient-hero": "linear-gradient(180deg, #F97316 0%, #A855F7 100%)",
         "gradient-hero-dark": "linear-gradient(180deg, #1A0A00 0%, #08080C 100%)",
+        "gradient-mesh": "radial-gradient(ellipse 60% 50% at 20% 10%, rgba(249, 115, 22, 0.03) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 80% 20%, rgba(244, 63, 94, 0.025) 0%, transparent 50%), radial-gradient(ellipse 40% 60% at 50% 70%, rgba(139, 92, 246, 0.02) 0%, transparent 50%)",
       },
       boxShadow: {
         glow: "0 0 24px rgba(249, 115, 22, 0.25)",
@@ -82,10 +83,15 @@ const config: Config = {
         "glow-magenta": "0 0 24px rgba(168, 85, 247, 0.25)",
         "glow-violet": "0 0 24px rgba(139, 92, 246, 0.25)",
         "glow-xl": "0 0 60px rgba(249, 115, 22, 0.2), 0 0 120px rgba(244, 63, 94, 0.1)",
+        "glow-amber": "0 0 20px rgba(249, 115, 22, 0.15)",
+        "glow-rose": "0 0 20px rgba(244, 63, 94, 0.15)",
+        "glow-duo": "0 0 24px rgba(249, 115, 22, 0.2), 0 0 24px rgba(244, 63, 94, 0.15)",
         "card": "0 0 0 1px rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3)",
         "card-hover": "0 0 0 1px rgba(249, 115, 22, 0.25), 0 4px 12px rgba(0, 0, 0, 0.2), 0 24px 48px rgba(0, 0, 0, 0.4)",
         "neon": "0 0 4px rgba(249, 115, 22, 0.25), 0 0 20px rgba(249, 115, 22, 0.1)",
         "elevated": "0 0 0 1px rgba(255, 255, 255, 0.04), 0 4px 8px rgba(0, 0, 0, 0.2), 0 20px 40px rgba(0, 0, 0, 0.4)",
+        "inner-glow": "inset 0 1px 0 rgba(255,255,255,0.04)",
+        "soft": "0 2px 8px rgba(0, 0, 0, 0.15)",
       },
       animation: {
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
@@ -96,6 +102,12 @@ const config: Config = {
         "fade-in": "fadeIn 0.45s ease-out",
         "scale-in": "scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
         "shimmer-slow": "shimmer 3s ease-in-out infinite",
+        "border-rotate": "borderRotate 4s linear infinite",
+        "ambient-mesh": "ambientMesh 20s ease-in-out infinite alternate",
+        "heart-pop": "heartPop 0.7s ease-out both",
+        "page-enter": "pageEnter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "loading-bar": "loadingBar 1.5s ease-in-out infinite",
+        "sheet-up": "sheetSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
       keyframes: {
         float: {
@@ -125,6 +137,37 @@ const config: Config = {
         shimmer: {
           "0%": { backgroundPosition: "200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
+        },
+        borderRotate: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        ambientMesh: {
+          "0%": { transform: "translate(0, 0) rotate(0deg)" },
+          "25%": { transform: "translate(2%, 1%) rotate(1deg)" },
+          "50%": { transform: "translate(-1%, 2%) rotate(-1deg)" },
+          "75%": { transform: "translate(1%, -1%) rotate(0.5deg)" },
+          "100%": { transform: "translate(-2%, 0) rotate(-0.5deg)" },
+        },
+        heartPop: {
+          "0%": { opacity: "0", transform: "scale(0.2) translateY(10px)" },
+          "30%": { opacity: "1", transform: "scale(1.2) translateY(-4px)" },
+          "60%": { opacity: "1", transform: "scale(1) translateY(-8px)" },
+          "100%": { opacity: "0", transform: "scale(0.6) translateY(-20px)" },
+        },
+        pageEnter: {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        loadingBar: {
+          "0%": { width: "0%", marginLeft: "0" },
+          "50%": { width: "60%", marginLeft: "20%" },
+          "100%": { width: "0%", marginLeft: "100%" },
+        },
+        sheetSlideUp: {
+          "0%": { transform: "translateY(100%)" },
+          "100%": { transform: "translateY(0)" },
         },
       },
     },
