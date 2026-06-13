@@ -1,4 +1,4 @@
-name: Apply Prisma migration (prod)
+name: DB: Apply migration
 
 on:
   workflow_dispatch:
