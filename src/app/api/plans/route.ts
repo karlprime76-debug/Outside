@@ -187,8 +187,9 @@ export async function GET(req: Request) {
       const searchWhere: Record<string, unknown>[] = [
         { title: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
-        { planCategory: { contains: search, mode: "insensitive" } },
-        { mood: { contains: search, mode: "insensitive" } },
+        // planCategory and mood are Prisma enums — cannot use contains
+        // { planCategory: { contains: search, mode: "insensitive" } },
+        // { mood: { contains: search, mode: "insensitive" } },
         { city: { name: { contains: search, mode: "insensitive" } } },
         { creator: { name: { contains: search, mode: "insensitive" } } },
       ];

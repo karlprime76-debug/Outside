@@ -78,7 +78,7 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
         token.accountKind = user.accountKind;
@@ -93,15 +93,15 @@ export const authConfig: NextAuthConfig = {
       }
       // On sign-in, embed tokenVersion from DB for revocation capability
       if (trigger === "signIn" || trigger === "signUp") {
-        // Fetch latest tokenVersion asynchronously — stored in JWT for validation
-        db.user.findUnique({
-          where: { id: token.sub },
-          select: { tokenVersion: true },
-        }).then((u) => {
+        try {
+          const u = await db.user.findUnique({
+            where: { id: token.sub },
+            select: { tokenVersion: true },
+          });
           token.tokenVersion = u?.tokenVersion ?? 0;
-        }).catch(() => {
+        } catch {
           token.tokenVersion = 0;
-        });
+        }
       }
       // Mise à jour du token lors d'un update() client
       if (trigger === "update" && session?.image) {
@@ -117,34 +117,34 @@ export const authConfig: NextAuthConfig = {
         session.user.id = token.sub;
       }
       if (token.role) {
-        session.user.role = token.role as string;
+        session.user.role = String(token.role);
       }
       if (token.accountKind) {
-        session.user.accountKind = token.accountKind as string;
+        session.user.accountKind = String(token.accountKind);
       }
       if (token.username) {
-        session.user.username = token.username as string;
+        session.user.username = String(token.username);
       }
       if (token.country) {
-        session.user.country = token.country as string;
+        session.user.country = String(token.country);
       }
       if (token.countryCode) {
-        session.user.countryCode = token.countryCode as string;
+        session.user.countryCode = String(token.countryCode);
       }
       if (token.homeCity) {
-        session.user.homeCity = token.homeCity as string;
+        session.user.homeCity = String(token.homeCity);
       }
       if (token.activeCity) {
-        session.user.activeCity = token.activeCity as string;
+        session.user.activeCity = String(token.activeCity);
       }
       if (token.homeCityId) {
-        session.user.homeCityId = token.homeCityId as string;
+        session.user.homeCityId = String(token.homeCityId);
       }
       if (token.activeCityId) {
-        session.user.activeCityId = token.activeCityId as string;
+        session.user.activeCityId = String(token.activeCityId);
       }
       if (token.image) {
-        session.user.image = token.image as string;
+        session.user.image = String(token.image);
       }
       return session;
     },
