@@ -20,8 +20,8 @@ npm install
 # 2. Configure environment
 cp .env.local.example .env.local
 # Edit .env.local with your DATABASE_URL, NEXTAUTH_SECRET, and other environment variables
-DATABASE_URL="postgresql://user:password@host:5432/postgres"
-DIRECT_URL="postgresql://user:password@host:5432/postgres"
+DATABASE_URL="postgresql://postgres.[project-ref]:[password]@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
+DIRECT_URL="postgresql://postgres.[project-ref]:[password]@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?connection_limit=1"
 
 # NextAuth
 # En local : http://localhost:3000

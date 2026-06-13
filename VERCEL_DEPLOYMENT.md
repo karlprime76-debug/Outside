@@ -10,8 +10,8 @@ Configure these in your Vercel project settings (Settings > Environment Variable
 
 ### Database (Required)
 ```
-DATABASE_URL=postgresql://user:password@host:5432/postgres
-DIRECT_URL=postgresql://user:password@host:5432/postgres
+DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1
+DIRECT_URL=postgresql://postgres.[project-ref]:[password]@aws-0-eu-west-1.pooler.supabase.com:6543/postgres?connection_limit=1
 ```
 
 ### NextAuth (Required - CRITICAL)

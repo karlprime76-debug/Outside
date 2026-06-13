@@ -25,6 +25,7 @@ export const fr: Dictionary = {
     places: "Lieux",
     friends: "Amis",
     profile: "Profil",
+    search: "Recherche",
   },
   landing: {
     heroTitle: "Le monde est dehors.",

@@ -25,6 +25,7 @@ export const en: Dictionary = {
     places: "Places",
     friends: "Friends",
     profile: "Profile",
+    search: "Search",
   },
   landing: {
     heroTitle: "The world is outside.",

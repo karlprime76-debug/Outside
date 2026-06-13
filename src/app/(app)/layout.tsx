@@ -9,7 +9,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { Avatar } from "@/components/ui/avatar";
 import { UiProviders } from "@/components/ui/providers-client";
 import { ThemeBadge } from "@/components/theme-toggle";
-import { Bell, MessageSquare } from "lucide-react";
+import { Bell, MessageSquare, Search } from "lucide-react";
 import { getUnreadDmCount } from "@/lib/dm";
 import { PushPrompt } from "@/components/push-prompt";
 
@@ -37,6 +37,8 @@ export default async function AppLayout({
     }
   }
 
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "MODERATOR";
+
   const NAV_LINKS = [
     { href: "/plans", label: "Plans" },
     { href: "/live", label: "Live" },
@@ -46,6 +48,7 @@ export default async function AppLayout({
     { href: "/passport", label: "Passeport" },
     { href: "/settings", label: "Paramètres" },
     { href: "/legal", label: "Légal" },
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
   return (
@@ -73,6 +76,13 @@ export default async function AppLayout({
             ))}
             {session?.user ? (
               <div className="flex items-center gap-3 ml-2 pl-3 border-l border-[var(--os-card-border)]">
+                <Link
+                  href="/search"
+                  aria-label="Rechercher"
+                  className="rounded-lg p-2 hover:bg-white/5 transition-colors pressable"
+                >
+                  <Search className="h-5 w-5 text-[var(--os-muted)]" />
+                </Link>
                 <Link
                   href="/activity"
                   aria-label="Activité"
@@ -116,6 +126,13 @@ export default async function AppLayout({
           <div className="flex md:hidden items-center gap-2">
             {session?.user ? (
               <>
+                <Link
+                  href="/search"
+                  aria-label="Rechercher"
+                  className="rounded-lg p-2 hover:bg-white/5 transition-colors pressable"
+                >
+                  <Search className="h-5 w-5 text-[var(--os-muted)]" />
+                </Link>
                 <Link
                   href="/activity"
                   aria-label="Activité"
