@@ -1,18 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
 import { Heart, MessageCircle, Share2, Play, SendHorizonal, Bookmark, BookmarkCheck } from "lucide-react";
 import { MomentMedia } from "./moment-media";
-import { MomentAudioPlayer } from "@/components/audio/moment-audio-player";
 import { MomentOverflowMenu } from "./moment-overflow-menu";
-import { ShareMomentSheet } from "./share-moment-sheet";
 import { useHaptic } from "@/hooks/use-haptic";
 import { useDictionary } from "@/hooks/use-dictionary";
-import { ReactionPicker } from "./reaction-picker";
 import { LiveComments } from "./live-comments";
+
+const MomentAudioPlayer = dynamic(() => import("@/components/audio/moment-audio-player").then((m) => ({ default: m.MomentAudioPlayer })), { ssr: false });
+const ShareMomentSheet = dynamic(() => import("./share-moment-sheet").then((m) => ({ default: m.ShareMomentSheet })), { ssr: false });
+const ReactionPicker = dynamic(() => import("./reaction-picker").then((m) => ({ default: m.ReactionPicker })), { ssr: false });
 
 interface Author {
   id: string;
@@ -59,6 +61,7 @@ interface MomentItem {
 interface MomentCardProps {
   moment: MomentItem;
   userId?: string;
+  priority?: boolean;
   onLikeToggle: (_id: string, _liked: boolean) => void;
   onOpenComments: (_moment: MomentItem) => void;
   onDelete?: (_id: string) => void;
@@ -66,7 +69,7 @@ interface MomentCardProps {
   onHideAccount?: (_authorId: string) => void;
 }
 
-export function MomentCard({ moment, userId, onLikeToggle, onOpenComments, onDelete, onHide, onHideAccount }: MomentCardProps) {
+export function MomentCard({ moment, userId, priority, onLikeToggle, onOpenComments, onDelete, onHide, onHideAccount }: MomentCardProps) {
   const { addToast } = useToast();
   const [liked, setLiked] = useState(moment.viewerState.likedByMe);
   const [myReaction, setMyReaction] = useState(moment.viewerState.myReaction);
@@ -113,6 +116,7 @@ export function MomentCard({ moment, userId, onLikeToggle, onOpenComments, onDel
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !viewTrackedRef.current) {
+          clearTimeout(timer);
           timer = setTimeout(() => {
             viewTrackedRef.current = true;
             watchStartTimeRef.current = Date.now();
@@ -154,13 +158,12 @@ export function MomentCard({ moment, userId, onLikeToggle, onOpenComments, onDel
       if (percent >= threshold && !trackedThresholdsRef.current.has(threshold)) {
         trackedThresholdsRef.current.add(threshold);
         trackEvent("VIEW", { percent, watchMs });
-        
-        // Track complete view at 80%
-        if (percent >= 80 && !trackedThresholdsRef.current.has(80)) {
-          trackedThresholdsRef.current.add(80);
-          trackEvent("COMPLETE_VIEW", { percent, watchMs });
-        }
       }
+    }
+    // Track complete view at 80% (independent of threshold loop)
+    if (percent >= 80 && !trackedThresholdsRef.current.has(80)) {
+      trackedThresholdsRef.current.add(80);
+      trackEvent("COMPLETE_VIEW", { percent, watchMs });
     }
   }, [trackEvent]);
 
@@ -212,7 +215,7 @@ export function MomentCard({ moment, userId, onLikeToggle, onOpenComments, onDel
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        setReactionsCount(data.reactions?.length ?? reactionsCount);
+        setReactionsCount((prev) => data.reactions?.length ?? prev);
         onLikeToggle(moment.id, newLiked);
         trackEvent(newLiked ? "LIKE" : "UNLIKE");
       } else {
@@ -459,11 +462,13 @@ export function MomentCard({ moment, userId, onLikeToggle, onOpenComments, onDel
               type={moment.type}
               src={moment.mediaUrl}
               className="h-full w-full object-cover"
-              preload="metadata"
+              preload={priority ? "auto" : "metadata"}
               muted
               loop
               playsInline
               controls={false}
+              priority={priority}
+              fetchPriority={priority ? "high" : undefined}
             />
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 pointer-events-none" />
@@ -504,7 +509,9 @@ export function MomentCard({ moment, userId, onLikeToggle, onOpenComments, onDel
               type={moment.type}
               src={moment.mediaUrl}
               className="h-full w-full object-cover"
-              preload="metadata"
+              preload={priority ? "auto" : "metadata"}
+              priority={priority}
+              fetchPriority={priority ? "high" : undefined}
             />
             {showHeartAnim && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-heart-pop">

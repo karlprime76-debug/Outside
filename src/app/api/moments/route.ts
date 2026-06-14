@@ -60,6 +60,8 @@ export async function GET(req: Request) {
             viewerState: { likedByMe: false, myReaction: null, savedByMe: false, canDelete: false, canReport: true },
           })),
           nextCursor: moments.length === limit ? moments[moments.length - 1].id : null,
+        }, {
+          headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=120" },
         });
       }
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -103,7 +105,9 @@ export async function GET(req: Request) {
     );
 
     logPerfEnd(perfLabel);
-    return NextResponse.json({ moments, nextCursor });
+    return NextResponse.json({ moments, nextCursor }, {
+      headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+    });
   } catch (error) {
     logPerfEnd(perfLabel);
     logError("[MOMENT_ERROR]", "GET /api/moments failed", { error: String(error) });
@@ -170,19 +174,18 @@ export async function POST(req: Request) {
     }
 
     const expiresIn = formData.get("expiresIn") as string | null;
-    const momentFields = { caption, visibility, city, countryCode, planId, placeId, eventId, liveId, expiresIn };
+    const momentFields = { caption, visibility, city, countryCode, planId, placeId, eventId, liveId, expiresIn, audioTrackId };
     const parsed = createMomentSchema.safeParse(momentFields);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const { caption: parsedCaption, visibility: parsedVisibility, city: parsedCity, countryCode: parsedCountryCode, planId: parsedPlanId, placeId: parsedPlaceId, eventId: parsedEventId, liveId: parsedLiveId, expiresIn: parsedExpiresIn } = parsed.data;
+    const { caption: parsedCaption, visibility: parsedVisibility, city: parsedCity, countryCode: parsedCountryCode, planId: parsedPlanId, placeId: parsedPlaceId, eventId: parsedEventId, liveId: parsedLiveId, expiresIn: parsedExpiresIn, audioTrackId: parsedAudioTrackId } = parsed.data;
 
     // Compute expiresAt from expiresIn duration string
     let expiresAt: Date | undefined;
-    const expiresInValue = parsedExpiresIn ?? expiresIn;
-    if (expiresInValue) {
-      const match = expiresInValue.match(/^(\d+)([hd])$/);
+    if (parsedExpiresIn) {
+      const match = parsedExpiresIn.match(/^(\d+)([hd])$/);
       if (match) {
         const value = parseInt(match[1], 10);
         const unit = match[2];
@@ -269,7 +272,7 @@ export async function POST(req: Request) {
         placeId: parsedPlaceId,
         eventId: parsedEventId,
         liveId: parsedLiveId,
-        audioTrackId,
+        audioTrackId: parsedAudioTrackId,
         audioStartTime: isNaN(audioStartTime) ? 0 : audioStartTime,
         audioVolume: isNaN(audioVolume) ? 1 : Math.min(1, Math.max(0, audioVolume)),
         // Media editing metadata
@@ -291,11 +294,13 @@ export async function POST(req: Request) {
       attachHashtagsToMoment(moment.id, parsedCaption ?? null, parsedCity ?? null, parsedCountryCode ?? null).catch((err) => {
         console.error("[POST /api/moments] Background hashtag error:", err);
       });
+    }).catch((err) => {
+      console.error("[POST /api/moments] Hashtag module import error:", err);
     });
 
-    if (audioTrackId) {
+    if (parsedAudioTrackId) {
       await db.audioTrack.update({
-        where: { id: audioTrackId },
+        where: { id: parsedAudioTrackId },
         data: { usageCount: { increment: 1 } },
       }).catch((err) => {
         console.error("[POST /api/moments] Background task error:", err);
@@ -327,14 +332,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
 
 

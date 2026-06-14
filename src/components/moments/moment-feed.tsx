@@ -442,6 +442,7 @@ export function MomentFeed() {
                   key={moment.id}
                   moment={moment}
                   userId={userId}
+                  priority={index === 0}
                   onLikeToggle={handleLikeToggle}
                   onOpenComments={setCommentMoment}
                   onDelete={handleDelete}

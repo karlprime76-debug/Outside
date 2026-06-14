@@ -131,6 +131,7 @@ export const createMomentSchema = z.object({
   eventId: z.string().nullish(),
   liveId: z.string().nullish(),
   expiresIn: z.enum(["1h", "3h", "24h", "7d"]).nullish(),
+  audioTrackId: z.string().uuid().nullish(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

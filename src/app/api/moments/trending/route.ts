@@ -11,13 +11,13 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const city = searchParams.get("city");
     const countryCode = searchParams.get("countryCode");
-    const window = searchParams.get("window") || "24h";
+    const timeWindow = searchParams.get("window") || "24h";
     const limit = Math.min(parseInt(searchParams.get("limit") || "10"), 50);
 
     const blockedIds = await getUserBlockedIds(user.id);
 
     const now = new Date();
-    const windowStart = window === "7d"
+    const windowStart = timeWindow === "7d"
       ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
       : new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
       where: {
         visibility: "PUBLIC",
         authorId: { notIn: blockedIds },
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
         ...(city && { city }),
         ...(countryCode && { countryCode }),
         createdAt: { gte: windowStart },
@@ -124,7 +125,9 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ moments: momentsWithBadges });
+    return NextResponse.json({ moments: momentsWithBadges }, {
+      headers: { "Cache-Control": "public, max-age=120, stale-while-revalidate=300" },
+    });
   } catch (error) {
     console.error("[TRENDING]", error);
     return NextResponse.json({ error: "Erreur lors du chargement des tendances" }, { status: 500 });

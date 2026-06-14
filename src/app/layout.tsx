@@ -63,6 +63,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="preconnect" href="https://*.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://*.supabase.co" />
+      </head>
       <body className="min-h-full flex flex-col overflow-x-hidden">
         <ThemeMeta />
         <PwaRegister />

@@ -381,7 +381,7 @@ async function fetchCandidates(
         ],
       },
       { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
-      { createdAt: { gte: cutoff } },
+      { createdAt: { gte: since || cutoff } },
     ],
   };
 

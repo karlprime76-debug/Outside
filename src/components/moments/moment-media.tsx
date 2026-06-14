@@ -4,7 +4,7 @@ import React, { forwardRef, useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
 interface MomentMediaProps {
-  type: string; // "PHOTO" | "VIDEO" (string to align with existing types)
+  type: string;
   src: string;
   className?: string;
   muted?: boolean;
@@ -14,6 +14,8 @@ interface MomentMediaProps {
   controls?: boolean;
   videoStartTime?: number;
   videoEndTime?: number;
+  priority?: boolean;
+  fetchPriority?: "auto" | "high" | "low";
 }
 
 function normalizeMediaUrl(url: string): string {
@@ -33,7 +35,7 @@ function isVideoByExtension(url: string): boolean {
 }
 
 export const MomentMedia = forwardRef<HTMLVideoElement, MomentMediaProps>(function MomentMedia(
-  { type, src, className, muted = true, loop = true, playsInline = true, preload = "metadata", controls = true, videoStartTime, videoEndTime },
+  { type, src, className, muted = true, loop = true, playsInline = true, preload = "metadata", controls = true, videoStartTime, videoEndTime, priority, fetchPriority },
   ref
 ) {
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +114,9 @@ export const MomentMedia = forwardRef<HTMLVideoElement, MomentMediaProps>(functi
         fill
         className={className || "object-cover"}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        loading="lazy"
+        loading={priority ? undefined : "lazy"}
+        priority={priority}
+        fetchPriority={fetchPriority}
         onError={() => setError("error")}
       />
     </div>

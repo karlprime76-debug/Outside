@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useRef, ChangeEvent, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -13,13 +14,14 @@ import {
   CheckCircle2, AlertCircle, Camera, Film,
 } from "lucide-react";
 import { AUDIO_RIGHTS_NOTICE } from "@/lib/audio";
-import { AudioPicker } from "@/components/audio/audio-picker";
-import { ImageCropEditor } from "@/components/media/image-crop-editor";
-import { VideoTrimEditor } from "@/components/media/video-trim-editor";
 import { compressImage, shouldCompressImage } from "@/lib/media/compress-image";
 import { retryAsync, UploadProgress } from "@/lib/upload/retry-upload";
-import { UploadProgressComponent } from "@/components/upload/upload-progress";
-import { MomentPreview } from "@/components/moments/moment-preview";
+
+const AudioPicker = dynamic(() => import("@/components/audio/audio-picker").then((m) => ({ default: m.AudioPicker })), { ssr: false });
+const ImageCropEditor = dynamic(() => import("@/components/media/image-crop-editor").then((m) => ({ default: m.ImageCropEditor })), { ssr: false });
+const VideoTrimEditor = dynamic(() => import("@/components/media/video-trim-editor").then((m) => ({ default: m.VideoTrimEditor })), { ssr: false });
+const UploadProgressComponent = dynamic(() => import("@/components/upload/upload-progress").then((m) => ({ default: m.UploadProgressComponent })), { ssr: false });
+const MomentPreview = dynamic(() => import("@/components/moments/moment-preview").then((m) => ({ default: m.MomentPreview })), { ssr: false });
 
 type Step = "select" | "edit" | "preview" | "publish";
 
