@@ -51,11 +51,11 @@ export function HomeHeader({ activeCity }: HomeHeaderProps) {
   });
 
   return (
-    <div className="border-b border-[var(--os-card-border)] bg-[var(--os-bg)]">
-      <div className="max-w-5xl mx-auto px-4 py-3">
+    <div className="sticky top-0 z-40 bg-[var(--os-bg)] border-b border-[var(--os-card-border)] md:relative md:top-auto md:z-auto">
+      <div className="max-w-5xl mx-auto px-4 py-4 md:py-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link href="/home" className="flex items-center justify-center shrink-0">
-            <AppIcon size={userImage ? 36 : 32} />
+            <AppIcon size={userImage ? 40 : 36} />
           </Link>
           <div className="min-w-0 flex-1">
             {userName && (

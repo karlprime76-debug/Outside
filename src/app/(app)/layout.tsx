@@ -52,7 +52,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-col min-h-screen bg-[var(--os-bg)]">
-      {/* Top header */}
+      {/* Top header — desktop only */}
       <header className="sticky top-0 z-50 safe-header bg-[var(--os-bg)]/75 backdrop-blur-2xl border-b border-[var(--os-card-border)] before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-[rgba(249,115,22,0.08)] before:to-transparent">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link
@@ -119,57 +119,6 @@ export default async function AppLayout({
               </Link>
             )}
           </nav>
-
-          {/* Mobile: OUTSIDE logo + notifications + avatar or login */}
-          <div className="flex md:hidden items-center w-full justify-between">
-            <Link
-              href="/home"
-              className="text-lg font-extrabold tracking-tight gradient-text"
-            >
-              OUTSIDE
-            </Link>
-            {session?.user ? (
-              <div className="flex items-center gap-1.5">
-                <Link
-                  href="/search"
-                  aria-label="Rechercher"
-                  className="rounded-lg p-2 hover:bg-white/[0.04] transition-all duration-200 pressable"
-                >
-                  <Search className="h-5 w-5 text-[var(--os-muted)]" />
-                </Link>
-                <Link
-                  href="/activity"
-                  aria-label="Activité"
-                  className="relative rounded-lg p-2 hover:bg-white/[0.04] transition-all duration-200 pressable"
-                >
-                  <Bell className="h-5 w-5 text-[var(--os-muted)]" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-neon-orange ring-[3px] ring-[var(--os-bg)] glow-pulse" />
-                  )}
-                </Link>
-                <Link
-                  href="/dm"
-                  aria-label={dmUnread > 0 ? `Messages non lus: ${dmUnread}` : "Messages"}
-                  className="relative rounded-lg p-2 hover:bg-white/[0.04] transition-all duration-200 pressable"
-                >
-                  <MessageSquare className="h-5 w-5 text-[var(--os-muted)]" />
-                  {dmUnread > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-neon-orange ring-[3px] ring-[var(--os-bg)] glow-pulse" />
-                  )}
-                </Link>
-                <Link href="/profile" className="pressable">
-                  <Avatar src={session.user.image} name={session.user.name} size="sm" ring />
-                </Link>
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="text-sm font-semibold bg-gradient-to-r from-neon-orange to-neon-rose bg-clip-text text-transparent"
-              >
-                Se connecter
-              </Link>
-            )}
-          </div>
         </div>
       </header>
 
