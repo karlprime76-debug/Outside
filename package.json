@@ -19,6 +19,7 @@
     "db:studio": "dotenv -e .env.local -- prisma studio",
     "db:seed": "dotenv -e .env.local -- tsx prisma/seed.ts",
     "db:seed:demo": "dotenv -e .env.local -- tsx prisma/seed-demo.ts",
+    "db:seed:audio": "dotenv -e .env.local -- tsx prisma/seed-audio.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

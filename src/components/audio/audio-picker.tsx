@@ -15,6 +15,7 @@ interface AudioTrackItem {
   usageCount: number;
   isOfficial: boolean;
   isOriginal: boolean;
+  isFromPixabay?: boolean;
 }
 
 interface AudioPickerProps {
@@ -46,6 +47,7 @@ export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioP
         const params = new URLSearchParams();
         if (search) params.set("q", search);
         params.set("limit", "20");
+        if (search && search.length >= 2) params.set("source", "pixabay");
         const res = await fetch(`/api/audio/tracks?${params.toString()}`);
         const data = await res.json();
         if (res.ok) setTracks(data.tracks || []);
@@ -245,7 +247,11 @@ export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioP
                         {track.artistName || "Artiste inconnu"} · {formatDuration(track.duration)} · {track.usageCount} utilisations
                       </p>
                     </div>
-                    {track.isOfficial && (
+                    {track.isFromPixabay ? (
+                      <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-500">
+                        PIXABAY
+                      </span>
+                    ) : track.isOfficial && (
                       <span className="rounded-full bg-outside-500/10 px-2 py-0.5 text-[10px] font-bold text-outside-500">
                         OFFICIEL
                       </span>
