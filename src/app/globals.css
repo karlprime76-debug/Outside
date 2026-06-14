@@ -1199,6 +1199,54 @@
   }
 
   /* ================================================
+     --- Light mode overrides ---
+     ================================================ */
+
+  html:not(.dark) {
+    --os-bg: #F5F5F0;
+    --os-bg-secondary: #EBEBE6;
+    --os-fg: #1A1A1E;
+    --os-fg-secondary: #5A5A66;
+    --os-card: #FFFFFF;
+    --os-card-hover: #EDEDE8;
+    --os-card-border: rgba(0, 0, 0, 0.06);
+    --os-card-border-hover: rgba(0, 0, 0, 0.10);
+    --os-muted: #7A7A8A;
+    --os-muted-light: #5A5A66;
+
+    --os-glass: rgba(255, 255, 255, 0.85);
+    --os-glass-border: rgba(0, 0, 0, 0.06);
+    --os-glass-shine: rgba(255, 255, 255, 0.5);
+
+    --os-shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+    --os-shadow-glow: 0 0 24px rgba(249, 115, 22, 0.12), 0 0 48px rgba(244, 63, 94, 0.06);
+    --os-shadow-elevated: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.04), 0 20px 40px rgba(0, 0, 0, 0.06);
+  }
+
+  html:not(.dark) body::before {
+    opacity: 0.15;
+  }
+
+  html:not(.dark) body::after {
+    opacity: 0.1;
+  }
+
+  html:not(.dark) .os-card {
+    background: #FFFFFF;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  html:not(.dark) .os-card-glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+  }
+
+  html:not(.dark) .glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+  }
+
+  /* ================================================
      --- Focus glow for inputs ---
      ================================================ */
 

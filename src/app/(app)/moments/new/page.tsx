@@ -9,23 +9,20 @@ import { useToast } from "@/components/ui/toast";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { useMomentDraft } from "@/hooks/use-moment-draft";
 import {
-  Image as ImageIcon, Upload, MapPin, ArrowLeft,
-  Save, Volume2, Music, Trash2, Eye, FileImage,
+  Image as ImageIcon, Upload, MapPin,
+  Music, Trash2,
   CheckCircle2, AlertCircle, Camera, Film,
+  ChevronLeft,
+  SlidersHorizontal,
 } from "lucide-react";
-import { AUDIO_RIGHTS_NOTICE } from "@/lib/audio";
 import { compressImage, shouldCompressImage } from "@/lib/media/compress-image";
-import { retryAsync, UploadProgress } from "@/lib/upload/retry-upload";
 
 const AudioPicker = dynamic(() => import("@/components/audio/audio-picker").then((m) => ({ default: m.AudioPicker })), { ssr: false });
 const ImageCropEditor = dynamic(() => import("@/components/media/image-crop-editor").then((m) => ({ default: m.ImageCropEditor })), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3 text-white/40">
-        <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-outside-500 animate-spin" />
-        <span className="text-sm">Préparation de l&apos;éditeur...</span>
-      </div>
+      <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-outside-500 animate-spin" />
     </div>
   ),
 });
@@ -33,17 +30,19 @@ const VideoTrimEditor = dynamic(() => import("@/components/media/video-trim-edit
   ssr: false,
   loading: () => (
     <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3 text-white/40">
-        <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-outside-500 animate-spin" />
-        <span className="text-sm">Préparation de l&apos;éditeur...</span>
-      </div>
+      <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-outside-500 animate-spin" />
     </div>
   ),
 });
 const UploadProgressComponent = dynamic(() => import("@/components/upload/upload-progress").then((m) => ({ default: m.UploadProgressComponent })), { ssr: false });
-const MomentPreview = dynamic(() => import("@/components/moments/moment-preview").then((m) => ({ default: m.MomentPreview })), { ssr: false });
 
-type Step = "select" | "edit" | "preview" | "publish";
+type Step = "select" | "edit" | "details" | "publish";
+
+interface UploadState {
+  status: "preparing" | "init" | "uploading" | "creating" | "completed" | "error";
+  percentage: number;
+  message?: string;
+}
 
 export default function NewMomentPage() {
   const router = useRouter();
@@ -53,39 +52,29 @@ export default function NewMomentPage() {
   const [step, setStep] = useState<Step>("select");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [isVerticalVideo, setIsVerticalVideo] = useState(false);
-  const [publishAsClip, setPublishAsClip] = useState(false);
   const [caption, setCaption] = useState("");
   const [visibility, setVisibility] = useState("PUBLIC");
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
+  const [uploadState, setUploadState] = useState<UploadState | null>(null);
   const [showDraftPrompt, setShowDraftPrompt] = useState(false);
   const [audioTrack, setAudioTrack] = useState<{ id: string; title: string; artistName: string | null } | null>(null);
   const [audioVolume, setAudioVolume] = useState(1);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [isOriginalAudio, setIsOriginalAudio] = useState(false);
-  const [user, setUser] = useState<{ name: string | null; image: string | null; username: string | null } | null>(null);
   const [mediaType, setMediaType] = useState<"PHOTO" | "VIDEO">("PHOTO");
-  const [processedVideoMeta, setProcessedVideoMeta] = useState<{
-    startTime: number;
-    endTime: number;
-    duration: number;
-    width: number;
-    height: number;
-  } | null>(null);
 
   const [showImageEditor, setShowImageEditor] = useState(false);
   const [showVideoEditor, setShowVideoEditor] = useState(false);
-  const [mediaMetadata, setMediaMetadata] = useState<{
-    mediaWidth?: number;
-    mediaHeight?: number;
-    mediaDuration?: number;
-    mediaCrop?: Record<string, unknown>;
-    videoStartTime?: number;
-    videoEndTime?: number;
-    mediaAspectRatio?: string;
-  }>({});
+  const [mediaMetadata, setMediaMetadata] = useState({
+    mediaWidth: undefined as number | undefined,
+    mediaHeight: undefined as number | undefined,
+    mediaDuration: undefined as number | undefined,
+    mediaCrop: undefined as Record<string, unknown> | undefined,
+    videoStartTime: undefined as number | undefined,
+    videoEndTime: undefined as number | undefined,
+    mediaAspectRatio: undefined as string | undefined,
+  });
 
   const { data: session } = useSession();
   const draft = useMomentDraft(session?.user?.id);
@@ -95,9 +84,6 @@ export default function NewMomentPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         const u = data?.user;
-        if (u) {
-          setUser({ name: u.name, image: u.image, username: u.username });
-        }
         const fallbackCity = u?.activeCity?.name || u?.homeCity?.name || "";
         const existing = draft.restoreDraft();
         if (existing) {
@@ -105,7 +91,6 @@ export default function NewMomentPage() {
           setCity(existing.city || fallbackCity);
           setCaption(existing.caption || "");
           setVisibility(existing.visibility || "PUBLIC");
-          setPublishAsClip(existing.publishAsClip || false);
         } else {
           setCity(fallbackCity);
         }
@@ -132,22 +117,10 @@ export default function NewMomentPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (caption || city || visibility !== "PUBLIC" || publishAsClip) {
-      draft.saveDraft({ caption, visibility, city, publishAsClip });
+    if (caption || city || visibility !== "PUBLIC") {
+      draft.saveDraft({ caption, visibility, city, publishAsClip: false });
     }
-  }, [caption, visibility, city, publishAsClip, draft]);
-
-  const resetMedia = useCallback(() => {
-    if (preview) URL.revokeObjectURL(preview);
-    setFile(null);
-    setPreview(null);
-    setIsVerticalVideo(false);
-    setPublishAsClip(false);
-    setMediaMetadata({});
-    setProcessedVideoMeta(null);
-    setMediaType("PHOTO");
-    setStep("select");
-  }, [preview]);
+  }, [caption, visibility, city, draft]);
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0];
@@ -179,22 +152,15 @@ export default function NewMomentPage() {
         v.preload = "metadata";
         v.src = url;
         v.onloadedmetadata = () => {
-          const vertical = v.videoHeight > v.videoWidth;
-          setIsVerticalVideo(vertical);
-          setPublishAsClip(vertical);
           setShowVideoEditor(true);
           setStep("edit");
         };
       } catch {
-        setIsVerticalVideo(false);
-        setPublishAsClip(false);
         setShowVideoEditor(true);
         setStep("edit");
       }
     } else {
       setMediaType("PHOTO");
-      setIsVerticalVideo(false);
-      setPublishAsClip(false);
       setShowImageEditor(true);
       setStep("edit");
     }
@@ -202,20 +168,21 @@ export default function NewMomentPage() {
 
   const handleImageCropConfirm = (croppedFile: File) => {
     setFile(croppedFile);
+    if (preview) URL.revokeObjectURL(preview);
     const url = URL.createObjectURL(croppedFile);
     setPreview(url);
     setShowImageEditor(false);
     const img = new Image();
     img.onload = () => {
-      setMediaMetadata({
-        ...mediaMetadata,
+      setMediaMetadata((prev) => ({
+        ...prev,
         mediaWidth: img.width,
         mediaHeight: img.height,
         mediaAspectRatio: `${img.width}:${img.height}`,
-      });
+      }));
     };
     img.src = url;
-    setStep("preview");
+    setStep("details");
   };
 
   const handleVideoTrimConfirm = (result: {
@@ -227,27 +194,20 @@ export default function NewMomentPage() {
     height: number;
   }) => {
     setFile(result.processedFile);
-    const url = URL.createObjectURL(result.processedFile);
     if (preview) URL.revokeObjectURL(preview);
+    const url = URL.createObjectURL(result.processedFile);
     setPreview(url);
-    setProcessedVideoMeta({
-      startTime: result.startTime,
-      endTime: result.endTime,
-      duration: result.duration,
-      width: result.width,
-      height: result.height,
-    });
-    setMediaMetadata({
-      ...mediaMetadata,
+    setMediaMetadata((prev) => ({
+      ...prev,
       videoStartTime: result.startTime,
       videoEndTime: result.endTime,
       mediaDuration: result.duration,
       mediaWidth: result.width,
       mediaHeight: result.height,
       mediaAspectRatio: `${result.width}:${result.height}`,
-    });
+    }));
     setShowVideoEditor(false);
-    setStep("preview");
+    setStep("details");
   };
 
   function handleImageEditCancel() {
@@ -264,6 +224,35 @@ export default function NewMomentPage() {
     setStep("select");
   }
 
+  async function uploadFile(
+    signedUrl: string,
+    fileToUpload: File,
+    onProgress: (pct: number) => void
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", signedUrl, true);
+      xhr.setRequestHeader("Content-Type", fileToUpload.type);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Upload failed: ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Upload network error"));
+      xhr.send(fileToUpload);
+    });
+  }
+
   async function submit() {
     if (!file) return;
 
@@ -275,12 +264,12 @@ export default function NewMomentPage() {
 
     setLoading(true);
     setStep("publish");
-    setUploadProgress({ status: "preparing", percentage: 0 });
+    setUploadState({ status: "preparing", percentage: 0 });
 
     try {
       let fileToUpload = file;
       if (shouldCompressImage(file) && mediaType === "PHOTO") {
-        setUploadProgress({ status: "compressing", percentage: 10, message: "Compression de l'image..." });
+        setUploadState({ status: "preparing", percentage: 5, message: "Compression de l'image..." });
         try {
           const result = await compressImage(file);
           fileToUpload = result.compressedFile;
@@ -289,52 +278,66 @@ export default function NewMomentPage() {
         }
       }
 
-      setUploadProgress({ status: "uploading", percentage: 30, message: "Envoi en cours..." });
-
-      const uploadWithProgress = async () => {
-        const formData = new FormData();
-        formData.append("file", fileToUpload);
-        if (caption.trim()) formData.append("caption", caption.trim());
-        formData.append("visibility", visibility);
-        if (city.trim()) formData.append("city", city.trim());
-        if (audioTrack) {
-          formData.append("audioTrackId", audioTrack.id);
-          formData.append("audioStartTime", "0");
-          formData.append("audioVolume", String(audioVolume));
-        }
-        if (mediaMetadata.mediaWidth) formData.append("mediaWidth", String(mediaMetadata.mediaWidth));
-        if (mediaMetadata.mediaHeight) formData.append("mediaHeight", String(mediaMetadata.mediaHeight));
-        if (mediaMetadata.mediaDuration) formData.append("mediaDuration", String(mediaMetadata.mediaDuration));
-        if (mediaMetadata.mediaCrop) formData.append("mediaCrop", JSON.stringify(mediaMetadata.mediaCrop));
-        if (mediaMetadata.videoStartTime) formData.append("videoStartTime", String(mediaMetadata.videoStartTime));
-        if (mediaMetadata.videoEndTime) formData.append("videoEndTime", String(mediaMetadata.videoEndTime));
-        if (mediaMetadata.mediaAspectRatio) formData.append("mediaAspectRatio", mediaMetadata.mediaAspectRatio);
-
-        const res = await fetch("/api/moments", { method: "POST", body: formData });
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || "Erreur lors de la publication");
-        }
-        return res;
-      };
-
-      await retryAsync(uploadWithProgress, {
-        maxAttempts: 3,
-        baseDelay: 1000,
-        onRetry: (attempt) => {
-          addToast(`Échec de l'envoi. Nouvelle tentative (${attempt}/3)...`, "info");
-          setUploadProgress({
-            status: "uploading",
-            percentage: 30 + attempt * 10,
-            message: `Nouvelle tentative ${attempt}/3...`,
-          });
-        },
+      // Step 1: Init upload — get presigned URL
+      setUploadState({ status: "init", percentage: 10, message: "Préparation de l'upload..." });
+      const initRes = await fetch("/api/moments/init-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileType: fileToUpload.type }),
       });
 
-      setUploadProgress({ status: "processing", percentage: 90, message: "Traitement..." });
+      if (!initRes.ok) {
+        const err = await initRes.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur d'initialisation");
+      }
+
+      const { signedUrl, filePath, publicUrl } = await initRes.json();
+
+      // Step 2: Upload file directly to Supabase via presigned URL
+      setUploadState({ status: "uploading", percentage: 15, message: "Envoi en cours..." });
+
+      await uploadFile(signedUrl, fileToUpload, (pct) => {
+        const mappedPct = 15 + Math.round(pct * 0.6);
+        setUploadState((prev) => ({
+          ...prev,
+          status: "uploading" as const,
+          percentage: mappedPct,
+          message: `Envoi en cours... ${pct}%`,
+        }));
+      });
+
+      // Step 3: Create moment record
+      setUploadState({ status: "creating", percentage: 85, message: "Finalisation..." });
+
+      const createRes = await fetch("/api/moments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filePath,
+          publicUrl,
+          fileType: fileToUpload.type,
+          caption: caption.trim() || null,
+          visibility,
+          city: city.trim() || null,
+          audioTrackId: audioTrack?.id || null,
+          audioVolume,
+          mediaWidth: mediaMetadata.mediaWidth,
+          mediaHeight: mediaMetadata.mediaHeight,
+          mediaDuration: mediaMetadata.mediaDuration,
+          mediaCrop: mediaMetadata.mediaCrop ? JSON.stringify(mediaMetadata.mediaCrop) : null,
+          videoStartTime: mediaMetadata.videoStartTime,
+          videoEndTime: mediaMetadata.videoEndTime,
+          mediaAspectRatio: mediaMetadata.mediaAspectRatio,
+        }),
+      });
+
+      if (!createRes.ok) {
+        const err = await createRes.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de la création du moment");
+      }
 
       draft.clearDraft();
-      setUploadProgress({ status: "completed", percentage: 100 });
+      setUploadState({ status: "completed", percentage: 100 });
       addToast("Moment publié !", "success");
 
       setTimeout(() => {
@@ -344,216 +347,187 @@ export default function NewMomentPage() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Erreur réseau";
       addToast(errorMessage, "error");
-      setUploadProgress({ status: "error", percentage: 0, message: errorMessage });
+      setUploadState({ status: "error", percentage: 0, message: errorMessage });
       setLoading(false);
     }
   }
 
-  const steps = [
-    { key: "select", label: "Sélection", icon: FileImage },
-    { key: "edit", label: "Édition", icon: Camera },
-    { key: "preview", label: "Aperçu", icon: Eye },
-    { key: "publish", label: "Publication", icon: Upload },
-  ] as const;
-
-  const currentStepIndex = steps.findIndex((s) => s.key === step);
+  const goToEdit = useCallback(() => {
+    if (preview) {
+      if (mediaType === "VIDEO") {
+        setShowVideoEditor(true);
+      } else {
+        setShowImageEditor(true);
+      }
+      setStep("edit");
+    }
+  }, [preview, mediaType]);
 
   return (
-    <AnimatedPage className="p-4 max-w-xl mx-auto space-y-6 pb-24 md:pb-4">
-      <div className="flex items-center justify-between">
-        <Link
-          href="/moments"
-          className="inline-flex items-center gap-1 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour
-        </Link>
-
-        {step !== "select" && step !== "publish" && (
-          <button
-            onClick={() => {
-              if (step === "preview") {
-                setShowVideoEditor(true);
-                setStep("edit");
-              } else if (step === "edit") {
-                resetMedia();
-              }
-            }}
-            className="text-xs font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
+    <div className="min-h-screen bg-[var(--os-bg)]">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-[var(--os-bg)] border-b border-[var(--os-card-border)]">
+        <div className="flex items-center justify-between px-4 h-14 max-w-4xl mx-auto">
+          <Link
+            href="/moments"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors"
           >
-            Modifier
-          </button>
-        )}
-      </div>
+            <ChevronLeft className="h-5 w-5" />
+            Retour
+          </Link>
 
-      <div>
-        <h1 className="text-2xl font-black text-[var(--os-fg)] flex items-center gap-3">
-          <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
-            <ImageIcon className="h-5 w-5 text-white" />
-          </div>
-          {step === "select" && "Nouveau moment"}
-          {step === "edit" && "Éditer le média"}
-          {step === "preview" && "Aperçu"}
-          {step === "publish" && "Publication"}
-        </h1>
-      </div>
+          <h1 className="text-base font-extrabold text-[var(--os-fg)]">
+            {step === "select" && "Nouveau moment"}
+            {step === "edit" && "Éditer le média"}
+            {step === "details" && "Détails"}
+            {step === "publish" && "Publication"}
+          </h1>
 
-      <div className="flex items-center gap-1.5">
-        {steps.map((s, i) => {
-          const isActive = i === currentStepIndex;
-          const isDone = i < currentStepIndex;
-          const Icon = s.icon;
-          return (
-            <div key={s.key} className="flex items-center gap-1.5 flex-1">
-              <div
-                className={`flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold transition-all ${
-                  isActive
-                    ? "bg-outside-500 text-white shadow-glow"
-                    : isDone
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-[var(--os-card)] text-[var(--os-muted)]"
-                }`}
+          <div className="w-20" />
+        </div>
+      </header>
+
+      <AnimatedPage className="max-w-4xl mx-auto pb-24 md:pb-8">
+        {/* Draft prompt */}
+        {showDraftPrompt && step === "select" && (
+          <div className="mx-4 mb-4 mt-4 rounded-2xl border border-sky-200 bg-sky-50 p-4 space-y-3 dark:border-sky-900 dark:bg-sky-950/20">
+            <p className="text-sm font-bold text-sky-800 dark:text-sky-300">
+              Reprendre ton brouillon ?
+            </p>
+            <p className="text-xs text-sky-600 dark:text-sky-400">
+              Tu avais commencé un Moment sans le publier.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDraftPrompt(false)}
+                className="rounded-lg bg-sky-600 px-4 py-2 text-xs font-bold text-white hover:bg-sky-700 transition-colors"
               >
-                {isDone ? (
-                  <CheckCircle2 className="h-3 w-3" />
-                ) : (
-                  <Icon className="h-3 w-3" />
-                )}
-                <span className="hidden sm:inline">{s.label}</span>
+                Reprendre
+              </button>
+              <button
+                onClick={() => {
+                  draft.clearDraft();
+                  setShowDraftPrompt(false);
+                  setCaption("");
+                  setVisibility("PUBLIC");
+                  setCity("");
+                }}
+                className="rounded-lg border border-sky-300 px-4 py-2 text-xs font-bold text-sky-700 hover:bg-sky-100 transition-colors dark:border-sky-700 dark:text-sky-300 dark:hover:bg-sky-900/30"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step: Select file */}
+        {step === "select" && !file && (
+          <div className="p-4">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-5 rounded-3xl border-2 border-dashed border-[var(--os-card-border)] bg-[var(--os-bg)] py-24 px-8 cursor-pointer hover:border-outside-400 hover:bg-outside-500/[0.02] transition-all group"
+            >
+              <div className="rounded-full bg-gradient-to-br from-outside-500/15 to-accent-500/15 p-6 group-hover:scale-110 transition-transform">
+                <Camera className="h-14 w-14 text-outside-400" />
               </div>
-              {i < steps.length - 1 && (
-                <div
-                  className={`h-px flex-1 ${
-                    i < currentStepIndex ? "bg-green-500/50" : "bg-[var(--os-card-border)]"
-                  }`}
+              <div className="text-center">
+                <p className="text-xl font-extrabold text-[var(--os-fg)]">
+                  Ajoute une photo ou une vidéo
+                </p>
+                <p className="text-sm text-[var(--os-muted)] mt-1">
+                  Choisis un média pour immortaliser ce moment
+                </p>
+              </div>
+              <div className="flex gap-3 mt-2">
+                <div className="flex items-center gap-1.5 rounded-full bg-outside-500/10 px-4 py-2 text-xs font-bold text-outside-400">
+                  <ImageIcon className="h-4 w-4" />
+                  JPG · PNG · WebP
+                </div>
+                <div className="flex items-center gap-1.5 rounded-full bg-accent-500/10 px-4 py-2 text-xs font-bold text-accent-400">
+                  <Film className="h-4 w-4" />
+                  MP4 · WebM
+                </div>
+              </div>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+        )}
+
+        {/* Step: Details + Preview */}
+        {step === "details" && file && preview && (
+          <div className="p-4 space-y-5 animate-fade-in">
+            {/* Media preview — large, immersive */}
+            <div className="relative rounded-2xl overflow-hidden bg-black/5 dark:bg-white/5 max-h-[60vh] flex items-center justify-center">
+              {mediaType === "VIDEO" ? (
+                <video
+                  src={preview}
+                  className="max-w-full max-h-[60vh] object-contain"
+                  controls={false}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              ) : (
+                <img
+                  src={preview}
+                  alt="Aperçu"
+                  className="max-w-full max-h-[60vh] object-contain"
                 />
               )}
+              <button
+                onClick={goToEdit}
+                className="absolute top-3 right-3 rounded-full bg-black/50 p-2.5 text-white hover:bg-black/70 transition-colors"
+                aria-label="Modifier le média"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </button>
             </div>
-          );
-        })}
-      </div>
 
-      {showDraftPrompt && step === "select" && (
-        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 space-y-3 dark:border-sky-900 dark:bg-sky-950/20">
-          <p className="text-sm font-bold text-sky-800 dark:text-sky-300">
-            Reprendre ton brouillon ?
-          </p>
-          <p className="text-xs text-sky-600 dark:text-sky-400">
-            Tu avais commencé un Moment sans le publier.
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowDraftPrompt(false)}
-              className="rounded-lg bg-sky-600 px-4 py-2 text-xs font-bold text-white hover:bg-sky-700 transition-colors"
-            >
-              Reprendre
-            </button>
-            <button
-              onClick={() => {
-                draft.clearDraft();
-                setShowDraftPrompt(false);
-                setCaption("");
-                setVisibility("PUBLIC");
-                setPublishAsClip(false);
-                setCity("");
-              }}
-              className="rounded-lg border border-sky-300 px-4 py-2 text-xs font-bold text-sky-700 hover:bg-sky-100 transition-colors dark:border-sky-700 dark:text-sky-300 dark:hover:bg-sky-900/30"
-            >
-              Supprimer
-            </button>
-          </div>
-        </div>
-      )}
-
-      {draft.draft && !showDraftPrompt && !file && step === "select" && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-start gap-2 dark:border-amber-900 dark:bg-amber-950/20">
-          <MapPin className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-          <p className="text-xs text-amber-700 dark:text-amber-400">
-            Ajoute à nouveau ton média pour publier ce brouillon.
-          </p>
-        </div>
-      )}
-
-      {draft.savedAt && !showDraftPrompt && step === "select" && (
-        <div className="flex items-center gap-1.5 text-[10px] text-[var(--os-muted)] animate-fade-in">
-          <Save className="h-3 w-3" />
-          <span>Brouillon enregistré</span>
-        </div>
-      )}
-
-      {step === "select" && !file && (
-        <>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-[var(--os-card-border)] bg-[var(--os-bg)] p-16 cursor-pointer hover:border-outside-300 transition-colors group"
-          >
-            <div className="rounded-2xl bg-gradient-to-br from-outside-500/10 to-accent-500/10 p-5 group-hover:scale-110 transition-transform">
-              <Camera className="h-10 w-10 text-outside-400" />
-            </div>
-            <div className="text-center">
-              <p className="text-base font-bold text-[var(--os-fg)]">
-                Ajoute une photo ou une vidéo
-              </p>
-              <p className="text-sm text-[var(--os-muted)] mt-1">
-                Photo max 5 Mo · Vidéo max 50 Mo
-              </p>
-            </div>
-            <div className="flex gap-3 mt-2">
-              <div className="flex items-center gap-1.5 rounded-full bg-outside-500/10 px-3 py-1.5 text-[11px] font-bold text-outside-400">
-                <ImageIcon className="h-3.5 w-3.5" />
-                JPG · PNG · WebP
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-accent-500/10 px-3 py-1.5 text-[11px] font-bold text-accent-400">
-                <Film className="h-3.5 w-3.5" />
-                MP4 · WebM
-              </div>
-            </div>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </>
-      )}
-
-      {step === "preview" && file && preview && user && (
-        <div className="space-y-4 animate-fade-in">
-          <MomentPreview
-            mediaUrl={preview}
-            type={mediaType}
-            caption={caption}
-            city={city}
-            visibility={visibility}
-            author={user}
-            videoStartTime={mediaMetadata.videoStartTime}
-            videoEndTime={mediaMetadata.videoEndTime}
-          />
-
-          <div className="rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 space-y-4">
+            {/* Caption */}
             <div>
-              <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Légende</label>
+              <label className="block text-xs font-bold text-[var(--os-muted)] mb-1.5">
+                Légende
+              </label>
               <textarea
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 rows={2}
                 maxLength={160}
-                className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] p-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500 resize-none"
+                className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-3.5 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500 resize-none"
                 placeholder="Décris ce moment..."
               />
-              <p className="text-[10px] text-[var(--os-muted)] text-right">{caption.length}/160</p>
+              <p className="text-[10px] text-[var(--os-muted)] text-right mt-1">{caption.length}/160</p>
             </div>
 
-            <div className="flex gap-2">
+            {/* City + Visibility row */}
+            <div className="flex gap-3">
               <div className="flex-1">
-                <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Visibilité</label>
+                <label className="block text-xs font-bold text-[var(--os-muted)] mb-1.5 flex items-center gap-1">
+                  <MapPin className="h-3 w-3" /> Ville
+                </label>
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Paris, Lyon..."
+                  className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-3.5 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-bold text-[var(--os-muted)] mb-1.5">
+                  Visibilité
+                </label>
                 <select
                   value={visibility}
                   onChange={(e) => setVisibility(e.target.value)}
-                  className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] p-3 text-sm text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
+                  className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-3.5 text-sm text-[var(--os-fg)] focus:outline-none focus:ring-2 focus:ring-outside-500"
                 >
                   <option value="PUBLIC">Public</option>
                   <option value="FRIENDS">Amis uniquement</option>
@@ -561,52 +535,19 @@ export default function NewMomentPage() {
                   <option value="PRIVATE">Privé</option>
                 </select>
               </div>
-              <div className="flex-1">
-                <label className="block text-xs font-bold text-[var(--os-muted)] mb-1 flex items-center gap-1">
-                  <MapPin className="h-3 w-3" /> Ville
-                </label>
-                <input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="Paris, Lyon..."
-                  className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] p-3 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500"
-                />
-              </div>
             </div>
 
-            {file?.type.startsWith("video/") && (
-              <div className="flex items-center justify-between rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] p-3">
-                <div>
-                  <p className="text-sm font-bold text-[var(--os-fg)]">Publier comme clip</p>
-                  <p className="text-xs text-[var(--os-muted)]">
-                    {isVerticalVideo ? "Vidéo verticale" : "Vidéo classique"}
-                    {processedVideoMeta && ` · ${processedVideoMeta.duration}s · ${processedVideoMeta.width}x${processedVideoMeta.height}`}
-                  </p>
-                </div>
-                <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={publishAsClip}
-                    onChange={(e) => setPublishAsClip(e.target.checked)}
-                    className="h-4 w-4 accent-outside-500"
-                  />
-                </label>
-              </div>
-            )}
-
-            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
-              <Volume2 className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-              <p className="text-xs text-amber-700 dark:text-amber-400">{AUDIO_RIGHTS_NOTICE}</p>
-            </div>
-
+            {/* Audio */}
             <div>
-              <label className="block text-xs font-bold text-[var(--os-muted)] mb-1">Musique</label>
+              <label className="block text-xs font-bold text-[var(--os-muted)] mb-1.5">
+                Musique
+              </label>
               {!audioTrack ? (
                 <button
                   onClick={() => setPickerOpen(true)}
-                  className="w-full flex items-center gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] px-3 py-3 text-left hover:bg-[var(--os-card)] transition-colors active:scale-[0.98]"
+                  className="w-full flex items-center gap-3 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-3.5 py-3 text-left hover:bg-[var(--os-card-hover)] transition-colors active:scale-[0.98]"
                 >
-                  <div className="rounded-full bg-outside-500/10 p-2">
+                  <div className="rounded-full bg-outside-500/10 p-2.5">
                     <Music className="h-4 w-4 text-outside-500" />
                   </div>
                   <div>
@@ -616,14 +557,14 @@ export default function NewMomentPage() {
                     <p className="text-[11px] text-[var(--os-muted)]">
                       {isOriginalAudio
                         ? "L'audio de la vidéo sera conservé"
-                        : "Choisir un son de la bibliothèque ou importer le tien"}
+                        : "Choisir un son de la bibliothèque"}
                     </p>
                   </div>
-                  <span className="ml-auto text-[11px] text-[var(--os-muted)]">Choisir</span>
+                  <span className="ml-auto text-xs text-[var(--os-muted)]">Choisir</span>
                 </button>
               ) : (
-                <div className="flex items-center gap-3 rounded-xl border border-outside-500/20 bg-outside-500/5 px-3 py-3">
-                  <div className="rounded-full bg-outside-500/10 p-2">
+                <div className="flex items-center gap-3 rounded-xl border border-outside-500/20 bg-outside-500/5 px-3.5 py-3">
+                  <div className="rounded-full bg-outside-500/10 p-2.5">
                     <Music className="h-4 w-4 text-outside-500" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -656,114 +597,116 @@ export default function NewMomentPage() {
               )}
             </div>
 
-            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 flex items-start gap-2 dark:border-amber-900 dark:bg-amber-950/20">
+            {/* Privacy notice */}
+            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3.5 flex items-start gap-2 dark:border-amber-900 dark:bg-amber-950/20">
               <MapPin className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
               <p className="text-xs text-amber-700 dark:text-amber-400">
-                Ta position exacte ne sera jamais affichée.
+                Ta position exacte ne sera jamais affichée. Seule la ville sera visible.
               </p>
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                setShowVideoEditor(true);
-                setStep("edit");
-              }}
-              className="flex-1 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
-            >
-              Modifier le média
-            </button>
-            <button
-              onClick={submit}
-              disabled={loading || !city.trim()}
-              className="flex-1 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98]"
-            >
-              <Upload className="h-4 w-4" />
-              Publier
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === "publish" && (
-        <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
-          {uploadProgress?.status === "completed" ? (
-            <div className="text-center space-y-4">
-              <div className="h-20 w-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="h-10 w-10 text-green-400" />
-              </div>
-              <p className="text-lg font-black text-[var(--os-fg)]">Moment publié !</p>
-              <p className="text-sm text-[var(--os-muted)]">Redirection vers le fil d&apos;actualité...</p>
-              <div className="h-1 w-48 bg-[var(--os-card-border)] rounded-full overflow-hidden mx-auto">
-                <div className="h-full bg-gradient-to-r from-outside-500 to-accent-500 animate-pulse rounded-full" style={{ width: "60%" }} />
-              </div>
-            </div>
-          ) : uploadProgress?.status === "error" ? (
-            <div className="text-center space-y-4">
-              <div className="h-20 w-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto">
-                <AlertCircle className="h-10 w-10 text-red-400" />
-              </div>
-              <p className="text-lg font-black text-[var(--os-fg)]">Erreur</p>
-              <p className="text-sm text-[var(--os-muted)] max-w-xs">
-                {uploadProgress.message || "Une erreur est survenue lors de la publication."}
-              </p>
+            {/* Submit buttons */}
+            <div className="flex gap-3 pt-2">
               <button
-                onClick={() => setStep("preview")}
-                className="rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+                onClick={goToEdit}
+                className="flex-1 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] py-3.5 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors active:scale-[0.98]"
               >
-                Réessayer
+                Modifier le média
+              </button>
+              <button
+                onClick={submit}
+                disabled={loading || !city.trim()}
+                className="flex-1 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 py-3.5 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98]"
+              >
+                <Upload className="h-4 w-4" />
+                Publier
               </button>
             </div>
-          ) : (
-            <div className="w-full max-w-sm space-y-4">
-              <UploadProgressComponent
-                progress={uploadProgress || { status: "preparing", percentage: 0 }}
-                onCancel={() => {
-                  setLoading(false);
-                  setUploadProgress(null);
-                  setStep("preview");
-                }}
-              />
-            </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      <AudioPicker
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onSelect={(track, opts) => {
-          if (opts?.isOriginal) {
-            setIsOriginalAudio(true);
-            setAudioTrack(null);
-          } else if (track) {
-            setAudioTrack(track);
-            setIsOriginalAudio(false);
-          } else {
-            setAudioTrack(null);
-            setIsOriginalAudio(false);
-          }
-        }}
-        selectedTrackId={audioTrack?.id ?? (isOriginalAudio ? null : undefined)}
-      />
+        {/* Step: Publishing */}
+        {step === "publish" && (
+          <div className="flex flex-col items-center justify-center py-20 px-4 animate-fade-in">
+            {uploadState?.status === "completed" ? (
+              <div className="text-center space-y-5">
+                <div className="h-24 w-24 rounded-full bg-green-500/20 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="h-12 w-12 text-green-400" />
+                </div>
+                <p className="text-xl font-black text-[var(--os-fg)]">Moment publié !</p>
+                <p className="text-sm text-[var(--os-muted)]">Redirection vers le fil d&apos;actualité...</p>
+              </div>
+            ) : uploadState?.status === "error" ? (
+              <div className="text-center space-y-5">
+                <div className="h-24 w-24 rounded-full bg-red-500/20 flex items-center justify-center mx-auto">
+                  <AlertCircle className="h-12 w-12 text-red-400" />
+                </div>
+                <p className="text-xl font-black text-[var(--os-fg)]">Erreur</p>
+                <p className="text-sm text-[var(--os-muted)] max-w-xs">
+                  {uploadState.message || "Une erreur est survenue lors de la publication."}
+                </p>
+                <button
+                  onClick={() => setStep("details")}
+                  className="rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-6 py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+                >
+                  Réessayer
+                </button>
+              </div>
+            ) : (
+              <div className="w-full max-w-sm space-y-6">
+                <UploadProgressComponent
+                  progress={{
+                    status: uploadState?.status === "init" || uploadState?.status === "creating" ? "uploading" : uploadState?.status || "preparing",
+                    percentage: uploadState?.percentage || 0,
+                    message: uploadState?.message,
+                  }}
+                  onCancel={() => {
+                    setLoading(false);
+                    setUploadState(null);
+                    setStep("details");
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
-      {showImageEditor && file && (
-        <ImageCropEditor
-          imageFile={file}
-          onConfirm={handleImageCropConfirm}
-          onCancel={handleImageEditCancel}
+        {/* Editing overlays */}
+        <AudioPicker
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(track, opts) => {
+            if (opts?.isOriginal) {
+              setIsOriginalAudio(true);
+              setAudioTrack(null);
+            } else if (track) {
+              setAudioTrack(track);
+              setIsOriginalAudio(false);
+            } else {
+              setAudioTrack(null);
+              setIsOriginalAudio(false);
+            }
+          }}
+          selectedTrackId={audioTrack?.id ?? (isOriginalAudio ? null : undefined)}
         />
-      )}
 
-      {showVideoEditor && file && (
-        <VideoTrimEditor
-          videoFile={file}
-          onConfirm={handleVideoTrimConfirm}
-          onCancel={handleVideoEditCancel}
-          maxDuration={60}
-        />
-      )}
-    </AnimatedPage>
+        {showImageEditor && file && (
+          <ImageCropEditor
+            imageFile={file}
+            onConfirm={handleImageCropConfirm}
+            onCancel={handleImageEditCancel}
+          />
+        )}
+
+        {showVideoEditor && file && (
+          <VideoTrimEditor
+            videoFile={file}
+            onConfirm={handleVideoTrimConfirm}
+            onCancel={handleVideoEditCancel}
+            maxDuration={60}
+          />
+        )}
+      </AnimatedPage>
+    </div>
   );
 }
