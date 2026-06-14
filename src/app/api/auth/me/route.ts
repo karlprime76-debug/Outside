@@ -35,6 +35,8 @@ export async function GET() {
     const user = await db.user.findUnique({
       where: { id: sessionUser.id },
       include: {
+        homeCity: true,
+        activeCity: true,
         _count: {
           select: {
             plansCreated: true,
