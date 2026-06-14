@@ -21,7 +21,7 @@ const QUALITY_OPTIONS: { key: QualityPreset; label: string; desc: string }[] = [
 ];
 
 export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 60 }: VideoTrimEditorProps) {
-  const [videoSrc, setVideoSrc] = useState("");
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
@@ -242,6 +242,11 @@ export function VideoTrimEditor({ videoFile, onConfirm, onCancel, maxDuration = 
               <p>La vidéo est rognée et compressée directement dans ton navigateur.</p>
               <p className="mt-1">Aucune donnée n&apos;est envoyée à un serveur.</p>
             </div>
+          </div>
+        ) : !videoSrc ? (
+          <div className="flex flex-col items-center gap-3 text-white/40">
+            <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-outside-500 animate-spin" />
+            <span className="text-sm">Chargement de la vidéo...</span>
           </div>
         ) : (
           <video

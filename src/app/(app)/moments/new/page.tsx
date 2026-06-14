@@ -18,8 +18,28 @@ import { compressImage, shouldCompressImage } from "@/lib/media/compress-image";
 import { retryAsync, UploadProgress } from "@/lib/upload/retry-upload";
 
 const AudioPicker = dynamic(() => import("@/components/audio/audio-picker").then((m) => ({ default: m.AudioPicker })), { ssr: false });
-const ImageCropEditor = dynamic(() => import("@/components/media/image-crop-editor").then((m) => ({ default: m.ImageCropEditor })), { ssr: false });
-const VideoTrimEditor = dynamic(() => import("@/components/media/video-trim-editor").then((m) => ({ default: m.VideoTrimEditor })), { ssr: false });
+const ImageCropEditor = dynamic(() => import("@/components/media/image-crop-editor").then((m) => ({ default: m.ImageCropEditor })), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3 text-white/40">
+        <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-outside-500 animate-spin" />
+        <span className="text-sm">Préparation de l&apos;éditeur...</span>
+      </div>
+    </div>
+  ),
+});
+const VideoTrimEditor = dynamic(() => import("@/components/media/video-trim-editor").then((m) => ({ default: m.VideoTrimEditor })), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3 text-white/40">
+        <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-outside-500 animate-spin" />
+        <span className="text-sm">Préparation de l&apos;éditeur...</span>
+      </div>
+    </div>
+  ),
+});
 const UploadProgressComponent = dynamic(() => import("@/components/upload/upload-progress").then((m) => ({ default: m.UploadProgressComponent })), { ssr: false });
 const MomentPreview = dynamic(() => import("@/components/moments/moment-preview").then((m) => ({ default: m.MomentPreview })), { ssr: false });
 

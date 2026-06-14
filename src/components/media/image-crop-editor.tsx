@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import { X, RotateCw, Check, RefreshCw, Type, Sticker, Palette, Scissors } from "lucide-react";
 import { IMAGE_FILTERS, FILTER_KEYS, DEFAULT_FILTER, applyFilterToCanvas } from "@/lib/media/image-filters";
@@ -33,7 +33,8 @@ export function ImageCropEditor({ imageFile, onConfirm, onCancel }: ImageCropEdi
   const [rotation, setRotation] = useState(0);
   const [aspectRatio, setAspectRatio] = useState<number | undefined>(1);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [imageSrc, setImageSrc] = useState<string>("");
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState<EditorTab>("crop");
   const [selectedFilter, setSelectedFilter] = useState(DEFAULT_FILTER);
@@ -52,15 +53,18 @@ export function ImageCropEditor({ imageFile, onConfirm, onCancel }: ImageCropEdi
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cropperContainerRef = useRef<HTMLDivElement>(null);
 
-  useState(() => {
+  useEffect(() => {
+    setImageLoading(true);
     const reader = new FileReader();
     reader.onload = (e) => {
       if (e.target?.result) {
         setImageSrc(e.target.result as string);
       }
+      setImageLoading(false);
     };
+    reader.onerror = () => setImageLoading(false);
     reader.readAsDataURL(imageFile);
-  });
+  }, [imageFile]);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -226,6 +230,14 @@ export function ImageCropEditor({ imageFile, onConfirm, onCancel }: ImageCropEdi
         onClick={handleCropperClick}
         style={{ cursor: placingText ? "crosshair" : "default" }}
       >
+        {imageLoading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-3 text-white/40">
+              <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-outside-500 animate-spin" />
+              <span className="text-sm">Chargement de l&apos;image...</span>
+            </div>
+          </div>
+        )}
         {imageSrc && (
           <>
             <div style={{ filter: filterCss, width: "100%", height: "100%" }}>

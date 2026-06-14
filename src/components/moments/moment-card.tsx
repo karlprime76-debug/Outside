@@ -12,7 +12,10 @@ import { useHaptic } from "@/hooks/use-haptic";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { LiveComments } from "./live-comments";
 
-const MomentAudioPlayer = dynamic(() => import("@/components/audio/moment-audio-player").then((m) => ({ default: m.MomentAudioPlayer })), { ssr: false });
+const MomentAudioPlayer = dynamic(() => import("@/components/audio/moment-audio-player").then((m) => ({ default: m.MomentAudioPlayer })), {
+  ssr: false,
+  loading: () => <div className="h-8 w-32 rounded-full bg-white/5 animate-pulse" />,
+});
 const ShareMomentSheet = dynamic(() => import("./share-moment-sheet").then((m) => ({ default: m.ShareMomentSheet })), { ssr: false });
 const ReactionPicker = dynamic(() => import("./reaction-picker").then((m) => ({ default: m.ReactionPicker })), { ssr: false });
 
