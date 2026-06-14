@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppIcon } from "@/components/ui/app-icon";
 import { MapPin, Flame } from "lucide-react";
@@ -11,16 +12,42 @@ interface HomeHeaderProps {
   activeCity?: { name: string } | null;
 }
 
+interface ProfileData {
+  name: string | null;
+  image: string | null;
+  activeCity: { name: string } | null;
+  country: string | null;
+  countryCode: string | null;
+}
+
 export function HomeHeader({ activeCity }: HomeHeaderProps) {
   const { data: session } = useSession();
   const { streak } = useStreak();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
 
-  const userName = session?.user?.name ? session.user.name.split(" ")[0] : "";
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.user) {
+          setProfile(data.user);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const userName = profile?.name
+    ? profile.name.split(" ")[0]
+    : session?.user?.name
+      ? session.user.name.split(" ")[0]
+      : "";
+  const userImage = profile?.image || session?.user?.image;
+  const city = profile?.activeCity || activeCity;
 
   const location = formatUserLocation({
-    activeCity,
-    userCountry: session?.user?.country,
-    userCountryCode: session?.user?.countryCode,
+    activeCity: city,
+    userCountry: profile?.country || session?.user?.country,
+    userCountryCode: profile?.countryCode || session?.user?.countryCode,
   });
 
   return (
@@ -28,7 +55,7 @@ export function HomeHeader({ activeCity }: HomeHeaderProps) {
       <div className="max-w-5xl mx-auto px-4 py-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link href="/home" className="flex items-center justify-center shrink-0">
-            <AppIcon size={32} />
+            <AppIcon size={userImage ? 36 : 32} />
           </Link>
           <div className="min-w-0 flex-1">
             {userName && (

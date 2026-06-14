@@ -8,7 +8,6 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 import { Providers } from "@/components/providers";
-import { ThemeMeta } from "@/components/theme-meta";
 import { PwaRegister } from "@/components/pwa-register";
 import { AppContainer } from "@/components/app-container";
 
@@ -61,14 +60,12 @@ export default function RootLayout({
     <html
       lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      suppressHydrationWarning
     >
       <head>
         <link rel="preconnect" href="https://*.supabase.co" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://*.supabase.co" />
       </head>
       <body className="min-h-full flex flex-col overflow-x-hidden">
-        <ThemeMeta />
         <PwaRegister />
         <Providers>
           <AppContainer>{children}</AppContainer>

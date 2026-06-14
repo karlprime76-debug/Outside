@@ -143,6 +143,7 @@ async function main() {
 
   // ── Official OUTSIDE Accounts ──
   const OFFICIAL = [
+    { email: "officiel@outside.com", username: "outside_officiel", name: "OUTSIDE Officiel", bio: "Compte officiel OUTSIDE — Toute l'actualité de l'app", cityId: null, accountKind: "OFFICIAL_GUIDE" as const },
     { email: "guide@outside.com", username: "outside_guide", name: "OUTSIDE Guide", bio: "Compte officiel OUTSIDE — Guide et conseils pour profiter de l'app", cityId: "Cotonou", accountKind: "OFFICIAL_GUIDE" as const },
     { email: "cotonou@outside.com", username: "outside_cotonou", name: "OUTSIDE Cotonou", bio: "Compte officiel OUTSIDE Cotonou — Les meilleurs plans à Cotonou", cityId: "Cotonou", accountKind: "OFFICIAL_CITY" as const },
     { email: "abidjan@outside.com", username: "outside_abidjan", name: "OUTSIDE Abidjan", bio: "Compte officiel OUTSIDE Abidjan — Les meilleurs plans à Abidjan", cityId: "Abidjan", accountKind: "OFFICIAL_CITY" as const },

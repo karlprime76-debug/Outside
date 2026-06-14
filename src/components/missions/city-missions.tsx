@@ -49,7 +49,17 @@ export function CityMissions() {
   }
 
   if (missions.length === 0) {
-    return null;
+    return (
+      <div className="rounded-2xl border-2 border-dashed border-[var(--os-card-border)] bg-[var(--os-card)] p-8 text-center space-y-3">
+        <div className="rounded-full bg-gradient-to-br from-outside-500/10 to-accent-500/10 p-4 w-fit mx-auto">
+          <Target className="h-8 w-8 text-outside-400" />
+        </div>
+        <h3 className="font-bold text-[var(--os-fg)]">Aucune mission pour l&apos;instant</h3>
+        <p className="text-sm text-[var(--os-muted)] max-w-xs mx-auto">
+          De nouvelles missions apparaîtront bientôt dans ta ville. Reviens nous voir !
+        </p>
+      </div>
+    );
   }
 
   const completedCount = missions.filter((m) => m.completed).length;

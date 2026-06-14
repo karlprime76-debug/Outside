@@ -10,6 +10,7 @@ import { LoadingScreen } from "@/components/ui/loading-screen";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Search, Users, MapPin, Camera, CalendarDays, ArrowLeft } from "lucide-react";
+import { UserSearchInput } from "@/components/users/user-search-input";
 
 type SearchTab = "all" | "users" | "plans" | "places" | "moments";
 
@@ -197,12 +198,15 @@ export default function SearchPage() {
         <p className="mt-1 text-sm text-[var(--os-muted)]">Trouve des utilisateurs, plans, lieux et moments.</p>
       </div>
 
-      <SearchBar
-        placeholder="Rechercher sur OUTSIDE..."
-        value={query}
-        onChange={setQuery}
-        autoFocus
-      />
+      <div className="space-y-3">
+        <UserSearchInput placeholder="Rechercher un compte..." />
+        <SearchBar
+          placeholder="Rechercher plans, lieux, moments..."
+          value={query}
+          onChange={setQuery}
+          autoFocus={false}
+        />
+      </div>
 
       {/* Type tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">

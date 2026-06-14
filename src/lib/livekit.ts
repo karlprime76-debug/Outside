@@ -94,9 +94,11 @@ interface CreateTokenOptions {
   userId: string;
   name: string;
   isHost: boolean;
+  canPublish?: boolean;
+  canPublishData?: boolean;
 }
 
-export async function createLiveKitToken({ liveId, userId, name, isHost }: CreateTokenOptions): Promise<string> {
+export async function createLiveKitToken({ liveId, userId, name, isHost, canPublish, canPublishData }: CreateTokenOptions): Promise<string> {
   const { apiKey, apiSecret } = getLiveKitEnv();
 
   const roomName = createLiveKitRoomName(liveId);
@@ -115,9 +117,9 @@ export async function createLiveKitToken({ liveId, userId, name, isHost }: Creat
   token.addGrant({
     roomJoin: true,
     room: roomName,
-    canPublish: isHost,
+    canPublish: canPublish ?? isHost,
     canSubscribe: true,
-    canPublishData: isHost,
+    canPublishData: canPublishData ?? isHost,
   });
 
   return await token.toJwt();

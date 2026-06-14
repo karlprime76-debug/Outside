@@ -1,7 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
+import { createContext, useContext, ReactNode } from "react";
 
 interface ThemeContextValue {
   theme: string;
@@ -11,36 +10,17 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: "dark",
+  theme: "light",
   setTheme: () => {},
   isNight: false,
-  mounted: false,
+  mounted: true,
 });
-
-function ThemeContextBridge({ children }: { children: ReactNode }) {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isNight = resolvedTheme === "dark";
-
-  return (
-    <ThemeContext.Provider
-      value={{ theme: theme ?? "dark", setTheme, isNight, mounted }}
-    >
-      {children}
-    </ThemeContext.Provider>
-  );
-}
 
 export function OutsideThemeProvider({ children }: { children: ReactNode }) {
   return (
-    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <ThemeContextBridge>{children}</ThemeContextBridge>
-    </NextThemesProvider>
+    <ThemeContext.Provider value={{ theme: "light", setTheme: () => {}, isNight: false, mounted: true }}>
+      {children}
+    </ThemeContext.Provider>
   );
 }
 

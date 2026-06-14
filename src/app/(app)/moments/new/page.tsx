@@ -689,24 +689,24 @@ export default function NewMomentPage() {
           }}
           selectedTrackId={audioTrack?.id ?? (isOriginalAudio ? null : undefined)}
         />
-
-        {showImageEditor && file && (
-          <ImageCropEditor
-            imageFile={file}
-            onConfirm={handleImageCropConfirm}
-            onCancel={handleImageEditCancel}
-          />
-        )}
-
-        {showVideoEditor && file && (
-          <VideoTrimEditor
-            videoFile={file}
-            onConfirm={handleVideoTrimConfirm}
-            onCancel={handleVideoEditCancel}
-            maxDuration={60}
-          />
-        )}
       </AnimatedPage>
+
+      {showImageEditor && file && (
+        <ImageCropEditor
+          imageFile={file}
+          onConfirm={handleImageCropConfirm}
+          onCancel={handleImageEditCancel}
+        />
+      )}
+
+      {showVideoEditor && file && (
+        <VideoTrimEditor
+          videoFile={file}
+          onConfirm={handleVideoTrimConfirm}
+          onCancel={handleVideoEditCancel}
+          maxDuration={60}
+        />
+      )}
     </div>
   );
 }

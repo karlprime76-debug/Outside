@@ -3,18 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { PlanCard } from "@/components/plan-card";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
-import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import {
   MapPin,
   Plus,
   Globe,
-  Clock,
   Sparkles,
-  ArrowRight,
-  Flame,
   Coffee,
   Dumbbell,
   Music,
@@ -28,9 +23,9 @@ import {
   CalendarDays,
   Radio,
   RefreshCw,
+  Download,
 } from "lucide-react";
 import { AvailabilitySheet } from "@/components/availability/availability-sheet";
-import { useMomentPolling } from "@/hooks/use-moment-polling";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useHaptic } from "@/hooks/use-haptic";
 import { AccountSuggestions } from "@/components/users/account-suggestions";
@@ -39,8 +34,9 @@ import { TonightSection } from "@/components/home/tonight-section";
 import { HomeHeader } from "@/components/home/home-header";
 import { StarterPack } from "@/components/home/starter-pack";
 import { LeaderboardCard } from "@/components/home/leaderboard-card";
-import type { Plan } from "@/types/plan";
-import { useDictionary } from "@/hooks/use-dictionary";
+import { FollowOfficialPrompt } from "@/components/home/follow-official-prompt";
+import { HomeFeed } from "@/components/home/home-feed";
+import { isStandaloneMode } from "@/lib/pwa";
 
 const QUICK_MOODS = [
   { label: "Manger", icon: Coffee, mood: "FOOD" },
@@ -55,49 +51,33 @@ const QUICK_MOODS = [
 
 export default function HomePage() {
   const { data: session } = useSession();
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [loadingPlans, setLoadingPlans] = useState(true);
   const [showStarterPack, setShowStarterPack] = useState(false);
   const [userProfile, setUserProfile] = useState<{
     activeCity?: { name: string };
     preferredMoods?: string[];
   } | null>(null);
   const [lives, setLives] = useState<{ id: string; title: string; viewerCount: number }[]>([]);
-  const [trendingMoments, setTrendingMoments] = useState<{ id: string; mediaUrl: string; type: string; caption: string | null; author: { name: string | null; image: string | null }; badge: string | null }[]>([]);
-  const [loadingTrending, setLoadingTrending] = useState(true);
   const [myAvailability, setMyAvailability] = useState<{ mood: string; expiresAt: string } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  useMomentPolling({ scope: "for-you", media: "all", enabled: true });
   const haptic = useHaptic();
-  const t = useDictionary();
   const activeCity = userProfile?.activeCity;
-
-  const todayPlans = plans.filter((p) => {
-    const start = new Date(p.startDate);
-    const now = new Date();
-    return (
-      start.getDate() === now.getDate() &&
-      start.getMonth() === now.getMonth() &&
-      start.getFullYear() === now.getFullYear()
-    );
-  });
+  const [showPwaBanner, setShowPwaBanner] = useState(false);
 
   useEffect(() => {
-    fetch("/api/plans?limit=6&sortBy=for-you")
-      .then((r) => r.json())
-      .then((data) => {
-        setPlans(data.plans?.slice(0, 6) || []);
-        setLoadingPlans(false);
-      })
-      .catch(() => setLoadingPlans(false));
+    if (typeof window === "undefined") return;
+    const dismissed = sessionStorage.getItem("pwa_banner_dismissed");
+    if (!dismissed && !isStandaloneMode()) {
+      setShowPwaBanner(true);
+    }
+  }, []);
 
+  useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.user) setUserProfile(data.user);
         if (data?.stats) {
           const { plansCount, momentsCount, friendsCount } = data.stats;
-          // Show starter pack if user is relatively new or inactive
           setShowStarterPack(plansCount === 0 || momentsCount === 0 || friendsCount < 3);
         }
       })
@@ -116,18 +96,6 @@ export default function HomePage() {
         if (data?.availability) setMyAvailability(data.availability);
       })
       .catch((err) => { console.error("[SETTINGS_ERROR] Failed to fetch availability:", err); });
-
-    if (activeCity?.name) {
-      fetch(`/api/moments/trending?city=${encodeURIComponent(activeCity.name)}&limit=5`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          setTrendingMoments(data?.moments || []);
-          setLoadingTrending(false);
-        })
-        .catch(() => setLoadingTrending(false));
-    } else {
-      setLoadingTrending(false);
-    }
   }, [activeCity]);
 
   async function deactivateAvailability() {
@@ -138,19 +106,11 @@ export default function HomePage() {
   const handleRefresh = useCallback(async () => {
     haptic.medium();
     const fetches = [
-      fetch("/api/plans?limit=6").then((r) => r.json()).then((data) => setPlans(data.plans?.slice(0, 6) || [])),
       fetch("/api/lives?limit=3").then((r) => r.ok ? r.json() : null).then((data) => setLives(data?.lives?.slice(0, 3) || [])),
       fetch("/api/availability?mine=1").then((r) => r.ok ? r.json() : null).then((data) => { if (data?.availability) setMyAvailability(data.availability); }),
     ];
-    if (activeCity?.name) {
-      fetches.push(
-        fetch(`/api/moments/trending?city=${encodeURIComponent(activeCity.name)}&limit=5`)
-          .then((r) => r.ok ? r.json() : null)
-          .then((data) => setTrendingMoments(data?.moments || []))
-      );
-    }
     await Promise.allSettled(fetches);
-  }, [activeCity]);
+  }, [haptic]);
 
   const { containerRef: pullRefreshRef, isPulling, pullDistance, isRefreshing, progress } = usePullToRefresh({
     onRefresh: handleRefresh,
@@ -176,6 +136,34 @@ export default function HomePage() {
       </div>
 
       <HomeHeader activeCity={activeCity} />
+
+      {/* PWA install banner */}
+      {showPwaBanner && (
+        <div className="mx-4 mt-4 rounded-2xl border border-outside-200 bg-gradient-to-r from-outside-500/5 to-accent-500/5 p-4 flex items-center gap-3 animate-slide-up">
+          <div className="rounded-full bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shrink-0">
+            <Download className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-[var(--os-fg)]">Installe OUTSIDE</p>
+            <p className="text-xs text-[var(--os-muted)]">Ajoute l&apos;app à ton écran d&apos;accueil pour une meilleure expérience.</p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link
+              href="/install"
+              className="rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-3.5 py-2 text-xs font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+            >
+              Voir
+            </Link>
+            <button
+              onClick={() => { setShowPwaBanner(false); sessionStorage.setItem("pwa_banner_dismissed", "1"); }}
+              className="rounded-full p-2 text-[var(--os-muted)] hover:bg-[var(--os-card)]"
+              aria-label="Fermer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <AnimatedPage className="space-y-6 p-4 max-w-5xl mx-auto pb-24 md:pb-4">
 
@@ -267,83 +255,13 @@ export default function HomePage() {
         {/* Starter Pack for new users */}
         <StarterPack show={showStarterPack} activeCity={activeCity?.name} />
 
-        {/* Plans du jour — horizontal scroll */}
-        <section id="plans-section">
-          <SectionTitle
-            title="Plans du jour"
-            icon={<Clock className="h-5 w-5 text-outside-500" />}
-            action={
-              <Link href="/plans" className="text-sm font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
-                Voir tout <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            }
-          />
-          {loadingPlans ? (
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="min-w-[260px] h-36 shrink-0 os-card p-4 shimmer" />
-              ))}
-            </div>
-          ) : todayPlans.length === 0 && plans.length === 0 ? (
-            <OutsideEmptyState
-              icon={Sparkles}
-              title={t.emptyStates.noPlansTitle}
-              description="Dans ta ville. Lance le premier."
-            />
-          ) : (
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
-              {(todayPlans.length > 0 ? todayPlans : plans.slice(0, 5)).map((plan) => (
-                <div key={plan.id} className="min-w-[260px] shrink-0 snap-start">
-                  <PlanCard plan={plan} showJoin />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        {/* Follow official accounts */}
+        <FollowOfficialPrompt />
 
-        {/* Trending moments */}
-        {activeCity?.name && trendingMoments.length > 0 && (
-          <section className="animate-slide-up">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-black text-[var(--os-fg)] flex items-center gap-1.5">
-                <Flame className="h-4 w-4 text-orange-500" />
-                Tendance à {activeCity.name}
-              </h2>
-              <Link href="/trending" className="text-xs font-bold text-outside-600 hover:text-outside-700 transition-colors flex items-center gap-1">
-                Voir tout <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-            {loadingTrending ? (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="aspect-[3/4] rounded-xl bg-[var(--os-bg)] shimmer" />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {trendingMoments.map((m) => (
-                  <Link key={m.id} href="/moments" className="rounded-xl overflow-hidden bg-black relative aspect-[3/4] block group">
-                    {m.type === "VIDEO" ? (
-                      <video src={m.mediaUrl} className="h-full w-full object-cover" muted loop playsInline preload="metadata" />
-                    ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.mediaUrl} alt={m.caption || ""} className="h-full w-full object-cover" loading="lazy" />
-                    )}
-                    {m.badge && (
-                      <span className="absolute top-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500/90 text-white">
-                        {m.badge}
-                      </span>
-                    )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                      <p className="text-[10px] font-bold text-white truncate">{m.author.name || "Anonyme"}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
+        {/* Unified Feed — mix of plans and moments */}
+        <section>
+          <HomeFeed activeCityName={activeCity?.name} />
+        </section>
 
         {/* Leaderboard Card */}
         <section className="animate-slide-up">

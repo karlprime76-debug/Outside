@@ -18,16 +18,16 @@
   --safe-right: env(safe-area-inset-right, 0px);
 
   /* --- Core tokens --- */
-  --os-bg: #08080C;
-  --os-bg-secondary: #0C0C14;
-  --os-fg: #F0F0F4;
-  --os-fg-secondary: #C8C8D4;
-  --os-card: #101016;
-  --os-card-hover: #1A1A28;
-  --os-card-border: rgba(255, 255, 255, 0.04);
-  --os-card-border-hover: rgba(255, 255, 255, 0.08);
-  --os-muted: #8B8B9E;
-  --os-muted-light: #A8A8BC;
+  --os-bg: #F5F5F0;
+  --os-bg-secondary: #EBEBE6;
+  --os-fg: #1A1A1E;
+  --os-fg-secondary: #5A5A66;
+  --os-card: #FFFFFF;
+  --os-card-hover: #EDEDE8;
+  --os-card-border: rgba(0, 0, 0, 0.06);
+  --os-card-border-hover: rgba(0, 0, 0, 0.10);
+  --os-muted: #6A6A78;
+  --os-muted-light: #4A4A56;
 
   /* Brand gradient spectrum */
   --os-primary: #F97316;
@@ -52,17 +52,17 @@
   --os-info: #3B82F6;
 
   /* Glass */
-  --os-glass: rgba(16, 16, 22, 0.82);
-  --os-glass-border: rgba(255, 255, 255, 0.04);
-  --os-glass-shine: rgba(255, 255, 255, 0.02);
+  --os-glass: rgba(255, 255, 255, 0.85);
+  --os-glass-border: rgba(0, 0, 0, 0.06);
+  --os-glass-shine: rgba(255, 255, 255, 0.5);
 
   /* Focus */
   --os-focus: #F97316;
 
   /* Shadows */
-  --os-shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3);
-  --os-shadow-glow: 0 0 24px rgba(249, 115, 22, 0.2), 0 0 48px rgba(244, 63, 94, 0.1);
-  --os-shadow-elevated: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 4px 8px rgba(0, 0, 0, 0.2), 0 20px 40px rgba(0, 0, 0, 0.4);
+  --os-shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --os-shadow-glow: 0 0 24px rgba(249, 115, 22, 0.12), 0 0 48px rgba(244, 63, 94, 0.06);
+  --os-shadow-elevated: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.04), 0 20px 40px rgba(0, 0, 0, 0.06);
 
   /* Living animation tokens */
   --os-duration-instant: 0.1s;
@@ -103,7 +103,8 @@
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.015em;
+    line-height: 1.6;
     position: relative;
   }
 
@@ -173,10 +174,10 @@
     color: var(--os-fg);
   }
 
-  /* Mobile readability bump — scale up all rem-based values */
+  /* Mobile readability — slightly reduced for better fit */
   @media (max-width: 640px) {
     html {
-      font-size: 17px;
+      font-size: 16px;
     }
   }
 
@@ -1199,54 +1200,6 @@
   }
 
   /* ================================================
-     --- Light mode overrides ---
-     ================================================ */
-
-  html:not(.dark) {
-    --os-bg: #F5F5F0;
-    --os-bg-secondary: #EBEBE6;
-    --os-fg: #1A1A1E;
-    --os-fg-secondary: #5A5A66;
-    --os-card: #FFFFFF;
-    --os-card-hover: #EDEDE8;
-    --os-card-border: rgba(0, 0, 0, 0.06);
-    --os-card-border-hover: rgba(0, 0, 0, 0.10);
-    --os-muted: #7A7A8A;
-    --os-muted-light: #5A5A66;
-
-    --os-glass: rgba(255, 255, 255, 0.85);
-    --os-glass-border: rgba(0, 0, 0, 0.06);
-    --os-glass-shine: rgba(255, 255, 255, 0.5);
-
-    --os-shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
-    --os-shadow-glow: 0 0 24px rgba(249, 115, 22, 0.12), 0 0 48px rgba(244, 63, 94, 0.06);
-    --os-shadow-elevated: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0, 0, 0, 0.04), 0 20px 40px rgba(0, 0, 0, 0.06);
-  }
-
-  html:not(.dark) body::before {
-    opacity: 0.15;
-  }
-
-  html:not(.dark) body::after {
-    opacity: 0.1;
-  }
-
-  html:not(.dark) .os-card {
-    background: #FFFFFF;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
-  }
-
-  html:not(.dark) .os-card-glass {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(12px);
-  }
-
-  html:not(.dark) .glass {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(20px);
-  }
-
-  /* ================================================
      --- Focus glow for inputs ---
      ================================================ */
 
@@ -1547,6 +1500,24 @@
 
   .glow-violet-soft {
     box-shadow: 0 0 20px rgba(139, 92, 246, 0.08), 0 0 40px rgba(139, 92, 246, 0.04);
+  }
+
+  /* TikTok-like animations */
+  @keyframes like-float {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
+  }
+  @keyframes comment-slide {
+    0% { opacity: 0; transform: translateX(-20px); }
+    10% { opacity: 1; transform: translateX(0); }
+    90% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(-10px); }
+  }
+  .animate-like-float {
+    animation: like-float 2s ease-out forwards;
+  }
+  .animate-comment-slide {
+    animation: comment-slide 5s ease-out forwards;
   }
 
   /* ================================================

@@ -338,6 +338,12 @@ enum LiveVisibility {
   PRIVATE
 }
 
+enum LiveRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 enum ProAccountStatus {
   PENDING
   APPROVED
@@ -458,7 +464,9 @@ model User {
   planInvitationsSent     PlanInvitation[]  @relation("PlanInvitationSender")
   planInvitationsReceived PlanInvitation[]  @relation("PlanInvitationReceiver")
   moments                 Moment[]
+  liveRequests            LiveRequest[]
   audioTracks             AudioTrack[]
+  sponsorships            Sponsorship[]
   userBadges              UserBadge[]
   reportsMade             Report[]          @relation("Reporter")
   reportsReceived         Report[]          @relation("Reported")
@@ -790,6 +798,7 @@ model Plan {
   expenses     PlanExpense[]
   reviews      PlanParticipantReview[]
   hashtags     PlanHashtag[]
+  sponsorships Sponsorship[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -994,10 +1003,13 @@ model Moment {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  isSponsored Boolean @default(false)
+
   reactions MomentReaction[]
   comments  MomentComment[]
   hashtags    MomentHashtag[]
   savedBy     SavedMoment[]
+  sponsorships Sponsorship[]
 
   @@index([city, createdAt])
   @@index([authorId])
@@ -1420,10 +1432,29 @@ model LiveSession {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  requests LiveRequest[]
+
   @@index([hostId])
   @@index([status])
   @@index([city])
   @@index([createdAt])
+}
+
+model LiveRequest {
+  id        String           @id @default(cuid())
+  liveId    String
+  userId    String
+  status    LiveRequestStatus @default(PENDING)
+
+  live LiveSession @relation(fields: [liveId], references: [id], onDelete: Cascade)
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([liveId, userId])
+  @@index([liveId])
+  @@index([userId])
 }
 
 model ProAccount {
@@ -1918,6 +1949,53 @@ model PasswordResetToken {
 
   @@index([email])
   @@index([token])
+}
+
+model Sponsorship {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  momentId  String?
+  moment    Moment?  @relation(fields: [momentId], references: [id], onDelete: Cascade)
+  planId    String?
+  plan      Plan?    @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  budget    Float
+  currency  String   @default("XOF")
+  status    SponsorshipStatus @default(PENDING)
+
+  // Meta Ads / Stripe tracking
+  stripeSessionId String?  @unique
+  stripePaymentId String?
+  metaAdId        String?
+  metaAdStatus    String?
+
+  targetCity     String?
+  targetGender   String?
+  targetMinAge   Int?
+  targetMaxAge   Int?
+
+  impressions    Int      @default(0)
+  clicks         Int      @default(0)
+  startsAt       DateTime?
+  endsAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([momentId])
+  @@index([planId])
+  @@index([status])
+}
+
+enum SponsorshipStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  ENDED
+  CANCELLED
 }
 
 model Ticket {

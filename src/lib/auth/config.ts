@@ -1,5 +1,8 @@
 import { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
+import Facebook from "next-auth/providers/facebook";
+import Instagram from "next-auth/providers/instagram";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validation/schemas";
@@ -7,6 +10,15 @@ import { rateLimit } from "@/lib/rate-limit";
 
 export const authConfig: NextAuthConfig = {
   providers: [
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [Google({ clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET })]
+      : []),
+    ...(process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET
+      ? [Facebook({ clientId: process.env.FACEBOOK_CLIENT_ID, clientSecret: process.env.FACEBOOK_CLIENT_SECRET })]
+      : []),
+    ...(process.env.INSTAGRAM_CLIENT_ID && process.env.INSTAGRAM_CLIENT_SECRET
+      ? [Instagram({ clientId: process.env.INSTAGRAM_CLIENT_ID, clientSecret: process.env.INSTAGRAM_CLIENT_SECRET })]
+      : []),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -78,18 +90,59 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   callbacks: {
+    async signIn({ account, profile }) {
+      if (!account || account.type === "credentials") return true;
+      if (!profile) return false;
+      if (!profile.email && account.provider !== "instagram") return false;
+
+      let email = profile.email as string | undefined;
+
+      if (account.provider === "instagram" && !email) {
+        const p = profile as Record<string, string>;
+        const username = p.username || p.id;
+        if (!username) return false;
+        email = `instagram-${username}@outside.app`;
+      }
+
+      if (!email) return false;
+
+      try {
+        const existing = await db.user.findUnique({ where: { email } });
+        if (existing) return true;
+
+        const name = (profile.name as string) || email.split("@")[0];
+        const image = (profile.picture as string) || null;
+
+        const baseUsername = name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20) || email.split("@")[0];
+        let username = baseUsername;
+        let attempt = 0;
+        while (await db.user.findUnique({ where: { username } })) {
+          attempt++;
+          username = `${baseUsername}${attempt}`;
+        }
+
+        await db.user.create({
+          data: { email, name, username, image, emailVerified: new Date() },
+        });
+
+        return true;
+      } catch {
+        return false;
+      }
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.role = user.role;
-        token.accountKind = user.accountKind;
-        token.username = user.username;
+        const u = user as Record<string, unknown>;
+        token.role = u.role ?? "USER";
+        token.accountKind = u.accountKind ?? "STANDARD";
+        token.username = u.username ?? null;
         token.image = user.image;
-        token.country = user.country;
-        token.countryCode = user.countryCode;
-        token.homeCity = user.homeCity;
-        token.activeCity = user.activeCity;
-        token.homeCityId = user.homeCityId;
-        token.activeCityId = user.activeCityId;
+        token.country = u.country ?? null;
+        token.countryCode = u.countryCode ?? null;
+        token.homeCity = u.homeCity ?? null;
+        token.activeCity = u.activeCity ?? null;
+        token.homeCityId = u.homeCityId ?? null;
+        token.activeCityId = u.activeCityId ?? null;
       }
       // On sign-in, embed tokenVersion from DB for revocation capability
       if (trigger === "signIn" || trigger === "signUp") {

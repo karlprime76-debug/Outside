@@ -8,7 +8,6 @@ export const dynamic = "force-dynamic";
 import { BottomNav } from "@/components/bottom-nav";
 import { Avatar } from "@/components/ui/avatar";
 import { UiProviders } from "@/components/ui/providers-client";
-import { ThemeBadge } from "@/components/theme-toggle";
 import { Bell, MessageSquare, Search } from "lucide-react";
 import { getUnreadDmCount } from "@/lib/dm";
 import { PushPrompt } from "@/components/push-prompt";
@@ -103,7 +102,6 @@ export default async function AppLayout({
                     <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-neon-orange ring-[3px] ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
-                <ThemeBadge />
                 <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/[0.04] transition-all duration-200">
                   <Avatar src={session.user.image} name={session.user.name} size="sm" ring />
                   <span className="text-sm text-[var(--os-fg)] max-w-[80px] truncate">
@@ -122,10 +120,16 @@ export default async function AppLayout({
             )}
           </nav>
 
-          {/* Mobile: notifications + avatar or login */}
-          <div className="flex md:hidden items-center gap-1.5">
+          {/* Mobile: OUTSIDE logo + notifications + avatar or login */}
+          <div className="flex md:hidden items-center w-full justify-between">
+            <Link
+              href="/home"
+              className="text-lg font-extrabold tracking-tight gradient-text"
+            >
+              OUTSIDE
+            </Link>
             {session?.user ? (
-              <>
+              <div className="flex items-center gap-1.5">
                 <Link
                   href="/search"
                   aria-label="Rechercher"
@@ -153,11 +157,10 @@ export default async function AppLayout({
                     <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-neon-orange ring-[3px] ring-[var(--os-bg)] glow-pulse" />
                   )}
                 </Link>
-                <ThemeBadge />
                 <Link href="/profile" className="pressable">
                   <Avatar src={session.user.image} name={session.user.name} size="sm" ring />
                 </Link>
-              </>
+              </div>
             ) : (
               <Link
                 href="/login"

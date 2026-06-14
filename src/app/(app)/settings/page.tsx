@@ -5,14 +5,12 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/components/ui/toast";
 import { Avatar } from "@/components/ui/avatar";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import {
   ArrowLeft,
   Bell,
-  Moon,
   Globe,
   Shield,
   Eye,
@@ -305,15 +303,6 @@ export default function SettingsPage() {
 
       {/* Apparence */}
       <Section title="Apparence">
-        <div className="flex items-center justify-between py-3 border-b border-[var(--os-card-border)]">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-outside-100 p-2">
-              <Moon className="h-4 w-4 text-outside-600" />
-            </div>
-            <span className="text-sm font-semibold text-[var(--os-fg)]">Thème</span>
-          </div>
-          <ThemeToggle />
-        </div>
         <div className="flex items-center justify-between py-3">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-outside-100 p-2">
@@ -557,6 +546,20 @@ export default function SettingsPage() {
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
+
+        {/* Feedback */}
+        <Link
+          href="/feedback"
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:bg-[var(--os-card-hover)]"
+        >
+          <MessageSquare className="h-5 w-5 text-outside-500" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-[var(--os-fg)]">Suggestions &amp; bugs</p>
+            <p className="text-xs text-[var(--os-muted)]">Propose une idée ou signale un problème</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-[var(--os-muted)]" />
+        </Link>
+
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:bg-red-50"
