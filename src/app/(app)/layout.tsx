@@ -62,6 +62,46 @@ export default async function AppLayout({
             OUTSIDE
           </Link>
 
+          {/* Mobile actions */}
+          {session?.user ? (
+            <div className="flex md:hidden items-center gap-1">
+              <Link
+                href="/search"
+                aria-label="Rechercher"
+                className="rounded-lg p-2.5 hover:bg-white/[0.04] transition-all duration-200 pressable"
+              >
+                <Search className="h-5 w-5 text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors" />
+              </Link>
+              <Link
+                href="/activity"
+                aria-label="Activité"
+                className="relative rounded-lg p-2.5 hover:bg-white/[0.04] transition-all duration-200 pressable"
+              >
+                <Bell className="h-5 w-5 text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-neon-orange ring-[3px] ring-[var(--os-bg)] glow-pulse" />
+                )}
+              </Link>
+              <Link
+                href="/dm"
+                aria-label={dmUnread > 0 ? `Messages non lus: ${dmUnread}` : "Messages"}
+                className="relative rounded-lg p-2.5 hover:bg-white/[0.04] transition-all duration-200 pressable"
+              >
+                <MessageSquare className="h-5 w-5 text-[var(--os-muted)] hover:text-[var(--os-fg)] transition-colors" />
+                {dmUnread > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-neon-orange ring-[3px] ring-[var(--os-bg)] glow-pulse" />
+                )}
+              </Link>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="md:hidden rounded-lg bg-gradient-to-r from-neon-orange via-neon-rose to-neon-pink px-4 py-2 text-sm font-semibold text-white shadow-glow hover:shadow-glow-lg transition-all duration-200 pressable"
+            >
+              Se connecter
+            </Link>
+          )}
+
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-0.5 text-sm font-medium">
             {NAV_LINKS.map((link) => (
