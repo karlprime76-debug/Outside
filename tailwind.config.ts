@@ -108,6 +108,23 @@ const config: Config = {
         "page-enter": "pageEnter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both",
         "loading-bar": "loadingBar 1.5s ease-in-out infinite",
         "sheet-up": "sheetSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both",
+
+        // --- Premium Vivante animations ---
+        "text-shimmer": "textShimmer 6s ease-in-out infinite",
+        "text-pulse": "textPulse 3s ease-in-out infinite",
+        "glass-breathe": "glassBreathe 6s ease-in-out infinite",
+        "border-shimmer": "borderShimmer 5s ease-in-out infinite",
+        "card-breathe": "cardBreathe 5s ease-in-out infinite",
+        "card-rotate": "cardBorderRotate 8s linear infinite",
+        "ambient-drift": "ambientDrift 20s ease-in-out infinite",
+        "ambient-drift-reverse": "ambientDriftReverse 25s ease-in-out infinite",
+        "enter-fade": "enterFade 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "enter-slide-up": "enterSlideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "enter-scale": "enterScale 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+        "shimmer-premium": "shimmerPremium 4s ease-in-out infinite",
+        "loading-sweep": "loadingSweep 1.8s ease-in-out infinite",
+        "pulse-dot": "pulseDot 1.4s ease-in-out infinite",
+        "sparkle-float": "sparkleFloat 3s ease-in-out infinite",
       },
       keyframes: {
         float: {
@@ -168,6 +185,77 @@ const config: Config = {
         sheetSlideUp: {
           "0%": { transform: "translateY(100%)" },
           "100%": { transform: "translateY(0)" },
+        },
+
+        // --- Premium Vivante keyframes ---
+        textShimmer: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        textPulse: {
+          "0%, 100%": { filter: "brightness(1)" },
+          "50%": { filter: "brightness(1.2)" },
+        },
+        glassBreathe: {
+          "0%, 100%": { backdropFilter: "blur(36px) saturate(1.5)", boxShadow: "0 0 0 1px rgba(249,115,22,0.02), 0 8px 32px rgba(0,0,0,0.3)" },
+          "50%": { backdropFilter: "blur(40px) saturate(1.6)", boxShadow: "0 0 0 1px rgba(249,115,22,0.06), 0 8px 40px rgba(0,0,0,0.35), 0 0 60px rgba(249,115,22,0.03)" },
+        },
+        borderShimmer: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        cardBreathe: {
+          "0%, 100%": { borderColor: "var(--os-card-border)" },
+          "50%": { borderColor: "rgba(249, 115, 22, 0.04)" },
+        },
+        cardBorderRotate: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        ambientDrift: {
+          "0%": { transform: "translate(0, 0) scale(1)", opacity: "0.6" },
+          "25%": { transform: "translate(1%, 0.5%) scale(1.02)", opacity: "0.8" },
+          "50%": { transform: "translate(-0.5%, 1%) scale(0.98)", opacity: "0.7" },
+          "75%": { transform: "translate(0.5%, -0.5%) scale(1.01)", opacity: "0.9" },
+          "100%": { transform: "translate(-1%, 0) scale(1)", opacity: "0.6" },
+        },
+        ambientDriftReverse: {
+          "0%": { transform: "translate(0, 0) rotate(0deg)", opacity: "0.5" },
+          "33%": { transform: "translate(-1%, 1%) rotate(2deg)", opacity: "0.7" },
+          "66%": { transform: "translate(1%, -1%) rotate(-2deg)", opacity: "0.6" },
+          "100%": { transform: "translate(0, 0) rotate(0deg)", opacity: "0.5" },
+        },
+        enterFade: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        enterSlideUp: {
+          "0%": { opacity: "0", transform: "translateY(16px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        enterScale: {
+          "0%": { opacity: "0", transform: "scale(0.92)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        shimmerPremium: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        loadingSweep: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        pulseDot: {
+          "0%, 80%, 100%": { transform: "scale(0.6)", opacity: "0.4" },
+          "40%": { transform: "scale(1)", opacity: "1" },
+        },
+        sparkleFloat: {
+          "0%, 100%": { opacity: "0", transform: "translateY(0) scale(0.5)" },
+          "20%": { opacity: "1", transform: "translateY(-4px) scale(1)" },
+          "40%": { opacity: "0", transform: "translateY(-8px) scale(0.8)" },
         },
       },
     },

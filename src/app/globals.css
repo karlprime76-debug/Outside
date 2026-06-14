@@ -34,6 +34,11 @@
   --os-accent: #F43F5E;
   --os-secondary: #8B5CF6;
 
+  /* Living brand — animated hue rotation range */
+  --os-primary-hue: 25;
+  --os-accent-hue: 348;
+  --os-secondary-hue: 268;
+
   /* Neon spectrum */
   --os-neon-amber: #F97316;
   --os-neon-rose: #F43F5E;
@@ -58,6 +63,16 @@
   --os-shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.3);
   --os-shadow-glow: 0 0 24px rgba(249, 115, 22, 0.2), 0 0 48px rgba(244, 63, 94, 0.1);
   --os-shadow-elevated: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 4px 8px rgba(0, 0, 0, 0.2), 0 20px 40px rgba(0, 0, 0, 0.4);
+
+  /* Living animation tokens */
+  --os-duration-instant: 0.1s;
+  --os-duration-fast: 0.2s;
+  --os-duration-normal: 0.35s;
+  --os-duration-slow: 0.6s;
+  --os-duration-lazy: 1s;
+  --os-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --os-ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --os-ease-spring: cubic-bezier(0.18, 0.89, 0.32, 1.28);
 
   /* Radius */
   --os-radius-sm: 0.5rem;
@@ -92,7 +107,7 @@
     position: relative;
   }
 
-  /* Subtle ambient glow — GPU-accelerated, pointer-events: none */
+  /* Living ambient background — animated gradient orbs drift slowly */
   body::before {
     content: "";
     position: fixed;
@@ -103,6 +118,35 @@
       radial-gradient(ellipse 50% 50% at 50% 80%, rgba(139, 92, 246, 0.015) 0%, transparent 50%);
     pointer-events: none;
     z-index: 0;
+    animation: ambientDrift 20s ease-in-out infinite;
+  }
+
+  /* Secondary floating orb that drifts differently */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: -100%;
+    background:
+      radial-gradient(ellipse 40% 30% at 70% 60%, rgba(217, 70, 239, 0.012) 0%, transparent 50%),
+      radial-gradient(ellipse 30% 40% at 30% 70%, rgba(249, 115, 22, 0.01) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+    animation: ambientDriftReverse 25s ease-in-out infinite;
+  }
+
+  @keyframes ambientDrift {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+    25% { transform: translate(1%, 0.5%) scale(1.02); opacity: 0.8; }
+    50% { transform: translate(-0.5%, 1%) scale(0.98); opacity: 0.7; }
+    75% { transform: translate(0.5%, -0.5%) scale(1.01); opacity: 0.9; }
+    100% { transform: translate(-1%, 0) scale(1); opacity: 0.6; }
+  }
+
+  @keyframes ambientDriftReverse {
+    0% { transform: translate(0, 0) rotate(0deg); opacity: 0.5; }
+    33% { transform: translate(-1%, 1%) rotate(2deg); opacity: 0.7; }
+    66% { transform: translate(1%, -1%) rotate(-2deg); opacity: 0.6; }
+    100% { transform: translate(0, 0) rotate(0deg); opacity: 0.5; }
   }
 
   * {
@@ -171,7 +215,7 @@
   /* Ambient mesh and noise are below all content via pointer-events:none */
 
   /* ================================================
-     --- Glassmorphism 2°27' Premium ---
+     --- Glassmorphism 2°27' Premium Vivante ---
      ================================================ */
 
   .glass {
@@ -218,6 +262,43 @@
     transition: opacity 0.3s ease;
   }
 
+  /* Living glass — animated gradient border that breathes */
+  .glass-vivante {
+    position: relative;
+    background: linear-gradient(135deg, rgba(16, 16, 22, 0.88), rgba(20, 20, 30, 0.78));
+    backdrop-filter: blur(36px) saturate(1.5);
+    -webkit-backdrop-filter: blur(36px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.02), 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: glassBreathe 6s ease-in-out infinite;
+  }
+
+  .glass-vivante::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(244, 63, 94, 0.06), rgba(139, 92, 246, 0.12), rgba(249, 115, 22, 0.08));
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    animation: borderShimmer 5s ease-in-out infinite;
+  }
+
+  @keyframes glassBreathe {
+    0%, 100% { backdrop-filter: blur(36px) saturate(1.5); box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.02), 0 8px 32px rgba(0, 0, 0, 0.3); }
+    50% { backdrop-filter: blur(40px) saturate(1.6); box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.06), 0 8px 40px rgba(0, 0, 0, 0.35), 0 0 60px rgba(249, 115, 22, 0.03); }
+  }
+
+  @keyframes borderShimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
   /* ================================================
      --- Gradient text variants ---
      ================================================ */
@@ -255,6 +336,36 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* Living gradient text — subtle animated shimmer on the gradient */
+  .gradient-text-vivante {
+    background: linear-gradient(135deg, var(--os-primary) 0%, var(--os-accent) 25%, var(--os-secondary) 50%, var(--os-neon-pink) 75%, var(--os-primary) 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: textShimmer 6s ease-in-out infinite;
+  }
+
+  @keyframes textShimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Static gradient pulse — gentle opacity breathing */
+  .gradient-text-pulse {
+    background: linear-gradient(135deg, var(--os-primary) 0%, var(--os-accent) 50%, var(--os-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: textPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes textPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
   }
 
   .scrollbar-hide {
@@ -344,7 +455,7 @@
     border: 1px solid var(--os-card-border);
     border-radius: var(--os-radius-lg);
     box-shadow: var(--os-shadow-card);
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.25s ease;
+    transition: transform 0.25s var(--os-ease-bounce), box-shadow 0.3s ease, border-color 0.25s ease;
   }
 
   .os-card-glass {
@@ -353,7 +464,7 @@
     border-radius: var(--os-radius-lg);
     box-shadow: var(--os-shadow-card);
     backdrop-filter: blur(8px) saturate(1.2);
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.25s ease;
+    transition: transform 0.25s var(--os-ease-bounce), box-shadow 0.3s ease, border-color 0.25s ease;
   }
 
   .os-card-premium {
@@ -386,6 +497,54 @@
     height: 200%;
     background: radial-gradient(circle at 30% 20%, rgba(249,115,22,0.03) 0%, transparent 50%);
     pointer-events: none;
+  }
+
+  /* Living card — subtle border glow that breathes */
+  .os-card-vivante {
+    position: relative;
+    background: linear-gradient(180deg, rgba(255,255,255,0.025) 0%, transparent 100%);
+    background-color: var(--os-card);
+    border: 1px solid var(--os-card-border);
+    border-radius: var(--os-radius-lg);
+    box-shadow: var(--os-shadow-card);
+    transition: transform 0.3s var(--os-ease-bounce), box-shadow 0.35s ease, border-color 0.3s ease;
+    animation: cardBreathe 5s ease-in-out infinite;
+  }
+
+  .os-card-vivante::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 0deg at 50% 50%, transparent, rgba(249,115,22,0.04), rgba(244,63,94,0.03), rgba(139,92,246,0.04), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    animation: cardBorderRotate 8s linear infinite;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .os-card-vivante:hover::before {
+    opacity: 1;
+  }
+
+  .os-card-vivante:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.08), 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(249, 115, 22, 0.04);
+    border-color: rgba(249, 115, 22, 0.08);
+  }
+
+  @keyframes cardBreathe {
+    0%, 100% { border-color: var(--os-card-border); }
+    50% { border-color: rgba(249, 115, 22, 0.04); }
+  }
+
+  @keyframes cardBorderRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
   .os-muted {
@@ -443,11 +602,11 @@
   }
 
   /* ================================================
-     --- Micro-interactions ---
+     --- Micro-interactions Vivantes ---
      ================================================ */
 
   .pressable {
-    transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, opacity 0.15s ease;
+    transition: transform 0.12s var(--os-ease-bounce), box-shadow 0.2s ease, opacity 0.15s ease;
     -webkit-tap-highlight-color: transparent;
     cursor: pointer;
   }
@@ -455,8 +614,20 @@
     transform: scale(0.94);
   }
 
+  .pressable-vivante {
+    transition: transform 0.15s var(--os-ease-spring), box-shadow 0.25s ease, opacity 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+  }
+  .pressable-vivante:active {
+    transform: scale(0.92);
+  }
+  .pressable-vivante:hover {
+    opacity: 0.85;
+  }
+
   .hover-lift {
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.25s ease;
+    transition: transform 0.25s var(--os-ease-bounce), box-shadow 0.3s ease, border-color 0.25s ease;
   }
   .hover-lift:hover {
     transform: translateY(-3px);
@@ -464,9 +635,22 @@
     border-color: rgba(249, 115, 22, 0.15);
   }
 
+  /* Living lift — springier with glow */
+  .hover-lift-vivante {
+    transition: transform 0.35s var(--os-ease-spring), box-shadow 0.4s ease, border-color 0.35s ease;
+  }
+  .hover-lift-vivante:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.2), 0 0 32px rgba(244, 63, 94, 0.1), 0 8px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(249, 115, 22, 0.15);
+  }
+  .hover-lift-vivante:active {
+    transform: translateY(-1px) scale(0.98);
+  }
+
   /* 3D press effect */
   .press-3d {
-    transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.1s ease;
+    transition: transform 0.1s var(--os-ease-bounce), box-shadow 0.1s ease;
   }
   .press-3d:active {
     transform: scale(0.96) translateY(1px);
@@ -475,7 +659,7 @@
 
   /* Scale on hover with glow */
   .scale-glow {
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    transition: transform 0.25s var(--os-ease-bounce), box-shadow 0.3s ease;
   }
   .scale-glow:hover {
     transform: scale(1.03);
@@ -483,6 +667,17 @@
   }
   .scale-glow:active {
     transform: scale(0.97);
+  }
+
+  /* Tap spring — bouncy tap feedback */
+  .tap-spring {
+    transition: transform 0.12s var(--os-ease-spring), opacity 0.1s ease;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tap-spring:active {
+    transform: scale(0.93);
+    opacity: 0.8;
   }
 
   /* ================================================
@@ -869,6 +1064,56 @@
     100% { width: 0%; margin-left: 100%; }
   }
 
+  /* Premium loading bar with gradient sweep */
+  .loading-bar-premium {
+    position: relative;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .loading-bar-premium::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--os-primary), var(--os-accent), var(--os-secondary), transparent);
+    background-size: 200% 100%;
+    animation: loadingSweep 1.8s ease-in-out infinite;
+    border-radius: 2px;
+  }
+
+  @keyframes loadingSweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* ================================================
+     --- Pulse dot loading ---
+     ================================================ */
+
+  .pulse-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .pulse-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--os-primary);
+    animation: pulseDot 1.4s ease-in-out infinite;
+  }
+
+  .pulse-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .pulse-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulseDot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
   /* ================================================
      --- Sheet animations ---
      ================================================ */
@@ -909,6 +1154,26 @@
     );
     background-size: 200% 200%;
     animation: shimmer 3s ease-in-out infinite;
+  }
+
+  .img-shimmer-premium {
+    background: linear-gradient(
+      135deg,
+      var(--os-card) 0%,
+      rgba(249,115,22,0.06) 20%,
+      rgba(244,63,94,0.04) 40%,
+      rgba(139,92,246,0.05) 60%,
+      rgba(217,70,239,0.03) 80%,
+      var(--os-card) 100%
+    );
+    background-size: 300% 300%;
+    animation: shimmerPremium 4s ease-in-out infinite;
+  }
+
+  @keyframes shimmerPremium {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 
   /* ================================================
@@ -1095,11 +1360,147 @@
   .animate-in.duration-500 { animation-duration: 0.5s; }
 
   /* ================================================
+     --- Premium enter animations (staggered content) ---
+     ================================================ */
+
+  .enter-fade {
+    animation: enterFade 0.5s var(--os-ease-smooth) both;
+  }
+
+  .enter-slide-up {
+    animation: enterSlideUp 0.55s var(--os-ease-smooth) both;
+  }
+
+  .enter-slide-down {
+    animation: enterSlideDown 0.5s var(--os-ease-smooth) both;
+  }
+
+  .enter-scale {
+    animation: enterScale 0.45s var(--os-ease-bounce) both;
+  }
+
+  .enter-rotate {
+    animation: enterRotate 0.5s var(--os-ease-smooth) both;
+  }
+
+  .enter-stagger-1 { animation-delay: 0.04s; }
+  .enter-stagger-2 { animation-delay: 0.08s; }
+  .enter-stagger-3 { animation-delay: 0.12s; }
+  .enter-stagger-4 { animation-delay: 0.16s; }
+  .enter-stagger-5 { animation-delay: 0.20s; }
+  .enter-stagger-6 { animation-delay: 0.24s; }
+  .enter-stagger-7 { animation-delay: 0.28s; }
+  .enter-stagger-8 { animation-delay: 0.32s; }
+  .enter-stagger-9 { animation-delay: 0.36s; }
+  .enter-stagger-10 { animation-delay: 0.40s; }
+
+  @keyframes enterFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes enterSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes enterSlideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes enterScale {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes enterRotate {
+    from { opacity: 0; transform: rotate(-3deg) scale(0.95); }
+    to { opacity: 1; transform: rotate(0deg) scale(1); }
+  }
+
+  /* ================================================
+     --- Ripple effect on click ---
+     ================================================ */
+
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ripple::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .ripple:active::after {
+    opacity: 1;
+    animation: rippleExpand 0.4s ease-out forwards;
+  }
+
+  @keyframes rippleExpand {
+    from { background-size: 0% 0%; }
+    to { background-size: 300% 300%; opacity: 0; }
+  }
+
+  /* ================================================
+     --- Ambient particle sparkle ---
+     ================================================ */
+
+  .sparkle {
+    position: relative;
+  }
+
+  .sparkle::after {
+    content: "✦";
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 8px;
+    color: var(--os-primary);
+    opacity: 0;
+    animation: sparkleFloat 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes sparkleFloat {
+    0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+    20% { opacity: 1; transform: translateY(-4px) scale(1); }
+    40% { opacity: 0; transform: translateY(-8px) scale(0.8); }
+  }
+
+  /* ================================================
+     --- Glow accent classes vivantes ---
+     ================================================ */
+
+  .glow-accent-vivante {
+    animation: glowPulse 3s ease-in-out infinite;
+  }
+
+  .glow-amber-soft {
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.08), 0 0 40px rgba(249, 115, 22, 0.04);
+  }
+
+  .glow-rose-soft {
+    box-shadow: 0 0 20px rgba(244, 63, 94, 0.08), 0 0 40px rgba(244, 63, 94, 0.04);
+  }
+
+  .glow-violet-soft {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.08), 0 0 40px rgba(139, 92, 246, 0.04);
+  }
+
+  /* ================================================
      --- Reduced motion ---
      ================================================ */
 
   @media (prefers-reduced-motion: reduce) {
-    body::before {
+    body::before,
+    body::after {
       animation: none;
     }
 
@@ -1115,9 +1516,13 @@
     .card-hover,
     .hover-lift,
     .pressable,
+    .pressable-vivante,
+    .hover-lift-vivante,
+    .tap-spring,
     .shimmer,
     .shimmer-neon,
     .shimmer-premium,
+    .shimmer-premium-alt,
     .glow-pulse,
     .glow-pulse-rose,
     .glow-pulse-violet,
@@ -1128,7 +1533,25 @@
     .scale-glow,
     .card-hover-premium,
     .press-3d,
-    .neon-border-animated::before {
+    .neon-border-animated::before,
+    .glass-vivante,
+    .glass-vivante::before,
+    .os-card-vivante,
+    .os-card-vivante::before,
+    .gradient-text-vivante,
+    .gradient-text-pulse,
+    .enter-fade,
+    .enter-slide-up,
+    .enter-slide-down,
+    .enter-scale,
+    .enter-rotate,
+    .ripple::after,
+    .sparkle::after,
+    .loading-bar-premium::after,
+    .pulse-dots span,
+    .loading-bar-premium,
+    .glow-accent-vivante,
+    .img-shimmer-premium {
       animation: none !important;
       transition: none !important;
       opacity: 1 !important;
