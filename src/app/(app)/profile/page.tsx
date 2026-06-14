@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import Link from "next/link";
-import { Users, Pencil, Shield, LayoutDashboard, Trophy, Group, Wallet } from "lucide-react";
+import { Users, Pencil, Shield, LayoutDashboard, Trophy, Group, Wallet, Briefcase } from "lucide-react";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { OutsideEmptyState } from "@/components/ui/outside-empty-state";
 import { TrustBadge } from "@/components/trust/trust-badge";
@@ -334,12 +334,19 @@ export default async function ProfilePage() {
           <Group className="h-4 w-4 text-outside-500" />
           Mes cercles privés
         </Link>
-        {(user.role === "PRO" || user.role === "ADMIN") && (
+        {user.role === "PRO" || user.role === "ADMIN" ? (
           <Link href="/pro/dashboard"
             className="flex items-center justify-center gap-2 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-4 py-3 text-sm font-bold text-[var(--os-fg)] hover:border-outside-500 transition-all pressable"
           >
             <LayoutDashboard className="h-4 w-4 text-outside-500" />
             Dashboard PRO
+          </Link>
+        ) : (
+          <Link href="/pro"
+            className="flex items-center justify-center gap-2 rounded-xl bg-[var(--os-card)] border border-[var(--os-card-border)] px-4 py-3 text-sm font-bold text-[var(--os-fg)] hover:border-outside-500 transition-all pressable"
+          >
+            <Briefcase className="h-4 w-4 text-outside-500" />
+            Devenir Pro
           </Link>
         )}
         <Link href="/profile/edit"
