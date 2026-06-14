@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import {
   MapPin, Compass, Radio, Zap, Users, Globe,
   ArrowRight, Sparkles, CheckCircle,
@@ -55,6 +56,46 @@ const TRUST_ITEMS = [
   { icon: Lock, title: "Chat sécurisé", desc: "Pas de partage de contact externe." },
 ];
 
+function useReveal(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || revealed) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setRevealed(true);
+          observer.disconnect();
+        }
+      },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold, revealed]);
+
+  return { ref, revealed };
+}
+
+function RevealSection({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const { ref, revealed } = useReveal();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: revealed ? 1 : 0,
+        transform: revealed ? "translateY(0)" : "translateY(30px)",
+        transition: `opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[--os-bg] overflow-x-hidden">
@@ -88,12 +129,38 @@ export default function LandingPage() {
           from { opacity: 0; transform: scale(0.95); }
           to { opacity: 1; transform: scale(1); }
         }
+        @keyframes breathe {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.05); opacity: 1; }
+        }
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes spinSlow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pingSoft {
+          0% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.15); opacity: 0.4; }
+          100% { transform: scale(1); opacity: 0.8; }
+        }
+        @keyframes orbit {
+          0% { transform: rotate(0deg) translateX(4px) rotate(0deg); }
+          100% { transform: rotate(360deg) translateX(4px) rotate(-360deg); }
+        }
         .animate-fade-in-up { animation: fadeInUp 0.7s ease-out both; }
         .animate-fade-in { animation: fadeIn 1s ease-out both; }
         .animate-float { animation: float 3s ease-in-out infinite; }
         .animate-float-slow { animation: floatSlow 6s ease-in-out infinite; }
         .animate-glow { animation: pulseGlow 2s ease-in-out infinite; }
         .animate-scale-in { animation: scaleIn 0.5s ease-out both; }
+        .animate-breathe { animation: breathe 4s ease-in-out infinite; }
+        .animate-gradient-shift { background-size: 200% 200%; animation: gradientShift 8s ease infinite; }
+        .animate-spin-slow { animation: spinSlow 20s linear infinite; }
+        .animate-ping-soft { animation: pingSoft 2s ease-in-out infinite; }
         .delay-100 { animation-delay: 0.1s; }
         .delay-200 { animation-delay: 0.2s; }
         .delay-300 { animation-delay: 0.3s; }
@@ -178,7 +245,7 @@ export default function LandingPage() {
           <h1 className="animate-fade-in-up text-5xl font-black tracking-tight text-white sm:text-7xl lg:text-8xl drop-shadow-xl leading-[1.05]">
             Le monde est
             <br />
-            <span className="bg-gradient-to-r from-outside-400 via-accent-400 to-rose-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-outside-400 via-accent-400 to-rose-400 bg-clip-text text-transparent animate-gradient-shift">
               dehors
             </span>
           </h1>
@@ -226,8 +293,10 @@ export default function LandingPage() {
       </ImmersiveBackground>
 
       {/* Features */}
+      <RevealSection delay={100}>
       <section className="relative py-24 sm:py-32">
         <div className="absolute inset-0 bg-gradient-to-b from-[var(--os-bg)] via-outside-500/[0.02] to-[var(--os-bg)] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 h-64 w-64 rounded-full bg-outside-500/[0.03] blur-3xl animate-breathe" />
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 rounded-full bg-outside-500/10 px-4 py-1.5 text-xs font-bold text-outside-500 mb-4">
@@ -248,15 +317,16 @@ export default function LandingPage() {
               return (
                 <div
                   key={f.title}
-                  className="group relative overflow-hidden rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-6 hover:border-outside-500/20 hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300"
+                  className="group relative overflow-hidden rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-6 hover:border-outside-500/30 hover:shadow-card-hover hover:-translate-y-1.5 hover:bg-[var(--os-card)]/80 transition-all duration-400"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
-                  <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-br from-outside-500/5 to-accent-500/5 group-hover:from-outside-500/10 group-hover:to-accent-500/10 group-hover:scale-[3] transition-all duration-500" />
+                  <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-br from-outside-500/5 to-accent-500/5 group-hover:from-outside-500/[0.12] group-hover:to-accent-500/[0.12] group-hover:scale-[3.5] transition-all duration-500" />
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-outside-500/[0.02] to-transparent pointer-events-none" />
                   <div className="relative">
-                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-outside-500/10 to-accent-500/10 mb-4 group-hover:scale-110 group-hover:from-outside-500/20 group-hover:to-accent-500/20 transition-all duration-300">
-                      <Icon className="h-5 w-5 text-outside-500" />
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-outside-500/10 to-accent-500/10 mb-4 group-hover:scale-110 group-hover:shadow-glow group-hover:from-outside-500/20 group-hover:to-accent-500/20 transition-all duration-300">
+                      <Icon className="h-5 w-5 text-outside-500 group-hover:text-outside-400 transition-colors" />
                     </div>
-                    <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">{f.title}</h3>
+                    <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2 group-hover:text-outside-500 transition-colors">{f.title}</h3>
                     <p className="text-sm text-[var(--os-muted)] leading-relaxed">{f.desc}</p>
                   </div>
                 </div>
@@ -265,8 +335,10 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </RevealSection>
 
       {/* Cities */}
+      <RevealSection delay={100}>
       <section className="relative py-24 sm:py-32 border-y border-[var(--os-card-border)] bg-gradient-to-b from-[var(--os-bg)] via-outside-500/[0.02] to-[var(--os-bg)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="text-center mb-14">
@@ -286,7 +358,7 @@ export default function LandingPage() {
             {CITIES.map((city, i) => (
               <div
                 key={city}
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-500/30 hover:text-outside-500 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 cursor-default"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-5 py-2.5 text-sm font-bold text-[var(--os-fg)] hover:border-outside-500/40 hover:text-outside-500 hover:shadow-glow hover:-translate-y-1 hover:bg-outside-500/5 transition-all duration-300 cursor-default"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
                 <MapPin className="h-3.5 w-3.5 text-outside-400" />
@@ -299,8 +371,10 @@ export default function LandingPage() {
           </p>
         </div>
       </section>
+      </RevealSection>
 
       {/* Live section */}
+      <RevealSection delay={100}>
       <section className="relative py-24 sm:py-32">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 p-8 sm:p-14 text-white shadow-2xl border border-white/5">
@@ -349,8 +423,10 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </RevealSection>
 
       {/* Social proof */}
+      <RevealSection delay={100}>
       <section className="relative py-24 sm:py-32 border-y border-[var(--os-card-border)] bg-gradient-to-b from-[var(--os-bg)] via-outside-500/[0.02] to-[var(--os-bg)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -374,11 +450,13 @@ export default function LandingPage() {
                   { icon: Shield, text: "Construis un cercle fiable avec des badges" },
                   { icon: MessageCircle, text: "Chat intégré dans chaque plan" },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 hover:border-outside-500/20 hover:shadow-sm transition-all duration-200 group">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-outside-500/10 to-accent-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <div key={i} className="flex items-center gap-4 rounded-xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 hover:border-outside-500/30 hover:shadow-glow hover:-translate-x-0.5 transition-all duration-300 group"
+                    style={{ transitionDelay: `${i * 50}ms` }}
+                  >
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-outside-500/10 to-accent-500/10 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:shadow-glow transition-all duration-300">
                       <item.icon className="h-5 w-5 text-outside-500" />
                     </div>
-                    <p className="text-sm font-semibold text-[var(--os-fg)]">{item.text}</p>
+                    <p className="text-sm font-semibold text-[var(--os-fg)] group-hover:text-outside-500 transition-colors">{item.text}</p>
                   </div>
                 ))}
               </div>
@@ -392,18 +470,20 @@ export default function LandingPage() {
               ].map((stat, i) => (
                 <div
                   key={i}
-                  className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-6 text-center hover:border-outside-500/20 hover:-translate-y-0.5 transition-all duration-200"
+                  className="group rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-6 text-center hover:border-outside-500/30 hover:shadow-glow hover:-translate-y-1 transition-all duration-300"
                 >
-                  <p className="text-3xl font-black gradient-text">{stat.number}</p>
-                  <p className="text-sm text-[var(--os-muted)] mt-1">{stat.label}</p>
+                  <p className="text-3xl font-black gradient-text group-hover:scale-110 transition-transform duration-300">{stat.number}</p>
+                  <p className="text-sm text-[var(--os-muted)] mt-1 group-hover:text-[var(--os-fg)] transition-colors">{stat.label}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </section>
+      </RevealSection>
 
       {/* Pro */}
+      <RevealSection delay={100}>
       <section className="relative py-24 sm:py-32">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-outside-600 via-outside-700 to-accent-700 p-8 sm:p-14 text-white shadow-2xl">
@@ -445,8 +525,10 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </RevealSection>
 
       {/* Privacy */}
+      <RevealSection delay={100}>
       <section className="relative py-24 sm:py-32 border-y border-[var(--os-card-border)] bg-gradient-to-b from-[var(--os-bg)] via-outside-500/[0.02] to-[var(--os-bg)]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="text-center mb-14">
@@ -463,23 +545,26 @@ export default function LandingPage() {
           </div>
 
           <div className="grid gap-6 sm:grid-cols-3 max-w-4xl mx-auto">
-            {TRUST_ITEMS.map((item) => (
+            {TRUST_ITEMS.map((item, i) => (
               <div
                 key={item.title}
-                className="rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-8 text-center hover:border-outside-500/20 hover:-translate-y-0.5 transition-all duration-200"
+                className="group rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-8 text-center hover:border-outside-500/30 hover:shadow-glow hover:-translate-y-1.5 transition-all duration-300"
+                style={{ transitionDelay: `${i * 50}ms` }}
               >
-                <div className="mx-auto h-14 w-14 rounded-xl bg-gradient-to-br from-outside-500/10 to-accent-500/10 flex items-center justify-center mb-5">
-                  <item.icon className="h-7 w-7 text-outside-500" />
+                <div className="mx-auto h-14 w-14 rounded-xl bg-gradient-to-br from-outside-500/10 to-accent-500/10 flex items-center justify-center mb-5 group-hover:scale-110 group-hover:shadow-glow transition-all duration-300">
+                  <item.icon className="h-7 w-7 text-outside-500 group-hover:text-outside-400 transition-colors" />
                 </div>
-                <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2">{item.title}</h3>
-                <p className="text-sm text-[var(--os-muted)]">{item.desc}</p>
+                <h3 className="text-lg font-bold text-[var(--os-fg)] mb-2 group-hover:text-outside-500 transition-colors">{item.title}</h3>
+                <p className="text-sm text-[var(--os-muted)] group-hover:text-[var(--os-fg)]/80 transition-colors">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
+      </RevealSection>
 
       {/* Final CTA */}
+      <RevealSection delay={100}>
       <section className="relative py-28 sm:py-36">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500/10 to-accent-500/10 px-4 py-1.5 text-xs font-bold text-outside-500 mb-6 border border-outside-500/20">
@@ -525,6 +610,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      </RevealSection>
 
       {/* Footer */}
       <footer className="border-t border-[var(--os-card-border)] bg-[var(--os-bg)] px-6 py-12">

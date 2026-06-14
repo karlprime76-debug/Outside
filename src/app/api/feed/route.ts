@@ -13,13 +13,16 @@ export async function GET(req: Request) {
     const cursor = searchParams.get("cursor");
     const limit = Math.min(parseInt(searchParams.get("limit") || "10", 10), 20);
     const city = searchParams.get("city");
+    const since = searchParams.get("since");
 
     const notBlocked = blockedIds.length > 0 ? { authorId: { notIn: blockedIds } } : {};
+    const sinceFilter = since ? { createdAt: { gt: new Date(since) } } : {};
 
     // Fetch moments
     const moments = await db.moment.findMany({
       where: {
         ...notBlocked,
+        ...sinceFilter,
         ...(city ? { city } : {}),
         visibility: "PUBLIC",
       },
@@ -38,6 +41,7 @@ export async function GET(req: Request) {
       where: {
         status: "ACTIVE",
         visibility: "PUBLIC",
+        ...sinceFilter,
         ...(city ? { city: { name: city } } : {}),
         startDate: { gte: new Date() },
         creatorId: userId ? { notIn: blockedIds } : undefined,

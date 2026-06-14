@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
-import { Heart, MessageCircle, Sparkles, Megaphone } from "lucide-react";
+import { Heart, MessageCircle, Sparkles, Megaphone, RefreshCw } from "lucide-react";
+import { usePolling } from "@/hooks/use-polling";
 import { PlanCard } from "@/components/plan-card";
 import { Avatar } from "@/components/ui/avatar";
 import type { Plan } from "@/types/plan";
@@ -120,7 +121,10 @@ export function HomeFeed({ activeCityName }: { activeCityName?: string }) {
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [pendingNew, setPendingNew] = useState<FeedItem[]>([]);
+  const [hasNew, setHasNew] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const sinceRef = useRef<string>(new Date().toISOString());
 
   const fetchFeed = useCallback(async (cursorVal?: string) => {
     const params = new URLSearchParams({ limit: "10" });
@@ -139,9 +143,42 @@ export function HomeFeed({ activeCityName }: { activeCityName?: string }) {
     setCursor(data.nextCursor);
   }, [activeCityName]);
 
+  const checkNew = useCallback(async () => {
+    const params = new URLSearchParams({ limit: "5", since: sinceRef.current });
+    if (activeCityName) params.set("city", activeCityName);
+    try {
+      const res = await fetch(`/api/feed?${params}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const items: FeedItem[] = data.feed || [];
+      if (items.length === 0) return;
+      const existingIds = new Set(feed.map((f) => `${f.__type}-${f.id}`));
+      const trulyNew = items.filter((f) => !existingIds.has(`${f.__type}-${f.id}`));
+      if (trulyNew.length > 0) {
+        setPendingNew(trulyNew);
+        setHasNew(true);
+      }
+    } catch {
+      // silent
+    }
+  }, [activeCityName, feed]);
+
   useEffect(() => {
     fetchFeed().finally(() => setLoading(false));
   }, [fetchFeed]);
+
+  usePolling(checkNew, 30000, !loading);
+
+  function loadNewItems() {
+    setFeed((prev) => {
+      const existingIds = new Set(prev.map((f) => `${f.__type}-${f.id}`));
+      const trulyNew = pendingNew.filter((f) => !existingIds.has(`${f.__type}-${f.id}`));
+      return [...trulyNew, ...prev];
+    });
+    setPendingNew([]);
+    setHasNew(false);
+    sinceRef.current = new Date().toISOString();
+  }
 
   useEffect(() => {
     if (!sentinelRef.current || loading) return;
@@ -186,6 +223,15 @@ export function HomeFeed({ activeCityName }: { activeCityName?: string }) {
 
   return (
     <div className="space-y-6 pb-24 md:pb-4">
+      {hasNew && (
+        <button
+          onClick={loadNewItems}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-outside-200 bg-outside-50/50 dark:border-outside-800 dark:bg-outside-950/10 py-3 text-sm font-bold text-outside-600 hover:bg-outside-100/50 dark:hover:bg-outside-950/20 transition-all active:scale-[0.98] animate-slide-up"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Nouveaux moments disponibles
+        </button>
+      )}
       {feed.map((item) => (
         <div key={`${item.__type}-${item.id}`} className="animate-slide-up">
           {item.__type === "moment" ? (

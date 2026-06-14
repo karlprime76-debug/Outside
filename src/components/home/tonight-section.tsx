@@ -1,7 +1,8 @@
 "use client";
 
 import { useDictionary } from "@/hooks/use-dictionary";
-import { useEffect, useState } from "react";
+import { usePolling } from "@/hooks/use-polling";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -299,6 +300,8 @@ function HubCardTile({ card }: { card: HubCard }) {
 export function TonightSection() {
   const [data, setData] = useState<TonightData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const t = useDictionary();
 
   const IDEA_ACTIONS = [
@@ -307,6 +310,22 @@ export function TonightSection() {
     { icon: UserPlus, label: t.tonight.inviteFriends, href: "/invite", cta: t.tonight.invite, color: "from-blue-500 to-cyan-500" },
     { icon: Sparkles, label: t.tonight.discoverAccounts, href: "/u/outside_guide", cta: t.tonight.discover, color: "from-outside-500 to-accent-500" },
   ];
+
+  const fetchTonight = useCallback(async () => {
+    try {
+      const res = await fetch("/api/home/tonight");
+      if (!res.ok) return;
+      const next = await res.json();
+      setData((prev) => {
+        if (!prev) return next;
+        const prevStr = JSON.stringify(prev);
+        const nextStr = JSON.stringify(next);
+        return prevStr === nextStr ? prev : next;
+      });
+    } catch {
+      // silent
+    }
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -323,6 +342,23 @@ export function TonightSection() {
 
     return () => controller.abort();
   }, []);
+
+  usePolling(fetchTonight, 60000, !loading);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    };
+    check();
+    el.addEventListener("scroll", check);
+    window.addEventListener("resize", check);
+    return () => {
+      el.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
+  }, [data]);
 
   if (loading) {
     return (
@@ -355,17 +391,29 @@ export function TonightSection() {
           <h3 className="font-black text-[var(--os-fg)] truncate">Ce soir sur OUTSIDE</h3>
           {payload.city && <Badge variant="outline" className="shrink-0">{payload.city}</Badge>}
         </div>
-        <Link href="/tonight" className="text-xs font-bold text-outside-600 hover:text-outside-700 shrink-0">
-          Tout voir
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          {!loading && <span className="h-2 w-2 rounded-full bg-outside-500 animate-pulse-dot" title="Mise à jour automatique" />}
+          <Link href="/tonight" className="text-xs font-bold text-outside-600 hover:text-outside-700">
+            Tout voir
+          </Link>
+        </div>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2 snap-x snap-mandatory">
-        {cards.map((card) => (
-          <div key={card.key} className="snap-start shrink-0">
-            <HubCardTile card={card} />
-          </div>
-        ))}
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2 snap-x snap-mandatory cursor-grab active:cursor-grabbing"
+          style={{ touchAction: "pan-x" }}
+        >
+          {cards.map((card) => (
+            <div key={card.key} className="snap-start shrink-0">
+              <HubCardTile card={card} />
+            </div>
+          ))}
+        </div>
+        {canScrollRight && (
+          <div className="absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-[var(--os-card)] to-transparent pointer-events-none" />
+        )}
       </div>
 
       {!hasRealContent && (

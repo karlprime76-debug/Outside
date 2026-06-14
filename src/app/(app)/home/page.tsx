@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { usePolling } from "@/hooks/use-polling";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { SectionTitle } from "@/components/ui/section-title";
 import {
@@ -97,6 +98,21 @@ export default function HomePage() {
       })
       .catch((err) => { console.error("[SETTINGS_ERROR] Failed to fetch availability:", err); });
   }, [activeCity]);
+
+  usePolling(async () => {
+    const [livesRes, availRes] = await Promise.allSettled([
+      fetch("/api/lives?limit=3"),
+      fetch("/api/availability?mine=1"),
+    ]);
+    if (livesRes.status === "fulfilled" && livesRes.value.ok) {
+      const data = await livesRes.value.json();
+      setLives(data?.lives?.slice(0, 3) || []);
+    }
+    if (availRes.status === "fulfilled" && availRes.value.ok) {
+      const data = await availRes.value.json();
+      if (data?.availability) setMyAvailability(data.availability);
+    }
+  }, 60000);
 
   async function deactivateAvailability() {
     const res = await fetch("/api/availability", { method: "DELETE" });

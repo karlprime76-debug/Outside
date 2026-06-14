@@ -1,5 +1,5 @@
 import { ProfileAvatarViewer } from "./profile-avatar-viewer";
-import { MapPin, Camera } from "lucide-react";
+import { BadgeCheck, MapPin, Camera } from "lucide-react";
 import Link from "next/link";
 import { UserLevelBadge } from "./user-level-badge";
 
@@ -49,6 +49,9 @@ export function ProfileHeader({ user, qualityScore, showCity = true, actions, is
               )}
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-black truncate">{user.name || "Utilisateur OUTSIDE"}</h1>
+                {user.isVerified && (
+                  <BadgeCheck className="h-5 w-5 shrink-0 text-sky-400 drop-shadow" />
+                )}
                 {isOwn && (
                   <Link
                     href="/profile/edit"
