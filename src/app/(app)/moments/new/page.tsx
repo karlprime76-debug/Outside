@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useRef, ChangeEvent, useEffect, useCallback } from "react";
+import { Suspense, useState, useRef, ChangeEvent, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -45,6 +45,14 @@ interface UploadState {
 }
 
 export default function NewMomentPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[var(--os-bg)]" />}>
+      <NewMomentForm />
+    </Suspense>
+  );
+}
+
+function NewMomentForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToast } = useToast();
