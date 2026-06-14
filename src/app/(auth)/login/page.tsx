@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Sparkles } from "lucide-react";
 import { ImmersiveBackground } from "@/components/ui/immersive-background";
-import { SocialLoginButtons } from "@/components/auth/social-login";
 import { backgrounds } from "@/lib/backgrounds";
 
 function LoginForm() {
@@ -173,8 +172,6 @@ function LoginForm() {
                   {loading ? "Connexion..." : "Se connecter"}
                 </button>
               </form>
-
-              <SocialLoginButtons callbackUrl={callbackUrl} />
 
               <p className="text-center text-sm text-white/60 mt-6">
                 Pas encore de compte ?{" "}
