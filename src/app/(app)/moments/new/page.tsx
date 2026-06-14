@@ -85,7 +85,7 @@ function NewMomentForm() {
   });
 
   const { data: session } = useSession();
-  const draft = useMomentDraft(session?.user?.id);
+  const { restoreDraft, saveDraft, clearDraft: clearDraftFn } = useMomentDraft(session?.user?.id);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -93,7 +93,7 @@ function NewMomentForm() {
       .then((data) => {
         const u = data?.user;
         const fallbackCity = u?.activeCity?.name || u?.homeCity?.name || "";
-        const existing = draft.restoreDraft();
+        const existing = restoreDraft();
         if (existing) {
           setShowDraftPrompt(true);
           setCity(existing.city || fallbackCity);
@@ -104,7 +104,7 @@ function NewMomentForm() {
         }
       })
       .catch(() => {});
-  }, [draft]);
+  }, [restoreDraft]);
 
   useEffect(() => {
     const audioTrackId = searchParams.get("audioTrackId");
@@ -126,9 +126,9 @@ function NewMomentForm() {
 
   useEffect(() => {
     if (caption || city || visibility !== "PUBLIC") {
-      draft.saveDraft({ caption, visibility, city, publishAsClip: false });
+      saveDraft({ caption, visibility, city, publishAsClip: false });
     }
-  }, [caption, visibility, city, draft]);
+  }, [caption, visibility, city, saveDraft]);
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0];
@@ -347,7 +347,7 @@ function NewMomentForm() {
         throw new Error(err.error || "Erreur lors de la création du moment");
       }
 
-      draft.clearDraft();
+      clearDraftFn();
       setUploadState({ status: "completed", percentage: 100 });
       addToast("Moment publié !", "success");
 
@@ -417,7 +417,7 @@ function NewMomentForm() {
               </button>
               <button
                 onClick={() => {
-                  draft.clearDraft();
+                  clearDraftFn();
                   setShowDraftPrompt(false);
                   setCaption("");
                   setVisibility("PUBLIC");

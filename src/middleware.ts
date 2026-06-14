@@ -44,8 +44,8 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/home", nextUrl));
   }
 
-  // Logged in users should not see login/register
-  if (isLoggedIn && (nextUrl.pathname === "/login" || nextUrl.pathname === "/register")) {
+  // Logged in users should not see landing/login/register
+  if (isLoggedIn && (nextUrl.pathname === "/" || nextUrl.pathname === "/login" || nextUrl.pathname === "/register")) {
     return NextResponse.redirect(new URL("/home", nextUrl));
   }
 
