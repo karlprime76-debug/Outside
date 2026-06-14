@@ -29,9 +29,9 @@ export async function GET() {
   }
 
   const scope: GeoScope = {
-    city: user.activeCity?.name ?? null,
-    cityId: user.activeCityId,
-    countryCode: user.countryCode ?? user.activeCity?.countryCode ?? null,
+    city: user.activeCity?.name ?? user.homeCity?.name ?? null,
+    cityId: user.activeCityId ?? user.homeCityId,
+    countryCode: user.countryCode ?? user.activeCity?.countryCode ?? user.homeCity?.countryCode ?? null,
     blockedIds,
   };
 

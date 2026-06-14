@@ -2,7 +2,7 @@
 
 import { useDictionary } from "@/hooks/use-dictionary";
 import { usePolling } from "@/hooks/use-polling";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -300,8 +300,6 @@ function HubCardTile({ card }: { card: HubCard }) {
 export function TonightSection() {
   const [data, setData] = useState<TonightData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const t = useDictionary();
 
   const IDEA_ACTIONS = [
@@ -345,21 +343,6 @@ export function TonightSection() {
 
   usePolling(fetchTonight, 60000, !loading);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const check = () => {
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-    };
-    check();
-    el.addEventListener("scroll", check);
-    window.addEventListener("resize", check);
-    return () => {
-      el.removeEventListener("scroll", check);
-      window.removeEventListener("resize", check);
-    };
-  }, [data]);
-
   if (loading) {
     return (
       <div className="rounded-2xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)] p-5 animate-pulse">
@@ -399,21 +382,15 @@ export function TonightSection() {
         </div>
       </div>
 
-      <div className="relative">
-        <div
-          ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-2 px-2 snap-x snap-mandatory cursor-grab active:cursor-grabbing"
-          style={{ touchAction: "pan-x" }}
-        >
-          {cards.map((card) => (
-            <div key={card.key} className="snap-start shrink-0">
-              <HubCardTile card={card} />
-            </div>
-          ))}
-        </div>
-        {canScrollRight && (
-          <div className="absolute right-0 top-0 bottom-2 w-10 bg-gradient-to-l from-[var(--os-card)] to-transparent pointer-events-none" />
-        )}
+      <div
+        className="flex gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 snap-x snap-mandatory"
+        style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}
+      >
+        {cards.map((card) => (
+          <div key={card.key} className="snap-start shrink-0">
+            <HubCardTile card={card} />
+          </div>
+        ))}
       </div>
 
       {!hasRealContent && (
