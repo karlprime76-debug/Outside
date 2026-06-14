@@ -158,11 +158,14 @@ function NewMomentForm() {
       try {
         const v = document.createElement("video");
         v.preload = "metadata";
-        v.src = url;
         v.onloadedmetadata = () => {
           setShowVideoEditor(true);
           setStep("edit");
         };
+        v.onerror = () => {
+          addToast("Format vidéo non supporté", "error");
+        };
+        v.src = url;
       } catch {
         setShowVideoEditor(true);
         setStep("edit");
