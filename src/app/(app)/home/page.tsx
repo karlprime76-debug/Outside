@@ -204,16 +204,16 @@ export default function HomePage() {
         })()}
 
         {/* Quick Actions row */}
-        <div className="flex items-center gap-2 animate-slide-up">
-          {/* Live indicator */}
+        <div className="flex items-stretch gap-3 animate-slide-up">
+          {/* Live indicator (when active) */}
           {hasLive && (
             <Link
               href="/live"
-              className="flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-500/20 transition-colors"
+              className="flex items-center gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-3 text-sm font-bold text-red-500 hover:bg-red-500/20 transition-colors shrink-0"
             >
-              <span className="relative flex h-2.5 w-2.5">
+              <span className="relative flex h-3 w-3">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
               </span>
               Live{totalViewers > 0 && ` · ${totalViewers}`}
             </Link>
@@ -221,19 +221,19 @@ export default function HomePage() {
 
           {/* Je suis dispo */}
           {myAvailability ? (
-            <div className="flex items-center gap-2 rounded-full border-2 border-outside-300 bg-outside-50/50 px-4 py-2 text-xs font-bold text-outside-700">
-              <Zap className="h-3.5 w-3.5" />
-              Dispo {QUICK_MOODS.find((m) => m.mood === myAvailability.mood)?.label || myAvailability.mood}
-              <button onClick={deactivateAvailability} className="ml-1 rounded-full p-0.5 hover:bg-outside-100" title="Désactiver">
-                <X className="h-3 w-3" />
+            <div className="flex items-center gap-2 rounded-2xl border-2 border-outside-300 bg-outside-50/50 px-5 py-3 text-sm font-bold text-outside-700">
+              <Zap className="h-5 w-5" />
+              <span className="truncate">Dispo {QUICK_MOODS.find((m) => m.mood === myAvailability.mood)?.label || myAvailability.mood}</span>
+              <button onClick={deactivateAvailability} className="ml-1 rounded-full p-1 hover:bg-outside-100" title="Désactiver">
+                <X className="h-4 w-4" />
               </button>
             </div>
           ) : (
             <button
               onClick={() => setSheetOpen(true)}
-              className="flex items-center gap-2 rounded-full border-2 border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-2.5 text-xs font-bold text-[var(--os-fg)] hover:border-outside-300 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)] px-5 py-3 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-colors active:scale-[0.98]"
             >
-              <Zap className="h-3.5 w-3.5 text-outline-500" />
+              <Zap className="h-5 w-5 text-outside-500" />
               Je suis dispo
             </button>
           )}
@@ -241,19 +241,19 @@ export default function HomePage() {
           {/* Créer */}
           <Link
             href="/plans/new"
-            className="flex items-center gap-2 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-4 py-2.5 text-xs font-bold text-white shadow-glow hover:shadow-glow-lg transition-all"
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-outside-500 to-accent-500 px-5 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-[0.98]"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-5 w-5" />
             Créer
           </Link>
 
-          {/* Live bouton (quand aucun live actif) */}
+          {/* Live quand inactif */}
           {!hasLive && (
             <Link
               href="/live"
-              className="flex items-center gap-2 rounded-full border border-[var(--os-card-border)] bg-[var(--os-card)] px-4 py-2.5 text-xs font-bold text-[var(--os-fg)] hover:border-outside-300 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--os-card-border)] bg-[var(--os-card)] px-5 py-3 text-sm font-bold text-[var(--os-fg)] hover:border-outside-300 transition-colors active:scale-[0.98]"
             >
-              <Radio className="h-3.5 w-3.5 text-outside-500" />
+              <Radio className="h-5 w-5 text-outside-500" />
               Live
             </Link>
           )}
@@ -279,9 +279,9 @@ export default function HomePage() {
             }
           />
           {loadingPlans ? (
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="min-w-[200px] h-32 shrink-0 os-card p-4 shimmer" />
+                <div key={i} className="min-w-[260px] h-36 shrink-0 os-card p-4 shimmer" />
               ))}
             </div>
           ) : todayPlans.length === 0 && plans.length === 0 ? (
@@ -291,9 +291,9 @@ export default function HomePage() {
               description="Dans ta ville. Lance le premier."
             />
           ) : (
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-              {(todayPlans.length > 0 ? todayPlans : plans.slice(0, 4)).map((plan) => (
-                <div key={plan.id} className="min-w-[220px] shrink-0">
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
+              {(todayPlans.length > 0 ? todayPlans : plans.slice(0, 5)).map((plan) => (
+                <div key={plan.id} className="min-w-[260px] shrink-0 snap-start">
                   <PlanCard plan={plan} showJoin />
                 </div>
               ))}
@@ -314,15 +314,15 @@ export default function HomePage() {
               </Link>
             </div>
             {loadingTrending ? (
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="min-w-[110px] shrink-0 aspect-[3/4] rounded-xl bg-[var(--os-bg)] shimmer" />
+                  <div key={i} className="aspect-[3/4] rounded-xl bg-[var(--os-bg)] shimmer" />
                 ))}
               </div>
             ) : (
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {trendingMoments.map((m) => (
-                  <Link key={m.id} href="/moments" className="min-w-[110px] shrink-0 rounded-xl overflow-hidden bg-black relative aspect-[3/4] block">
+                  <Link key={m.id} href="/moments" className="rounded-xl overflow-hidden bg-black relative aspect-[3/4] block group">
                     {m.type === "VIDEO" ? (
                       <video src={m.mediaUrl} className="h-full w-full object-cover" muted loop playsInline preload="metadata" />
                     ) : (
@@ -334,6 +334,7 @@ export default function HomePage() {
                         {m.badge}
                       </span>
                     )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                       <p className="text-[10px] font-bold text-white truncate">{m.author.name || "Anonyme"}</p>
                     </div>
@@ -354,36 +355,36 @@ export default function HomePage() {
           <DailyChallenges />
         </section>
 
-        {/* Découvrir — compact grid */}
+        {/* Découvrir — grille spacieuse */}
         <section className="animate-slide-up">
           <SectionTitle
             title="Découvrir"
             icon={<Compass className="h-5 w-5 text-outside-500" />}
           />
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/city-map" className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 text-center hover:border-outside-300 transition-colors">
-              <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-2.5 shadow-glow">
-                <MapPin className="h-5 w-5 text-white" />
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/city-map" className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-5 text-center hover:border-outside-300 transition-colors active:scale-[0.97]">
+              <div className="rounded-xl bg-gradient-to-br from-outside-500 to-accent-500 p-3 shadow-glow">
+                <MapPin className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xs font-bold text-[var(--os-fg)]">Carte</span>
+              <span className="text-sm font-bold text-[var(--os-fg)]">Carte</span>
             </Link>
-            <Link href="/events" className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 text-center hover:border-outside-300 transition-colors">
-              <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 p-2.5 shadow-lg">
-                <CalendarDays className="h-5 w-5 text-white" />
+            <Link href="/events" className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-5 text-center hover:border-outside-300 transition-colors active:scale-[0.97]">
+              <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 p-3 shadow-lg">
+                <CalendarDays className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xs font-bold text-[var(--os-fg)]">Événements</span>
+              <span className="text-sm font-bold text-[var(--os-fg)]">Événements</span>
             </Link>
-            <Link href="/places" className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 text-center hover:border-outside-300 transition-colors">
-              <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 p-2.5 shadow-lg">
-                <MapPin className="h-5 w-5 text-white" />
+            <Link href="/places" className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-5 text-center hover:border-outside-300 transition-colors active:scale-[0.97]">
+              <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 p-3 shadow-lg">
+                <MapPin className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xs font-bold text-[var(--os-fg)]">Lieux</span>
+              <span className="text-sm font-bold text-[var(--os-fg)]">Lieux</span>
             </Link>
-            <Link href="/passport" className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-4 text-center hover:border-outside-300 transition-colors">
-              <div className="rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 p-2.5 shadow-lg">
-                <Globe className="h-5 w-5 text-white" />
+            <Link href="/passport" className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--os-card-border)] bg-[var(--os-card)] p-5 text-center hover:border-outside-300 transition-colors active:scale-[0.97]">
+              <div className="rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 p-3 shadow-lg">
+                <Globe className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xs font-bold text-[var(--os-fg)]">Voyage</span>
+              <span className="text-sm font-bold text-[var(--os-fg)]">Voyage</span>
             </Link>
           </div>
         </section>

@@ -173,6 +173,13 @@
     color: var(--os-fg);
   }
 
+  /* Mobile readability bump — scale up all rem-based values */
+  @media (max-width: 640px) {
+    html {
+      font-size: 17px;
+    }
+  }
+
   ::-webkit-scrollbar {
     width: 3px;
     height: 3px;
