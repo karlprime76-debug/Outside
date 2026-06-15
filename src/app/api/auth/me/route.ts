@@ -20,7 +20,6 @@ function sanitizeUser(user: any) {
     termsAcceptedAt: undefined,
     privacyAcceptedAt: undefined,
     trustScore: undefined,
-    referralCode: undefined,
     _count: undefined,
   };
 }
