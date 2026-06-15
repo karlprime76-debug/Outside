@@ -4,50 +4,34 @@ import Link from "next/link";
 import { Users, Plus, Sparkles, Radio } from "lucide-react";
 import { SectionTitle } from "@/components/ui/section-title";
 
+interface StarterTaskStatus {
+  friends: boolean;
+  plan: boolean;
+  moment: boolean;
+  live: boolean;
+}
+
 interface StarterPackProps {
-  show?: boolean;
+  tasks: StarterTaskStatus;
   activeCity?: string | null;
 }
 
-const STARTER_ITEMS = [
-  {
-    icon: Users,
-    title: "Comptes à suivre",
-    description: "Trouve les personnes actives de ta ville",
-    href: "/friends",
-    cta: "Découvrir",
-  },
-  {
-    icon: Plus,
-    title: "Ton premier plan",
-    description: "Crée un plan et trouve des personnes",
-    href: "/plans/new",
-    cta: "Créer",
-  },
-  {
-    icon: Sparkles,
-    title: "Ton premier moment",
-    description: "Partage l'ambiance d'un lieu",
-    href: "/moments/new",
-    cta: "Publier",
-  },
-  {
-    icon: Radio,
-    title: "Lance un live",
-    description: "Montre ce que tu fais maintenant",
-    href: "/live/new",
-    cta: "Démarrer",
-  },
+const ITEMS = [
+  { key: "friends" as const, icon: Users, title: "Comptes à suivre", description: "Trouve les personnes actives de ta ville", href: "/friends", cta: "Découvrir" },
+  { key: "plan" as const, icon: Plus, title: "Ton premier plan", description: "Crée un plan et trouve des personnes", href: "/plans/new", cta: "Créer" },
+  { key: "moment" as const, icon: Sparkles, title: "Ton premier moment", description: "Partage l'ambiance d'un lieu", href: "/moments/new", cta: "Publier" },
+  { key: "live" as const, icon: Radio, title: "Lance un live", description: "Montre ce que tu fais maintenant", href: "/live/new", cta: "Démarrer" },
 ];
 
-export function StarterPack({ show = false, activeCity }: StarterPackProps) {
-  if (!show) return null;
+export function StarterPack({ tasks, activeCity }: StarterPackProps) {
+  const incomplete = ITEMS.filter((item) => !tasks[item.key]);
+  if (incomplete.length === 0) return null;
 
   return (
     <section className="animate-slide-up">
       <SectionTitle title={`Starter Pack${activeCity ? ` — ${activeCity}` : ""}`} />
       <div className="grid gap-3 sm:grid-cols-2">
-        {STARTER_ITEMS.map((item) => {
+        {incomplete.map((item) => {
           const Icon = item.icon;
           return (
             <Link

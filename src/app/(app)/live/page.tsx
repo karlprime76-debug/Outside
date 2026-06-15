@@ -32,7 +32,7 @@ export default function LivePage() {
     fetch("/api/lives")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        setLives(data?.lives || []);
+        setLives((data?.lives || []).filter((l: LiveItem) => l.status === "LIVE"));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -104,7 +104,7 @@ export default function LivePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <StatusBadge status="live" text="En direct" />
+                  <StatusBadge status={live.status === "LIVE" ? "live" : "ended"} text={live.status === "LIVE" ? "En direct" : "Terminé"} />
                 </div>
                 <p className="text-sm font-bold text-[var(--os-fg)] truncate">{live.title}</p>
                 <p className="text-xs text-[var(--os-muted)] mt-1">

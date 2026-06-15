@@ -43,6 +43,7 @@ export async function GET() {
             moments: true,
             friendshipsInitiated: true,
             friendshipsReceived: true,
+            liveSessions: true,
           },
         },
       },
@@ -56,6 +57,7 @@ export async function GET() {
       plansCount: user._count.plansCreated,
       momentsCount: user._count.moments,
       friendsCount: user._count.friendshipsInitiated + user._count.friendshipsReceived,
+      livesCount: user._count.liveSessions,
     };
 
     const gamification = await getUserGamificationData(user.id);

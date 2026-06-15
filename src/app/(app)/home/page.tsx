@@ -50,9 +50,16 @@ const QUICK_MOODS = [
   { label: "Voyage", icon: Plane, mood: "TRAVEL" },
 ];
 
+interface StarterTaskStatus {
+  friends: boolean;
+  plan: boolean;
+  moment: boolean;
+  live: boolean;
+}
+
 export default function HomePage() {
   const { data: session } = useSession();
-  const [showStarterPack, setShowStarterPack] = useState(false);
+  const [tasks, setTasks] = useState<StarterTaskStatus | null>(null);
   const [userProfile, setUserProfile] = useState<{
     activeCity?: { name: string };
     preferredMoods?: string[];
@@ -64,6 +71,26 @@ export default function HomePage() {
   const activeCity = userProfile?.activeCity;
   const [showPwaBanner, setShowPwaBanner] = useState(false);
 
+  const checkStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.user) setUserProfile(data.user);
+      if (data?.stats) {
+        const { plansCount, momentsCount, friendsCount, livesCount } = data.stats;
+        setTasks({
+          friends: friendsCount >= 3,
+          plan: plansCount > 0,
+          moment: momentsCount > 0,
+          live: livesCount > 0,
+        });
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const dismissed = sessionStorage.getItem("pwa_banner_dismissed");
@@ -73,16 +100,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.user) setUserProfile(data.user);
-        if (data?.stats) {
-          const { plansCount, momentsCount, friendsCount } = data.stats;
-          setShowStarterPack(plansCount === 0 || momentsCount === 0 || friendsCount < 3);
-        }
-      })
-      .catch((err) => { console.error("[AUTH_ERROR] Failed to fetch user profile:", err); });
+    checkStats();
 
     fetch("/api/lives?limit=3")
       .then((r) => (r.ok ? r.json() : null))
@@ -97,12 +115,21 @@ export default function HomePage() {
         if (data?.availability) setMyAvailability(data.availability);
       })
       .catch((err) => { console.error("[SETTINGS_ERROR] Failed to fetch availability:", err); });
-  }, [activeCity]);
+  }, [checkStats]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") checkStats();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [checkStats]);
 
   usePolling(async () => {
-    const [livesRes, availRes] = await Promise.allSettled([
+    const [livesRes, availRes, statsRes] = await Promise.allSettled([
       fetch("/api/lives?limit=3"),
       fetch("/api/availability?mine=1"),
+      fetch("/api/auth/me"),
     ]);
     if (livesRes.status === "fulfilled" && livesRes.value.ok) {
       const data = await livesRes.value.json();
@@ -111,6 +138,19 @@ export default function HomePage() {
     if (availRes.status === "fulfilled" && availRes.value.ok) {
       const data = await availRes.value.json();
       if (data?.availability) setMyAvailability(data.availability);
+    }
+    if (statsRes.status === "fulfilled" && statsRes.value.ok) {
+      const data = await statsRes.value.json();
+      if (data?.user) setUserProfile(data.user);
+      if (data?.stats) {
+        const { plansCount, momentsCount, friendsCount, livesCount } = data.stats;
+        setTasks({
+          friends: friendsCount >= 3,
+          plan: plansCount > 0,
+          moment: momentsCount > 0,
+          live: livesCount > 0,
+        });
+      }
     }
   }, 60000);
 
@@ -269,7 +309,7 @@ export default function HomePage() {
         </section>
 
         {/* Starter Pack for new users */}
-        <StarterPack show={showStarterPack} activeCity={activeCity?.name} />
+        {tasks && <StarterPack tasks={tasks} activeCity={activeCity?.name} />}
 
         {/* Follow official accounts */}
         <FollowOfficialPrompt />
