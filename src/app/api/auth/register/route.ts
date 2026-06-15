@@ -8,6 +8,7 @@ import { isValidCountryCode, getCountryName } from "@/lib/countries";
 import { normalizeUsername, validateUsername } from "@/lib/username";
 import { evaluateFounderBadges } from "@/lib/badges";
 import { linkNewUserToReferral } from "@/lib/referral";
+import { sendEmail, welcomeHtml } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
@@ -153,6 +154,18 @@ export async function POST(req: Request) {
         evaluateFounderBadges(newUser.id).catch((err) => {
           if (process.env.NODE_ENV === "development") {
             console.error("[REGISTER] Badge evaluation error:", err);
+          }
+        });
+      }
+
+      if (newUser.email) {
+        sendEmail({
+          to: newUser.email,
+          subject: "Bienvenue sur OUTSIDE ! 🎉",
+          html: welcomeHtml(newUser.name || ""),
+        }).catch((err) => {
+          if (process.env.NODE_ENV === "development") {
+            console.error("[REGISTER] Welcome email error:", err);
           }
         });
       }

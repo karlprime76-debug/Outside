@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import crypto from "crypto";
+import { sendEmail, passwordResetHtml } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
@@ -27,11 +28,11 @@ export async function POST(req: Request) {
       data: { email, token, expiresAt },
     });
 
-    // In production, send email with reset link
-    // await sendEmail({ to: email, template: "password-reset", data: { token } });
-    if (process.env.NODE_ENV === "development") {
-      console.log("[RESET_PASSWORD] Reset link generated"); // email omitted in logs
-    }
+    await sendEmail({
+      to: email,
+      subject: "Réinitialisation de ton mot de passe OUTSIDE",
+      html: passwordResetHtml(token, email),
+    });
 
     return NextResponse.json({ message: "Si cet email existe, un lien de réinitialisation a été envoyé." });
   } catch (error) {

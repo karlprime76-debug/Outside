@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import crypto from "crypto";
+import { sendEmail, emailVerifyHtml } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
@@ -63,11 +64,11 @@ export async function PUT() {
       data: { identifier: "email-verify", token, expires },
     });
 
-    // In production, send verification email
-    // await sendEmail({ to: user.email, template: "email-verify", data: { token } });
-    if (process.env.NODE_ENV === "development") {
-      console.log("[VERIFY_EMAIL] Verification email generated"); // email omitted in logs
-    }
+    await sendEmail({
+      to: user.email!,
+      subject: "Confirme ton adresse email sur OUTSIDE",
+      html: emailVerifyHtml(token, user.email!),
+    });
 
     return NextResponse.json({ message: "Email de vérification envoyé." });
   } catch (error) {
