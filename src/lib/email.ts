@@ -1,5 +1,3 @@
-"use server";
-
 const API_URL = "https://api.brevo.com/v3/smtp/email";
 
 const FROM = { name: "OUTSIDE", email: "noreply@outside.app" };
