@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { compressImage, shouldCompressImage } from "@/lib/media/compress-image";
+import { ALLOWED_MOMENT_TYPES, MOMENT_PHOTO_MAX_SIZE, MOMENT_VIDEO_MAX_SIZE, ACCEPT_MEDIA_TYPES } from "@/lib/supabase/moments-storage";
 
 const AudioPicker = dynamic(() => import("@/components/audio/audio-picker").then((m) => ({ default: m.AudioPicker })), { ssr: false });
 const ImageCropEditor = dynamic(() => import("@/components/media/image-crop-editor").then((m) => ({ default: m.ImageCropEditor })), {
@@ -134,18 +135,15 @@ function NewMomentForm() {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    const allowed = [
-      "image/jpeg", "image/png", "image/webp",
-      "video/mp4", "video/webm", "video/quicktime",
-    ];
-    if (!allowed.includes(selected.type)) {
-      addToast("Format non accepté. Utilise JPG, PNG, WebP, MP4 ou WebM.", "error");
+    if (!ALLOWED_MOMENT_TYPES.includes(selected.type)) {
+      addToast("Format non accepté.", "error");
       return;
     }
 
-    const maxSize = selected.type.startsWith("video/") ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+    const maxSize = selected.type.startsWith("video/") ? MOMENT_VIDEO_MAX_SIZE : MOMENT_PHOTO_MAX_SIZE;
     if (selected.size > maxSize) {
-      addToast(selected.type.startsWith("video/") ? "Vidéo max 50 Mo" : "Photo max 5 Mo", "error");
+      const label = selected.type.startsWith("video/") ? "100 Mo" : "10 Mo";
+      addToast(`Fichier trop lourd. Taille max : ${label}.`, "error");
       return;
     }
 
@@ -464,7 +462,7 @@ function NewMomentForm() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+              accept={ACCEPT_MEDIA_TYPES}
               onChange={handleFileChange}
               className="hidden"
             />

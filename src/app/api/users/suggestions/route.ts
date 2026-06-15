@@ -24,12 +24,13 @@ export async function GET(req: NextRequest) {
     const now = new Date();
 
     // ——— Exclusions ———
-    const [follows, blocks, blocksOfMe] = await Promise.all([
-      db.follow.findMany({ where: { followerId: userId }, select: { followingId: true } }),
+    const follows = await db.follow.findMany({ where: { followerId: userId }, select: { followingId: true } });
+    const followedIds = new Set(follows.map((f) => f.followingId));
+
+    const [blocks, blocksOfMe] = await Promise.all([
       db.userBlock.findMany({ where: { blockerId: userId }, select: { blockedId: true } }),
       db.userBlock.findMany({ where: { blockedId: userId }, select: { blockerId: true } }),
     ]);
-    const followedIds = new Set(follows.map((f) => f.followingId));
     const excludedIds = new Set([userId, ...followedIds, ...blocks.map((b) => b.blockedId), ...blocksOfMe.map((b) => b.blockerId)]);
 
     // ——— Friends (mutual follows) ———
@@ -178,7 +179,7 @@ export async function GET(req: NextRequest) {
           isOfficial: u.role === "ADMIN" || u.isAmbassador,
           accountKind: u.accountKind,
           reason: displayReason,
-          viewerState: { isFollowing: false },
+          viewerState: { isFollowing: followedIds.has(u.id) },
         };
       })
       .sort((a, b) => {

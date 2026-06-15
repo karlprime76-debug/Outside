@@ -1,31 +1,47 @@
 export const MOMENTS_BUCKET = "moments";
-export const MOMENT_PHOTO_MAX_SIZE = 5 * 1024 * 1024; // 5 Mo
-export const MOMENT_VIDEO_MAX_SIZE = 50 * 1024 * 1024; // 50 Mo
+export const MOMENT_PHOTO_MAX_SIZE = 10 * 1024 * 1024; // 10 Mo
+export const MOMENT_VIDEO_MAX_SIZE = 100 * 1024 * 1024; // 100 Mo
 
 export const ALLOWED_MOMENT_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
+  "image/avif",
+  "image/heic",
+  "image/heif",
+  "image/gif",
   "video/mp4",
   "video/webm",
   "video/quicktime",
+  "video/x-msvideo",
+  "video/3gpp",
+  "video/mpeg",
+  "video/x-matroska",
 ];
+
+// Formats clés pour l'attribut HTML accept (limité aux plus courants côté client)
+export const ACCEPT_MEDIA_TYPES = [
+  "image/jpeg", "image/png", "image/webp", "image/avif", "image/heic", "image/heif", "image/gif",
+  "video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", "video/3gpp", "video/mpeg", "video/x-matroska",
+].join(",");
 
 export function getMomentFileExtension(fileType: string): string {
   switch (fileType) {
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-    case "video/mp4":
-      return "mp4";
-    case "video/webm":
-      return "webm";
-    case "video/quicktime":
-      return "mov";
+    case "image/png": return "png";
+    case "image/webp": return "webp";
+    case "image/avif": return "avif";
+    case "image/heic": return "heic";
+    case "image/heif": return "heif";
+    case "image/gif": return "gif";
+    case "video/mp4": return "mp4";
+    case "video/webm": return "webm";
+    case "video/quicktime": return "mov";
+    case "video/x-msvideo": return "avi";
+    case "video/3gpp": return "3gp";
+    case "video/mpeg": return "mpeg";
+    case "video/x-matroska": return "mkv";
     case "image/jpeg":
-    default:
-      return "jpg";
+    default: return "jpg";
   }
 }
 
@@ -42,12 +58,12 @@ export function buildMomentPath(userId: string, fileType: string): string {
 
 export function validateMomentFile(file: File): { ok: boolean; error?: string } {
   if (!ALLOWED_MOMENT_TYPES.includes(file.type)) {
-    return { ok: false, error: "Format non accepté. Utilise JPG, PNG, WebP, MP4 ou WebM." };
+    return { ok: false, error: "Format non accepté." };
   }
 
   const maxSize = isVideo(file.type) ? MOMENT_VIDEO_MAX_SIZE : MOMENT_PHOTO_MAX_SIZE;
   if (file.size > maxSize) {
-    const label = isVideo(file.type) ? "50 Mo" : "5 Mo";
+    const label = isVideo(file.type) ? "100 Mo" : "10 Mo";
     return { ok: false, error: `Fichier trop lourd. Taille max : ${label}.` };
   }
 

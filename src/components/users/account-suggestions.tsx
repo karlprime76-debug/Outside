@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { UserPlus, Sparkles } from "lucide-react";
+import { UserPlus, Sparkles, Check } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 
 interface SuggestedUser {
@@ -27,16 +27,33 @@ interface AccountSuggestionsProps {
 export function AccountSuggestions({ title, limit = 5 }: AccountSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<SuggestedUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
     fetch(`/api/users/suggestions?limit=${limit}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         setSuggestions(data?.suggestions || []);
       })
-      .catch((err) => { console.error("[PROFILE_ERROR] Failed to fetch suggestions:", err); })
+      .catch((err) => { console.error("[SUGGESTIONS] Failed to fetch:", err); })
       .finally(() => setLoading(false));
   }, [limit]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleFollow = (userId: string) => {
+    setFollowedIds((prev) => new Set(prev).add(userId));
+    fetch(`/api/follow?userId=${userId}`, { method: "POST" })
+      .then(() => {
+        // After a short delay, reload suggestions to get new accounts
+        setTimeout(load, 800);
+      })
+      .catch((err) => {
+        console.error("[SUGGESTIONS] Follow failed:", err);
+        setFollowedIds((prev) => { const next = new Set(prev); next.delete(userId); return next; });
+      });
+  };
 
   if (loading) {
     return (
@@ -58,6 +75,8 @@ export function AccountSuggestions({ title, limit = 5 }: AccountSuggestionsProps
   if (suggestions.length === 0) {
     return null;
   }
+
+  const isFollowing = (u: SuggestedUser) => u.viewerState.isFollowing || followedIds.has(u.id);
 
   return (
     <div className="space-y-3">
@@ -89,22 +108,16 @@ export function AccountSuggestions({ title, limit = 5 }: AccountSuggestionsProps
                 {user.reason}
               </p>
             </div>
-            {!user.viewerState.isFollowing && (
+            {isFollowing(user) ? (
+              <div className="mt-1 flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-[10px] font-bold text-green-500">
+                <Check className="h-3 w-3" />
+                Suivi
+              </div>
+            ) : (
               <button
                 onClick={(e) => {
                   e.preventDefault();
-                  // Handle follow action
-                  fetch(`/api/follow?userId=${user.id}`, { method: "POST" })
-                    .then(() => {
-                      setSuggestions((prev) =>
-                        prev.map((u) =>
-                          u.id === user.id
-                            ? { ...u, viewerState: { ...u.viewerState, isFollowing: true } }
-                            : u
-                        )
-                      );
-                    })
-                    .catch((err) => { console.error("[PROFILE_ERROR] Failed to follow user:", err); });
+                  handleFollow(user.id);
                 }}
                 className="mt-1 flex items-center gap-1 rounded-full bg-gradient-to-r from-outside-500 to-accent-500 px-3 py-1 text-[10px] font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-95"
               >

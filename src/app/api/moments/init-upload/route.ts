@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { buildMomentPath, MOMENTS_BUCKET } from "@/lib/supabase/moments-storage";
+import { buildMomentPath, MOMENTS_BUCKET, ALLOWED_MOMENT_TYPES } from "@/lib/supabase/moments-storage";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
@@ -16,11 +16,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Type de fichier requis." }, { status: 400 });
     }
 
-    const allowed = [
-      "image/jpeg", "image/png", "image/webp",
-      "video/mp4", "video/webm", "video/quicktime",
-    ];
-    if (!allowed.includes(fileType)) {
+    if (!ALLOWED_MOMENT_TYPES.includes(fileType)) {
       return NextResponse.json({ error: "Format non accepté." }, { status: 400 });
     }
 
