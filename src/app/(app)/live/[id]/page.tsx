@@ -94,7 +94,7 @@ export default function LiveDetailPage() {
 
     init();
     return () => { cancelled = true; mountedRef.current = false; };
-  }, [id, session?.user?.email]);
+  }, [id, session?.user?.email, session?.user?.id]);
 
   // Heartbeat for host
   useEffect(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -67,7 +67,7 @@ export default function AdminProVenuesPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
 
-  const loadVenues = async (statusFilter?: VenueStatus | "ALL") => {
+  const loadVenues = useCallback(async (statusFilter?: VenueStatus | "ALL") => {
     const qs = (statusFilter || filter) !== "ALL" ? `?status=${statusFilter || filter}` : "";
     try {
       const res = await fetch(`/api/admin/pro/venues${qs}`);
@@ -78,7 +78,7 @@ export default function AdminProVenuesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -90,11 +90,11 @@ export default function AdminProVenuesPage() {
       return;
     }
     loadVenues();
-  }, [status, session, router]);
+  }, [status, session, router, loadVenues]);
 
   useEffect(() => {
     if (!loading) loadVenues(filter);
-  }, [filter, loading]);
+  }, [filter, loading, loadVenues]);
 
   async function updateStatus(id: string, newStatus: VenueStatus, reason?: string) {
     setActionId(id);

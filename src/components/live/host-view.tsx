@@ -42,12 +42,13 @@ function HostOverlay({ onDisconnected, liveId }: HostViewProps) {
 
   // Attach local camera
   useEffect(() => {
-    if (videoRef.current && camTrack?.publication?.track) {
-      camTrack.publication.track.attach(videoRef.current);
+    const el = videoRef.current;
+    if (el && camTrack?.publication?.track) {
+      camTrack.publication.track.attach(el);
     }
     return () => {
-      if (videoRef.current) {
-        camTrack?.publication?.track?.detach(videoRef.current);
+      if (el) {
+        camTrack?.publication?.track?.detach(el);
       }
     };
   }, [camTrack]);

@@ -3,11 +3,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function GET() {
-  const isDev = process.env.NODE_ENV !== "production";
-  if (!isDev) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-
   try {
     const session = await auth();
     const isAdmin = Boolean(session?.user?.role && ["ADMIN", "MODERATOR"].includes(session.user.role as string));

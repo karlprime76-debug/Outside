@@ -90,6 +90,7 @@ export function DmMessageComposer({
     return () => {
       stopMedia();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function stopMedia() {

@@ -382,7 +382,7 @@ export default function DmConversationPage() {
       setNextCursor(data.nextCursor);
       fetch(`/api/dm/conversations/${id}/read`, { method: "POST" }).catch((err) => { console.error("[DM_ERROR] Failed to mark conversation as read:", err); });
     }
-  }, [fetchMessages, id]);
+  }, [fetchMessages, id, haptic]);
 
   const { containerRef: pullRefreshRef, isPulling, pullDistance, isRefreshing, progress } = usePullToRefresh({
     onRefresh: handleRefresh,
