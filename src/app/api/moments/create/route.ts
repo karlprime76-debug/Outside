@@ -3,17 +3,26 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canViewPlan } from "@/lib/plans/permissions";
 import { recordTripHistory } from "@/lib/passport";
-import { MOMENTS_BUCKET } from "@/lib/supabase/moments-storage";
+import { ensureMomentsBucket } from "@/lib/supabase/moments-storage";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { MomentVisibility, ChallengeType } from "@prisma/client";
 import { GamificationEngine } from "@/lib/gamification-engine";
 import { cacheClear } from "@/lib/cache";
+import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const limit = await rateLimit(`moment:create:${user.id}`, 20, 3600000);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: "Trop de moments publiés. Réessaie plus tard." },
+        { status: 429, headers: getRateLimitHeaders(limit) }
+      );
     }
 
     const body = await req.json();
@@ -45,17 +54,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Informations du fichier manquantes." }, { status: 400 });
     }
 
-    // Validate the upload exists in Supabase
     const supabase = createSupabaseServerClient();
-    const { data: exists } = await supabase.storage
-      .from(MOMENTS_BUCKET)
-      .list(filePath.substring(0, filePath.lastIndexOf("/")));
-
-    const fileName = filePath.split("/").pop();
-    const fileFound = exists?.some((f) => f.name === fileName);
-    if (!fileFound) {
-      return NextResponse.json({ error: "Fichier introuvable." }, { status: 400 });
-    }
+    await ensureMomentsBucket(supabase);
 
     // Validate metadata
     const parsedMediaCrop = mediaCrop ? (() => {

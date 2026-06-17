@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { buildMomentPath, MOMENTS_BUCKET, ALLOWED_MOMENT_TYPES } from "@/lib/supabase/moments-storage";
+import { buildMomentPath, MOMENTS_BUCKET, ALLOWED_MOMENT_TYPES, ensureMomentsBucket } from "@/lib/supabase/moments-storage";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = createSupabaseServerClient();
+    await ensureMomentsBucket(supabase);
     const filePath = buildMomentPath(user.id, fileType);
 
     const { data, error } = await supabase.storage
