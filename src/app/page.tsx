@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+
+const AmbientScene = dynamic(
+  () => import("@/components/3d/ambient-scene").then((m) => m.AmbientScene),
+  { ssr: false }
+);
 import {
   MapPin, Compass, Radio, Zap, Users, Globe,
   ArrowRight, Sparkles, CheckCircle,
@@ -215,6 +221,7 @@ export default function LandingPage() {
         height="screen"
         priority
       >
+        <AmbientScene />
         <div className="relative z-10 mx-auto flex max-w-6xl flex-1 flex-col items-center justify-center px-4 pb-24 pt-24 text-center">
           {/* Floating elements */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
