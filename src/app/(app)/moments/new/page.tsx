@@ -35,6 +35,14 @@ const VideoTrimEditor = dynamic(() => import("@/components/media/video-trim-edit
     </div>
   ),
 });
+const VideoTranscoder = dynamic(() => import("@/components/media/video-transcoder").then((m) => ({ default: m.VideoTranscoder })), {
+  ssr: false,
+  loading: () => (
+    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
+      <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-outside-500 animate-spin" />
+    </div>
+  ),
+});
 const UploadProgressComponent = dynamic(() => import("@/components/upload/upload-progress").then((m) => ({ default: m.UploadProgressComponent })), { ssr: false });
 
 type Step = "select" | "edit" | "details" | "publish";
@@ -75,6 +83,7 @@ function NewMomentForm() {
 
   const [showImageEditor, setShowImageEditor] = useState(false);
   const [showVideoEditor, setShowVideoEditor] = useState(false);
+  const [showVideoTranscoder, setShowVideoTranscoder] = useState(false);
   const [videoPlayable, setVideoPlayable] = useState(true);
   const [mediaMetadata, setMediaMetadata] = useState({
     mediaWidth: undefined as number | undefined,
@@ -164,7 +173,7 @@ function NewMomentForm() {
         };
         v.onerror = () => {
           setVideoPlayable(false);
-          setShowVideoEditor(false);
+          setShowVideoTranscoder(true);
           setStep("edit");
         };
         v.src = url;
@@ -224,6 +233,29 @@ function NewMomentForm() {
     setStep("details");
   };
 
+  const handleTranscodeConfirm = (result: {
+    processedFile: File;
+    duration: number;
+    width: number;
+    height: number;
+  }) => {
+    setFile(result.processedFile);
+    if (preview) URL.revokeObjectURL(preview);
+    const url = URL.createObjectURL(result.processedFile);
+    setPreview(url);
+    setShowVideoTranscoder(false);
+    setVideoPlayable(true);
+    setShowVideoEditor(false);
+    setMediaMetadata((prev) => ({
+      ...prev,
+      mediaDuration: result.duration || undefined,
+      mediaWidth: result.width || undefined,
+      mediaHeight: result.height || undefined,
+      mediaAspectRatio: result.width && result.height ? `${result.width}:${result.height}` : undefined,
+    }));
+    setStep("details");
+  };
+
   function handleImageEditCancel() {
     setShowImageEditor(false);
     setFile(null);
@@ -233,6 +265,7 @@ function NewMomentForm() {
 
   function handleVideoEditCancel() {
     setShowVideoEditor(false);
+    setShowVideoTranscoder(false);
     setFile(null);
     setPreview(null);
     setStep("select");
@@ -371,6 +404,8 @@ function NewMomentForm() {
       if (mediaType === "VIDEO") {
         if (videoPlayable) {
           setShowVideoEditor(true);
+        } else {
+          setShowVideoTranscoder(true);
         }
         setStep("edit");
       } else {
@@ -728,7 +763,7 @@ function NewMomentForm() {
         />
       )}
 
-      {showVideoEditor && file && (
+      {showVideoEditor && file && videoPlayable && (
         <VideoTrimEditor
           videoFile={file}
           onConfirm={handleVideoTrimConfirm}
@@ -737,52 +772,12 @@ function NewMomentForm() {
         />
       )}
 
-      {!showVideoEditor && step === "edit" && mediaType === "VIDEO" && file && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-[var(--os-card)] border border-[var(--os-card-border)] p-6 space-y-5">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <div className="rounded-full bg-amber-500/10 p-3">
-                <Film className="h-8 w-8 text-amber-400" />
-              </div>
-              <h2 className="text-lg font-extrabold text-[var(--os-fg)]">
-                Aperçu non disponible
-              </h2>
-              <p className="text-sm text-[var(--os-muted)] max-w-xs">
-                Ce format vidéo ne peut pas être prévisualisé sur ton appareil. Le fichier sera publié tel quel.
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-[var(--os-bg)] border border-[var(--os-card-border)] p-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--os-muted)]">Fichier</span>
-                <span className="font-bold text-[var(--os-fg)] truncate max-w-[200px]">{file.name}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--os-muted)]">Format</span>
-                <span className="font-bold text-[var(--os-fg)]">{file.type}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--os-muted)]">Taille</span>
-                <span className="font-bold text-[var(--os-fg)]">{(file.size / (1024 * 1024)).toFixed(1)} Mo</span>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={handleVideoEditCancel}
-                className="flex-1 rounded-xl border border-[var(--os-card-border)] py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={() => setStep("details")}
-                className="flex-1 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-[0.98]"
-              >
-                Continuer
-              </button>
-            </div>
-          </div>
-        </div>
+      {showVideoTranscoder && file && !videoPlayable && (
+        <VideoTranscoder
+          videoFile={file}
+          onConfirm={handleTranscodeConfirm}
+          onCancel={handleVideoEditCancel}
+        />
       )}
     </div>
   );
