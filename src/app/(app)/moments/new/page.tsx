@@ -161,7 +161,8 @@ function NewMomentForm() {
           setStep("edit");
         };
         v.onerror = () => {
-          addToast("Format vidéo non supporté", "error");
+          setShowVideoEditor(false);
+          setStep("details");
         };
         v.src = url;
       } catch {

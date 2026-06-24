@@ -23,6 +23,7 @@ export function MomentUploadSheet({ open, onClose, onUploaded, defaultCity, defa
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [videoPlayable, setVideoPlayable] = useState(true);
   const [caption, setCaption] = useState("");
   const [visibility, setVisibility] = useState("PUBLIC");
   const [city, setCity] = useState(defaultCity || "");
@@ -52,6 +53,15 @@ export function MomentUploadSheet({ open, onClose, onUploaded, defaultCity, defa
     setFile(selected);
     const url = URL.createObjectURL(selected);
     setPreview(url);
+    if (selected.type.startsWith("video/")) {
+      const v = document.createElement("video");
+      v.preload = "metadata";
+      v.onloadedmetadata = () => setVideoPlayable(true);
+      v.onerror = () => setVideoPlayable(false);
+      v.src = url;
+    } else {
+      setVideoPlayable(true);
+    }
   }
 
   async function submit() {
@@ -126,7 +136,15 @@ export function MomentUploadSheet({ open, onClose, onUploaded, defaultCity, defa
         ) : (
           <div className="relative rounded-2xl overflow-hidden bg-black">
             {file.type.startsWith("video/") ? (
-              <video src={preview || undefined} className="w-full max-h-64 object-contain" controls />
+              videoPlayable ? (
+                <video src={preview || undefined} className="w-full max-h-64 object-contain" controls />
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-2 p-8 text-[var(--os-muted)]">
+                  <Video className="h-10 w-10" />
+                  <p className="text-sm text-center">Aperçu non disponible pour ce format vidéo</p>
+                  <p className="text-xs text-center opacity-60">Le fichier sera tout de même publié</p>
+                </div>
+              )
             ) : (
               <Image src={preview || ""} alt="Aperçu du moment" width={500} height={400} className="w-full max-h-64 object-contain" unoptimized />
             )}

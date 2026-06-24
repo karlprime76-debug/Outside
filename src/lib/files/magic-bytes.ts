@@ -21,12 +21,19 @@ export function detectMimeType(buffer: Uint8Array): string | null {
   }
   if (buffer.length >= 8) {
     const ftyp = String.fromCharCode(...buffer.slice(4, 8));
-    if (ftyp === "ftyp" || ftyp === "ftyp") {
+    if (ftyp === "ftyp") {
       const brand = String.fromCharCode(...buffer.slice(8, 12));
       if (brand === "isom" || brand === "mp42" || brand === "avc1") return "video/mp4";
       if (brand === "qt  ") return "video/quicktime";
       if (brand === "heic" || brand === "heix" || brand === "mif1") return "image/heic";
       if (brand === "avif") return "image/avif";
+      if (brand === "3gp1" || brand === "3gp2" || brand === "3gp5" || brand === "3gp6") return "video/3gpp";
+    }
+  }
+  // MPEG-1 / MPEG-2 video
+  if (buffer.length >= 4) {
+    if (buffer[0] === 0x00 && buffer[1] === 0x00 && buffer[2] === 0x01 && (buffer[3] === 0xBA || buffer[3] === 0xB3)) {
+      return "video/mpeg";
     }
   }
   // AVI magic: "RIFF" + 4 bytes + "AVI "
