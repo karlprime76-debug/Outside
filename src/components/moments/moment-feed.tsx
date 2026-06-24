@@ -53,6 +53,7 @@ interface FeedMoment {
     title: string;
     artistName: string | null;
     audioUrl: string;
+    spotifyTrackId?: string | null;
   } | null;
 }
 

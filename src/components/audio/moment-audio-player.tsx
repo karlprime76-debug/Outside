@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useGlobalAudio } from "@/hooks/use-global-audio";
-import { Volume2, VolumeX, Music } from "lucide-react";
+import { Volume2, VolumeX, Music, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 interface MomentAudioPlayerProps {
@@ -13,6 +13,7 @@ interface MomentAudioPlayerProps {
   volume?: number;
   startTime?: number;
   linkToDetail?: boolean;
+  spotifyTrackId?: string | null;
 }
 
 export function MomentAudioPlayer({
@@ -23,6 +24,7 @@ export function MomentAudioPlayer({
   volume = 1,
   startTime = 0,
   linkToDetail = true,
+  spotifyTrackId,
 }: MomentAudioPlayerProps) {
   const { state, play, pause, toggleMute, stop } = useGlobalAudio();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,6 +118,18 @@ export function MomentAudioPlayer({
           <Volume2 className="h-3 w-3 text-white/70" />
         )}
       </button>
+      {spotifyTrackId && (
+        <a
+          href={`https://open.spotify.com/track/${spotifyTrackId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="rounded-full p-1 hover:bg-green-500/20 transition-colors text-green-400"
+          aria-label="Écouter sur Spotify"
+        >
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      )}
     </div>
   );
 }

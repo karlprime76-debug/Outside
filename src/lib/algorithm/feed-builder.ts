@@ -182,7 +182,7 @@ async function fetchNewCreators(
         },
       },
       _count: { select: { reactions: true, comments: true } },
-      audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
+      audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true, spotifyTrackId: true } },
     },
   });
 
@@ -252,7 +252,7 @@ async function fetchExploration(
         },
       },
       _count: { select: { reactions: true, comments: true } },
-      audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
+      audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true, spotifyTrackId: true } },
     },
   });
 
@@ -461,7 +461,7 @@ async function fetchCandidates(
         },
       },
       _count: { select: { reactions: true, comments: true } },
-      audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true } },
+      audioTrack: { select: { id: true, title: true, artistName: true, audioUrl: true, status: true, spotifyTrackId: true } },
     },
   });
 

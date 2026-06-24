@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useToast } from "@/components/ui/toast";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { isValidAudioType, MAX_AUDIO_SIZE, AUDIO_RIGHTS_NOTICE } from "@/lib/audio";
-import { Search, Upload, Play, Pause, Check, X, Volume1 } from "lucide-react";
+import { Search, Upload, Play, Pause, Check, X, Volume1, Music } from "lucide-react";
 
 interface AudioTrackItem {
   id: string;
@@ -16,6 +16,18 @@ interface AudioTrackItem {
   isOfficial: boolean;
   isOriginal: boolean;
   isFromPixabay?: boolean;
+  spotifyTrackId?: string | null;
+  albumArt?: string | null;
+}
+
+interface SpotifyResult {
+  id: string;
+  title: string;
+  artistName: string;
+  albumArt: string;
+  previewUrl: string | null;
+  durationMs: number;
+  externalUrl: string;
 }
 
 interface AudioPickerProps {
@@ -27,7 +39,7 @@ interface AudioPickerProps {
 
 export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioPickerProps) {
   const { addToast } = useToast();
-  const [tab, setTab] = useState<"library" | "upload">("library");
+  const [tab, setTab] = useState<"library" | "upload" | "spotify">("library");
   const [query, setQuery] = useState("");
   const [tracks, setTracks] = useState<AudioTrackItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,6 +51,10 @@ export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioP
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [spotifyQuery, setSpotifyQuery] = useState("");
+  const [spotifyResults, setSpotifyResults] = useState<SpotifyResult[]>([]);
+  const [spotifyLoading, setSpotifyLoading] = useState(false);
+  const [savingSpotify, setSavingSpotify] = useState(false);
 
   const fetchTracks = useCallback(
     async (search?: string) => {
@@ -70,6 +86,59 @@ export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioP
     }, 300);
     return () => clearTimeout(timeout);
   }, [query, tab, fetchTracks]);
+
+  useEffect(() => {
+    if (tab !== "spotify") return;
+    const timeout = setTimeout(async () => {
+      if (!spotifyQuery || spotifyQuery.length < 2) {
+        setSpotifyResults([]);
+        return;
+      }
+      setSpotifyLoading(true);
+      try {
+        const res = await fetch(`/api/audio/spotify/search?q=${encodeURIComponent(spotifyQuery)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSpotifyResults(data.tracks || []);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setSpotifyLoading(false);
+      }
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [spotifyQuery, tab]);
+
+  const handleSelectSpotify = async (track: SpotifyResult) => {
+    setSavingSpotify(true);
+    try {
+      const res = await fetch("/api/audio/spotify/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          spotifyTrackId: track.id,
+          title: track.title,
+          artistName: track.artistName,
+          albumArt: track.albumArt,
+          previewUrl: track.previewUrl,
+          durationMs: track.durationMs,
+          externalUrl: track.externalUrl,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onSelect(data.track);
+        onClose();
+      } else {
+        addToast("Erreur lors de l'ajout Spotify", "error");
+      }
+    } catch {
+      addToast("Erreur réseau", "error");
+    } finally {
+      setSavingSpotify(false);
+    }
+  };
 
   const handlePlayPreview = (track: AudioTrackItem) => {
     if (playingId === track.id) {
@@ -157,6 +226,16 @@ export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioP
             }`}
           >
             Bibliothèque
+          </button>
+          <button
+            onClick={() => setTab("spotify")}
+            className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors ${
+              tab === "spotify"
+                ? "bg-[var(--os-card)] text-[var(--os-fg)] shadow-sm"
+                : "text-[var(--os-muted)]"
+            }`}
+          >
+            Spotify
           </button>
           <button
             onClick={() => setTab("upload")}
@@ -275,6 +354,79 @@ export function AudioPicker({ open, onClose, onSelect, selectedTrackId }: AudioP
                 {tracks.length === 0 && query && (
                   <p className="text-center text-xs text-[var(--os-muted)] py-6">
                     Aucun résultat pour &quot;{query}&quot;
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {tab === "spotify" && (
+          <>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--os-muted)]" />
+              <input
+                value={spotifyQuery}
+                onChange={(e) => setSpotifyQuery(e.target.value)}
+                placeholder="Chercher un titre sur Spotify..."
+                className="w-full rounded-xl border border-[var(--os-card-border)] bg-[var(--os-bg)] pl-9 pr-3 py-2.5 text-sm text-[var(--os-fg)] placeholder:text-[var(--os-muted)] focus:outline-none focus:ring-2 focus:ring-outside-500"
+              />
+            </div>
+
+            <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-3">
+              <p className="text-[11px] text-green-600 dark:text-green-400">
+                Les morceaux Spotify sont ajoutés à ta bibliothèque et liés au moment. Un lien vers Spotify apparaîtra sur le moment.
+              </p>
+            </div>
+
+            {spotifyLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-14 rounded-xl bg-[var(--os-bg)] animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1">
+                {spotifyResults.map((track) => (
+                  <div
+                    key={track.id}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors border border-transparent hover:bg-[var(--os-bg)]"
+                  >
+                    {track.albumArt ? (
+                      <img
+                        src={track.albumArt}
+                        alt={track.title}
+                        className="h-10 w-10 rounded-lg object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-[var(--os-card-border)] flex items-center justify-center shrink-0">
+                        <Music className="h-4 w-4 text-[var(--os-muted)]" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-[var(--os-fg)] truncate">{track.title}</p>
+                      <p className="text-[11px] text-[var(--os-muted)] truncate">{track.artistName}</p>
+                    </div>
+                    <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-bold text-green-500 shrink-0">
+                      SPOTIFY
+                    </span>
+                    <button
+                      onClick={() => handleSelectSpotify(track)}
+                      disabled={savingSpotify}
+                      className="rounded-full bg-green-600 px-3 py-1 text-[11px] font-bold text-white hover:bg-green-700 transition-colors active:scale-95 disabled:opacity-50 shrink-0"
+                    >
+                      {savingSpotify ? "..." : "Utiliser"}
+                    </button>
+                  </div>
+                ))}
+                {spotifyResults.length === 0 && spotifyQuery.length >= 2 && (
+                  <p className="text-center text-xs text-[var(--os-muted)] py-6">
+                    Aucun résultat pour &quot;{spotifyQuery}&quot;
+                  </p>
+                )}
+                {spotifyResults.length === 0 && spotifyQuery.length < 2 && (
+                  <p className="text-center text-xs text-[var(--os-muted)] py-6">
+                    Tape au moins 2 caractères pour chercher sur Spotify
                   </p>
                 )}
               </div>

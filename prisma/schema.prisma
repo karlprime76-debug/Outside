@@ -212,6 +212,7 @@ enum AudioSourceType {
   USER_ORIGINAL
   ARTIST_UPLOAD
   MOMENT_ORIGINAL
+  SPOTIFY
 }
 
 enum AudioStatus {
@@ -1033,6 +1034,7 @@ model AudioTrack {
   duration  Int?
   coverUrl  String?
 
+  spotifyTrackId  String?
   isOfficial      Boolean @default(false)
   isOriginal      Boolean @default(false)
   usageCount      Int     @default(0)

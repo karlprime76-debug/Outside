@@ -58,6 +58,7 @@ interface MomentItem {
     title: string;
     artistName: string | null;
     audioUrl: string;
+    spotifyTrackId?: string | null;
   } | null;
 }
 
@@ -499,6 +500,7 @@ export function MomentCard({ moment, userId, priority, onLikeToggle, onOpenComme
                   artistName={moment.audioTrack.artistName}
                   volume={moment.audioVolume ?? 1}
                   startTime={moment.audioStartTime ?? 0}
+                  spotifyTrackId={moment.audioTrack.spotifyTrackId}
                 />
               </div>
             )}
@@ -535,6 +537,7 @@ export function MomentCard({ moment, userId, priority, onLikeToggle, onOpenComme
                   artistName={moment.audioTrack.artistName}
                   volume={moment.audioVolume ?? 1}
                   startTime={moment.audioStartTime ?? 0}
+                  spotifyTrackId={moment.audioTrack.spotifyTrackId}
                 />
               </div>
             )}
