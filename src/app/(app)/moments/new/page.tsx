@@ -75,6 +75,7 @@ function NewMomentForm() {
 
   const [showImageEditor, setShowImageEditor] = useState(false);
   const [showVideoEditor, setShowVideoEditor] = useState(false);
+  const [videoPlayable, setVideoPlayable] = useState(true);
   const [mediaMetadata, setMediaMetadata] = useState({
     mediaWidth: undefined as number | undefined,
     mediaHeight: undefined as number | undefined,
@@ -157,15 +158,18 @@ function NewMomentForm() {
         const v = document.createElement("video");
         v.preload = "metadata";
         v.onloadedmetadata = () => {
+          setVideoPlayable(true);
           setShowVideoEditor(true);
           setStep("edit");
         };
         v.onerror = () => {
+          setVideoPlayable(false);
           setShowVideoEditor(false);
-          setStep("details");
+          setStep("edit");
         };
         v.src = url;
       } catch {
+        setVideoPlayable(true);
         setShowVideoEditor(true);
         setStep("edit");
       }
@@ -365,13 +369,16 @@ function NewMomentForm() {
   const goToEdit = useCallback(() => {
     if (preview) {
       if (mediaType === "VIDEO") {
-        setShowVideoEditor(true);
+        if (videoPlayable) {
+          setShowVideoEditor(true);
+        }
+        setStep("edit");
       } else {
         setShowImageEditor(true);
+        setStep("edit");
       }
-      setStep("edit");
     }
-  }, [preview, mediaType]);
+  }, [preview, mediaType, videoPlayable]);
 
   return (
     <div className="min-h-screen bg-[var(--os-bg)]">
@@ -475,7 +482,7 @@ function NewMomentForm() {
           <div className="p-4 space-y-5 animate-fade-in">
             {/* Media preview — large, immersive */}
             <div className="relative rounded-2xl overflow-hidden bg-black/5 dark:bg-white/5 max-h-[60vh] flex items-center justify-center">
-              {mediaType === "VIDEO" ? (
+              {mediaType === "VIDEO" && videoPlayable ? (
                 <video
                   src={preview}
                   className="max-w-full max-h-[60vh] object-contain"
@@ -485,6 +492,18 @@ function NewMomentForm() {
                   loop
                   playsInline
                 />
+              ) : mediaType === "VIDEO" ? (
+                <div className="flex flex-col items-center gap-3 p-12 text-center">
+                  <div className="rounded-full bg-amber-500/10 p-4">
+                    <Film className="h-10 w-10 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--os-fg)]">Aperçu non disponible</p>
+                    <p className="text-xs text-[var(--os-muted)] mt-1">
+                      Le fichier sera publié tel quel
+                    </p>
+                  </div>
+                </div>
               ) : (
                 <img
                   src={preview}
@@ -716,6 +735,54 @@ function NewMomentForm() {
           onCancel={handleVideoEditCancel}
           maxDuration={60}
         />
+      )}
+
+      {!showVideoEditor && step === "edit" && mediaType === "VIDEO" && file && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-[var(--os-card)] border border-[var(--os-card-border)] p-6 space-y-5">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="rounded-full bg-amber-500/10 p-3">
+                <Film className="h-8 w-8 text-amber-400" />
+              </div>
+              <h2 className="text-lg font-extrabold text-[var(--os-fg)]">
+                Aperçu non disponible
+              </h2>
+              <p className="text-sm text-[var(--os-muted)] max-w-xs">
+                Ce format vidéo ne peut pas être prévisualisé sur ton appareil. Le fichier sera publié tel quel.
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-[var(--os-bg)] border border-[var(--os-card-border)] p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-[var(--os-muted)]">Fichier</span>
+                <span className="font-bold text-[var(--os-fg)] truncate max-w-[200px]">{file.name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-[var(--os-muted)]">Format</span>
+                <span className="font-bold text-[var(--os-fg)]">{file.type}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-[var(--os-muted)]">Taille</span>
+                <span className="font-bold text-[var(--os-fg)]">{(file.size / (1024 * 1024)).toFixed(1)} Mo</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleVideoEditCancel}
+                className="flex-1 rounded-xl border border-[var(--os-card-border)] py-3 text-sm font-bold text-[var(--os-fg)] hover:bg-[var(--os-bg)] transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => setStep("details")}
+                className="flex-1 rounded-xl bg-gradient-to-r from-outside-500 to-accent-500 py-3 text-sm font-bold text-white shadow-glow hover:shadow-glow-lg transition-all active:scale-[0.98]"
+              >
+                Continuer
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
