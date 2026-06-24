@@ -1,22 +1,14 @@
+import type { FFmpeg } from "@ffmpeg/ffmpeg";
+
 export type TranscodeResult = {
   file: File;
   url: string;
 };
 
-type FFmpegInstance = {
-  loaded: boolean;
-  on: (event: string, cb: (_event: unknown) => void) => void;
-  load: (_opts: { coreURL: string; wasmURL: string }) => Promise<void>;
-  writeFile: (_name: string, _data: BlobPart) => Promise<void>;
-  exec: (_args: string[]) => Promise<void>;
-  readFile: (_name: string) => Promise<Uint8Array | string>;
-  deleteFile: (_name: string) => Promise<void>;
-};
+let ffmpeg: FFmpeg | null = null;
+let loading: Promise<void> | null = null;
 
-let ffmpeg: FFmpegInstance | null = null;
-let loadPromise: Promise<FFmpegInstance> | null = null;
-
-const CORE_URL = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm";
+const CORE_URL = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd";
 const MAX_FILE_SIZE_MB = 500;
 
 function getExtension(name: string): string {
@@ -24,16 +16,18 @@ function getExtension(name: string): string {
   return i >= 0 ? name.slice(i) : "";
 }
 
-async function getFFmpeg(): Promise<FFmpegInstance> {
+async function getFFmpeg(): Promise<FFmpeg> {
   if (ffmpeg?.loaded) return ffmpeg;
-  if (loadPromise) return loadPromise;
+  if (loading) {
+    await loading;
+    return ffmpeg!;
+  }
 
-  loadPromise = (async () => {
-    const { FFmpeg } = await import("@ffmpeg/ffmpeg");
+  loading = (async () => {
+    const { FFmpeg: FFmpegClass } = await import("@ffmpeg/ffmpeg");
     const { toBlobURL } = await import("@ffmpeg/util");
 
-    const instance = new FFmpeg() as unknown as FFmpegInstance;
-    instance.on("progress", () => {});
+    const instance = new FFmpegClass();
 
     await instance.load({
       coreURL: await toBlobURL(`${CORE_URL}/ffmpeg-core.js`, "text/javascript"),
@@ -41,16 +35,14 @@ async function getFFmpeg(): Promise<FFmpegInstance> {
     });
 
     ffmpeg = instance;
-    return instance;
   })();
 
-  return loadPromise;
+  await loading;
+  return ffmpeg!;
 }
 
 export async function canTranscodeInBrowser(file: File): Promise<boolean> {
-  const sizeMB = file.size / (1024 * 1024);
-  if (sizeMB > MAX_FILE_SIZE_MB) return false;
-  return true;
+  return file.size / (1024 * 1024) <= MAX_FILE_SIZE_MB;
 }
 
 export async function transcodeVideo(
@@ -72,26 +64,39 @@ export async function transcodeVideo(
   const { fetchFile } = await import("@ffmpeg/util");
 
   const inputData = await fetchFile(file);
-  const inputBuf = inputData instanceof Uint8Array ? inputData : new TextEncoder().encode(inputData as string);
-  await instance.writeFile(inputName, inputBuf.buffer as ArrayBuffer);
+  await instance.writeFile(inputName, inputData);
 
-  instance.on("progress", (({ progress }: { progress: number }) => {
+  const logMessages: string[] = [];
+  instance.on("log", ({ message }: { message: string }) => {
+    logMessages.push(message);
+  });
+
+  instance.on("progress", ({ progress }: { progress: number }) => {
     onProgress?.(Math.round(progress * 100));
-  }) as (_event: unknown) => void);
+  });
 
-  await instance.exec([
+  const exitCode = await instance.exec([
     "-i", inputName,
     "-c:v", "libx264",
     "-preset", "fast",
     "-crf", "23",
     "-c:a", "aac",
     "-movflags", "+faststart",
+    "-map", "0:v?",
+    "-map", "0:a?",
     outputName,
-  ]);
+  ], 120000);
+
+  if (exitCode !== 0) {
+    const log = logMessages.slice(-3).join(" | ");
+    throw new Error(
+      `FFmpeg a échoué (code ${exitCode})${log ? `: ${log}` : ""}`
+    );
+  }
 
   const raw = await instance.readFile(outputName);
-  const outputBuf = raw instanceof Uint8Array ? raw : new TextEncoder().encode(raw as string);
-  const blob = new Blob([outputBuf.buffer as ArrayBuffer], { type: "video/mp4" });
+  const buf = raw instanceof Uint8Array ? raw : new TextEncoder().encode(raw as string);
+  const blob = new Blob([buf.buffer as ArrayBuffer], { type: "video/mp4" });
   const baseName = file.name.replace(/\.[^/.]+$/, "");
   const mp4File = new File([blob], `${baseName}.mp4`, { type: "video/mp4" });
   const url = URL.createObjectURL(blob);
