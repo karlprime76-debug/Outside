@@ -92,6 +92,10 @@ const config: Config = {
         "elevated": "0 0 0 1px rgba(255, 255, 255, 0.04), 0 4px 8px rgba(0, 0, 0, 0.2), 0 20px 40px rgba(0, 0, 0, 0.4)",
         "inner-glow": "inset 0 1px 0 rgba(255,255,255,0.04)",
         "soft": "0 2px 8px rgba(0, 0, 0, 0.15)",
+        "depth-sm": "0 0 0 1px rgba(249,115,22,0.06), 0 4px 12px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.25)",
+        "depth-md": "0 0 0 1px rgba(249,115,22,0.08), 0 8px 24px rgba(0,0,0,0.25), 0 24px 48px rgba(0,0,0,0.35)",
+        "depth-lg": "0 0 0 1px rgba(249,115,22,0.1), 0 8px 24px rgba(0,0,0,0.2), 0 24px 48px rgba(0,0,0,0.35), 0 48px 80px rgba(0,0,0,0.15)",
+        "depth-xl": "0 0 0 1px rgba(249,115,22,0.12), 0 12px 32px rgba(0,0,0,0.25), 0 32px 64px rgba(0,0,0,0.4), 0 64px 120px rgba(0,0,0,0.2)",
       },
       animation: {
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
@@ -125,6 +129,9 @@ const config: Config = {
         "loading-sweep": "loadingSweep 1.8s ease-in-out infinite",
         "pulse-dot": "pulseDot 1.4s ease-in-out infinite",
         "sparkle-float": "sparkleFloat 3s ease-in-out infinite",
+        "float-3d": "float3d 8s ease-in-out infinite",
+        "float-3d-slow": "float3d 14s ease-in-out infinite",
+        "float-3d-delayed": "float3d 10s ease-in-out 2s infinite",
       },
       keyframes: {
         float: {
@@ -256,6 +263,12 @@ const config: Config = {
           "0%, 100%": { opacity: "0", transform: "translateY(0) scale(0.5)" },
           "20%": { opacity: "1", transform: "translateY(-4px) scale(1)" },
           "40%": { opacity: "0", transform: "translateY(-8px) scale(0.8)" },
+        },
+        float3d: {
+          "0%, 100%": { transform: "translateY(0) translateZ(0) rotateX(0deg) rotateY(0deg)" },
+          "25%": { transform: "translateY(-12px) translateZ(20px) rotateX(2deg) rotateY(-1deg)" },
+          "50%": { transform: "translateY(-20px) translateZ(40px) rotateX(0deg) rotateY(1deg)" },
+          "75%": { transform: "translateY(-8px) translateZ(15px) rotateX(-1deg) rotateY(0deg)" },
         },
       },
     },
