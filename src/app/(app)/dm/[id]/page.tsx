@@ -183,25 +183,29 @@ export default function DmConversationPage() {
 
   // Pagination (load older messages)
   const topSentinelRef = useRef<HTMLDivElement>(null);
+  const isFetchingOlderRef = useRef(false);
   useEffect(() => {
     const el = topSentinelRef.current;
     if (!el || !nextCursor || loading) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && nextCursor) {
+        if (entry.isIntersecting && nextCursor && !isFetchingOlderRef.current) {
+          isFetchingOlderRef.current = true;
           fetchMessages(nextCursor).then((data) => {
             if (!data) return;
             const prevHeight = listRef.current?.scrollHeight || 0;
             setMessages((prev) => [...data.messages, ...prev]);
             setNextCursor(data.nextCursor);
-            // Restore scroll position after prepend
             requestAnimationFrame(() => {
               if (listRef.current) {
                 const newHeight = listRef.current.scrollHeight;
                 listRef.current.scrollTop = newHeight - prevHeight;
               }
             });
-          }).catch((e) => setError(e instanceof Error ? e.message : "Erreur."));
+          }).catch((e) => {
+            setError(e instanceof Error ? e.message : "Erreur.");
+            setTimeout(() => { setError(""); }, 5000);
+          }).finally(() => { isFetchingOlderRef.current = false; });
         }
       },
       { rootMargin: "300px" }
@@ -226,6 +230,7 @@ export default function DmConversationPage() {
     }
   ) {
     if ((!text.trim() && !opts?.mediaUrl) || sending) return;
+    setError("");
     setSending(true);
     const tempId = `temp-${Date.now()}`;
     const optimistic: DmMessage = {

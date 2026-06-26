@@ -8,6 +8,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 import { Providers } from "@/components/providers";
+import { OutsideThemeProvider } from "@/components/theme-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { AppContainer } from "@/components/app-container";
 
@@ -68,7 +69,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col overflow-x-hidden">
         <PwaRegister />
         <Providers>
-          <AppContainer>{children}</AppContainer>
+          <OutsideThemeProvider>
+            <AppContainer>{children}</AppContainer>
+          </OutsideThemeProvider>
         </Providers>
       </body>
     </html>

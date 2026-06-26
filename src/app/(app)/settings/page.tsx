@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { AnimatedPage } from "@/components/ui/animated-page";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { useOutsideThemeContext } from "@/components/theme-provider";
 import {
   ArrowLeft,
   Bell,
@@ -27,6 +28,8 @@ import {
   Image,
   MessageSquare,
   Zap,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 interface UserSettingsData {
@@ -79,6 +82,7 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const { addToast } = useToast();
   const push = usePushNotifications();
+  const { theme, setTheme } = useOutsideThemeContext();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<UserSettingsData>(DEFAULT_SETTINGS);
@@ -303,6 +307,23 @@ export default function SettingsPage() {
 
       {/* Apparence */}
       <Section title="Apparence">
+        <div className="flex items-center justify-between py-3">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-outside-100 p-2">
+              {theme === "dark" ? <Moon className="h-4 w-4 text-outside-600" /> : <Sun className="h-4 w-4 text-outside-600" />}
+            </div>
+            <span className="text-sm font-semibold text-[var(--os-fg)]">Thème</span>
+          </div>
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors border border-[var(--os-card-border)]"
+            style={{ background: theme === "dark" ? "var(--os-primary)" : "var(--os-card)" }}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${theme === "dark" ? "translate-x-6" : "translate-x-1"}`}
+            />
+          </button>
+        </div>
         <div className="flex items-center justify-between py-3">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-outside-100 p-2">

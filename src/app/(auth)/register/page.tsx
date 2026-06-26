@@ -27,6 +27,7 @@ function RegisterForm() {
   const [countryCode, setCountryCode] = useState("");
   const [homeCity, setHomeCity] = useState("");
   const [gender, setGender] = useState("");
+  const [interestedInGender, setInterestedInGender] = useState("");
   const [citySuggestion, setCitySuggestion] = useState<{ id: string; lat: number | null; lng: number | null } | null>(null);
   const [birthDate, setBirthDate] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -47,6 +48,7 @@ function RegisterForm() {
       password: form.get("password") as string,
       confirmPassword: form.get("confirmPassword") as string,
       gender: gender || undefined,
+      interestedInGender: interestedInGender || undefined,
       countryCode: countryCode.toUpperCase(),
       homeCity: homeCity.trim(),
       homeCityLat: citySuggestion?.lat ?? null,
@@ -270,6 +272,19 @@ function RegisterForm() {
                         {opt.label}
                       </option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-bold text-white/70">Je cherche</label>
+                  <select
+                    value={interestedInGender}
+                    onChange={(e) => setInterestedInGender(e.target.value)}
+                    className="w-full rounded-xl bg-white/90 px-4 py-3 text-sm text-zinc-900 border-0"
+                  >
+                    <option value="">Tout le monde</option>
+                    <option value="MEN">Hommes</option>
+                    <option value="WOMEN">Femmes</option>
+                    <option value="EVERYONE">Tout le monde</option>
                   </select>
                 </div>
                 <CountrySelect

@@ -11,6 +11,7 @@ const profileUpdateSchema = z.object({
   username: z.string().min(3, "Le username doit contenir au moins 3 caractères").max(30, "Le username est trop long").nullish(),
   bio: z.string().max(500, "La bio est trop longue (500 caractères max)").nullish(),
   gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).nullish(),
+  interestedInGender: z.enum(["MEN", "WOMEN", "EVERYONE"]).nullish(),
   countryCode: z.string().length(2, "Code pays invalide").nullish(),
   homeCity: z.string().min(2, "La ville doit contenir au moins 2 caractères").max(120, "La ville est trop longue").nullish(),
   birthDate: z.string().nullish(),
@@ -77,7 +78,7 @@ export async function PUT(req: Request) {
       );
     }
 
-    const { name, username, bio, gender, countryCode, homeCity, birthDate } = parsed.data as { name?: string; username?: string; bio?: string; gender?: string; countryCode?: string; homeCity?: string; birthDate?: string };
+    const { name, username, bio, gender, interestedInGender, countryCode, homeCity, birthDate } = parsed.data as { name?: string; username?: string; bio?: string; gender?: string; interestedInGender?: string; countryCode?: string; homeCity?: string; birthDate?: string };
 
     const existingUser = await db.user.findUnique({
       where: { email: session.user.email },
@@ -109,6 +110,7 @@ export async function PUT(req: Request) {
     // username déjà traité plus haut (normalisé/validé)
     if (bio !== undefined) updateData.bio = bio;
     if (gender !== undefined) updateData.gender = gender;
+    if (interestedInGender !== undefined) (updateData as Record<string, unknown>).interestedInGender = interestedInGender;
     if (parsed.data.socialLinks !== undefined) updateData.socialLinks = parsed.data.socialLinks;
 
     // birthDate (complétion légale). On autorise uniquement si absente côté DB.

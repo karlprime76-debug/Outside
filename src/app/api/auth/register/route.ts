@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, username: rawUsername, email, password, gender, countryCode, homeCity, homeCityLat, homeCityLng, birthDate, acceptTerms } = parsed.data as typeof parsed.data & { birthDate: string; acceptTerms: boolean };
+    const { name, username: rawUsername, email, password, gender, interestedInGender, countryCode, homeCity, homeCityLat, homeCityLng, birthDate, acceptTerms } = parsed.data as typeof parsed.data & { birthDate: string; acceptTerms: boolean };
 
     // Validation âge et acceptation
     if (!birthDate) {
@@ -132,6 +132,7 @@ export async function POST(req: Request) {
           password: hashedPassword,
           accountKind: "STANDARD",
           gender: gender || "PREFER_NOT_TO_SAY",
+          interestedInGender: interestedInGender || null,
           country: countryName,
           countryCode: countryCode.toUpperCase(),
           homeCityId: city.id,

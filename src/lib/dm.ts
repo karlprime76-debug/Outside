@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 export async function getOrCreateDirectConversation(userAId: string, userBId: string) {
   if (userAId === userBId) return null;
 
-  // Find existing conversation with these participants
   const existing = await db.conversation.findFirst({
     where: {
       participants: {
@@ -18,16 +17,36 @@ export async function getOrCreateDirectConversation(userAId: string, userBId: st
   });
   if (existing) return existing;
 
-  const conv = await db.conversation.create({
-    data: {
-      participants: {
-        createMany: {
-          data: [{ userId: userAId }, { userId: userBId }],
+  try {
+    const conv = await db.conversation.create({
+      data: {
+        participants: {
+          createMany: {
+            data: [{ userId: userAId }, { userId: userBId }],
+          },
         },
       },
-    },
-  });
-  return conv;
+    });
+    return conv;
+  } catch (e: unknown) {
+    const err = e as { code?: string };
+    if (err.code === "P2002") {
+      const retry = await db.conversation.findFirst({
+        where: {
+          participants: {
+            some: { userId: userAId },
+          },
+          AND: [
+            {
+              participants: { some: { userId: userBId } },
+            },
+          ],
+        },
+      });
+      if (retry) return retry;
+    }
+    throw e;
+  }
 }
 
 export async function canSendDirectMessage(senderId: string, receiverId: string) {

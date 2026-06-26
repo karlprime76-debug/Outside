@@ -2,7 +2,7 @@ import webPush from "web-push";
 import { db } from "@/lib/db";
 import { logError } from "@/lib/log";
 
-const vapidSubject = process.env.VAPID_SUBJECT || "mailto:contact@outside.app";
+const vapidSubject = process.env.VAPID_SUBJECT || "mailto:erosiahelp@hotmail.com";
 
 function getKeys(): { publicKey: string; privateKey: string } {
   const envPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;

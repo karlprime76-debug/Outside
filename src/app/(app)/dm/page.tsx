@@ -72,17 +72,20 @@ export default function DmInboxPage() {
   const load = useCallback(async (cursor?: string) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
-    const url = new URL("/api/dm/conversations", window.location.origin);
-    if (cursor) url.searchParams.set("cursor", cursor);
-    url.searchParams.set("limit", "20");
-    const res = await fetch(url.toString(), { cache: "no-store" });
-    isFetchingRef.current = false;
-    if (!res.ok) {
-      if (res.status === 401) { router.push("/login"); return; }
-      const j = await res.json().catch(() => ({}));
-      throw new Error(j.error || "Impossible de charger les messages.");
+    try {
+      const url = new URL("/api/dm/conversations", window.location.origin);
+      if (cursor) url.searchParams.set("cursor", cursor);
+      url.searchParams.set("limit", "20");
+      const res = await fetch(url.toString(), { cache: "no-store" });
+      if (!res.ok) {
+        if (res.status === 401) { router.push("/login"); return; }
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || "Impossible de charger les messages.");
+      }
+      return res.json() as Promise<{ conversations: ConversationItem[]; nextCursor: string | null }>;
+    } finally {
+      isFetchingRef.current = false;
     }
-    return res.json() as Promise<{ conversations: ConversationItem[]; nextCursor: string | null }>;
   }, [router]);
 
   useEffect(() => {

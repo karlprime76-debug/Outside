@@ -427,9 +427,9 @@ export function DmMessageBubble({
           )}
 
           {/* Reactions */}
-          {!message.isDeleted && onReact && message.reactions && message.reactions.length > 0 && (
+          {!message.isDeleted && onReact && (
             <MessageReactions
-              reactions={message.reactions}
+              reactions={message.reactions || []}
               myId={myId}
               onReact={onReact}
               messageId={message.id}

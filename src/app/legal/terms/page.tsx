@@ -50,7 +50,7 @@ export default function TermsPage() {
       <p>Le service peut évoluer. Nous pouvons modifier ces conditions. En cas de changement important, une notification raisonnable sera fournie.</p>
 
       <h2>14. Contact</h2>
-      <p>Contactez-nous via l’app ou par email pour toute question relative aux présentes conditions.</p>
+      <p>Contactez-nous à erosiahelp@hotmail.com pour toute question relative aux présentes conditions.</p>
 
       <p className="text-xs text-[var(--os-muted)] mt-6">Ce document est une base produit à faire relire par un juriste.</p>
     </article>

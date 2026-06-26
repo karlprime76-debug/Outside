@@ -84,6 +84,25 @@
   --os-radius-full: 9999px;
 }
 
+.dark {
+  --os-bg: #0A0A0E;
+  --os-bg-secondary: #121216;
+  --os-fg: #EDEDF0;
+  --os-fg-secondary: #8A8A96;
+  --os-card: #141418;
+  --os-card-hover: #1E1E24;
+  --os-card-border: rgba(255, 255, 255, 0.06);
+  --os-card-border-hover: rgba(255, 255, 255, 0.10);
+  --os-muted: #6A6A78;
+  --os-muted-light: #4A4A56;
+  --os-glass: rgba(0, 0, 0, 0.75);
+  --os-glass-border: rgba(255, 255, 255, 0.08);
+  --os-glass-shine: rgba(255, 255, 255, 0.08);
+  --os-shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --os-shadow-glow: 0 0 24px rgba(249, 115, 22, 0.08), 0 0 48px rgba(244, 63, 94, 0.04);
+  --os-shadow-elevated: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 4px 8px rgba(0, 0, 0, 0.3), 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
 @layer base {
   html {
     background-color: var(--os-bg);

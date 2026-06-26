@@ -86,8 +86,7 @@ export async function GET(req: Request) {
   } catch (e) {
     logPerfEnd(perfLabel);
     logError("[DM_ERROR]", "GET /api/dm/conversations failed", { error: String(e) });
-    // Return empty array instead of error when no data exists
-    return NextResponse.json({ conversations: [], nextCursor: null });
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 

@@ -31,6 +31,12 @@ enum Gender {
   PREFER_NOT_TO_SAY
 }
 
+enum InterestedInGender {
+  MEN
+  WOMEN
+  EVERYONE
+}
+
 enum FriendRequestStatus {
   PENDING
   ACCEPTED
@@ -428,7 +434,8 @@ model User {
   coverImage    String?
   bio           String?
   socialLinks   String?
-  gender        Gender?
+  gender              Gender?
+  interestedInGender  InterestedInGender?
   role          UserRole    @default(USER)
   accountKind   AccountKind @default(STANDARD)
   isDemoAccount Boolean     @default(false)

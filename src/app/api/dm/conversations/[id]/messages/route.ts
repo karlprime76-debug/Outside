@@ -28,6 +28,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       take: limit,
       skip: cursor ? 1 : 0,
       cursor: cursor ? { id: cursor } : undefined,
+      include: {
+        reactions: {
+          include: { user: { select: { id: true, name: true, username: true } } },
+        },
+      },
     });
 
     const nextCursor = messages.length === limit ? messages[messages.length - 1].id : null;
@@ -48,6 +53,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         mediaMimeType: m.mediaMimeType,
         mediaSize: m.mediaSize,
         metadata: m.metadata,
+        reactions: m.reactions.map((r) => ({
+          id: r.id,
+          emoji: r.emoji,
+          userId: r.userId,
+          user: r.user,
+        })),
       })),
       nextCursor,
     });
@@ -148,6 +159,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         mediaMimeType: msg.mediaMimeType,
         mediaSize: msg.mediaSize,
         metadata: msg.metadata,
+        reactions: [],
       },
     });
   } catch (e) {

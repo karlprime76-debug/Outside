@@ -46,7 +46,7 @@ export default function PrivacyPage() {
       <p>Nous mettons en œuvre des mesures de sécurité adaptées. Aucune méthode n’étant infaillible, nous améliorons en continu la protection des données.</p>
 
       <h2>9. Contact</h2>
-      <p>Contactez-nous via l’app ou par email pour toute question relative à cette politique.</p>
+      <p>Contactez-nous à erosiahelp@hotmail.com pour toute question relative à cette politique.</p>
 
       <p className="text-xs text-[var(--os-muted)] mt-6">Ce document est une base produit à faire relire par un juriste.</p>
     </article>

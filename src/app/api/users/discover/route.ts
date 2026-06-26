@@ -16,12 +16,17 @@ export async function GET(req: Request) {
 
     const currentUser = await db.user.findUnique({
       where: { id: currentUserId },
-      select: { activeCityId: true, homeCityId: true, countryCode: true },
+      select: { activeCityId: true, homeCityId: true, countryCode: true, interestedInGender: true },
     });
 
     if (!currentUser) {
       return NextResponse.json({ users: [] });
     }
+
+    const genderFilter: Record<string, string> | undefined =
+      currentUser.interestedInGender === "MEN" ? { gender: "MALE" } :
+      currentUser.interestedInGender === "WOMEN" ? { gender: "FEMALE" } :
+      undefined;
 
     // Exclude self + existing relationships
     const [friendships, requests, follows, blocks] = await Promise.all([
@@ -58,6 +63,7 @@ export async function GET(req: Request) {
           id: { notIn: Array.from(excludeIds) },
           userSettings: { privateDiscoveryMode: false },
           moments: { some: { visibility: "PUBLIC", createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } },
+          ...genderFilter,
         },
         select: {
           id: true, name: true, username: true, image: true, isVerified: true,
@@ -73,6 +79,7 @@ export async function GET(req: Request) {
         where: {
           id: { notIn: Array.from(excludeIds) },
           userSettings: { privateDiscoveryMode: false },
+          ...genderFilter,
           OR: [
             { activeCityId: currentUser.activeCityId },
             { homeCityId: currentUser.homeCityId },
