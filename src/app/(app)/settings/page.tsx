@@ -30,6 +30,9 @@ import {
   Zap,
   Sun,
   Moon,
+  Pen,
+  Check,
+  X,
 } from "lucide-react";
 
 interface UserSettingsData {
@@ -86,6 +89,10 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<UserSettingsData>(DEFAULT_SETTINGS);
+  const [editingName, setEditingName] = useState(false);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [nameValue, setNameValue] = useState(session?.user?.name || "");
+  const [usernameValue, setUsernameValue] = useState(session?.user?.username || "");
 
   // Load settings from API
   useEffect(() => {
@@ -126,6 +133,38 @@ export default function SettingsPage() {
     },
     [addToast]
   );
+
+  async function handleSaveName() {
+    const v = nameValue.trim()
+    if (!v || v.length < 2) { addToast("Le nom doit contenir au moins 2 caractères", "error"); return }
+    if (v.length > 80) { addToast("Le nom est trop long (80 caractères max)", "error"); return }
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: v }),
+      })
+      if (!res.ok) { const d = await res.json(); addToast(d.error || "Erreur", "error"); return }
+      setEditingName(false)
+      addToast("Nom mis à jour", "success")
+    } catch { addToast("Erreur réseau", "error") }
+  }
+
+  async function handleSaveUsername() {
+    const v = usernameValue.trim()
+    if (!v || v.length < 3) { addToast("Le pseudo doit contenir au moins 3 caractères", "error"); return }
+    if (v.length > 30) { addToast("Le pseudo est trop long (30 caractères max)", "error"); return }
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: v }),
+      })
+      if (!res.ok) { const d = await res.json(); addToast(d.error || "Erreur", "error"); return }
+      setEditingUsername(false)
+      addToast("Pseudo mis à jour", "success")
+    } catch { addToast("Erreur réseau", "error") }
+  }
 
   function updateSetting<K extends keyof UserSettingsData>(
     key: K,
@@ -252,20 +291,52 @@ export default function SettingsPage() {
         <div className="space-y-3">
           <div className="flex items-center gap-3 py-2">
             <User className="h-4 w-4 text-outside-600" />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-xs text-[var(--os-muted)]">Nom</p>
-              <p className="text-sm font-semibold text-[var(--os-fg)]">
-                {session?.user?.name || "—"}
-              </p>
+              {editingName ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    value={nameValue}
+                    onChange={(e) => setNameValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); if (e.key === "Escape") setEditingName(false) }}
+                    className="flex-1 rounded-lg border border-[var(--os-card-border)] bg-[var(--os-card)] px-2 py-1 text-sm font-semibold text-[var(--os-fg)] outline-none focus:border-outside-500"
+                    autoFocus
+                    maxLength={80}
+                  />
+                  <button onClick={handleSaveName} className="rounded-full p-1 text-green-500 hover:bg-green-50"><Check className="h-4 w-4" /></button>
+                  <button onClick={() => setEditingName(false)} className="rounded-full p-1 text-[var(--os-muted)] hover:bg-[var(--os-card-border)]"><X className="h-4 w-4" /></button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-[var(--os-fg)] truncate">{session?.user?.name || "—"}</p>
+                  <button onClick={() => { setNameValue(session?.user?.name || ""); setEditingName(true) }} className="rounded-full p-1 text-[var(--os-muted)] hover:bg-[var(--os-card-border)]"><Pen className="h-3 w-3" /></button>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3 py-2">
             <AtSign className="h-4 w-4 text-outside-600" />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-xs text-[var(--os-muted)]">Nom d&apos;utilisateur</p>
-              <p className="text-sm font-semibold text-[var(--os-fg)]">
-                {session?.user?.username || "—"}
-              </p>
+              {editingUsername ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    value={usernameValue}
+                    onChange={(e) => setUsernameValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSaveUsername(); if (e.key === "Escape") setEditingUsername(false) }}
+                    className="flex-1 rounded-lg border border-[var(--os-card-border)] bg-[var(--os-card)] px-2 py-1 text-sm font-semibold text-[var(--os-fg)] outline-none focus:border-outside-500"
+                    autoFocus
+                    maxLength={30}
+                  />
+                  <button onClick={handleSaveUsername} className="rounded-full p-1 text-green-500 hover:bg-green-50"><Check className="h-4 w-4" /></button>
+                  <button onClick={() => setEditingUsername(false)} className="rounded-full p-1 text-[var(--os-muted)] hover:bg-[var(--os-card-border)]"><X className="h-4 w-4" /></button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-[var(--os-fg)] truncate">{session?.user?.username || "—"}</p>
+                  <button onClick={() => { setUsernameValue(session?.user?.username || ""); setEditingUsername(true) }} className="rounded-full p-1 text-[var(--os-muted)] hover:bg-[var(--os-card-border)]"><Pen className="h-3 w-3" /></button>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3 py-2">

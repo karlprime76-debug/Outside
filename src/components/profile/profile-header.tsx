@@ -48,7 +48,7 @@ export function ProfileHeader({ user, qualityScore, showCity = true, actions, is
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black truncate">{user.name || "Utilisateur OUTSIDE"}</h1>
+                <h1 className="text-2xl font-black truncate">{user.name || user.username || "Utilisateur"}</h1>
                 {user.isVerified && (
                   <BadgeCheck className="h-5 w-5 shrink-0 text-sky-400 drop-shadow" />
                 )}
@@ -63,7 +63,7 @@ export function ProfileHeader({ user, qualityScore, showCity = true, actions, is
                 )}
               </div>
             </div>
-            <p className="text-sm text-white/80 truncate">@{user.username || "username"}</p>
+            <p className="text-sm text-white/80 truncate">@{user.username || "pseudo"}</p>
             {showCity && cityName && (
               <div className="mt-2 flex items-center gap-1.5 text-xs text-white/70">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
